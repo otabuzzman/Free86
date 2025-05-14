@@ -10,6 +10,9 @@
 #include <cstdio>
 #include <time.h>
 #include <thread>
+#ifdef TEST386
+#include "Test386.h"
+#endif
 
 int Running = 1;
 
@@ -37,7 +40,11 @@ void input_loop(PC *pc)
 int main(int ArgCount, char **Args)
 {
     static const int width = 840, height = 350;
+#ifdef TEST386
+    Test386 *pc = new Test386();
+#else
     PC              *pc = new PC();
+#endif
     pc->init();
     pc->start();
 

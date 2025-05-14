@@ -17,7 +17,7 @@ class PC {
     ~PC();
 
     void init();
-    void load(int binno, std::string path);
+    int  load(std::string path, int offset = 0);
     void start();
     void run_cpu();
 
@@ -33,10 +33,6 @@ class PC {
 #ifndef NO_SDL
     TTF_Font    *font = nullptr;
 #endif
-
-    uint8_t *bin0 = nullptr;
-    uint8_t *bin1 = nullptr;
-    uint8_t *bin2 = nullptr;
 
     int mem_size     = 16 * 1024 * 1024;
     int start_addr   = 0x10000;

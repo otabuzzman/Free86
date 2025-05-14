@@ -10,6 +10,7 @@ add_executable(${PROJECT_NAME} ${sourcefiles}
 set_property(TARGET cpp_app PROPERTY CXX_STANDARD 20)
 
 option(NO_SDL "Disable SDL support" OFF)
+option(TEST386 "Run test386 suite" OFF)
 
 if(NO_SDL)
     add_compile_definitions(NO_SDL)
@@ -17,4 +18,9 @@ if(NO_SDL)
 else()
     find_package(OpenGL)
     target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL2_image SDL2_ttf SDL2 SDL2main)
+endif()
+
+if(TEST386)
+    add_compile_definitions(TEST386)
+    message(STATUS "Run test386 suite.")
 endif()

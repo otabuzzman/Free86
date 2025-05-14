@@ -4592,6 +4592,9 @@ void x86Internal::st32_port(int port_num, int x)
 int x86Internal::ioport_read(int mem8_loc)
 {
     int port = mem8_loc & (1024 - 1);
+#ifdef TEST386
+    printf("*** ioport_read 0x%04x\n", port);
+#endif
     switch (port) {
         case 0x80:
             // (function(mem8_loc, data) {})(mem8_loc);
@@ -4631,6 +4634,9 @@ int x86Internal::ioport_read(int mem8_loc)
 void x86Internal::ioport_write(int mem8_loc, int data)
 {
     int port = mem8_loc & (1024 - 1);
+#ifdef TEST386
+    printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
+#endif
     switch (port) {
         case 0x80:
             // (function(mem8_loc, data) {})(mem8_loc, data);

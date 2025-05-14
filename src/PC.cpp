@@ -25,19 +25,16 @@ PC::PC()
 }
 PC::~PC()
 {
-    delete[] bin0;
-    delete[] bin1;
-    delete[] bin2;
     delete cpu;
 }
 void PC::init()
 {
     printf("load file\n");
-    load(0, "bin/vmlinux-2.6.20.bin");
-    load(1, "bin/root.bin");
-    load(2, "bin/linuxstart.bin");
+    load("bin/vmlinux-2.6.20.bin", 0x00100000);
+    initrd_size = load("bin/root.bin", 0x00400000);
+    load("bin/linuxstart.bin", 0x00010000);
 }
-void PC::load(int binno, std::string path)
+int PC::load(std::string path, int offset)
 {
     FILE *f = fopen(path.c_str(), "rb");
     fseek(f, 0, SEEK_END);
@@ -46,21 +43,10 @@ void PC::load(int binno, std::string path)
     auto buffer = new uint8_t[size];
     auto __     = fread(buffer, size, 1, f);
 
-    int offset = 0;
-    if (binno == 0) {
-        bin0   = buffer;
-        offset = 0x00100000;
-    } else if (binno == 1) {
-        bin1        = buffer;
-        offset      = 0x00400000;
-        initrd_size = size;
-    } else if (binno == 2) {
-        bin2   = buffer;
-        offset = 0x10000;
-    }
-
     cpu->load(buffer, offset, size);
     fclose(f);
+
+    return size;
 }
 void PC::start()
 {
