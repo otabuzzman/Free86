@@ -43,7 +43,7 @@ int main(int ArgCount, char **Args)
 #ifdef TEST386
     Test386 *pc = new Test386();
 #else
-    PC              *pc = new PC();
+    PC *pc = new PC();
 #endif
     pc->init();
     pc->start();

@@ -47,6 +47,8 @@ make
 
 Add `-DCMAKE_BUILD_TYPE=Debug` to CMake command to compile for debugging.
 
+Add `-DTEST386=ON` to CMake command to compile for [test386](https://github.com/barotto/test386.asm) suite.
+
 Run:
 
 ```bash

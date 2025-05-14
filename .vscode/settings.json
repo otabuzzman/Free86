@@ -4,6 +4,7 @@
     "cwd": "${workspaceFolder}"
   },
   "cmake.configureArgs": [
-    "-DNO_SDL=ON"
+    "-DNO_SDL=ON",
+    "-DTEST386=ON"
   ],
 }
