@@ -46,7 +46,7 @@ class x86 {
     int cpl         = 0;    // current privilege level
     int df          = 1;    // Direction Flag
 
-    int cr0 = (1 << 0);    // PE-mode ON
+    int cr0 = 0;
     int cr2 = 0;
     int cr3 = 0;
     int cr4 = 0;
@@ -64,9 +64,9 @@ class x86 {
 
     //   [" ES", " CS", " SS", " DS", " FS", " GS", "LDT", " TR"]
     DescriptorTable segs[7];
-    DescriptorTable idt;
+    DescriptorTable idt = {0, 0, 0x03ff, 0};
 
-    int eip = 0;    // instruction pointer
+    int eip = 0xfff0;    // instruction pointer
 
     int cccc_op   = 0;    // current op
     int cccc_dst  = 0;    // current dest

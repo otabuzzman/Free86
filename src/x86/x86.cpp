@@ -14,9 +14,6 @@ x86::x86(int _mem_size)
     mem_size     = _mem_size;
     new_mem_size = mem_size + ((15 + 3) & ~3);
 
-    this->segs[2].flags = (1 << 22);
-    this->segs[1].flags = (1 << 22);
-
     phys_mem = (uint8_t *)malloc(sizeof(uint8_t) * new_mem_size);
     for (int i = 0; i < new_mem_size; i++) {
         phys_mem[i] = 0;
@@ -33,6 +30,8 @@ x86::x86(int _mem_size)
     for (int i = 0; i < tlb_size; i++) {
         tlb_clear(i);
     }
+
+    segs[1].base = 0xffff0000;    // CS
 }
 x86::~x86()
 {
