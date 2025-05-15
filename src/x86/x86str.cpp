@@ -335,8 +335,8 @@ void x86Internal::stringOp_MOVSD()
             if (len > l)
                 len = l;
 
-            ug = do_tlb_lookup(mem8_loc, 0);
-            vg = do_tlb_lookup(eg, 1);
+            ug = check_real_mode() ? mem8_loc : do_tlb_lookup(mem8_loc, 0);
+            vg = check_real_mode() ? eg : do_tlb_lookup(eg, 1);
             wg = len << 2;
             vg >>= 2;
             ug >>= 2;
@@ -384,7 +384,7 @@ void x86Internal::stringOp_STOSD()
             l   = (4096 - (mem8_loc & 0xfff)) >> 2;
             if (len > l)
                 len = l;
-            vg = do_tlb_lookup(regs[7], 1);
+            vg = check_real_mode() ? regs[7] : do_tlb_lookup(regs[7], 1);
             x  = regs[0];
             vg >>= 2;
             for (i = 0; i < len; i++)

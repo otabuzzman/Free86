@@ -289,7 +289,7 @@ void x86Internal::init_segment_local_vars()
 void x86Internal::check_opbyte()
 {
     eip                  = (eip + physmem8_ptr - initial_mem_ptr) >> 0;
-    eip_offset           = (eip + CS_base) >> 0;
+    eip_offset           = ((eip + CS_base) & 0xfffff) >> 0;
     uint32_t eip_offset2 = eip_offset;
     int64_t  eip_tlb_val = tlb_read[eip_offset2 >> 12];
 
@@ -2700,13 +2700,11 @@ EXEC_LOOP:;
 }
 void x86Internal::set_CR0(int Qd)
 {
-    if (!(Qd & (1 << 0)))    // 0th bit protected or real, real not supported!
-        cpu_abort("real mode not supported");
     // if changing flags 31, 16, or 0 must flush tlb
     if ((Qd & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
         tlb_flush_all();
     }
-    cr0 = Qd | (1 << 4);    // keep bit 4 set to 1
+    cr0 = Qd | (1 << 4);    // keep bit 4 set to 1 (80387 present)
 }
 void x86Internal::set_CR3(int new_pdb)
 {
@@ -2718,6 +2716,14 @@ void x86Internal::set_CR3(int new_pdb)
 void x86Internal::set_CR4(int newval)
 {
     cr4 = newval;
+}
+bool x86Internal::check_real_mode()
+{
+    return !check_protected();
+}
+bool x86Internal::check_protected()
+{
+    return cr0 & (1 << 0);
 }
 int x86Internal::SS_mask_from_flags(int desp_high4)
 {
@@ -3241,12 +3247,11 @@ void x86Internal::set_protected_mode_segment_register(int reg, int selector)
 }
 void x86Internal::set_segment_register(int reg, int selector)
 {
-    DescriptorTable descriptor_table;
     selector &= 0xffff;
     if (!(cr0 & (1 << 0))) {    // CR0.PE (0 == real mode)
-        descriptor_table          = segs[reg];
-        descriptor_table.selector = selector;
-        descriptor_table.base     = selector << 4;
+        segs[reg].selector = selector;
+        segs[reg].base     = selector << 4;
+        segs[reg].limit    = 0xffff;
     } else if (eflags & 0x00020000) {    // EFLAGS.VM (1 == v86 mode)
         init_segment_vars_with_selector(reg, selector);
     } else {    // protected mode

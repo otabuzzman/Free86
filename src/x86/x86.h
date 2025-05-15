@@ -410,6 +410,9 @@ class x86Internal : public x86 {
     void set_CR3(int new_pdb);
     void set_CR4(int newval);
 
+    bool check_real_mode();
+    bool check_protected();
+
     int  SS_mask_from_flags(int descriptor_high4bytes);
     void load_from_descriptor_table(int selector, int *desary);
     int  calc_desp_limit(int descriptor_low4bytes, int descriptor_high4bytes);
