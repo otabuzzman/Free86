@@ -40,7 +40,7 @@ class x86 {
 
     int count = 0;
 
-    // EAX, EBX, ECX, EDX, ESI, EDI, ESP, EBP  32bit registers
+    // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI  32bit registers
     int regs[8]{0};
     int cycle_count = 0;
     int cpl         = 0;    // current privilege level

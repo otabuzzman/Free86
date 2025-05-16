@@ -289,7 +289,7 @@ void x86Internal::init_segment_local_vars()
 void x86Internal::check_opbyte()
 {
     eip                  = (eip + physmem8_ptr - initial_mem_ptr) >> 0;
-    eip_offset           = ((eip + CS_base) & 0xfffff) >> 0;
+    eip_offset           = check_real_mode() ? (eip + CS_base) & 0xfffff : eip + CS_base;
     uint32_t eip_offset2 = eip_offset;
     int64_t  eip_tlb_val = tlb_read[eip_offset2 >> 12];
 
