@@ -495,6 +495,8 @@ class x86Internal : public x86 {
     void stringOp_LODSD();
     void stringOp_SCASD();
 
+    bool do_dump = false;
+    void dump();
     void dump(int OPbyte);
     int  file_read();
 

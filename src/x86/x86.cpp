@@ -163,6 +163,15 @@ int x86Internal::file_read()
     }
     return EXIT_SUCCESS;
 }
+void x86Internal::dump()
+{
+    if (do_dump) {
+        char buf2[1000];
+        sprintf(buf2, "EIP:%08X EAX:%08X ECX:%08X EDX:%08X EBX:%08X ESP:%08X EBP:%08X ESI:%08X EDI:%08X EFLAGS:%08X", eip,
+                regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], eflags);
+        printf("%s", buf2);
+    }
+}
 void x86Internal::dump(int OPbyte)
 {
     count++;
