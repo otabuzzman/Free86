@@ -60,6 +60,22 @@ exe/cpp_app
 
 Enter shell commands at prompt after Linux boot sequence. Ctrl-C terminates Linux. Run `stty -icanon -echo` to enable character mode and turn off echo for common tty behaviour.
 
+<br>
+
+### Test386
+Bypass POST 9 failure
+
+1. Add BP at OP `0xEE` (`out al, dx`) in `x86opcode.cpp`, line ~1801
+2. Add BP at `set_segment_register`, OP `0x1F` (`pop ss`), line ~1149
+3. Add BP in `init_segment_local_vars` after `SS_mask` setting in `x86.cpp`, line ~283
+4. Activate BP 1 and 2, step until output of "POST 9"
+5. Step to next BP 2, repeat once
+6. Activate BP 3, step to BP 3
+7. Set `SS_mask` from -1 to 0xFFFF
+8. Step to next BP 3, repeat until `SS_mask` equals -1
+9. Set `SS_mask` from -1 to 0xFFFF
+10. Deactivate BP 3 and 2, proceed
+
 <br><br><br><br><br><br>
 
 ## Intel 8086 version
