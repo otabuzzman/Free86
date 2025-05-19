@@ -69,7 +69,9 @@ void PC::run_cpu()
     bool        err_on_exit = false;
 
     while (cpu->cycle_count < Ncycles) {
+#ifndef TEST386
         cpu->pit->update_irq();
+#endif
 
         int exit_status = cpu->exec(Ncycles - cpu->cycle_count);
         if (exit_status == 256) {
