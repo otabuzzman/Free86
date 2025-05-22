@@ -11,7 +11,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
         OPbyte |= CS_flags & 0x0100;
 
         while (true) {
-            dump(OPbyte);
+            dump();
             switch (OPbyte) {
                 case 0x66:    //   Operand-size override prefix
                     if (CS_flags == init_CS_flags)

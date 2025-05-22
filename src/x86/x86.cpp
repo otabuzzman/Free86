@@ -169,7 +169,7 @@ void x86Internal::dump()
         char buf2[1000];
         sprintf(buf2, "EIP:%08X EAX:%08X ECX:%08X EDX:%08X EBX:%08X ESP:%08X EBP:%08X ESI:%08X EDI:%08X EFLAGS:%08X", eip,
                 regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], eflags);
-        printf("%s", buf2);
+        printf("%s\n", buf2);
     }
 }
 void x86Internal::dump(int OPbyte)
@@ -2787,7 +2787,7 @@ int x86Internal::calc_desp_limit(int desp_low4, int desp_high4)
 }
 int x86Internal::calc_desp_base(int desp_low4, int desp_high4)
 {
-    return (((desp_low4 >> 16) | ((desp_high4 & 0xff) << 16) | (desp_high4 & 0xff000000))) & -1;
+    return ((((desp_low4 >> 16) & 0xffff) | ((desp_high4 & 0xff) << 16) | (desp_high4 & 0xff000000))) & -1;
 }
 void x86Internal::set_descriptor_register(DescriptorTable *descriptor_table, int desp_low4, int desp_high4)
 {
