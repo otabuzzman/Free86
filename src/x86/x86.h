@@ -487,6 +487,14 @@ class x86Internal : public x86 {
     void op_16_LODS();
     void op_16_SCAS();
 
+    void stringOp_INSW();
+    void stringOp_OUTSW();
+    void stringOp_MOVSW();
+    void stringOp_STOSW();
+    void stringOp_CMPSW();
+    void stringOp_LODSW();
+    void stringOp_SCASW();
+
     void stringOp_INSD();
     void stringOp_OUTSD();
     void stringOp_MOVSD();
