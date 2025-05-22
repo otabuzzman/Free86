@@ -1647,31 +1647,31 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     stringOp_MOVSB();
                     goto EXEC_LOOP;
                 case 0xa5:    // MOVS DS:[SI] ES:[DI] Move Data from String to String
-                    CS_flags & 0x0100 ? stringOp_MOVSW() ? stringOp_MOVSD();
+                    CS_flags & 0x0100 ? stringOp_MOVSW() : stringOp_MOVSD();
                     goto EXEC_LOOP;
                 case 0xaa:    // STOS AL (ES:)[rDI] Store String
                     stringOp_STOSB();
                     goto EXEC_LOOP;
                 case 0xab:    // STOS AX ES:[DI] Store String
-                    CS_flags & 0x0100 ? stringOp_STOSW() ? stringOp_STOSD();
+                    CS_flags & 0x0100 ? stringOp_STOSW() : stringOp_STOSD();
                     goto EXEC_LOOP;
                 case 0xa6:    // CMPS (ES:)[rDI]  Compare String Operands
                     stringOp_CMPSB();
                     goto EXEC_LOOP;
                 case 0xa7:    // CMPS ES:[DI]  Compare String Operands
-                    CS_flags & 0x0100 ? stringOp_CMPSW() ? stringOp_CMPSD();
+                    CS_flags & 0x0100 ? stringOp_CMPSW() : stringOp_CMPSD();
                     goto EXEC_LOOP;
                 case 0xac:    // LODS (DS:)[rSI] AL Load String
                     stringOp_LODSB();
                     goto EXEC_LOOP;
                 case 0xad:    // LODS DS:[SI] AX Load String
-                    CS_flags & 0x0100 ? stringOp_LODSW() ? stringOp_LODSD();
+                    CS_flags & 0x0100 ? stringOp_LODSW() : stringOp_LODSD();
                     goto EXEC_LOOP;
                 case 0xae:    // SCAS (ES:)[rDI]  Scan String
                     stringOp_SCASB();
                     goto EXEC_LOOP;
                 case 0xaf:    // SCAS ES:[DI]  Scan String
-                    CS_flags & 0x0100 ? stringOp_SCASW() ? stringOp_SCASD();
+                    CS_flags & 0x0100 ? stringOp_SCASW() : stringOp_SCASD();
                     goto EXEC_LOOP;
                 case 0x6c:    // INS DX (ES:)[rDI] Input from Port to String
                     stringOp_INSB();
@@ -1681,7 +1681,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
 
                     goto EXEC_LOOP;
                 case 0x6d:    // INS DX ES:[DI] Input from Port to String
-                    CS_flags & 0x0100 ? stringOp_INSW() ? stringOp_INSD();
+                    CS_flags & 0x0100 ? stringOp_INSW() : stringOp_INSD();
 
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
@@ -1695,7 +1695,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
 
                     goto EXEC_LOOP;
                 case 0x6f:    // OUTS DS:[SI] DX Output String to Port
-                    CS_flags & 0x0100 ? stringOp_OUTSW() ? stringOp_OUTSD();
+                    CS_flags & 0x0100 ? stringOp_OUTSW() : stringOp_OUTSD();
 
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
