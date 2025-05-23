@@ -1144,10 +1144,14 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     push_dword_to_stack(segs[OPbyte >> 3].selector);
                     goto EXEC_LOOP;
                 case 0x07:    // POP SS:[rSP] ES Pop a Value from the Stack
-                case 0x17:    // POP SS:[rSP] SS Pop a Value from the Stack
                 case 0x1f:    // POP SS:[rSP] DS Pop a Value from the Stack
                     set_segment_register(OPbyte >> 3, pop_dword_from_stack_read() & 0xffff);
                     pop_dword_from_stack_incr_ptr();
+                    goto EXEC_LOOP;
+                case 0x17:    // POP SS:[rSP] SS Pop a Value from the Stack
+                    x = pop_dword_from_stack_read() & 0xffff;
+                    pop_dword_from_stack_incr_ptr();
+                    set_segment_register(OPbyte >> 3, x);
                     goto EXEC_LOOP;
                 case 0x8d:    // LEA M Gvqp Load Effective Address
                     mem8 = phys_mem8[physmem8_ptr++];
@@ -3006,10 +3010,14 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                             push_word_to_stack(segs[(OPbyte >> 3) & 3].selector);
                             goto EXEC_LOOP;
                         case 0x107:    // POP SS:[rSP] ES Pop a Value from the Stack
-                        case 0x117:    // POP SS:[rSP] SS Pop a Value from the Stack
                         case 0x11f:    // POP SS:[rSP] DS Pop a Value from the Stack
                             set_segment_register((OPbyte >> 3) & 3, pop_word_from_stack_read());
                             pop_word_from_stack_incr_ptr();
+                            goto EXEC_LOOP;
+                        case 0x117:    // POP SS:[rSP] SS Pop a Value from the Stack
+                            x = pop_word_from_stack_read();
+                            pop_word_from_stack_incr_ptr();
+                            set_segment_register((OPbyte >> 3) & 3, x);
                             goto EXEC_LOOP;
                         case 0x18d:    // LEA M Gvqp Load Effective Address
                             mem8 = phys_mem8[physmem8_ptr++];
