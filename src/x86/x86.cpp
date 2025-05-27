@@ -369,10 +369,6 @@ void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja)
         if (!(Jd & 0x00000001)) {
             error_code = 0;
         } else {
-            if (!(Jd & 0x00000020)) {
-                Jd |= 0x00000020;
-                st32_phys(Id, Jd);
-            }
             Kd = (Jd & -4096) + ((Gd >> 10) & 0xffc);
             Ld = ld32_phys(Kd);
             if (!(Ld & 0x00000001)) {
@@ -381,9 +377,13 @@ void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja)
                 Md = Ld & Jd;
                 if (ja && !(Md & 0x00000004)) {
                     error_code = 0x01;
-                } else if (Hd && !(Md & 0x00000002)) {
+                } else if (ja && Hd && !(Md & 0x00000002)) {
                     error_code = 0x01;
                 } else {
+                    if (!(Jd & 0x00000020)) {
+                        Jd |= 0x00000020;
+                        st32_phys(Id, Jd);
+                    }
                     Nd = (Hd && !(Ld & 0x00000040));
                     if (!(Ld & 0x00000020) || Nd) {
                         Ld |= 0x00000020;
