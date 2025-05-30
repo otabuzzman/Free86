@@ -660,7 +660,7 @@ int x86Internal::segment_translation(int mem8)
 
     return 0;
 }
-int x86Internal::segmented_mem8_loc_for_MOV()
+int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
 {
     int mem8_loc, Sb;
     if (CS_flags & 0x0080) {
@@ -675,6 +675,8 @@ int x86Internal::segmented_mem8_loc_for_MOV()
         Sb = 3;
     else
         Sb--;
+    if (!segment_isnt_accessible(segs[Sb].selector, is_verw))
+        abort(13);
     mem8_loc = (mem8_loc + segs[Sb].base) >> 0;
     return mem8_loc;
 }
@@ -4164,7 +4166,7 @@ void x86Internal::checkOp_BOUND()
 {
     int mem8, x, y, z;
     mem8 = phys_mem8[physmem8_ptr++];
-    if ((mem8 >> 3) == 3)
+    if ((mem8 >> 6) == 3)
         abort(6);
     mem8_loc = segment_translation(mem8);
     x        = ld_32bits_mem8_read();
@@ -4179,7 +4181,7 @@ void x86Internal::op_16_BOUND()
 {
     int mem8, x, y, z;
     mem8 = phys_mem8[physmem8_ptr++];
-    if ((mem8 >> 3) == 3)
+    if ((mem8 >> 6) == 3)
         abort(6);
     mem8_loc = segment_translation(mem8);
     x        = (ld_16bits_mem8_read() << 16) >> 16;
@@ -4663,7 +4665,10 @@ void x86Internal::ioport_write(int mem8_loc, int data)
 {
     int port = mem8_loc & (1024 - 1);
 #ifdef TEST386
-    printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
+    if (port == 0x2a)
+        printf("%c", data);
+    else
+        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
 #endif
     switch (port) {
         case 0x80:
