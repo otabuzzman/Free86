@@ -4293,7 +4293,7 @@ void x86Internal::op_16_ENTER()
     mem8_loc = ((le & SS_mask) + SS_base) >> 0;
     ld_16bits_mem8_write();
     regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
-    regs[4] = le;
+    regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
 }
 void x86Internal::op_ENTER()
 {
@@ -4308,7 +4308,7 @@ void x86Internal::op_ENTER()
     mem8_loc = ((le & SS_mask) + SS_base) >> 0;
     st32_mem8_write(Rf);
 
-    Sf = le;
+    Sf = (Rf & ~SS_mask) | (le & SS_mask);
     if (Qf != 0) {
         while (Qf > 1) {
             Rf       = (Rf - 4) >> 0;
