@@ -21,7 +21,7 @@ typedef struct DescriptorTable
 } DescriptorTable;
 typedef struct ErrorInfo
 {
-    int intno      = 0;
+    int intno      = -1;
     int error_code = 0;
 } ErrorInfo;
 

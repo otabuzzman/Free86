@@ -246,7 +246,7 @@ int x86Internal::exec(int N_cycles)
     size_t final_cycle_count = cycle_count + N_cycles;
     int    exit_code         = 256;
     interrupt.error_code     = 0;
-    interrupt.intno          = 0;
+    interrupt.intno          = -1;
 
     while (cycle_count < final_cycle_count) {
         try {
@@ -254,7 +254,7 @@ int x86Internal::exec(int N_cycles)
             if (exit_code != 256)
                 break;
             interrupt.error_code = 0;
-            interrupt.intno      = 0;
+            interrupt.intno      = -1;
         } catch (ErrorInfo cpu_exception) {
             interrupt = cpu_exception;
         }
@@ -343,7 +343,7 @@ int x86Internal::check_halted()
 }
 void x86Internal::check_interrupt()
 {
-    if (interrupt.intno != 0) {
+    if (interrupt.intno >= 0) {
         do_interrupt(interrupt.intno, 0, interrupt.error_code, 0, 0);
     }
     if (hard_intno >= 0) {
