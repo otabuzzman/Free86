@@ -377,7 +377,7 @@ void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja)
                 Md = Ld & Jd;
                 if (ja && !(Md & 0x00000004)) {
                     error_code = 0x01;
-                } else if (ja && Hd && !(Md & 0x00000002)) {
+                } else if ((ja || (cr0 & (1 << 16))) && Hd && !(Md & 0x00000002)) {
                     error_code = 0x01;
                 } else {
                     if (!(Jd & 0x00000020)) {
@@ -660,7 +660,7 @@ int x86Internal::segment_translation(int mem8)
 
     return 0;
 }
-int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
+int x86Internal::segmented_mem8_loc_for_MOV()
 {
     int mem8_loc, Sb;
     if (CS_flags & 0x0080) {
@@ -675,8 +675,6 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
         Sb = 3;
     else
         Sb--;
-    if (!segment_isnt_accessible(segs[Sb].selector, is_verw))
-        abort(13);
     mem8_loc = (mem8_loc + segs[Sb].base) >> 0;
     return mem8_loc;
 }

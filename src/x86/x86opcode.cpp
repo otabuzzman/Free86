@@ -168,21 +168,21 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     regs[(mem8 >> 3) & 7] = x;
                     goto EXEC_LOOP;
                 case 0xa0:    // MOV Ob AL Move byte at (seg:offset) to AL
-                    mem8_loc = segmented_mem8_loc_for_MOV(false);
+                    mem8_loc = segmented_mem8_loc_for_MOV();
                     x        = ld_8bits_mem8_read();
                     regs[0]  = (regs[0] & -256) | x;
                     goto EXEC_LOOP;
                 case 0xa1:    // MOV Ovqp rAX Move dword at (seg:offset) to EAX
-                    mem8_loc = segmented_mem8_loc_for_MOV(false);
+                    mem8_loc = segmented_mem8_loc_for_MOV();
                     x        = ld_32bits_mem8_read();
                     regs[0]  = x;
                     goto EXEC_LOOP;
                 case 0xa2:    // MOV AL Ob Move AL to (seg:offset)
-                    mem8_loc = segmented_mem8_loc_for_MOV(true);
+                    mem8_loc = segmented_mem8_loc_for_MOV();
                     st8_mem8_write(regs[0]);
                     goto EXEC_LOOP;
                 case 0xa3:    // MOV rAX Ovqp Move EAX to (seg:offset)
-                    mem8_loc = segmented_mem8_loc_for_MOV(true);
+                    mem8_loc = segmented_mem8_loc_for_MOV();
                     st32_mem8_write(regs[0]);
                     goto EXEC_LOOP;
                 case 0xd7:    // XLAT (DS:)[rBX+AL] AL Table Look-up Translation
@@ -2596,12 +2596,12 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                             set_lower_word_in_register(OPbyte & 7, ld16_mem8_direct());
                             goto EXEC_LOOP;
                         case 0x1a1:    // MOV Ovqp rAX Move
-                            mem8_loc = segmented_mem8_loc_for_MOV(false);
+                            mem8_loc = segmented_mem8_loc_for_MOV();
                             x        = ld_16bits_mem8_read();
                             set_lower_word_in_register(0, x);
                             goto EXEC_LOOP;
                         case 0x1a3:    // MOV rAX Ovqp Move
-                            mem8_loc = segmented_mem8_loc_for_MOV(true);
+                            mem8_loc = segmented_mem8_loc_for_MOV();
                             st16_mem8_write(regs[0]);
                             goto EXEC_LOOP;
                         case 0x1c7:    // MOV Ivds Evqp Move

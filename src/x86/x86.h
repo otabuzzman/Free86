@@ -339,7 +339,7 @@ class x86Internal : public x86 {
     void st32_mem8_kernel_write(int x);
 
     int  segment_translation(int mem8);
-    int  segmented_mem8_loc_for_MOV(bool is_verw);
+    int  segmented_mem8_loc_for_MOV();
     void set_word_in_register(int reg_idx1, int x);
     void set_lower_word_in_register(int reg_idx1, int x);
 
