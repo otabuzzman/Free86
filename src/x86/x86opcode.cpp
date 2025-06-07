@@ -2710,7 +2710,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                             if ((mem8 >> 6) == 3) {
                                 reg_idx0       = mem8 & 7;
                                 y              = ld16_mem8_direct();
-                                regs[reg_idx0] = do_16bit_math(conditional_var, regs[reg_idx0], y);
+                                set_lower_word_in_register(reg_idx0, do_16bit_math(conditional_var, regs[reg_idx0], y));
                             } else {
                                 mem8_loc = segment_translation(mem8);
                                 y        = ld16_mem8_direct();
