@@ -43,16 +43,13 @@ bool x86Internal::check_carry()
             rval = ((reldst + cc_src) >> 0) < (cc_src >> 0);
             break;
         case 9:
-            Yb   = (reldst + cc_src + 1) & 0xff;
-            rval = Yb <= (cc_src & 0xff);
+            rval = ((reldst + cc_src + 1) & 0xff) <= (cc_src & 0xff);
             break;
         case 10:
-            Yb   = (reldst + cc_src + 1) & 0xffff;
-            rval = Yb <= (cc_src & 0xffff);
+            rval = ((reldst + cc_src + 1) & 0xffff) <= (cc_src & 0xffff);
             break;
         case 11:
-            Yb   = (reldst + cc_src + 1) >> 0;
-            rval = Yb <= (cc_src >> 0);
+            rval = ((reldst + cc_src + 1) >> 0) <= (cc_src >> 0);
             break;
         case 12:
         case 13:
