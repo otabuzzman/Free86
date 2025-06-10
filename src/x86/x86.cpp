@@ -1364,8 +1364,8 @@ void x86Internal::op_16_DIV(int OPbyte)
     uint32_t au = a;
     if ((au >> 16) >= OPbyte)
         abort(0);
-    q = (a / OPbyte) >> 0;
-    r = (a % OPbyte);
+    q = (au / OPbyte) >> 0;
+    r = (au % OPbyte);
     set_lower_word_in_register(0, q);
     set_lower_word_in_register(2, r);
 }
@@ -1447,7 +1447,7 @@ int x86Internal::op_IDIV32(int Ic, int Jc, int OPbyte)
 }
 int x86Internal::op_MUL(int a, int OPbyte)
 {
-    bool flg;
+    int flg;
     a &= 0xff;
     OPbyte &= 0xff;
     flg    = (regs[0] & 0xff) * (OPbyte & 0xff);
@@ -1458,7 +1458,7 @@ int x86Internal::op_MUL(int a, int OPbyte)
 }
 int x86Internal::op_IMUL(int a, int OPbyte)
 {
-    bool flg;
+    int flg;
     a      = (((a) << 24) >> 24);
     OPbyte = (((OPbyte) << 24) >> 24);
     flg    = (a * OPbyte) >> 0;
@@ -1469,7 +1469,7 @@ int x86Internal::op_IMUL(int a, int OPbyte)
 }
 int x86Internal::op_16_MUL(int a, int OPbyte)
 {
-    bool flg;
+    int flg;
     flg    = ((a & 0xffff) * (OPbyte & 0xffff)) >> 0;
     cc_src = flg >> 16;
     cc_dst = (((flg) << 16) >> 16);
@@ -1478,7 +1478,7 @@ int x86Internal::op_16_MUL(int a, int OPbyte)
 }
 int x86Internal::op_16_IMUL(int a, int OPbyte)
 {
-    bool flg;
+    int flg;
     a      = (a << 16) >> 16;
     OPbyte = (OPbyte << 16) >> 16;
     flg    = (a * OPbyte) >> 0;
