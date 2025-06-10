@@ -1079,7 +1079,8 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb)
 }
 int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
 {
-    int kc, ac;
+    uint32_t kc;
+    int      ac;
     switch (conditional_var) {
         case 0:
             Zb &= 0x1f;
