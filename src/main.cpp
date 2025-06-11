@@ -8,6 +8,7 @@
 #include <SDL2/SDL_ttf.h>
 #endif
 #include <cstdio>
+#include <iostream>
 #include <time.h>
 #include <thread>
 #ifdef TEST386
@@ -24,6 +25,12 @@ void render_loop(PC *pc, SDL_Renderer *render, int width, int height)
     }
 }
 #else
+void on_signal(int sigdef)
+{
+    std::cout << std::flush;
+    std::cerr << std::flush;
+    exit(0);
+}
 void print_loop(PC *pc)
 {
     while (Running) {
@@ -45,6 +52,8 @@ int main(int ArgCount, char **Args)
 #else
     PC *pc = new PC();
 #endif
+    signal(SIGINT, on_signal);
+
     pc->init();
     pc->start();
 

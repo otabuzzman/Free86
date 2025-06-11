@@ -1190,14 +1190,14 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
 
 int x86Internal::op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc)
 {
-    bool flg;
+    int flg;
     pc &= 0x1f;
     if (pc) {
         if (conditional_var == 0) {
             Zb &= 0xffff;
             flg    = Zb | (Yb << 16);
             cc_src = flg >> (32 - pc);
-            flg <<= pc;
+            flg    = flg << pc;
             if (pc > 16)
                 flg |= Zb << (pc - 16);
             Yb = cc_dst = flg >> 16;
@@ -1205,7 +1205,7 @@ int x86Internal::op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc)
         } else {
             flg    = (Yb & 0xffff) | (Zb << 16);
             cc_src = flg >> (pc - 1);
-            flg >>= pc;
+            flg    = flg >> pc;
             if (pc > 16)
                 flg |= Zb << (32 - pc);
             Yb = cc_dst = (((flg) << 16) >> 16);
