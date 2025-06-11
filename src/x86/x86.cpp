@@ -908,7 +908,9 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb)
                 kc     = Yb;
                 Yb     = (Yb << Zb) | (Yb >> (8 - Zb));
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (Yb & 0x0001) | (((kc ^ Yb) << 4) & 0x0800);
+                cc_src |= (Yb & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) << 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -920,7 +922,9 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb)
                 kc     = Yb;
                 Yb     = (Yb >> Zb) | (Yb << (8 - Zb));
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= ((Yb >> 7) & 0x0001) | (((kc ^ Yb) << 4) & 0x0800);
+                cc_src |= ((Yb >> 7) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) << 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -935,7 +939,9 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb)
                 if (Zb > 1)
                     Yb |= kc >> (9 - Zb);
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (((kc ^ Yb) << 4) & 0x0800) | ((kc >> (8 - Zb)) & 0x0001);
+                cc_src |= ((kc >> (8 - Zb)) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) << 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -950,7 +956,9 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb)
                 if (Zb > 1)
                     Yb |= kc << (9 - Zb);
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (((kc ^ Yb) << 4) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
+                cc_src |= ((kc >> (Zb - 1)) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) << 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -998,7 +1006,9 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb)
                 kc     = Yb;
                 Yb     = (Yb << Zb) | (Yb >> (16 - Zb));
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (Yb & 0x0001) | (((kc ^ Yb) >> 4) & 0x0800);
+                cc_src |= (Yb & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -1010,7 +1020,9 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb)
                 kc     = Yb;
                 Yb     = (Yb >> Zb) | (Yb << (16 - Zb));
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= ((Yb >> 15) & 0x0001) | (((kc ^ Yb) >> 4) & 0x0800);
+                cc_src |= ((Yb >> 15) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -1025,7 +1037,9 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb)
                 if (Zb > 1)
                     Yb |= kc >> (17 - Zb);
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (((kc ^ Yb) >> 4) & 0x0800) | ((kc >> (16 - Zb)) & 0x0001);
+                cc_src |= ((kc >> (16 - Zb)) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -1040,7 +1054,9 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb)
                 if (Zb > 1)
                     Yb |= kc << (17 - Zb);
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (((kc ^ Yb) >> 4) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
+                cc_src |= ((kc >> (Zb - 1)) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -1088,7 +1104,9 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
                 kc     = Yb;
                 Yb     = (Yb << Zb) | (Yb >> (32 - Zb));
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (Yb & 0x0001) | (((kc ^ Yb) >> 20) & 0x0800);
+                cc_src |= (Yb & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -1099,7 +1117,9 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
                 kc     = Yb;
                 Yb     = (Yb >> Zb) | (Yb << (32 - Zb));
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= ((Yb >> 31) & 0x0001) | (((kc ^ Yb) >> 20) & 0x0800);
+                cc_src |= ((Yb >> 31) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -1113,7 +1133,9 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
                 if (Zb > 1)
                     Yb |= kc >> (33 - Zb);
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (((kc ^ Yb) >> 20) & 0x0800) | ((kc >> (32 - Zb)) & 0x0001);
+                cc_src |= ((kc >> (32 - Zb)) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
@@ -1127,7 +1149,9 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
                 if (Zb > 1)
                     Yb |= kc << (33 - Zb);
                 cc_src = conditional_flags_for_rot_shiftcc_ops();
-                cc_src |= (((kc ^ Yb) >> 20) & 0x0800) | ((kc >> (Zb - 1)) & 0x0001);
+                cc_src |= ((kc >> (Zb - 1)) & 0x0001);
+                if (Zb == 1)
+                    cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op  = 24;
             }
