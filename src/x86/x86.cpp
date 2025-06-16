@@ -4688,10 +4688,10 @@ void x86Internal::ioport_write(int mem8_loc, int data)
 {
     int port = mem8_loc & (1024 - 1);
 #ifdef TEST386
-    if (port == 0x2a)
-        printf("%c", data);
-    else
+    if (port == 0x0190) // default POST_POST in test386
         printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
+    else // any other value considered OUT_PORT
+        printf("%c", data);
 #endif
     switch (port) {
         case 0x80:
