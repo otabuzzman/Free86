@@ -1,4 +1,6 @@
 # CPU-80386-cpp
+- No SDL2 version added
+- test386 suite support added
 
 <br>
 
@@ -47,34 +49,45 @@ make
 
 Add `-DCMAKE_BUILD_TYPE=Debug` to CMake command to compile for debugging.
 
+Run:
+
+```bash
+# boot Linux, ^C terminates
+exe/cpp_app
+
+# set common tty behaviour
+stty -icanon -echo
+```
+
+<br>
+
+### test386
+- Clone [test386.asm]() an cd into repository.
+- Set OUT_PORT to any value != 0 and != POST_PORT in `src/configuration.asm`.
+- Add comments to POST 12 in file `test386.asm` (no bounds checks in emulator).
+- Compile test386.asm as described in README.
+
+Compile:
+
+```bash
+git checkout test386
+```
+
+Use commands from previous section.
+
 Add `-DTEST386=ON` to CMake command to compile for [test386](https://github.com/barotto/test386.asm) suite. Provide `../test386.asm/test386.bin`.
 
 Run:
 
 ```bash
-# boot Linux
-exe/cpp_app
+# run suite and capture results
+exe/cpp_app >test386-EE-reference.txt
+
+# compare results
+diff ../test386.asm/test386-EE-reference.txt test386-EE-reference.txt
 ```
 
-<br>
-
-Enter shell commands at prompt after Linux boot sequence. Ctrl-C terminates Linux. Run `stty -icanon -echo` to enable character mode and turn off echo for common tty behaviour.
-
-<br>
-
-### Test386
-Bypass POST 9 failure
-
-1. Add BP at OP `0xEE` (`out al, dx`) in `x86opcode.cpp`, line ~1801
-2. Add BP at `set_segment_register`, OP `0x1F` (`pop ss`), line ~1149
-3. Add BP in `init_segment_local_vars` after `SS_mask` setting in `x86.cpp`, line ~283
-4. Activate BP 1 and 2, step until output of "POST 9"
-5. Step to next BP 2, repeat once
-6. Activate BP 3, step to BP 3
-7. Set `SS_mask` from -1 to 0xFFFF
-8. Step to next BP 3, repeat until `SS_mask` equals -1
-9. Set `SS_mask` from -1 to 0xFFFF
-10. Deactivate BP 3 and 2, proceed
+Results should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF bit.
 
 <br><br><br><br><br><br>
 
