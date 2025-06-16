@@ -62,7 +62,7 @@ stty -icanon -echo
 <br>
 
 ### test386
-- Clone [test386.asm](https://github.com/barotto/test386.asm) an cd into repository.
+- Clone [test386.asm](https://github.com/barotto/test386.asm) and cd into repository.
 - Set OUT_PORT to any value != 0 and != POST_PORT in `src/configuration.asm`.
 - Add comments to POST 12 in file `test386.asm` (no bounds checks in emulator).
 - Compile test386.asm as described in README.
