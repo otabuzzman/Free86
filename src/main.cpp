@@ -27,6 +27,7 @@ void render_loop(PC *pc, SDL_Renderer *render, int width, int height)
 #else
 void on_signal(int sigdef)
 {
+    Running = 0; // threads will most likely block in queues
     std::cout << std::flush;
     std::cerr << std::flush;
     exit(0);
@@ -90,9 +91,6 @@ int main(int ArgCount, char **Args)
 
 #ifndef NO_SDL
     th.join();
-#else
-    print.join();
-    input.join();
 #endif
     return 0;
 }
