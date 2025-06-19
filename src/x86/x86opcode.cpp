@@ -1144,11 +1144,8 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     push_dword_to_stack(segs[OPbyte >> 3].selector);
                     goto EXEC_LOOP;
                 case 0x07:    // POP SS:[rSP] ES Pop a Value from the Stack
-                case 0x1f:    // POP SS:[rSP] DS Pop a Value from the Stack
-                    set_segment_register(OPbyte >> 3, pop_dword_from_stack_read() & 0xffff);
-                    pop_dword_from_stack_incr_ptr();
-                    goto EXEC_LOOP;
                 case 0x17:    // POP SS:[rSP] SS Pop a Value from the Stack
+                case 0x1f:    // POP SS:[rSP] DS Pop a Value from the Stack
                     x = pop_dword_from_stack_read() & 0xffff;
                     pop_dword_from_stack_incr_ptr();
                     set_segment_register(OPbyte >> 3, x);
@@ -2376,8 +2373,9 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                             goto EXEC_LOOP;
                         case 0xa1:    // POP SS:[rSP] FS Pop a Value from the Stack
                         case 0xa9:    // POP SS:[rSP] GS Pop a Value from the Stack
-                            set_segment_register((OPbyte >> 3) & 7, pop_dword_from_stack_read() & 0xffff);
+                            x = pop_dword_from_stack_read() & 0xffff;
                             pop_dword_from_stack_incr_ptr();
+                            set_segment_register((OPbyte >> 3) & 7, x);
                             goto EXEC_LOOP;
                         case 0xc8:    // BSWAP  Zvqp Byte Swap
                         case 0xc9:
@@ -3010,11 +3008,8 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                             push_word_to_stack(segs[(OPbyte >> 3) & 3].selector);
                             goto EXEC_LOOP;
                         case 0x107:    // POP SS:[rSP] ES Pop a Value from the Stack
-                        case 0x11f:    // POP SS:[rSP] DS Pop a Value from the Stack
-                            set_segment_register((OPbyte >> 3) & 3, pop_word_from_stack_read());
-                            pop_word_from_stack_incr_ptr();
-                            goto EXEC_LOOP;
                         case 0x117:    // POP SS:[rSP] SS Pop a Value from the Stack
+                        case 0x11f:    // POP SS:[rSP] DS Pop a Value from the Stack
                             x = pop_word_from_stack_read();
                             pop_word_from_stack_incr_ptr();
                             set_segment_register((OPbyte >> 3) & 3, x);
@@ -3452,8 +3447,9 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                                     goto EXEC_LOOP;
                                 case 0x1a1:    // POP SS:[rSP] FS Pop a Value from the Stack
                                 case 0x1a9:    // POP SS:[rSP] GS Pop a Value from the Stack
-                                    set_segment_register((OPbyte >> 3) & 7, pop_word_from_stack_read());
+                                    x = pop_word_from_stack_read();
                                     pop_word_from_stack_incr_ptr();
+                                    set_segment_register((OPbyte >> 3) & 7, x);
                                     goto EXEC_LOOP;
                                 case 0x1b2:    // LSS Mptp SS Load Far Pointer
                                 case 0x1b4:    // LFS Mptp FS Load Far Pointer
