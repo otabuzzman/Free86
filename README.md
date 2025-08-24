@@ -30,6 +30,13 @@ use JSLinux as a reference
 
 <br>
 
+### macOS
+Debugging with VS Code requires `root` authentication via Dialog stating _Developer Tools Access needs to take control of another process for debugging to continue_. To suppress
+- once run `DevToolsSecure --enable` and
+- once run `dseditgroup` to add users to group `_developers` (see man page)
+
+<br>
+
 ### No SDL2
 SDL omitted. Uses terminal window for character I/O.
 
