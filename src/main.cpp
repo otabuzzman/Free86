@@ -9,6 +9,7 @@
 #endif
 #include <cstdio>
 #include <iostream>
+#include <signal.h>
 #include <time.h>
 #include <thread>
 #ifdef TEST386

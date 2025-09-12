@@ -392,7 +392,7 @@ void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja)
                         st32_phys(Kd, Ld);
                     }
                     ud = 0;
-                    if ((Ld & 0x00000040) && (Md & 0x00000002))
+                    if ((Ld & 0x00000040) && (!ja || (Md & 0x00000002)))
                         ud = 1;
                     Od = 0;
                     if (Md & 0x00000004)

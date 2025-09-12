@@ -7,8 +7,8 @@ int x86Internal::__ld_8bits_mem8_read()
         do_tlb_set_page(mem8_loc, 0, cpl == 3);
         uint32_t mem8_locu  = mem8_loc;
         int      idx        = mem8_locu >> 12;
-        int      tlb_lookup = tlb_read[idx] ^ mem8_loc;
-        mem8_val            = phys_mem8[tlb_lookup];
+        int      tlb_lookup = tlb_read[idx];
+        mem8_val            = phys_mem8[mem8_loc ^ tlb_lookup];
     } else {
         mem8_val = phys_mem8[mem8_loc];
     }
@@ -67,8 +67,8 @@ int x86Internal::__ld_8bits_mem8_write()
     if (check_protected()) {
         do_tlb_set_page(mem8_loc, 1, cpl == 3);
         uint32_t mem8_locu  = mem8_loc;
-        int      tlb_lookup = tlb_write[mem8_locu >> 12] ^ mem8_loc;
-        mem8_val            = phys_mem8[tlb_lookup];
+        int      tlb_lookup = tlb_write[mem8_locu >> 12];
+        mem8_val            = phys_mem8[mem8_loc ^ tlb_lookup];
     } else {
         mem8_val = phys_mem8[mem8_loc];
     }
@@ -113,7 +113,7 @@ int x86Internal::ld_32bits_mem8_write()
 {
     int      tlb_lookup;
     uint32_t mem8_locu = mem8_loc;
-    return (check_real_mode() || (tlb_lookup = tlb_write[mem8_locu >> 12]) | mem8_loc) & 3
+    return check_real_mode() || ((tlb_lookup = tlb_write[mem8_locu >> 12]) | mem8_loc) & 3
                ? __ld_32bits_mem8_write()
                : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
 }
@@ -122,8 +122,8 @@ int x86Internal::__ld8_mem8_kernel_read()
 {
     do_tlb_set_page(mem8_loc, 0, 0);
     uint32_t mem8_locu  = mem8_loc;
-    int      tlb_lookup = tlb_read_kernel[mem8_locu >> 12] ^ mem8_loc;
-    return phys_mem8[tlb_lookup];
+    int      tlb_lookup = tlb_read_kernel[mem8_locu >> 12];
+    return phys_mem8[mem8_loc ^ tlb_lookup];
 }
 int x86Internal::ld8_mem8_kernel_read()
 {
@@ -178,8 +178,8 @@ void x86Internal::__st8_mem8_write(int x)
     if (check_protected()) {
         do_tlb_set_page(mem8_loc, 1, cpl == 3);
         uint32_t mem8_locu    = mem8_loc;
-        int      tlb_lookup   = tlb_write[mem8_locu >> 12] ^ mem8_loc;
-        phys_mem8[tlb_lookup] = x;
+        int      tlb_lookup   = tlb_write[mem8_locu >> 12];
+        phys_mem8[mem8_loc ^ tlb_lookup] = x;
     } else {
         phys_mem8[mem8_loc] = x;
     }
@@ -239,8 +239,8 @@ void x86Internal::__st8_mem8_kernel_write(int x)
 {
     do_tlb_set_page(mem8_loc, 1, 0);
     uint32_t mem8_locu    = mem8_loc;
-    int      tlb_lookup   = tlb_write_kernel[mem8_locu >> 12] ^ mem8_loc;
-    phys_mem8[tlb_lookup] = x;
+    int      tlb_lookup   = tlb_write_kernel[mem8_locu >> 12];
+    phys_mem8[mem8_loc ^ tlb_lookup] = x;
 }
 void x86Internal::st8_mem8_kernel_write(int x)
 {
