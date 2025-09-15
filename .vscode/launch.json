@@ -24,12 +24,11 @@
                     "ignoreFailures": true
                 },
                 {
-                    "description":  "逆アセンブリ フレーバーを Intel に設定",
+                    "description": "逆アセンブリ フレーバーを Intel に設定",
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
                 }
             ]
         }
-
     ]
 }
