@@ -289,7 +289,7 @@ void x86Internal::init_segment_local_vars()
         SS_mask = -1;
     else
         SS_mask = 0xffff;
-    FS_usage_flag = (((CS_base | SS_base | segs[3].base | segs[0].base) == 0) && SS_mask == -1);
+    FS_usage_flag = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
     if (segs[1].flags & (1 << 22))
         init_CS_flags = 0;
     else
