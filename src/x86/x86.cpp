@@ -167,8 +167,8 @@ void x86Internal::dump()
 {
     if (do_dump) {
         char buf2[1000];
-        sprintf(buf2, "EIP:%08X EAX:%08X ECX:%08X EDX:%08X EBX:%08X ESP:%08X EBP:%08X ESI:%08X EDI:%08X EFLAGS:%08X", eip,
-                regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], eflags);
+        sprintf(buf2, "EIP:%08X EAX:%08X ECX:%08X EDX:%08X EBX:%08X ESP:%08X EBP:%08X ESI:%08X EDI:%08X EFLAGS:%08X",
+                eip, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], eflags);
         printf("%s\n", buf2);
     }
 }
@@ -660,7 +660,7 @@ int x86Internal::segment_translation(int mem8)
 
     return 0;
 }
-int x86Internal::segmented_mem8_loc_for_MOV()
+int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
 {
     int mem8_loc, Sb;
     if (CS_flags & 0x0080) {
@@ -676,6 +676,9 @@ int x86Internal::segmented_mem8_loc_for_MOV()
     else
         Sb--;
     mem8_loc = (mem8_loc + segs[Sb].base) >> 0;
+    if (is_verw && !(segs[Sb].flags & (1 << 9))) { // test386 check if segment is writable
+        abort_with_error_code(13, 0);
+    }
     return mem8_loc;
 }
 void x86Internal::set_word_in_register(int reg_idx1, int x)
