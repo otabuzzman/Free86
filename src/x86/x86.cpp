@@ -662,12 +662,12 @@ int x86Internal::segment_translation(int mem8)
 }
 int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
 {
-    int mem8_loc, Sb;
+    uint64_t mem8_loc, Sb;
     if (CS_flags & 0x0080) {
         mem8_loc = ld16_mem8_direct();
     } else {
-        mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) |
-                   (phys_mem8[physmem8_ptr + 3] << 24);
+        mem8_loc = (phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) |
+                   (phys_mem8[physmem8_ptr + 3] << 24)) & 0xffffffff;
         physmem8_ptr += 4;
     }
     Sb = CS_flags & 0x000f;
@@ -675,9 +675,15 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
         Sb = 3;
     else
         Sb--;
-    mem8_loc = (mem8_loc + segs[Sb].base) >> 0;
-    if (is_verw && !(segs[Sb].flags & (1 << 9))) { // test386 check if segment is writable
+    if (is_verw && !(segs[Sb].flags & (1 << 9))) { // test386, type check
         abort_with_error_code(13, 0);
+    }
+    mem8_loc = (mem8_loc + segs[Sb].base) >> 0;
+    if (mem8_loc >= (segs[Sb].base + segs[Sb].limit - 2) >> 0) { // test386, limit check
+        if (Sb == 2)
+            abort_with_error_code(12, 0); // #SS(0)
+        else
+            abort_with_error_code(13, 0); // #GP(0)
     }
     return mem8_loc;
 }

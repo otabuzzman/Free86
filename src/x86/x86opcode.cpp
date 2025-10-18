@@ -182,7 +182,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     st8_mem8_write(regs[0]);
                     goto EXEC_LOOP;
                 case 0xa3:    // MOV rAX Ovqp Move EAX to (seg:offset)
-                    if (CS_flags & 0x0040) // test386 LOCK prefix not allowed with this instruction
+                    if (CS_flags & 0x0040) // test386, check LOCK prefix not allowed
                         abort(6);
                     mem8_loc = segmented_mem8_loc_for_MOV(true);
                     st32_mem8_write(regs[0]);
