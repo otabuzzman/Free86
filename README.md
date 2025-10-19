@@ -69,10 +69,11 @@ stty -icanon -echo
 <br>
 
 ### test386
+Support is limited to the requirements of the test suite. For example, not every illegal instruction combined with LOCK results in an error (in fact, only MOV (0xA3)). Segment limit checking and type checking are also not fully implemented.
+
 - Clone [test386.asm](https://github.com/barotto/test386.asm) and cd into repository.
 - Set OUT_PORT to any value != 0 and != POST_PORT in `src/configuration.asm`.
-- Add comments to POST 12 in file `test386.asm` (no bounds checks in emulator).
-- Compile test386.asm as described in README.
+- Compile test386.asm as described in its README.
 
 Compile:
 

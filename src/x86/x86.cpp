@@ -662,24 +662,28 @@ int x86Internal::segment_translation(int mem8)
 }
 int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
 {
-    uint64_t mem8_loc, Sb;
+    uint64_t mem8_loc;
+    int Sb, Ls;
     if (CS_flags & 0x0080) {
         mem8_loc = ld16_mem8_direct();
+        Ls = 1; // 16bit mode
     } else {
         mem8_loc = (phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) |
                    (phys_mem8[physmem8_ptr + 3] << 24)) & 0xffffffff;
         physmem8_ptr += 4;
+        Ls = 3; // 32bit mode
     }
+    if (!(OPbyte & 0x01))
+        Ls = 0; // byte mode, opcodes A0, A2
     Sb = CS_flags & 0x000f;
     if (Sb == 0)
         Sb = 3;
     else
         Sb--;
-    if (is_verw && !(segs[Sb].flags & (1 << 9))) { // test386, type check
+    if (is_verw && !(segs[Sb].flags & (1 << 9))) // test386, type checking
         abort_with_error_code(13, 0);
-    }
-    mem8_loc = (mem8_loc + segs[Sb].base) >> 0;
-    if (mem8_loc >= (segs[Sb].base + segs[Sb].limit - 2) >> 0) { // test386, limit check
+    mem8_loc = (segs[Sb].base + mem8_loc) >> 0;
+    if (mem8_loc > (segs[Sb].base + segs[Sb].limit - Ls) >> 0) { // test386, limit checking
         if (Sb == 2)
             abort_with_error_code(12, 0); // #SS(0)
         else

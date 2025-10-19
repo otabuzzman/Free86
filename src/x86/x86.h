@@ -256,7 +256,7 @@ class x86Internal : public x86 {
 
     int N_cycles    = 0;
     int cycles_left = 0;
-    unsigned mem8_loc;
+    uint32_t mem8_loc;
     int last_tlb_val;
     int physmem8_ptr    = 0;
     int initial_mem_ptr = 0;
