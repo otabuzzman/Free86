@@ -167,7 +167,7 @@ void x86Internal::dump()
 {
     if (do_dump) {
         char buf2[1000];
-        sprintf(buf2, "EIP:%08X EAX:%08X ECX:%08X EDX:%08X EBX:%08X ESP:%08X EBP:%08X ESI:%08X EDI:%08X EFLAGS:%08X",
+        snprintf(buf2, 1000, "EIP:%08X EAX:%08X ECX:%08X EDX:%08X EBX:%08X ESP:%08X EBP:%08X ESI:%08X EDI:%08X EFLAGS:%08X",
                 eip, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], eflags);
         printf("%s\n", buf2);
     }
@@ -179,21 +179,21 @@ void x86Internal::dump(int OPbyte)
     if (logcheck && filecheck_start <= count && count <= filecheck_end) {
         std::vector<std::string> ta = {"ES", "CS", "SS", "DS", "FS", "GS", "LDT", "TR"};
         char                     buf1[1000];
-        sprintf(buf1, "STEPS=%d OPCODE=%d", count, OPbyte);
+        snprintf(buf1, 1000, "STEPS=%d OPCODE=%d", count, OPbyte);
         // printf("%s", buf1);
         char buf2[1000];
-        sprintf(buf2, "EIP=%08X EAX=%08X ECX=%08X EDX=%08X EBX=%08X EFL=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X", eip,
+        snprintf(buf2, 1000, "EIP=%08X EAX=%08X ECX=%08X EDX=%08X EBX=%08X EFL=%08X ESP=%08X EBP=%08X ESI=%08X EDI=%08X", eip,
                 regs[0], regs[1], regs[2], regs[3], eflags, regs[4], regs[5], regs[6], regs[7]);
         // printf("%s", buf2);
         char buf3[1000];
-        sprintf(buf3, "TSC=%08X OP=%02X OP2=%02X SRC=%08X DST=%08X DST2=%08X", cycle_count, cc_op, cc_op2, cc_src,
+        snprintf(buf3, 1000, "TSC=%08X OP=%02X OP2=%02X SRC=%08X DST=%08X DST2=%08X", cycle_count, cc_op, cc_op2, cc_src,
                 cc_dst, cc_dst2);
         // printf("%s", buf3);
         char buf4[1000];
-        sprintf(buf4, "CPL=%d CR0=%08X CR2=%08X CR3=%08X CR4=%08X", cpl, cr0, cr2, cr3, cr4);
+        snprintf(buf4, 1000, "CPL=%d CR0=%08X CR2=%08X CR3=%08X CR4=%08X", cpl, cr0, cr2, cr3, cr4);
         // printf("%s", buf4);
         char buf5[1000];
-        sprintf(buf5, "hard_irq=%d", hard_irq);
+        snprintf(buf5, 1000, "hard_irq=%d", hard_irq);
 
         if (stepinfo) {
             printf("\n");
@@ -206,11 +206,11 @@ void x86Internal::dump(int OPbyte)
             int len = lines[0].size() + 10;
 
             char *sbf = new char[len];
-            sprintf(sbf, "%s", lines[count - 1 - fileoffset].c_str());
+            snprintf(sbf, len, "%s", lines[count - 1 - fileoffset].c_str());
             std::string s = sbf;
 
             char *tbf = new char[len];
-            sprintf(tbf, "%s %s %s %s %s", buf1, buf2, buf3, buf4, buf5);
+            snprintf(tbf, len, "%s %s %s %s %s", buf1, buf2, buf3, buf4, buf5);
             std::string t = tbf;
 
             if (std::equal(t.begin(), t.end(), s.begin())) {
