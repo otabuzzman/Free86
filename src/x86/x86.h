@@ -15,8 +15,8 @@
 typedef struct DescriptorTable
 {
     int selector = 0;
-    int base     = 0;
-    int limit    = 0;
+    uint32_t base  = 0;
+    uint32_t limit = 0;
     int flags    = 0;
 } DescriptorTable;
 typedef struct ErrorInfo
@@ -419,7 +419,7 @@ class x86Internal : public x86 {
     int  calc_desp_base(int descriptor_low4bytes, int descriptor_high4bytes);
     void set_descriptor_register(DescriptorTable *descriptor_table, int descriptor_low4bytes,
                                  int descriptor_high4bytes);
-    void set_segment_vars(int ee, int selector, int base, int limit, int flags);
+    void set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags);
     void init_segment_vars_with_selector(int Sb, int selector);
 
     void load_from_TR(int he, int *desary);

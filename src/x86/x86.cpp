@@ -665,7 +665,7 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
     uint64_t mem8_loc;
     int Sb, Ls;
     if (CS_flags & 0x0080) {
-        mem8_loc = ld16_mem8_direct();
+        mem8_loc = ld16_mem8_direct() & 0xffff;
         Ls = 1; // 16bit mode
     } else {
         mem8_loc = (phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) | (phys_mem8[physmem8_ptr + 2] << 16) |
@@ -680,10 +680,16 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
         Sb = 3;
     else
         Sb--;
-    if (is_verw && !(segs[Sb].flags & (1 << 9))) // test386, type checking
+    if (is_verw && !(segs[Sb].flags & (1 << 9))) { // test386, type checking
+#ifdef TEST386
         abort_with_error_code(13, 0);
+#else // Linux kernel 2.6.20 probe
+        std::vector<std::string> ta = {"ES", "CS", "SS", "DS", "FS", "GS", "LDT", "TR"};
+        printf("### GP: %s selector %d ###\n", ta[Sb].c_str(), segs[Sb].selector);
+#endif
+    }
     mem8_loc = (segs[Sb].base + mem8_loc) >> 0;
-    if (mem8_loc > (segs[Sb].base + segs[Sb].limit - Ls) >> 0) { // test386, limit checking
+    if (mem8_loc > ((uint64_t) segs[Sb].base + segs[Sb].limit - Ls) >> 0) { // test386, limit checking
         if (Sb == 2)
             abort_with_error_code(12, 0); // #SS(0)
         else
@@ -2833,7 +2839,7 @@ void x86Internal::set_descriptor_register(DescriptorTable *descriptor_table, int
     descriptor_table->limit = calc_desp_limit(desp_low4, desp_high4);
     descriptor_table->flags = desp_high4;
 }
-void x86Internal::set_segment_vars(int ee, int selector, int base, int limit, int flags)
+void x86Internal::set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags)
 {
     segs[ee] = {.selector = selector, .base = base, .limit = limit, .flags = flags};
     init_segment_local_vars();
