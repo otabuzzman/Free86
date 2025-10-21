@@ -58,9 +58,11 @@ void PC::start()
     printf("************************\n\n\n");
     cpu->start(start_addr, initrd_size, cmdline_addr);
 
-    cpu->segs[1].flags = (1 << 22);
-    cpu->segs[2].flags = (1 << 22);
-    cpu->cr0           = (1 << 0);    // PE-mode ON
+    // prepare for linuxstart.bin
+    cpu->segs[1].flags = (1 << 22); // CS, Bit 22 = 1 for 32bit segment
+    cpu->segs[2].flags = (1 << 22); // SS, Bit 22 = 1 for 32bit segment
+    cpu->segs[3].flags = (1 << 9);  // DS, Bit 9 = writable
+    cpu->cr0           = (1 << 0);  // PE-mode ON
 }
 void PC::run_cpu()
 {

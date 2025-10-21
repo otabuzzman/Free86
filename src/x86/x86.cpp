@@ -681,12 +681,7 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
     else
         Sb--;
     if (is_verw && !(segs[Sb].flags & (1 << 9))) { // test386, type checking
-#ifdef TEST386
         abort_with_error_code(13, 0);
-#else // Linux kernel 2.6.20 probe
-        std::vector<std::string> ta = {"ES", "CS", "SS", "DS", "FS", "GS", "LDT", "TR"};
-        printf("### GP: %s selector %d ###\n", ta[Sb].c_str(), segs[Sb].selector);
-#endif
     }
     mem8_loc = (segs[Sb].base + mem8_loc) >> 0;
     if (mem8_loc > ((uint64_t) segs[Sb].base + segs[Sb].limit - Ls) >> 0) { // test386, limit checking
