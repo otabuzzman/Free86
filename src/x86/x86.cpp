@@ -663,7 +663,7 @@ int x86Internal::segment_translation(int mem8)
 int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
 {
     uint64_t mem8_loc;
-    int Sb, Ls;
+    int Sb, Ls, Tc, Lc;
     if (CS_flags & 0x0080) {
         mem8_loc = ld16_mem8_direct() & 0xffff;
         Ls = 1; // 16bit mode
@@ -680,11 +680,21 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw)
         Sb = 3;
     else
         Sb--;
-    if (is_verw && !(segs[Sb].flags & (1 << 9))) { // test386, type checking
+    // type checking
+    if (Sb == 1) // CS segment
+        Tc = is_verw || !(segs[Sb].flags & (1 << 9));
+    else // data segment
+        Tc = is_verw && !(segs[Sb].flags & (1 << 9));
+    if (Tc)
         abort_with_error_code(13, 0);
-    }
     mem8_loc = (segs[Sb].base + mem8_loc) >> 0;
-    if (mem8_loc > ((uint64_t) segs[Sb].base + segs[Sb].limit - Ls) >> 0) { // test386, limit checking
+    // limit checking
+    if (segs[Sb].flags & (1 << 10)) { // expand-down segment
+        Lc = mem8_loc < ((uint64_t) segs[Sb].base + segs[Sb].limit + 1) >> 0;
+    } else {
+        Lc = mem8_loc > ((uint64_t) segs[Sb].base + segs[Sb].limit - Ls) >> 0;
+    }
+    if (Lc) {
         if (Sb == 2)
             abort_with_error_code(12, 0); // #SS(0)
         else
