@@ -264,7 +264,7 @@ class x86Internal : public x86 {
     int exit_code       = 256;
 
     int  CS_base, SS_base, iopl;
-    bool FS_usage_flag = false; // probably experimental, e.g. x86_64 mode (https://en.wikipedia.org/wiki/X86_memory_segmentation, sec. 'Later developments')
+    bool x86_64_long_mode = false; // https://en.wikipedia.org/wiki/X86_memory_segmentation
     int  mem8, reg_idx0, reg_idx1, x, y, z, v;
     int  SS_mask       = -1;
     int  init_CS_flags = 0;

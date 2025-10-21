@@ -1001,7 +1001,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                 case 0x56:
                 case 0x57:
                     x = regs[OPbyte & 7];
-                    if (FS_usage_flag) {
+                    if (x86_64_long_mode) {
                         mem8_loc           = (regs[4] - 4) >> 0;
                         uint32_t mem8_locu = mem8_loc;
                         {
@@ -1025,7 +1025,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                 case 0x5d:
                 case 0x5e:
                 case 0x5f:
-                    if (FS_usage_flag) {
+                    if (x86_64_long_mode) {
                         mem8_loc           = regs[4];
                         uint32_t mem8_locu = mem8_loc;
                         last_tlb_val       = tlb_read[mem8_locu >> 12];
@@ -1070,7 +1070,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
 
-                    if (FS_usage_flag) {
+                    if (x86_64_long_mode) {
                         mem8_loc = (regs[4] - 4) >> 0;
                         st32_mem8_write(x);
                         regs[4] = mem8_loc;
@@ -1081,7 +1081,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     goto EXEC_LOOP;
                 case 0x6a:    // PUSH Ibss SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-                    if (FS_usage_flag) {
+                    if (x86_64_long_mode) {
                         mem8_loc = (regs[4] - 4) >> 0;
                         st32_mem8_write(x);
                         regs[4] = mem8_loc;
@@ -1093,7 +1093,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     op_ENTER();
                     goto EXEC_LOOP;
                 case 0xc9:    // LEAVE SS:[rSP] eBP High Level Procedure Exit
-                    if (FS_usage_flag) {
+                    if (x86_64_long_mode) {
                         mem8_loc = regs[5];
                         x        = ld_32bits_mem8_read();
                         regs[5]  = x;
@@ -1253,7 +1253,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                                 x        = ld_32bits_mem8_read();
                             }
                             y = (eip + physmem8_ptr - initial_mem_ptr);
-                            if (FS_usage_flag) {
+                            if (x86_64_long_mode) {
                                 mem8_loc = (regs[4] - 4) >> 0;
                                 st32_mem8_write(y);
                                 regs[4] = mem8_loc;
@@ -1278,7 +1278,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                                 mem8_loc = segment_translation(mem8);
                                 x        = ld_32bits_mem8_read();
                             }
-                            if (FS_usage_flag) {
+                            if (x86_64_long_mode) {
                                 mem8_loc = (regs[4] - 4) >> 0;
                                 st32_mem8_write(x);
                                 regs[4] = mem8_loc;
@@ -1505,7 +1505,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     eip = x, physmem8_ptr = initial_mem_ptr = 0;
                     goto EXEC_LOOP;
                 case 0xc3:    // RETN SS:[rSP]  Return from procedure
-                    if (FS_usage_flag) {
+                    if (x86_64_long_mode) {
                         mem8_loc = regs[4];
                         x        = ld_32bits_mem8_read();
                         regs[4]  = (regs[4] + 4) >> 0;
@@ -1522,7 +1522,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     physmem8_ptr += 4;
 
                     y = (eip + physmem8_ptr - initial_mem_ptr);
-                    if (FS_usage_flag) {
+                    if (x86_64_long_mode) {
                         mem8_loc = (regs[4] - 4) >> 0;
                         st32_mem8_write(y);
                         regs[4] = mem8_loc;

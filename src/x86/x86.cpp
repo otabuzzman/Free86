@@ -289,7 +289,7 @@ void x86Internal::init_segment_local_vars()
         SS_mask = -1;
     else
         SS_mask = 0xffff;
-    FS_usage_flag = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
+    x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
     if (segs[1].flags & (1 << 22))
         init_CS_flags = 0;
     else
@@ -413,7 +413,7 @@ void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja)
 int x86Internal::segment_translation(int mem8)
 {
     int base, mem8_loc, Qb, Rb, Sb, Tb;
-    if (FS_usage_flag && (CS_flags & (0x000f | 0x0080)) == 0) {
+    if (x86_64_long_mode && (CS_flags & (0x000f | 0x0080)) == 0) {
         switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
             case 0x04:
                 Qb   = phys_mem8[physmem8_ptr++];
