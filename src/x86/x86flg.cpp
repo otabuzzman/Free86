@@ -185,7 +185,7 @@ bool x86Internal::check_overflow()
     }
     return rval;
 }
-bool x86Internal::check_below_or_equal()
+bool x86Internal::check_below_or_equal() // `below' for signed comparison, PM p. 317
 {
     bool flg = false;
     switch (cc_op) {
@@ -249,7 +249,7 @@ int x86Internal::check_less_than()
     }
     return flg;
 }
-int x86Internal::check_less_or_equal()
+int x86Internal::check_less_or_equal() // `less' for unsigned comparison, PM p. 317
 {
     bool flg;
     switch (cc_op) {
@@ -381,18 +381,24 @@ int x86Internal::check_status_bits_for_jump(int gd)
 }
 int x86Internal::conditional_flags_for_rot_shiftcc_ops()
 {
-    return (check_parity() << 2) | ((cc_dst == 0) << 6) | ((cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) << 7) |
-           check_adjust_flag();
+//    int c0  = (check_carry() << 0);
+    int c2  = (check_parity() << 2);
+    int c4  = check_adjust_flag();
+    int c6  = ((cc_dst == 0) << 6);
+    int c7  = ((cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) << 7);
+//    int c11 = (check_overflow() << 11);
+    int val =  c2 | c4 | c6 | c7;
+    return val;
 }
 int x86Internal::get_conditional_flags()
 {
     int c0  = (check_carry() << 0);
     int c2  = (check_parity() << 2);
+    int c4  = check_adjust_flag();
     int c6  = ((cc_dst == 0) << 6);
     int c7  = ((cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) << 7);
     int c11 = (check_overflow() << 11);
-    int c   = check_adjust_flag();
-    int val = c0 | c2 | c6 | c7 | c11 | c;
+    int val = c0 | c2 | c4 | c6 | c7 | c11;
     return val;
 }
 int x86Internal::get_FLAGS()
