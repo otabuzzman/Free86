@@ -3,7 +3,7 @@
 bool x86Internal::check_carry()
 {
     bool     rval;
-    int      Yb, currentcc_op;
+    int      currentcc_op;
     uint32_t reldst;
 
     if (cc_op >= 25) {

@@ -66,9 +66,9 @@ void PC::start()
 }
 void PC::run_cpu()
 {
-    std::size_t Ncycles     = cpu->cycle_count + 100000;
-    bool        do_reset    = false;
-    bool        err_on_exit = false;
+    int Ncycles      = cpu->cycle_count + 100000;
+    bool do_reset    = false;
+    bool err_on_exit = false;
 
     while (cpu->cycle_count < Ncycles) {
 #ifndef TEST386

@@ -1000,7 +1000,7 @@ class IRQCH {
 
     int get_time()
     {
-        return std::floor(cpu->cycle_count * 0.596591);
+        return static_cast<int>(std::floor(cpu->cycle_count * 0.596591));
     }
 
     int pit_get_count()

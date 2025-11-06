@@ -12,6 +12,8 @@ set_property(TARGET cpp_app PROPERTY CXX_STANDARD 20)
 option(NO_SDL "Disable SDL support" OFF)
 option(TEST386 "Run test386 suite" OFF)
 
+add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+
 if(NO_SDL)
     add_compile_definitions(NO_SDL)
     message(STATUS "SDL support disabled.")

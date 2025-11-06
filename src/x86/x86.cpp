@@ -203,7 +203,7 @@ void x86Internal::dump(int OPbyte)
         }
 
         if (count < filecheck_end) {
-            int len = lines[0].size() + 10;
+            int len = static_cast<int>(lines[0].size()) + 10;
 
             char *sbf = new char[len];
             snprintf(sbf, len, "%s", lines[count - 1 - fileoffset].c_str());
@@ -243,7 +243,7 @@ void x86Internal::dump(int OPbyte)
 }
 int x86Internal::exec(int N_cycles)
 {
-    size_t final_cycle_count = cycle_count + N_cycles;
+    int    final_cycle_count = cycle_count + N_cycles;
     int    exit_code         = 256;
     interrupt.error_code     = 0;
     interrupt.intno          = -1;
@@ -1638,7 +1638,7 @@ int x86Internal::do_tlb_lookup(int mem8_loc, int ud)
 
 int x86Internal::operation_size_function(int eip_offset, int OPbyte)
 {
-    int CS_flags, l, mem8, localcc_opbyte_var, base, conditional_var, stride;
+    int CS_flags, mem8, localcc_opbyte_var, conditional_var, stride;
     int n = 1;
 
     CS_flags = init_CS_flags;
@@ -2887,7 +2887,7 @@ void x86Internal::load_from_TR(int he, int *desary)
 void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe)
 {
     DescriptorTable descriptor_table;
-    int             qe, descriptor_type, he, selector, re, cpl_var;
+    int             qe, descriptor_type, selector, re, cpl_var;
     int             te, ue, is_32_bit;
     int             desp_low4, desp_high4, ve, ke, le, we, xe;
     int             ye, SS_mask;
@@ -3134,7 +3134,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
 void x86Internal::do_interrupt_not_protected_mode(int intno, int ne, int error_code, int oe, int pe)
 {
     DescriptorTable descriptor_table;
-    int             qe, selector, ve, le, ye;
+    int             selector, ve, le, ye;
     descriptor_table = idt;
 
     if (intno * 4 + 3 > descriptor_table.limit)
@@ -3339,7 +3339,7 @@ void x86Internal::do_JMPF_virtual_mode(int selector, int Le)
 }
 void x86Internal::do_JMPF(int selector, int Le)
 {
-    int      Ne, ie, desp_low4, desp_high4, cpl_var, dpl, rpl;
+    int      desp_low4, desp_high4, cpl_var, dpl, rpl;
     uint32_t limit;
 
     if ((selector & 0xfffc) == 0)
@@ -3435,7 +3435,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
     int ue, i;
     int desp_low4, desp_high4, cpl_var, dpl, rpl, ve, Se;
     int ke, we, xe, esp, descriptor_type, re, SS_mask;
-    int x, limit, Ue;
+    int x = 0, limit, Ue;
     int qe, Ve, We;
 
     if ((selector & 0xfffc) == 0)
