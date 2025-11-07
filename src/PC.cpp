@@ -140,7 +140,7 @@ void PC::paint(SDL_Renderer *renderer, int widht, int height)
 void PC::print()
 {
     char chr;
-    chr = cpu->serial->print_fifo.pop();
+    chr = cpu->serial->print_fifo_pop();
 
     std::cout << chr << std::flush;
 }
