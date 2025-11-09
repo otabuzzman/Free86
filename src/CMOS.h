@@ -58,4 +58,4 @@ class CMOS {
     }
 };
 
-#endif
+#endif // _H_CMOS

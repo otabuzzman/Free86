@@ -13,6 +13,10 @@
 
 #include "../ringbuffer.h"
 
+class PIT;
+class Serial;
+class PIC_Controller;
+
 typedef struct DescriptorTable
 {
     int selector = 0;
@@ -27,54 +31,65 @@ typedef struct ErrorInfo
     int error_code = 0;
 } ErrorInfo;
 
-class x86 {
+class x86Internal {
+  public:
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
 
-  public:
-    int  tlb_size         = 0x100000;
+    int  tlb_size         = 0x100000; // 1 MB
     int *tlb_read_kernel  = nullptr;
     int *tlb_write_kernel = nullptr;
     int *tlb_read_user    = nullptr;
     int *tlb_write_user   = nullptr;
+    int *tlb_read  = nullptr; // user or kernel (current)
+    int *tlb_write = nullptr;
 
     uint8_t  *phys_mem   = nullptr;
     uint8_t  *phys_mem8  = nullptr;
     uint16_t *phys_mem16 = nullptr;
     uint32_t *phys_mem32 = nullptr;
 
-    bool logcheck        = true;
-    std::string filename = "log.txt";
-    int  filecheck_start = 0;
-    int  filecheck_end   = 1000;
-    int  fileoffset      = 0;
-    bool stepinfo        = false;
-
-    int count = 0; // used by x86Internal::dump()
-
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     int regs[8]{0};
     int eflags = 0x2;
 
-    int cpl = 0; // current privilege level
+    int eip = 0xfff0;
+    int eip_offset = 0;
+
+    // ES, CS, SS, DS, FS, GS, LDT, TR
+    DescriptorTable segs[7] = {
+        {0, 0, 0, 0},
+        {0, 0xffff0000, 0, 0}, // CS
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}
+    };
+
     int df  = 1; // direction Flag
 
-    int cycle_count = 0;
+    int cpl  = 0; // current privilege level
+    int dpl  = 0; // descriptor privilege level
+    int iopl = 0; // IO privilege level
+
+    DescriptorTable gdt; // GDT register
+    DescriptorTable ldt; // LDT register
+    DescriptorTable tr;  // task register
+    DescriptorTable idt = {0, 0, 0x03ff, 0}; // IDT register
 
     int cr0 = 0;
     int cr2 = 0;
     int cr3 = 0;
     int cr4 = 0;
 
-    int halted     = 0;
+    int OPbyte = 0;
 
-    int hard_irq   = 0;
-    int hard_intno = -1;
-
-    // ES, CS, SS, DS, FS, GS, LDT, TR
-    DescriptorTable segs[7];
-
-    int eip = 0xfff0;
+    int cc_src  = 0;
+    int cc_dst  = 0;
+    int cc_op   = 0;
+    int cc_op2  = 0;
+    int cc_dst2 = 0;
 
     int cccc_op   = 0;    // current op
     int cccc_dst  = 0;    // current dest
@@ -82,10 +97,49 @@ class x86 {
     int cccc_op2  = 0;    // current op, byte2
     int cccc_dst2 = 0;    // current dest, byte2
 
-    DescriptorTable gdt; // GDT register
-    DescriptorTable ldt; // LDT register
-    DescriptorTable tr;  // task register
-    DescriptorTable idt = {0, 0, 0x03ff, 0}; // IDT register
+    // 0x0001 ES segment override prefix    (0x26)
+    // 0x0002 CS segment override prefix    (0x2e)
+    // 0x0003 SS segment override prefix    (0x36)
+    // 0x0004 DS segment override prefix    (0x3e)
+    // 0x0005 FS segment override prefix    (0x64)
+    // 0x0006 GS segment override prefix    (0x65)
+    // 0x0010 REPZ  string operation prefix (0xf3)
+    // 0x0020 REPNZ string operation prefix (0xf2)
+    // 0x0040 LOCK  signal prefix           (0xf0)
+    // 0x0080 address-size override prefix  (0x67)
+    // 0x0100 operand-size override prefix  (0x66)
+    int CS_flags = 0;
+    int init_CS_flags = 0; // reflects D flag (PM (1986), 16.1)
+
+    int CS_base;
+
+    int SS_base;
+    int SS_mask = -1; // 16 or 32 bit SS size
+
+    bool x86_64_long_mode = false; // https://en.wikipedia.org/wiki/X86_memory_segmentation
+
+    int conditional_var = 0; // opcode_543 bits 5, 4, and 3 of opcode or modR/M byte
+    int mem8; // byte_value
+    int reg_idx0, reg_idx1; // register indices (0-7)
+    int x, y, z, v; // intermediate values memory
+
+    int last_tlb_val; // tlb_hash_value
+    int physmem8_ptr    = 0; // fetch_address
+    int initial_mem_ptr = 0; // fetch_address_byte0
+    uint32_t mem8_loc; // byte_address
+
+    ErrorInfo interrupt;
+
+    int N_cycles    = 0;
+    int cycles_left = 0;
+    int cycle_count = 0;
+
+    int halted     = 0;
+
+    int hard_irq   = 0;
+    int hard_intno = -1;
+
+    int exit_code   = 256;
 
     const std::vector<int> parity_LUT = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
@@ -105,29 +159,25 @@ class x86 {
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
     };
-    const std::vector<int> shift16_LUT = {
-         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-        16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
-    };
     const std::vector<int> shift8_LUT  = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6,
         7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4
+    };
+    const std::vector<int> shift16_LUT = {
+         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+        16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
     };
 
     int mem_size     = 16 * 1024 * 1024;
     int new_mem_size = mem_size + ((15 + 3) & ~3);
 
-    x86(int _mem_size);
-    ~x86();
+    x86Internal(int _mem_size);
+    ~x86Internal();
 
-    void load(uint8_t *bin, int offset, int size);
-    void start(int start_addr, int initrd_size, int cmdline_addr);
-
-    void write_string(int mem8_loc, std::string str)
+    void st8_phys(int mem8_loc, std::string str)
     {
         auto s = str.c_str();
 
-        printf("%s\n", s);
         for (int i = 0; i < str.length(); i++)
             st8_phys(mem8_loc++, s[i] & 0xff);
         st8_phys(mem8_loc, 0);
@@ -254,49 +304,19 @@ class x86 {
     {
         return hex_rep(n, 4);
     }
-};
 
-class PIT;
-class Serial;
-class PIC_Controller;
-
-class x86Internal: public x86 {
-  public:
-/*
-    `CS_flags' bits record instruction prefixes on fetch
-
-    0x0001 ES segment override prefix    (0x26)
-    0x0002 CS segment override prefix    (0x2e)
-    0x0003 SS segment override prefix    (0x36)
-    0x0004 DS segment override prefix    (0x3e)
-    0x0005 FS segment override prefix    (0x64)
-    0x0006 GS segment override prefix    (0x65)
-    0x0010 REPZ  string operation prefix (0xf3)
-    0x0020 REPNZ string operation prefix (0xf2)
-    0x0040 LOCK  signal prefix           (0xf0)
-    0x0080 address-size override prefix  (0x67)
-    0x0100 operand-size override prefix  (0x66)
- */
-    int CS_flags = 0;
-
-    x86Internal(int _mem_size);
-    ~x86Internal();
-
-    int  ioport_read(int mem8_loc);
-    void ioport_write(int mem8_loc, int data);
-
-    CMOS           *cmos     = nullptr;
-    KBD            *kbd      = nullptr;
-    PIC_Controller *pic      = nullptr;
-    PIT            *pit      = nullptr;
-    Serial         *serial   = nullptr;
-
-    int  init(int _N_cycles);
     int  exec(int _N_cycles);
+
+    int  instruction(int _N_cycles, ErrorInfo interrupt);
+    int  init(int _N_cycles);
+    int  check_halted();
+    void check_interrupt();
+    void init_segment_local_vars();
 
     void check_opbyte();
 
-    int  instruction(int _N_cycles, ErrorInfo interrupt);
+    int  ioport_read(int mem8_loc);
+    void ioport_write(int mem8_loc, int data);
 
     int ld8_port(int port_num);
     int ld16_port(int port_num);
@@ -306,49 +326,8 @@ class x86Internal: public x86 {
     void st16_port(int port_num, int x);
     void st32_port(int port_num, int x);
 
-  private:
-    int *tlb_read, *tlb_write;
-    int last_tlb_val;
+    void do_tlb_set_page(int Gd, int Hd, bool ja);
 
-    int physmem8_ptr    = 0; // a contiguous RAM area that resembles physical memory
-    int initial_mem_ptr = 0; // physical address of 1st byte of current instruction
-    uint32_t mem8_loc;
-
-    int eip_offset = 0;
-
-    int dpl  = 0; // descriptor privilege level
-    int iopl = 0; // IO privilege level
-
-    int CS_base;
-    int init_CS_flags = 0; // reflects D flag (PM (1986), 16.1)
-
-    int SS_base;
-    int SS_mask = -1; // 16/ 32 bit (default) SS size
-
-    bool x86_64_long_mode = false; // https://en.wikipedia.org/wiki/X86_memory_segmentation
-
-    int OPbyte = 0;
-
-    int cc_src  = 0;
-    int cc_dst  = 0;
-    int cc_op   = 0;
-    int cc_op2  = 0;
-    int cc_dst2 = 0;
-
-    int conditional_var = 0;
-    int mem8, reg_idx0, reg_idx1, x, y, z, v;
-
-    int N_cycles    = 0;
-    int cycles_left = 0;
-
-    int exit_code   = 256;
-
-    ErrorInfo                interrupt;
-    std::vector<std::string> lines;
-
-    int  check_halted();
-    void init_segment_local_vars();
-    void check_interrupt();
 
     int __ld8_mem8_kernel_read();
     int ld8_mem8_kernel_read();
@@ -364,8 +343,6 @@ class x86Internal: public x86 {
     int ld_16bits_mem8_read();
     int __ld_32bits_mem8_read();
     int ld_32bits_mem8_read();
-
-    void do_tlb_set_page(int Gd, int Hd, bool ja);
 
     int __ld_8bits_mem8_write();
     int ld_8bits_mem8_write();
@@ -467,8 +444,7 @@ class x86Internal: public x86 {
     void load_from_descriptor_table(int selector, int *desary);
     int  calc_desp_limit(int descriptor_low4bytes, int descriptor_high4bytes);
     int  calc_desp_base(int descriptor_low4bytes, int descriptor_high4bytes);
-    void set_descriptor_register(DescriptorTable *descriptor_table, int descriptor_low4bytes,
-                                 int descriptor_high4bytes);
+    void set_descriptor_register(DescriptorTable *descriptor_table, int descriptor_low4bytes, int descriptor_high4bytes);
     void set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags);
     void init_segment_vars_with_selector(int Sb, int selector);
 
@@ -552,6 +528,24 @@ class x86Internal: public x86 {
     void stringOp_CMPSD();
     void stringOp_LODSD();
     void stringOp_SCASD();
+
+
+
+    CMOS           *cmos     = nullptr;
+    KBD            *kbd      = nullptr;
+    PIC_Controller *pic      = nullptr;
+    PIT            *pit      = nullptr;
+    Serial         *serial   = nullptr;
+
+    bool logcheck        = true;
+    std::string filename = "log.txt";
+    int  filecheck_start = 0;
+    int  filecheck_end   = 1000;
+    int  fileoffset      = 0;
+    bool stepinfo        = false;
+
+    int count = 0; // used by x86Internal::dump()
+    std::vector<std::string> lines;
 
     bool do_dump = false;
     void dump();
@@ -1047,7 +1041,7 @@ class IRQCH {
     int last_irr        = 0;
     int count           = 0;
     int count_load_time = 0;
-    // float pit_time_unit = 0.596591;
+    float pit_time_unit = 0.596591f;
     x86Internal *cpu;
 
   public:
@@ -1064,7 +1058,7 @@ class IRQCH {
 
     int get_time()
     {
-        return static_cast<int>(std::floor(cpu->cycle_count * 0.596591));
+        return static_cast<int>(std::floor(cpu->cycle_count * pit_time_unit));
     }
 
     int pit_get_count()

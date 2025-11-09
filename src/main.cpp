@@ -56,8 +56,7 @@ int main(int ArgCount, char **Args)
 #endif
     signal(SIGINT, on_signal);
 
-    pc->init();
-    pc->start();
+    pc->setup();
 
     int speed = 20;
 
@@ -74,7 +73,7 @@ int main(int ArgCount, char **Args)
 #endif
 
     while (Running) {
-        pc->run_cpu();
+        pc->cycle();
 #ifndef NO_SDL
         SDL_Event Event;
         while (SDL_PollEvent(&Event)) {

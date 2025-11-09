@@ -11,15 +11,13 @@
 #include <cstddef>
 
 class PC {
-  private:
   public:
     PC();
     ~PC();
 
-    void init();
     int  load(std::string path, int offset = 0);
-    void start();
-    void run_cpu();
+    void setup();
+    void cycle();
 
 #ifndef NO_SDL
     void paint(SDL_Renderer *render, int widht, int height);
@@ -33,13 +31,10 @@ class PC {
 #ifndef NO_SDL
     TTF_Font    *font = nullptr;
 #endif
-
     int mem_size     = 16 * 1024 * 1024;
     int start_addr   = 0x10000;
     int initrd_size  = 0;
-    int cmdline_addr = 0xf800;
-    int steps        = -1;
-
-    int reset_request = 0;
+    int cmdline_addr = 0x0f800;
 };
-#endif
+
+#endif // _H_PC

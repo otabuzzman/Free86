@@ -18,8 +18,7 @@ class KBD {
     void write_command(int mem8_loc, int x)
     {
         switch (x) {
-            case 0xfe:    // Resend command. Other commands are, apparently, ignored.
-                // this.reset_request();
+            case 0xfe: // Resend command (PC AT Technical Reference, sec. 4-1)
                 break;
             default:
                 break;
@@ -27,4 +26,4 @@ class KBD {
     }
 };
 
-#endif
+#endif // _H_KBD

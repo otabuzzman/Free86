@@ -5,12 +5,9 @@
 
 class Test386 : public PC {
 public:
-    void init() {
-        printf("load file\n");
+    void setup() {
         load("../test386.asm/test386.bin", 0x000f0000);
-    }
 
-    void start() {
         printf("\n\n*******************************\n");
         printf("*******************************\n");
         printf("*******************************\n");

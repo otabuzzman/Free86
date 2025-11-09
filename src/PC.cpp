@@ -13,7 +13,6 @@
 PC::PC()
 {
     cpu = new x86Internal(mem_size);
-
 #ifndef NO_SDL
     TTF_Init();
     font = TTF_OpenFont("bin/cp437.ttf", 14);
@@ -23,17 +22,12 @@ PC::PC()
     }
 #endif
 }
+
 PC::~PC()
 {
     delete cpu;
 }
-void PC::init()
-{
-    printf("load file\n");
-    load("bin/vmlinux-2.6.20.bin", 0x00100000);
-    initrd_size = load("bin/root.bin", 0x00400000);
-    load("bin/linuxstart.bin", 0x00010000);
-}
+
 int PC::load(std::string path, int offset)
 {
     FILE *f = fopen(path.c_str(), "rb");
@@ -43,56 +37,60 @@ int PC::load(std::string path, int offset)
     auto buffer = new uint8_t[size];
     auto __     = fread(buffer, size, 1, f);
 
-    cpu->load(buffer, offset, size);
+    printf("load %d bytes at 0x%x\n", size, offset);
+    for (int i = 0; i < size; i++) {
+        cpu->st8_phys(offset + i, buffer[i]);
+    }
     fclose(f);
 
     return size;
 }
-void PC::start()
+
+void PC::setup()
 {
-    cpu->write_string(cmdline_addr, "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1");
+    load("bin/vmlinux-2.6.20.bin",     0x00100000);
+    initrd_size = load("bin/root.bin", 0x00400000);
+    load("bin/linuxstart.bin",         0x00010000);
+
+    std::string cmdline = "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1";
+
+    cpu->st8_phys(cmdline_addr, cmdline);
+    printf("%s\n", cmdline.c_str());
+
+    // prepare for linuxstart.bin
+    cpu->eip = start_addr;
+    cpu->segs[1].flags = (1 << 22); // CS, Bit 22 = 1 for 32bit segment
+    cpu->segs[2].flags = (1 << 22); // SS, Bit 22 = 1 for 32bit segment
+    cpu->segs[3].flags = (1 << 9);  // DS, Bit 9 = writable
+    cpu->cr0 = (1 << 0);  // PE-mode ON
+
+    cpu->regs[0] = mem_size;
+    cpu->regs[1] = cmdline_addr;
+    cpu->regs[3] = initrd_size;
+
     printf("\n\n************************\n");
     printf("************************\n");
     printf("****** Boot Linux ******\n");
     printf("************************\n");
     printf("************************\n\n\n");
-    cpu->start(start_addr, initrd_size, cmdline_addr);
-
-    // prepare for linuxstart.bin
-    cpu->segs[1].flags = (1 << 22); // CS, Bit 22 = 1 for 32bit segment
-    cpu->segs[2].flags = (1 << 22); // SS, Bit 22 = 1 for 32bit segment
-    cpu->segs[3].flags = (1 << 9);  // DS, Bit 9 = writable
-    cpu->cr0           = (1 << 0);  // PE-mode ON
 }
-void PC::run_cpu()
+
+void PC::cycle()
 {
-    int Ncycles      = cpu->cycle_count + 100000;
-    bool do_reset    = false;
-    bool err_on_exit = false;
+    int Ncycles = cpu->cycle_count + 100000;
 
     while (cpu->cycle_count < Ncycles) {
 #ifndef TEST386
         cpu->pit->update_irq();
 #endif
 
-        int exit_status = cpu->exec(Ncycles - cpu->cycle_count);
-        if (exit_status == 256) {
-            if (reset_request) {
-                do_reset = true;
-                break;
-            }
-        } else if (exit_status == 257) {
-            err_on_exit = true;
+        cpu->exec(Ncycles - cpu->cycle_count);
+
+        if (cpu->halted)
             break;
-        } else {
-            do_reset = true;
-            break;
-        }
     }
-    // if (!do_reset) {
-    //     // std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    // }
 }
+
 #ifndef NO_SDL
 void PC::paint(SDL_Renderer *renderer, int widht, int height)
 {
@@ -144,6 +142,7 @@ void PC::print()
 
     std::cout << chr << std::flush;
 }
+
 void PC::input()
 {
     int chr;

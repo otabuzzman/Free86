@@ -9,8 +9,15 @@
 #include <thread>
 #include "x86.h"
 
-x86::x86(int _mem_size)
+x86Internal::x86Internal(int _mem_size)
 {
+    cmos   = new CMOS();
+    kbd    = new KBD();
+    pic    = new PIC_Controller(this);
+    serial = new Serial(pic, 0, 0);
+    pit    = new PIT(this, pic);
+    file_read();
+
     mem_size     = _mem_size;
     new_mem_size = mem_size + ((15 + 3) & ~3);
 
@@ -30,39 +37,6 @@ x86::x86(int _mem_size)
     for (int i = 0; i < tlb_size; i++) {
         tlb_clear(i);
     }
-
-    segs[1].base = 0xffff0000;    // CS
-}
-x86::~x86()
-{
-    free(phys_mem8);
-    delete[] tlb_read_kernel;
-    delete[] tlb_write_kernel;
-    delete[] tlb_read_user;
-    delete[] tlb_write_user;
-}
-void x86::load(uint8_t *bin, int offset, int size)
-{
-    printf("x86::load %x\n", offset);
-    for (int i = 0; i < size; i++) {
-        st8_phys(offset + i, bin[i]);
-    }
-}
-void x86::start(int start_addr, int initrd_size, int cmdline_addr)
-{
-    eip     = start_addr;
-    regs[0] = mem_size;
-    regs[3] = initrd_size;
-    regs[1] = cmdline_addr;
-}
-x86Internal::x86Internal(int _mem_size) : x86(_mem_size)
-{
-    cmos   = new CMOS();
-    kbd    = new KBD();
-    pic    = new PIC_Controller(this);
-    serial = new Serial(pic, 0, 0);
-    pit    = new PIT(this, pic);
-    file_read();
 }
 x86Internal::~x86Internal()
 {
@@ -71,6 +45,12 @@ x86Internal::~x86Internal()
     delete pic;
     delete pit;
     delete serial;
+
+    free(phys_mem8);
+    delete[] tlb_read_kernel;
+    delete[] tlb_write_kernel;
+    delete[] tlb_read_user;
+    delete[] tlb_write_user;
 }
 int x86Internal::file_read()
 {
