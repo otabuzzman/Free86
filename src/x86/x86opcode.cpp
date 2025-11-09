@@ -1,8 +1,8 @@
 #include "x86.h"
 
-int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
+int x86Internal::instruction(int cycles, ErrorInfo interrupt)
 {
-    if (init(_N_cycles))
+    if (init(cycles))
         return 257;
 
     do {
@@ -2285,7 +2285,7 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                         case 0x31:    // RDTSC IA32_TIME_STAMP_COUNTER EAX Read Time-Stamp Counter
                             if ((cr4 & (1 << 2)) && cpl != 0)
                                 abort(13);
-                            x       = current_cycle_count();
+                            x       = cycles_processed + (cycles_requested - cycles_remaining);
                             regs[0] = x >> 0;
                             regs[2] = (x / 0x100000000) >> 0;
                             goto EXEC_LOOP;
@@ -3760,12 +3760,13 @@ int x86Internal::instruction(int _N_cycles, ErrorInfo interrupt)
                     }
             }
         }
-    EXEC_LOOP:;
+    EXEC_LOOP:
+        ;
 
-    } while (--cycles_left);
+    } while (--cycles_remaining);
 OUTER_LOOP:
 
-    cycle_count += (N_cycles - cycles_left);
+    cycles_processed += (cycles_requested - cycles_remaining);
     eip = (eip + physmem8_ptr - initial_mem_ptr);
     return exit_code;
 }

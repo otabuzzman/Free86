@@ -77,14 +77,14 @@ void PC::setup()
 
 void PC::cycle()
 {
-    int Ncycles = cpu->cycle_count + 100000;
+    int cycles_requested = cpu->cycles_processed + 100000;
 
-    while (cpu->cycle_count < Ncycles) {
+    while (cpu->cycles_processed < cycles_requested) {
 #ifndef TEST386
         cpu->pit->update_irq();
 #endif
 
-        cpu->exec(Ncycles - cpu->cycle_count);
+        cpu->exec(cycles_requested - cpu->cycles_processed);
 
         if (cpu->halted)
             break;

@@ -130,9 +130,9 @@ class x86Internal {
 
     ErrorInfo interrupt;
 
-    int N_cycles    = 0;
-    int cycles_left = 0;
-    int cycle_count = 0;
+    int cycles_requested = 0;
+    int cycles_remaining = 0;
+    int cycles_processed = 0;
 
     int halted     = 0;
 
@@ -551,16 +551,6 @@ class x86Internal {
     void dump();
     void dump(int OPbyte);
     int  file_read();
-
-    int current_cycle_count()
-    {
-        return cycle_count + (N_cycles - cycles_left);
-    }
-
-    void cpu_abort(std::string str)
-    {
-        throw "CPU abort: " + str;
-    }
 };
 
 class PIC {
@@ -683,9 +673,9 @@ class PIC {
                 init_state = 1;
                 init4      = x & 1;
                 if (x & 0x02)
-                    throw "single mode not supported";
+                    throw "fatal: single mode not supported";
                 if (x & 0x08)
-                    throw "level sensitive irq not supported";
+                    throw "fatal: level sensitive IRQ not supported";
             } else if (x & 0x08) {
                 if (x & 0x02)
                     read_reg_select = x & 1;
@@ -1058,7 +1048,7 @@ class IRQCH {
 
     int get_time()
     {
-        return static_cast<int>(std::floor(cpu->cycle_count * pit_time_unit));
+        return static_cast<int>(std::floor(cpu->cycles_processed * pit_time_unit));
     }
 
     int pit_get_count()

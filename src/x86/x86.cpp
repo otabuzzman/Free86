@@ -166,7 +166,7 @@ void x86Internal::dump(int OPbyte)
                 regs[0], regs[1], regs[2], regs[3], eflags, regs[4], regs[5], regs[6], regs[7]);
         // printf("%s", buf2);
         char buf3[1000];
-        snprintf(buf3, 1000, "TSC=%08X OP=%02X OP2=%02X SRC=%08X DST=%08X DST2=%08X", cycle_count, cc_op, cc_op2, cc_src,
+        snprintf(buf3, 1000, "TSC=%08X OP=%02X OP2=%02X SRC=%08X DST=%08X DST2=%08X", cycles_requested, cc_op, cc_op2, cc_src,
                 cc_dst, cc_dst2);
         // printf("%s", buf3);
         char buf4[1000];
@@ -221,16 +221,16 @@ void x86Internal::dump(int OPbyte)
         }
     }
 }
-int x86Internal::exec(int N_cycles)
+int x86Internal::exec(int cycles)
 {
-    int    final_cycle_count = cycle_count + N_cycles;
+    int    final_cycle_count = cycles_processed + cycles;
     int    exit_code         = 256;
     interrupt.error_code     = 0;
     interrupt.intno          = -1;
 
-    while (cycle_count < final_cycle_count) {
+    while (cycles_processed < final_cycle_count) {
         try {
-            exit_code = instruction(final_cycle_count - cycle_count, interrupt);
+            exit_code = instruction(final_cycle_count - cycles_processed, interrupt);
             if (exit_code != 256)
                 break;
             interrupt.error_code = 0;
@@ -242,10 +242,10 @@ int x86Internal::exec(int N_cycles)
 
     return exit_code;
 }
-int x86Internal::init(int _N_cycles)
+int x86Internal::init(int cycles)
 {
-    N_cycles        = _N_cycles;
-    cycles_left     = N_cycles;
+    cycles_requested = cycles;
+    cycles_remaining = cycles_requested;
     CS_flags        = init_CS_flags;
     mem8_loc        = 0;
     last_tlb_val    = 0;
@@ -745,7 +745,7 @@ int x86Internal::do_32bit_math(int conditional_var, int Yb, int Zb)
             cc_op  = 8;
             break;
         default:
-            throw "arith: invalid op";
+            throw "fatal: invalid arithmetic operation";
     }
     return Yb;
 }
@@ -800,7 +800,7 @@ int x86Internal::do_16bit_math(int conditional_var, int Yb, int Zb)
             cc_op  = 7;
             break;
         default:
-            throw "arith: invalid op";
+            throw "fatal: invalid arithmetic operation";
     }
     return Yb;
 }
@@ -855,7 +855,7 @@ int x86Internal::do_8bit_math(int conditional_var, int Yb, int Zb)
             cc_op  = 6;
             break;
         default:
-            throw "arith: invalid op";
+            throw "fatal: invalid arithmetic operation";
     }
     return Yb;
 }
@@ -995,7 +995,7 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb)
             }
             break;
         default:
-            throw &"unsupported shift8="[conditional_var];
+            throw &"fatal: unsupported shift8="[conditional_var];
     }
     return Yb;
 }
@@ -1093,7 +1093,7 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb)
             }
             break;
         default:
-            throw &"unsupported shift16="[conditional_var];
+            throw &"fatal: unsupported shift16="[conditional_var];
     }
     return Yb;
 }
@@ -1187,7 +1187,7 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
             }
             break;
         default:
-            throw &"unsupported shift32="[conditional_var];
+            throw &"fatal: unsupported shift32="[conditional_var];
     }
     return Yb;
 }
@@ -2839,11 +2839,11 @@ void x86Internal::load_from_TR(int he, int *desary)
 {
     int tr_type, Rb, is_32_bit, ke, le;
     if (!(tr.flags & (1 << 15)))
-        cpu_abort("invalid tss");    // task state segment
+        throw "fatal: invalid TSS";
 
     tr_type = (tr.flags >> 8) & 0xf;
     if ((tr_type & 7) != 1)
-        cpu_abort("invalid tss type");
+        throw "fatal: invalid TSS type";
 
     is_32_bit = tr_type >> 3;
     Rb        = (he * 4 + 2) << is_32_bit;
@@ -2907,7 +2907,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
         case 5:
         case 7:
         case 6:
-            throw "unsupported task gate";
+            throw "fatal: unsupported task gate";
         case 14:
         case 15:
             break;
@@ -3356,7 +3356,7 @@ void x86Internal::do_JMPF(int selector, int Le)
         set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit, desp_high4);
         eip = Le, physmem8_ptr = initial_mem_ptr = 0;
     } else {
-        cpu_abort("unsupported jump to call or task gate");
+        throw "fatal: unsupported jump to call or task gate";
     }
 }
 void x86Internal::op_JMPF(int selector, int Le)
@@ -3486,7 +3486,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             case 1:
             case 9:
             case 5:
-                throw "unsupported task gate";
+                throw "fatal: unsupported task gate";
                 return;
             case 4:
             case 12:
@@ -3877,7 +3877,7 @@ void x86Internal::op_IRET(bool is_32_bit)
         do_return_not_protected_mode(is_32_bit, 1, 0);
     } else {
         if (eflags & 0x00004000) {
-            throw "unsupported task gate";
+            throw "fatal: unsupported task gate";
         } else {
             do_return_protected_mode(is_32_bit, 1, 0);
         }
@@ -4739,7 +4739,7 @@ void x86Internal::ioport_write(int mem8_loc, int data)
 }
 void x86Internal::abort_with_error_code(int intno, int error_code)
 {
-    cycle_count += (N_cycles - cycles_left);
+    cycles_processed += (cycles_requested - cycles_remaining);
     ErrorInfo errinf;
     errinf.intno      = intno;
     errinf.error_code = error_code;
