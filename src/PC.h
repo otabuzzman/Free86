@@ -12,7 +12,7 @@
 
 class PC {
   public:
-    PC();
+    PC(int mem_size);
     ~PC();
 
     int  load(std::string path, int offset = 0);

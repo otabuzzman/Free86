@@ -676,7 +676,7 @@ void x86Internal::set_lower_word_in_register(int reg_idx1, int x)
 int x86Internal::do_32bit_math(int conditional_var, int Yb, int Zb)
 {
     int ac;
-    switch (conditional_var) {
+    switch (conditional_var & 7) {
         case 0:
             cc_src = Zb;
             Yb     = (Yb + Zb) >> 0;
@@ -723,15 +723,13 @@ int x86Internal::do_32bit_math(int conditional_var, int Yb, int Zb)
             cc_dst = (Yb - Zb) >> 0;
             cc_op  = 8;
             break;
-        default:
-            throw "fatal: invalid arithmetic operation";
     }
     return Yb;
 }
 int x86Internal::do_16bit_math(int conditional_var, int Yb, int Zb)
 {
     int ac;
-    switch (conditional_var) {
+    switch (conditional_var & 7) {
         case 0:
             cc_src = Zb;
             Yb     = (((Yb + Zb) << 16) >> 16);
@@ -778,15 +776,13 @@ int x86Internal::do_16bit_math(int conditional_var, int Yb, int Zb)
             cc_dst = (((Yb - Zb) << 16) >> 16);
             cc_op  = 7;
             break;
-        default:
-            throw "fatal: invalid arithmetic operation";
     }
     return Yb;
 }
 int x86Internal::do_8bit_math(int conditional_var, int Yb, int Zb)
 {
     int ac;
-    switch (conditional_var) {
+    switch (conditional_var & 7) {
         case 0:
             cc_src = Zb;
             Yb     = (((Yb + Zb) << 24) >> 24);
@@ -833,8 +829,6 @@ int x86Internal::do_8bit_math(int conditional_var, int Yb, int Zb)
             cc_dst = (((Yb - Zb) << 24) >> 24);
             cc_op  = 6;
             break;
-        default:
-            throw "fatal: invalid arithmetic operation";
     }
     return Yb;
 }
@@ -883,7 +877,7 @@ int x86Internal::decrement_8bit(int x)
 int x86Internal::shift8(int conditional_var, int Yb, int Zb)
 {
     int kc, ac;
-    switch (conditional_var) {
+    switch (conditional_var & 7) {
         case 0:
             if (Zb & 0x1f) {
                 Zb &= 0x7;
@@ -973,15 +967,13 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb)
                 cc_op       = 18;
             }
             break;
-        default:
-            throw &"fatal: unsupported shift8="[conditional_var];
     }
     return Yb;
 }
 int x86Internal::shift16(int conditional_var, int Yb, int Zb)
 {
     int kc, ac;
-    switch (conditional_var) {
+    switch (conditional_var & 7) {
         case 0:
             if (Zb & 0x1f) {
                 Zb &= 0xf;
@@ -1071,8 +1063,6 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb)
                 cc_op       = 19;
             }
             break;
-        default:
-            throw &"fatal: unsupported shift16="[conditional_var];
     }
     return Yb;
 }
@@ -1080,7 +1070,7 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
 {
     uint32_t kc;
     int      ac;
-    switch (conditional_var) {
+    switch (conditional_var & 7) {
         case 0:
             Zb &= 0x1f;
             if (Zb) {
@@ -1165,8 +1155,6 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb)
                 cc_op       = 20;
             }
             break;
-        default:
-            throw &"fatal: unsupported shift32="[conditional_var];
     }
     return Yb;
 }
@@ -2818,11 +2806,11 @@ void x86Internal::load_from_TR(int he, int *desary)
 {
     int tr_type, Rb, is_32_bit, ke, le;
     if (!(tr.flags & (1 << 15)))
-        throw "fatal: invalid TSS";
+        abort_with_error_code(11, tr.selector & 0xfffc);
 
     tr_type = (tr.flags >> 8) & 0xf;
     if ((tr_type & 7) != 1)
-        throw "fatal: invalid TSS type";
+        abort_with_error_code(13, tr.selector & 0xfffc);
 
     is_32_bit = tr_type >> 3;
     Rb        = (he * 4 + 2) << is_32_bit;
@@ -2883,12 +2871,13 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
     descriptor_type = (desp_high4 >> 8) & 0x1f;
 
     switch (descriptor_type) {
-        case 5:
-        case 7:
-        case 6:
-            throw "fatal: unsupported task gate";
-        case 14:
-        case 15:
+        case 14: // 32 bit interrupt gate
+        case 15: // 32 bit trap gate
+            break;
+        case 5: // task gate
+        case 6: // 16 bit interrupt gate
+        case 7: // 16 bit trap gate
+            throw "fatal: unsupported gate type";
             break;
         default:
             abort_with_error_code(13, intno * 8 + 2);
@@ -3335,7 +3324,7 @@ void x86Internal::do_JMPF(int selector, int Le)
         set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit, desp_high4);
         eip = Le, physmem8_ptr = initial_mem_ptr = 0;
     } else {
-        throw "fatal: unsupported jump to call or task gate";
+        throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
 void x86Internal::op_JMPF(int selector, int Le)
@@ -3462,13 +3451,13 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         dpl             = (desp_high4 >> 13) & 3;
         rpl             = selector & 3;
         switch (descriptor_type) {
-            case 1:
-            case 9:
-            case 5:
-                throw "fatal: unsupported task gate";
-                return;
-            case 4:
-            case 12:
+            case 4:  // call gate
+            case 12: // 386 call gate
+                break;
+            case 1: // 16 bit task state segment
+            case 9: // 32 bit task state segment
+            case 5: // task gate
+                throw "fatal: unsupported TSS or task gate in CALL";
                 break;
             default:
                 abort_with_error_code(13, selector & 0xfffc);
@@ -3856,7 +3845,7 @@ void x86Internal::op_IRET(bool is_32_bit)
         do_return_not_protected_mode(is_32_bit, 1, 0);
     } else {
         if (eflags & 0x00004000) {
-            throw "fatal: unsupported task gate";
+            throw "fatal: unsupported EFLAGS.NT == 1 in IRET";
         } else {
             do_return_protected_mode(is_32_bit, 1, 0);
         }
@@ -4632,9 +4621,6 @@ int x86Internal::ioport_read(int mem8_loc)
     printf("*** ioport_read 0x%04x\n", port);
 #endif
     switch (port) {
-        case 0x80:
-            // (function(mem8_loc, data) {})(mem8_loc);
-            return 0;
         case 0x70:
         case 0x71:
             return cmos->ioport_read(mem8_loc);
@@ -4677,8 +4663,7 @@ void x86Internal::ioport_write(int mem8_loc, int data)
         printf("%c", data);
 #endif
     switch (port) {
-        case 0x80:
-            // (function(mem8_loc, data) {})(mem8_loc, data);
+        case 0x80: // POST
             break;
         case 0x70:
         case 0x71:
@@ -4689,11 +4674,15 @@ void x86Internal::ioport_write(int mem8_loc, int data)
             break;
         case 0x20:
         case 0x21:
-            pic->pics[0]->ioport_write(mem8_loc, data);
+            try {
+                pic->pics[0]->ioport_write(mem8_loc, data);
+            } catch (const char *) {}
             break;
         case 0xa0:
         case 0xa1:
-            pic->pics[1]->ioport_write(mem8_loc, data);
+            try {
+                pic->pics[1]->ioport_write(mem8_loc, data);
+            } catch (const char *) {}
             break;
         case 0x40:
         case 0x41:

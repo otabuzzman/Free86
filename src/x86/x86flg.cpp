@@ -14,7 +14,7 @@ bool x86Internal::check_carry()
         reldst       = cc_dst;
     }
 
-    switch (currentcc_op) {
+    switch (currentcc_op % 25) {
         case 0:
             rval = (reldst & 0xff) < (cc_src & 0xff);
             break;
@@ -78,8 +78,6 @@ bool x86Internal::check_carry()
         case 24:
             rval = cc_src & 1;
             break;
-        default:
-            throw &"GET_CARRY: unsupported cccc_op="[cc_op];
     }
     return rval;
 }
@@ -88,7 +86,7 @@ bool x86Internal::check_overflow()
     bool rval;
     int  Yb;
 
-    switch (cc_op) {
+    switch (cc_op % 0x1f) {
         case 0:
             Yb   = (cc_dst - cc_src) >> 0;
             rval = (((Yb ^ cc_src ^ -1) & (Yb ^ cc_dst)) >> 7) & 1;
@@ -180,8 +178,6 @@ bool x86Internal::check_overflow()
         case 30:
             rval = cc_dst == 0x7fffffff;
             break;
-        default:
-            throw &"JO: unsupported cccc_op="[cc_op];
     }
     return rval;
 }
@@ -287,7 +283,7 @@ int x86Internal::check_adjust_flag()
     int Yb;
     int rval;
 
-    switch (cc_op) {
+    switch (cc_op % 0x1f) {
         case 0:
         case 1:
         case 2:
@@ -341,15 +337,13 @@ int x86Internal::check_adjust_flag()
         case 30:
             rval = (cc_dst ^ (cc_dst + 1)) & 0x10;
             break;
-        default:
-            throw &"AF: unsupported cccc_op="[cc_op];
     }
     return rval;
 }
 int x86Internal::check_status_bits_for_jump(int gd)
 {
     bool flg;
-    switch (gd >> 1) {
+    switch ((gd >> 1) & 7){
         case 0:
             flg = check_overflow();
             break;
@@ -374,8 +368,6 @@ int x86Internal::check_status_bits_for_jump(int gd)
         case 7:
             flg = check_less_or_equal();
             break;
-        default:
-            throw &"unsupported cond: "[gd];
     }
     return flg ^ (gd & 1);
 }

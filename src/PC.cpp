@@ -10,7 +10,7 @@
 #endif
 #include "PC.h"
 
-PC::PC()
+PC::PC(int mem_size)
 {
     cpu = new x86Internal(mem_size);
 #ifndef NO_SDL
@@ -88,7 +88,7 @@ void PC::cycle()
             cpu->instruction(cycles_requested - cpu->cycles_processed);
             if (cpu->halted)
                 break;
-        } catch (ErrorInfo cpu_exception) {}
+        } catch (ErrorInfo) {}
     }
 }
 

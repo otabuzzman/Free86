@@ -669,9 +669,9 @@ class PIC {
                 init_state = 1;
                 init4      = x & 1;
                 if (x & 0x02)
-                    throw "fatal: single mode not supported";
+                    throw "PIC: SNGL == 1 not supported";
                 if (x & 0x08)
-                    throw "fatal: level sensitive IRQ not supported";
+                    throw "PIC: LTIM == 1 not supported";
             } else if (x & 0x08) {
                 if (x & 0x02)
                     read_reg_select = x & 1;

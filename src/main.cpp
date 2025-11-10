@@ -49,10 +49,11 @@ void input_loop(PC *pc)
 int main(int ArgCount, char **Args)
 {
     static const int width = 840, height = 350;
+    static const int mem_size = 0x01000000; // 16 MB
 #ifdef TEST386
-    Test386 *pc = new Test386();
+    Test386 *pc = new Test386(mem_size);
 #else
-    PC *pc = new PC();
+    PC *pc = new PC(mem_size);
 #endif
     signal(SIGINT, on_signal);
 
