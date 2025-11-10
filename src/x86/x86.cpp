@@ -221,38 +221,16 @@ void x86Internal::dump(int OPbyte)
         }
     }
 }
-int x86Internal::exec(int cycles)
-{
-    int    final_cycle_count = cycles_processed + cycles;
-    int    exit_code         = 256;
-    interrupt.error_code     = 0;
-    interrupt.intno          = -1;
-
-    while (cycles_processed < final_cycle_count) {
-        try {
-            exit_code = instruction(final_cycle_count - cycles_processed, interrupt);
-            if (exit_code != 256)
-                break;
-            interrupt.error_code = 0;
-            interrupt.intno      = -1;
-        } catch (ErrorInfo cpu_exception) {
-            interrupt = cpu_exception;
-        }
-    }
-
-    return exit_code;
-}
 int x86Internal::init(int cycles)
 {
     cycles_requested = cycles;
-    cycles_remaining = cycles_requested;
+    cycles_remaining = cycles;
     CS_flags        = init_CS_flags;
     mem8_loc        = 0;
     last_tlb_val    = 0;
     physmem8_ptr    = 0;
     initial_mem_ptr = 0;
     conditional_var = 0;
-    exit_code       = 256;
 
     change_permission_level(cpl);
     if (check_halted())
@@ -325,6 +303,7 @@ void x86Internal::check_interrupt()
 {
     if (interrupt.intno >= 0) {
         do_interrupt(interrupt.intno, 0, interrupt.error_code, 0, 0);
+        interrupt = {-1, 0};
     }
     if (hard_intno >= 0) {
         do_interrupt(hard_intno, 0, 0, 0, 1);
@@ -4740,10 +4719,8 @@ void x86Internal::ioport_write(int mem8_loc, int data)
 void x86Internal::abort_with_error_code(int intno, int error_code)
 {
     cycles_processed += (cycles_requested - cycles_remaining);
-    ErrorInfo errinf;
-    errinf.intno      = intno;
-    errinf.error_code = error_code;
-    throw errinf;
+    interrupt = {intno, error_code};
+    throw interrupt;
 }
 void x86Internal::abort(int intno)
 {

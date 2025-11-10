@@ -48,23 +48,23 @@ int PC::load(std::string path, int offset)
 
 void PC::setup()
 {
-    load("bin/vmlinux-2.6.20.bin",     0x00100000);
-    initrd_size = load("bin/root.bin", 0x00400000);
-    load("bin/linuxstart.bin",         0x00010000);
+    load("bin/linuxstart.bin",             0x00010000); // custom bootloader
+    load("bin/vmlinux-2.6.20.bin",         0x00100000); // Linux kernel
+    int initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
 
+    int cmdline_addr = 0x0f800;
     std::string cmdline = "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1";
 
     cpu->st8_phys(cmdline_addr, cmdline);
     printf("%s\n", cmdline.c_str());
 
-    // prepare for linuxstart.bin
-    cpu->eip = start_addr;
+    cpu->eip = 0x10000;
     cpu->segs[1].flags = (1 << 22); // CS, Bit 22 = 1 for 32bit segment
     cpu->segs[2].flags = (1 << 22); // SS, Bit 22 = 1 for 32bit segment
     cpu->segs[3].flags = (1 << 9);  // DS, Bit 9 = writable
     cpu->cr0 = (1 << 0);  // PE-mode ON
 
-    cpu->regs[0] = mem_size;
+    cpu->regs[0] = 16 * 1024 * 1024;
     cpu->regs[1] = cmdline_addr;
     cpu->regs[3] = initrd_size;
 
@@ -84,10 +84,11 @@ void PC::cycle()
         cpu->pit->update_irq();
 #endif
 
-        cpu->exec(cycles_requested - cpu->cycles_processed);
-
-        if (cpu->halted)
-            break;
+        try {
+            cpu->instruction(cycles_requested - cpu->cycles_processed);
+            if (cpu->halted)
+                break;
+        } catch (ErrorInfo cpu_exception) {}
     }
 }
 

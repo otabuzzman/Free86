@@ -31,10 +31,6 @@ class PC {
 #ifndef NO_SDL
     TTF_Font    *font = nullptr;
 #endif
-    int mem_size     = 16 * 1024 * 1024;
-    int start_addr   = 0x10000;
-    int initrd_size  = 0;
-    int cmdline_addr = 0x0f800;
 };
 
 #endif // _H_PC

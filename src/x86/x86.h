@@ -36,12 +36,12 @@ class x86Internal {
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
 
-    int  tlb_size         = 0x100000; // 1 MB
+    int  tlb_size         = 0x100000; // 1M
     int *tlb_read_kernel  = nullptr;
     int *tlb_write_kernel = nullptr;
     int *tlb_read_user    = nullptr;
     int *tlb_write_user   = nullptr;
-    int *tlb_read  = nullptr; // user or kernel (current)
+    int *tlb_read  = nullptr; // current (user or kernel)
     int *tlb_write = nullptr;
 
     uint8_t  *phys_mem   = nullptr;
@@ -121,14 +121,12 @@ class x86Internal {
     int conditional_var = 0; // opcode_543 bits 5, 4, and 3 of opcode or modR/M byte
     int mem8; // byte_value
     int reg_idx0, reg_idx1; // register indices (0-7)
-    int x, y, z, v; // intermediate values memory
+    int x, y, z, v; // intermediate values
 
     int last_tlb_val; // tlb_hash_value
     int physmem8_ptr    = 0; // fetch_address
     int initial_mem_ptr = 0; // fetch_address_byte0
     uint32_t mem8_loc; // byte_address
-
-    ErrorInfo interrupt;
 
     int cycles_requested = 0;
     int cycles_remaining = 0;
@@ -139,7 +137,7 @@ class x86Internal {
     int hard_irq   = 0;
     int hard_intno = -1;
 
-    int exit_code   = 256;
+    ErrorInfo interrupt;
 
     const std::vector<int> parity_LUT = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
@@ -305,10 +303,8 @@ class x86Internal {
         return hex_rep(n, 4);
     }
 
-    int  exec(int _N_cycles);
-
-    int  instruction(int _N_cycles, ErrorInfo interrupt);
-    int  init(int _N_cycles);
+    void instruction(int cycles);
+    int  init(int cycles);
     int  check_halted();
     void check_interrupt();
     void init_segment_local_vars();

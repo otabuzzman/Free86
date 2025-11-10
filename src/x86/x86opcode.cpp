@@ -1,9 +1,9 @@
 #include "x86.h"
 
-int x86Internal::instruction(int cycles, ErrorInfo interrupt)
+void x86Internal::instruction(int cycles)
 {
     if (init(cycles))
-        return 257;
+        return;
 
     do {
         check_opbyte();
@@ -1644,7 +1644,6 @@ int x86Internal::instruction(int cycles, ErrorInfo interrupt)
                     if (cpl != 0)
                         abort(13);
                     halted    = 1;
-                    exit_code = 257;
                     goto OUTER_LOOP;
                 case 0xa4:    // MOVS (DS:)[rSI] (ES:)[rDI] Move Data from String to String
                     stringOp_MOVSB();
@@ -3760,13 +3759,12 @@ int x86Internal::instruction(int cycles, ErrorInfo interrupt)
                     }
             }
         }
+
     EXEC_LOOP:
         ;
-
     } while (--cycles_remaining);
-OUTER_LOOP:
 
+OUTER_LOOP:
     cycles_processed += (cycles_requested - cycles_remaining);
     eip = (eip + physmem8_ptr - initial_mem_ptr);
-    return exit_code;
 }
