@@ -349,7 +349,7 @@ int x86Internal::segment_translation(int mem8)
     int base, mem8_loc, Qb, Rb, Sb, Tb;
     if (x86_64_long_mode && (CS_flags & (0x000f | 0x0080)) == 0) {
         switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-            case 0x04:
+            case 0x04: // ADD
                 Qb   = phys_mem8[physmem8_ptr++];
                 base = Qb & 7;
                 if (base == 5) {
@@ -366,7 +366,7 @@ int x86Internal::segment_translation(int mem8)
                     mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                 }
                 break;
-            case 0x0c:
+            case 0x0c: // OR
                 Qb       = phys_mem8[physmem8_ptr++];
                 mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                 base     = Qb & 7;
@@ -376,7 +376,7 @@ int x86Internal::segment_translation(int mem8)
                     mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                 }
                 break;
-            case 0x14:
+            case 0x14: // ADC
                 Qb = phys_mem8[physmem8_ptr++];
                     mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                                (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
@@ -388,38 +388,38 @@ int x86Internal::segment_translation(int mem8)
                     mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                 }
                 break;
-            case 0x05:
+            case 0x05: // ADD
                 mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                            (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                 physmem8_ptr += 4;
                 break;
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x06:
-            case 0x07:
+            case 0x00: // ADD
+            case 0x01: // ADD
+            case 0x02: // ADD
+            case 0x03: // ADD
+            case 0x06: // PUSH
+            case 0x07: // POP
                 base     = mem8 & 7;
                 mem8_loc = regs[base];
                 break;
-            case 0x08:
-            case 0x09:
-            case 0x0a:
-            case 0x0b:
-            case 0x0d:
-            case 0x0e:
-            case 0x0f:
+            case 0x08: // OR
+            case 0x09: // OR
+            case 0x0a: // OR
+            case 0x0b: // OR
+            case 0x0d: // OR
+            case 0x0e: // PUSH
+            case 0x0f: // 2-byte instruction escape
                 mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                 base     = mem8 & 7;
                 mem8_loc = (mem8_loc + regs[base]) >> 0;
                 break;
-            case 0x10:
-            case 0x11:
-            case 0x12:
-            case 0x13:
-            case 0x15:
-            case 0x16:
-            case 0x17:
+            case 0x10: // ADC
+            case 0x11: // ADC
+            case 0x12: // ADC
+            case 0x13: // ADC
+            case 0x15: // ADC
+            case 0x16: // PUSH
+            case 0x17: // POP
             default:
                 mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                            (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
@@ -491,7 +491,7 @@ int x86Internal::segment_translation(int mem8)
         return mem8_loc;
     } else {
         switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-            case 0x04:
+            case 0x04: // ADD
                 Qb   = phys_mem8[physmem8_ptr++];
                 base = Qb & 7;
                 if (base == 5) {
@@ -509,7 +509,7 @@ int x86Internal::segment_translation(int mem8)
                     mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                 }
                 break;
-            case 0x0c:
+            case 0x0c: // OR
                 Qb       = phys_mem8[physmem8_ptr++];
                 mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                 base     = Qb & 7;
@@ -519,7 +519,7 @@ int x86Internal::segment_translation(int mem8)
                     mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                 }
                 break;
-            case 0x14:
+            case 0x14: // ADC
                 Qb = phys_mem8[physmem8_ptr++];
                 mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                            (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
@@ -531,39 +531,39 @@ int x86Internal::segment_translation(int mem8)
                     mem8_loc = (mem8_loc + (regs[Rb] << (Qb >> 6))) >> 0;
                 }
                 break;
-            case 0x05:
+            case 0x05: // ADD
                 mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                            (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                 physmem8_ptr += 4;
                 base = 0;
                 break;
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x06:
-            case 0x07:
+            case 0x00: // ADD
+            case 0x01: // ADD
+            case 0x02: // ADD
+            case 0x03: // ADD
+            case 0x06: // PUSH
+            case 0x07: // POP
                 base     = mem8 & 7;
                 mem8_loc = regs[base];
                 break;
-            case 0x08:
-            case 0x09:
-            case 0x0a:
-            case 0x0b:
-            case 0x0d:
-            case 0x0e:
-            case 0x0f:
+            case 0x08: // OR
+            case 0x09: // OR
+            case 0x0a: // OR
+            case 0x0b: // OR
+            case 0x0d: // OR
+            case 0x0e: // PUSH
+            case 0x0f: // 2-byte instruction escape
                 mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                 base     = mem8 & 7;
                 mem8_loc = (mem8_loc + regs[base]) >> 0;
                 break;
-            case 0x10:
-            case 0x11:
-            case 0x12:
-            case 0x13:
-            case 0x15:
-            case 0x16:
-            case 0x17:
+            case 0x10: // ADC
+            case 0x11: // ADC
+            case 0x12: // ADC
+            case 0x13: // ADC
+            case 0x15: // ADC
+            case 0x16: // PUSH
+            case 0x17: // POP
             default:
                 mem8_loc = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                            (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
@@ -1555,7 +1555,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
         stride = 4;
     while (true) {
         switch (OPbyte) {
-            case 0x66:    //   Operand-size override prefix
+            case 0x66: // operand-size override prefix
                 if (init_CS_flags & 0x0100) {
                     stride = 4;
                     CS_flags &= ~0x0100;
@@ -1563,15 +1563,15 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                     stride = 2;
                     CS_flags |= 0x0100;
                 }
-            case 0xf0:    // LOCK   Assert LOCK# Signal Prefix
-            case 0xf2:    // REPNZ  eCX Repeat String Operation Prefix
-            case 0xf3:    // REPZ  eCX Repeat String Operation Prefix
-            case 0x26:    // ES ES  ES segment override prefix
-            case 0x2e:    // CS CS  CS segment override prefix
-            case 0x36:    // SS SS  SS segment override prefix
-            case 0x3e:    // DS DS  DS segment override prefix
-            case 0x64:    // FS FS  FS segment override prefix
-            case 0x65:    // GS GS  GS segment override prefix
+            case 0xf0: // LOCK prefix
+            case 0xf2: // REPN[EZ] repeat string operation prefix
+            case 0xf3: // REP[EZ] repeat string operation prefix
+            case 0x26: // ES segment override prefix
+            case 0x2e: // CS segment override prefix
+            case 0x36: // SS segment override prefix
+            case 0x3e: // DS segment override prefix
+            case 0x64: // FS segment override prefix
+            case 0x65: // GS segment override prefix
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
@@ -1582,7 +1582,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                                           : phys_mem8[mem8_loc ^ last_tlb_val]);
 }
                 break;
-            case 0x67:    //   Address-size override prefix
+            case 0x67: // address-size override prefix
                 if (init_CS_flags & 0x0080) {
                     CS_flags &= ~0x0080;
                 } else {
@@ -1598,236 +1598,236 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                                           : phys_mem8[mem8_loc ^ last_tlb_val]);
 }
                 break;
-            case 0x91:
-            case 0x92:
-            case 0x93:
-            case 0x94:
-            case 0x95:
-            case 0x96:
-            case 0x97:
-            case 0x40:    // INC  Zv Increment by 1
-            case 0x41:    // REX.B   Extension of r/m field, base field, or opcode reg field
-            case 0x42:    // REX.X   Extension of SIB index field
-            case 0x43:    // REX.XB   REX.X and REX.B combination
-            case 0x44:    // REX.R   Extension of ModR/M reg field
-            case 0x45:    // REX.RB   REX.R and REX.B combination
-            case 0x46:    // REX.RX   REX.R and REX.X combination
-            case 0x47:    // REX.RXB   REX.R, REX.X and REX.B combination
-            case 0x48:    // DEC  Zv Decrement by 1
-            case 0x49:    // REX.WB   REX.W and REX.B combination
-            case 0x4a:    // REX.WX   REX.W and REX.X combination
-            case 0x4b:    // REX.WXB   REX.W, REX.X and REX.B combination
-            case 0x4c:    // REX.WR   REX.W and REX.R combination
-            case 0x4d:    // REX.WRB   REX.W, REX.R and REX.B combination
-            case 0x4e:    // REX.WRX   REX.W, REX.R and REX.X combination
-            case 0x4f:    // REX.WRXB   REX.W, REX.R, REX.X and REX.B combination
-            case 0x50:    // PUSH Zv SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-            case 0x51:
-            case 0x52:
-            case 0x53:
-            case 0x54:
-            case 0x55:
-            case 0x56:
-            case 0x57:
-            case 0x58:    // POP SS:[rSP] Zv Pop a Value from the Stack
-            case 0x59:
-            case 0x5a:
-            case 0x5b:
-            case 0x5c:
-            case 0x5d:
-            case 0x5e:
-            case 0x5f:
-            case 0x98:    // CBW AL AX Convert Byte to Word
-            case 0x99:    // CWD AX DX Convert Word to Doubleword
-            case 0xc9:    // LEAVE SS:[rSP] eBP High Level Procedure Exit
-            case 0x9c:    // PUSHF Flags SS:[rSP] Push FLAGS Register onto the Stack
-            case 0x9d:    // POPF SS:[rSP] Flags Pop Stack into FLAGS Register
-            case 0x06:    // PUSH ES SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-            case 0x0e:    // PUSH CS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-            case 0x16:    // PUSH SS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-            case 0x1e:    // PUSH DS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-            case 0x07:    // POP SS:[rSP] ES Pop a Value from the Stack
-            case 0x17:    // POP SS:[rSP] SS Pop a Value from the Stack
-            case 0x1f:    // POP SS:[rSP] DS Pop a Value from the Stack
-            case 0xc3:    // RETN SS:[rSP]  Return from procedure
-            case 0xcb:    // RETF SS:[rSP]  Return from procedure
-            case 0x90:    // XCHG  Zvqp Exchange Register/Memory with Register
-            case 0xcc:    // INT 3 SS:[rSP] Call to Interrupt Procedure
-            case 0xce:    // INTO eFlags SS:[rSP] Call to Interrupt Procedure
-            case 0xcf:    // IRET SS:[rSP] Flags Interrupt Return
-            case 0xf5:    // CMC   Complement Carry Flag
-            case 0xf8:    // CLC   Clear Carry Flag
-            case 0xf9:    // STC   Set Carry Flag
-            case 0xfc:    // CLD   Clear Direction Flag
-            case 0xfd:    // STD   Set Direction Flag
-            case 0xfa:    // CLI   Clear Interrupt Flag
-            case 0xfb:    // STI   Set Interrupt Flag
-            case 0x9e:    // SAHF AH  Store AH into Flags
-            case 0x9f:    // LAHF  AH Load Status Flags into AH Register
-            case 0xf4:    // HLT   Halt
-            case 0xa4:    // MOVS (DS:)[rSI] (ES:)[rDI] Move Data from String to String
-            case 0xa5:    // MOVS DS:[SI] ES:[DI] Move Data from String to String
-            case 0xaa:    // STOS AL (ES:)[rDI] Store String
-            case 0xab:    // STOS AX ES:[DI] Store String
-            case 0xa6:    // CMPS (ES:)[rDI]  Compare String Operands
-            case 0xa7:    // CMPS ES:[DI]  Compare String Operands
-            case 0xac:    // LODS (DS:)[rSI] AL Load String
-            case 0xad:    // LODS DS:[SI] AX Load String
-            case 0xae:    // SCAS (ES:)[rDI]  Scan String
-            case 0xaf:    // SCAS ES:[DI]  Scan String
-            case 0x9b:    // FWAIT   Check pending unmasked floating-point exceptions
-            case 0xec:    // IN DX AL Input from Port
-            case 0xed:    // IN DX eAX Input from Port
-            case 0xee:    // OUT AL DX Output to Port
-            case 0xef:    // OUT eAX DX Output to Port
-            case 0xd7:    // XLAT (DS:)[rBX+AL] AL Table Look-up Translation
-            case 0x27:    // DAA  AL Decimal Adjust AL after Addition
-            case 0x2f:    // DAS  AL Decimal Adjust AL after Subtraction
-            case 0x37:    // AAA  AL ASCII Adjust After Addition
-            case 0x3f:    // AAS  AL ASCII Adjust AL After Subtraction
-            case 0x60:    // PUSHA AX SS:[rSP] Push All General-Purpose Registers
-            case 0x61:    // POPA SS:[rSP] DI Pop All General-Purpose Registers
-            case 0x6c:    // INS DX (ES:)[rDI] Input from Port to String
-            case 0x6d:    // INS DX ES:[DI] Input from Port to String
-            case 0x6e:    // OUTS (DS):[rSI] DX Output String to Port
-            case 0x6f:    // OUTS DS:[SI] DX Output String to Port
+            case 0x91: // XCHG C
+            case 0x92: // XCHG D
+            case 0x93: // XCHG B
+            case 0x94: // XCHG SP
+            case 0x95: // XCHG BP
+            case 0x96: // XCHG SI
+            case 0x97: // XCHG DI
+            case 0x40: // INC A
+            case 0x41: // INC C
+            case 0x42: // INC D
+            case 0x43: // INC B
+            case 0x44: // INC SP
+            case 0x45: // INC BP
+            case 0x46: // INC SI
+            case 0x47: // INC DI
+            case 0x48: // DEC A
+            case 0x49: // DEC C
+            case 0x4a: // DEC D
+            case 0x4b: // DEC B
+            case 0x4c: // DEC SP
+            case 0x4d: // DEC BP
+            case 0x4e: // DEC SI
+            case 0x4f: // DEC DI
+            case 0x50: // PUSH A
+            case 0x51: // PUSH C
+            case 0x52: // PUSH D
+            case 0x53: // PUSH B
+            case 0x54: // PUSH SP
+            case 0x55: // PUSH BP
+            case 0x56: // PUSH SI
+            case 0x57: // PUSH DI
+            case 0x58: // POP A
+            case 0x59: // POP C
+            case 0x5a: // POP D
+            case 0x5b: // POP B
+            case 0x5c: // POP SP
+            case 0x5d: // POP BP
+            case 0x5e: // POP SI
+            case 0x5f: // POP DI
+            case 0x98: // CBW
+            case 0x99: // CWD
+            case 0xc9: // LEAVE
+            case 0x9c: // PUSHF
+            case 0x9d: // POPF
+            case 0x06: // PUSH
+            case 0x0e: // PUSH
+            case 0x16: // PUSH
+            case 0x1e: // PUSH
+            case 0x07: // POP
+            case 0x17: // POP
+            case 0x1f: // POP
+            case 0xc3: // RET
+            case 0xcb: // RET
+            case 0x90: // NOP
+            case 0xcc: // INT
+            case 0xce: // INTO
+            case 0xcf: // IRET
+            case 0xf5: // CMC
+            case 0xf8: // CLC
+            case 0xf9: // STC
+            case 0xfc: // CLD
+            case 0xfd: // STD
+            case 0xfa: // CLI
+            case 0xfb: // STI
+            case 0x9e: // SAHF
+            case 0x9f: // LAHF
+            case 0xf4: // HLT
+            case 0xa4: // MOVSB
+            case 0xa5: // MOVSW/D
+            case 0xaa: // STOSB
+            case 0xab: // STOSW/D
+            case 0xa6: // CMPSB
+            case 0xa7: // CMPSW/D
+            case 0xac: // LOSB
+            case 0xad: // LOSW/D
+            case 0xae: // SCASB
+            case 0xaf: // SCASW/D
+            case 0x9b: // FWAIT/WAIT
+            case 0xec: // IN AL,DX
+            case 0xed: // IN AX,DX
+            case 0xee: // OUT DX,AL
+            case 0xef: // OUT DX,AX
+            case 0xd7: // XLAT
+            case 0x27: // DAA
+            case 0x2f: // DAS
+            case 0x37: // AAA
+            case 0x3f: // AAS
+            case 0x60: // PUSHA
+            case 0x61: // POPA
+            case 0x6c: // INSB
+            case 0x6d: // INSW/D
+            case 0x6e: // OUTSB
+            case 0x6f: // OUTSW/D
                 goto EXEC_LOOP;
-            case 0xb0:    // MOV Ib Zb Move
-            case 0xb1:
-            case 0xb2:
-            case 0xb3:
-            case 0xb4:
-            case 0xb5:
-            case 0xb6:
-            case 0xb7:
-            case 0x04:    // ADD Ib AL Add
-            case 0x0c:    // OR Ib AL Logical Inclusive OR
-            case 0x14:    // ADC Ib AL Add with Carry
-            case 0x1c:    // SBB Ib AL Integer Subtraction with Borrow
-            case 0x24:    // AND Ib AL Logical AND
-            case 0x2c:    // SUB Ib AL Subtract
-            case 0x34:    // XOR Ib AL Logical Exclusive OR
-            case 0x3c:    // CMP AL  Compare Two Operands
-            case 0xa8:    // TEST AL  Logical Compare
-            case 0x6a:    // PUSH Ibss SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-            case 0xeb:    // JMP Jbs  Jump
-            case 0x70:    // JO Jbs  Jump short if overflow (OF=1)
-            case 0x71:    // JNO Jbs  Jump short if not overflow (OF=0)
-            case 0x72:    // JB Jbs  Jump short if below/not above or equal/carry (CF=1)
-            case 0x73:    // JNB Jbs  Jump short if not below/above or equal/not carry (CF=0)
-            case 0x76:    // JBE Jbs  Jump short if below or equal/not above (CF=1 AND ZF=1)
-            case 0x77:    // JNBE Jbs  Jump short if not below or equal/above (CF=0 AND ZF=0)
-            case 0x78:    // JS Jbs  Jump short if sign (SF=1)
-            case 0x79:    // JNS Jbs  Jump short if not sign (SF=0)
-            case 0x7a:    // JP Jbs  Jump short if parity/parity even (PF=1)
-            case 0x7b:    // JNP Jbs  Jump short if not parity/parity odd
-            case 0x7c:    // JL Jbs  Jump short if less/not greater (SF!=OF)
-            case 0x7d:    // JNL Jbs  Jump short if not less/greater or equal (SF=OF)
-            case 0x7e:    // JLE Jbs  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
-            case 0x7f:    // JNLE Jbs  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
-            case 0x74:    // JZ Jbs  Jump short if zero/equal (ZF=0)
-            case 0x75:    // JNZ Jbs  Jump short if not zero/not equal (ZF=1)
-            case 0xe0:    // LOOPNZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=0
-            case 0xe1:    // LOOPZ Jbs eCX Decrement count; Jump short if count!=0 and ZF=1
-            case 0xe2:    // LOOP Jbs eCX Decrement count; Jump short if count!=0
-            case 0xe3:    // JCXZ Jbs  Jump short if eCX register is 0
-            case 0xcd:    // INT Ib SS:[rSP] Call to Interrupt Procedure
-            case 0xe4:    // IN Ib AL Input from Port
-            case 0xe5:    // IN Ib eAX Input from Port
-            case 0xe6:    // OUT AL Ib Output to Port
-            case 0xe7:    // OUT eAX Ib Output to Port
-            case 0xd4:    // AAM  AL ASCII Adjust AX After Multiply
-            case 0xd5:    // AAD  AL ASCII Adjust AX Before Division
+            case 0xb0: // MOV AL
+            case 0xb1: // MOV CL
+            case 0xb2: // MOV DL
+            case 0xb3: // MOV BL
+            case 0xb4: // MOV AH
+            case 0xb5: // MOV CH
+            case 0xb6: // MOV DH
+            case 0xb7: // MOV BH
+            case 0x04: // ADD
+            case 0x0c: // OR
+            case 0x14: // ADC
+            case 0x1c: // SBB
+            case 0x24: // AND
+            case 0x2c: // SUB
+            case 0x34: // XOR
+            case 0x3c: // CMP
+            case 0xa8: // TEST
+            case 0x6a: // PUSH
+            case 0xeb: // JMP
+            case 0x70: // JO
+            case 0x71: // JNO
+            case 0x72: // JB
+            case 0x73: // JNB
+            case 0x76: // JBE
+            case 0x77: // JNBE
+            case 0x78: // JS
+            case 0x79: // JNS
+            case 0x7a: // JP
+            case 0x7b: // JNP
+            case 0x7c: // JL
+            case 0x7d: // JNL
+            case 0x7e: // JLE
+            case 0x7f: // JNLE
+            case 0x74: // JZ
+            case 0x75: // JNZ
+            case 0xe0: // LOOPNE
+            case 0xe1: // LOOPE
+            case 0xe2: // LOOP
+            case 0xe3: // JCXZ
+            case 0xcd: // INT
+            case 0xe4: // IN AL,
+            case 0xe5: // IN AX,
+            case 0xe6: // OUT ,AL
+            case 0xe7: // OUT ,AX
+            case 0xd4: // AAM
+            case 0xd5: // AAD
                 n++;
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xb8:    // MOV Ivqp Zvqp Move
-            case 0xb9:
-            case 0xba:
-            case 0xbb:
-            case 0xbc:
-            case 0xbd:
-            case 0xbe:
-            case 0xbf:
-            case 0x05:    // ADD Ivds rAX Add
-            case 0x0d:    // OR Ivds rAX Logical Inclusive OR
-            case 0x15:    // ADC Ivds rAX Add with Carry
-            case 0x1d:    // SBB Ivds rAX Integer Subtraction with Borrow
-            case 0x25:    // AND Ivds rAX Logical AND
-            case 0x2d:    // SUB Ivds rAX Subtract
-            case 0x35:    // XOR Ivds rAX Logical Exclusive OR
-            case 0x3d:    // CMP rAX  Compare Two Operands
-            case 0xa9:    // TEST rAX  Logical Compare
-            case 0x68:    // PUSH Ivs SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-            case 0xe9:    // JMP Jvds  Jump
-            case 0xe8:    // CALL Jvds SS:[rSP] Call Procedure
+            case 0xb8: // MOV A
+            case 0xb9: // MOV C
+            case 0xba: // MOV D
+            case 0xbb: // MOV B
+            case 0xbc: // MOV SP
+            case 0xbd: // MOV BP
+            case 0xbe: // MOV SI
+            case 0xbf: // MOV DI
+            case 0x05: // ADD
+            case 0x0d: // OR
+            case 0x15: // ADC
+            case 0x1d: // SBB
+            case 0x25: // AND
+            case 0x2d: // SUB
+            case 0x35: // XOR
+            case 0x3d: // CMP
+            case 0xa9: // TEST
+            case 0x68: // PUSH
+            case 0xe9: // JMP
+            case 0xe8: // CALL
                 n += stride;
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0x88:    // MOV Gb Eb Move
-            case 0x89:    // MOV Gvqp Evqp Move
-            case 0x8a:    // MOV Eb Gb Move
-            case 0x8b:    // MOV Evqp Gvqp Move
-            case 0x86:    // XCHG  Gb Exchange Register/Memory with Register
-            case 0x87:    // XCHG  Gvqp Exchange Register/Memory with Register
-            case 0x8e:    // MOV Ew Sw Move
-            case 0x8c:    // MOV Sw Mw Move
-            case 0xc4:    // LES Mp ES Load Far Pointer
-            case 0xc5:    // LDS Mp DS Load Far Pointer
-            case 0x00:    // ADD Gb Eb Add
-            case 0x08:    // OR Gb Eb Logical Inclusive OR
-            case 0x10:    // ADC Gb Eb Add with Carry
-            case 0x18:    // SBB Gb Eb Integer Subtraction with Borrow
-            case 0x20:    // AND Gb Eb Logical AND
-            case 0x28:    // SUB Gb Eb Subtract
-            case 0x30:    // XOR Gb Eb Logical Exclusive OR
-            case 0x38:    // CMP Eb  Compare Two Operands
-            case 0x01:    // ADD Gvqp Evqp Add
-            case 0x09:    // OR Gvqp Evqp Logical Inclusive OR
-            case 0x11:    // ADC Gvqp Evqp Add with Carry
-            case 0x19:    // SBB Gvqp Evqp Integer Subtraction with Borrow
-            case 0x21:    // AND Gvqp Evqp Logical AND
-            case 0x29:    // SUB Gvqp Evqp Subtract
-            case 0x31:    // XOR Gvqp Evqp Logical Exclusive OR
-            case 0x39:    // CMP Evqp  Compare Two Operands
-            case 0x02:    // ADD Eb Gb Add
-            case 0x0a:    // OR Eb Gb Logical Inclusive OR
-            case 0x12:    // ADC Eb Gb Add with Carry
-            case 0x1a:    // SBB Eb Gb Integer Subtraction with Borrow
-            case 0x22:    // AND Eb Gb Logical AND
-            case 0x2a:    // SUB Eb Gb Subtract
-            case 0x32:    // XOR Eb Gb Logical Exclusive OR
-            case 0x3a:    // CMP Gb  Compare Two Operands
-            case 0x03:    // ADD Evqp Gvqp Add
-            case 0x0b:    // OR Evqp Gvqp Logical Inclusive OR
-            case 0x13:    // ADC Evqp Gvqp Add with Carry
-            case 0x1b:    // SBB Evqp Gvqp Integer Subtraction with Borrow
-            case 0x23:    // AND Evqp Gvqp Logical AND
-            case 0x2b:    // SUB Evqp Gvqp Subtract
-            case 0x33:    // XOR Evqp Gvqp Logical Exclusive OR
-            case 0x3b:    // CMP Gvqp  Compare Two Operands
-            case 0x84:    // TEST Eb  Logical Compare
-            case 0x85:    // TEST Evqp  Logical Compare
-            case 0xd0:    // ROL 1 Eb Rotate
-            case 0xd1:    // ROL 1 Evqp Rotate
-            case 0xd2:    // ROL CL Eb Rotate
-            case 0xd3:    // ROL CL Evqp Rotate
-            case 0x8f:    // POP SS:[rSP] Ev Pop a Value from the Stack
-            case 0x8d:    // LEA M Gvqp Load Effective Address
-            case 0xfe:    // INC  Eb Increment by 1
-            case 0xff:    // INC  Evqp Increment by 1
-            case 0xd8:    // FADD Msr ST Add
-            case 0xd9:    // FLD ESsr ST Load Floating Point Value
-            case 0xda:    // FIADD Mdi ST Add
-            case 0xdb:    // FILD Mdi ST Load Integer
-            case 0xdc:    // FADD Mdr ST Add
-            case 0xdd:    // FLD Mdr ST Load Floating Point Value
-            case 0xde:    // FIADD Mwi ST Add
-            case 0xdf:    // FILD Mwi ST Load Integer
-            case 0x62:    // BOUND Gv SS:[rSP] Check Array Index Against Bounds
-            case 0x63:    // ARPL Ew  Adjust RPL Field of Segment Selector
+            case 0x88: // MOV
+            case 0x89: // MOV
+            case 0x8a: // MOV
+            case 0x8b: // MOV
+            case 0x86: // XCHG
+            case 0x87: // XCHG
+            case 0x8e: // MOV
+            case 0x8c: // MOV
+            case 0xc4: // LES
+            case 0xc5: // LDS
+            case 0x00: // ADD
+            case 0x08: // OR
+            case 0x10: // ADC
+            case 0x18: // SBB
+            case 0x20: // AND
+            case 0x28: // SUB
+            case 0x30: // XOR
+            case 0x38: // CMP
+            case 0x01: // ADD
+            case 0x09: // OR
+            case 0x11: // ADC
+            case 0x19: // SBB
+            case 0x21: // AND
+            case 0x29: // SUB
+            case 0x31: // XOR
+            case 0x39: // CMP
+            case 0x02: // ADD
+            case 0x0a: // OR
+            case 0x12: // ADC
+            case 0x1a: // SBB
+            case 0x22: // AND
+            case 0x2a: // SUB
+            case 0x32: // XOR
+            case 0x3a: // CMP
+            case 0x03: // ADD
+            case 0x0b: // OR
+            case 0x13: // ADC
+            case 0x1b: // SBB
+            case 0x23: // AND
+            case 0x2b: // SUB
+            case 0x33: // XOR
+            case 0x3b: // CMP
+            case 0x84: // TEST
+            case 0x85: // TEST
+            case 0xd0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
+            case 0xd1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
+            case 0xd2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
+            case 0xd3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
+            case 0x8f: // POP
+            case 0x8d: // LEA
+            case 0xfe: // G4 (INC, DEC, -, -, -, -, -)
+            case 0xff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
+            case 0xd8: // ESC (80387)
+            case 0xd9: // ESC (80387)
+            case 0xda: // ESC (80387)
+            case 0xdb: // ESC (80387)
+            case 0xdc: // ESC (80387)
+            case 0xdd: // ESC (80387)
+            case 0xde: // ESC (80387)
+            case 0xdf: // ESC (80387)
+            case 0x62: // BOUND
+            case 0x63: // ARPL
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
@@ -1906,10 +1906,10 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xa0:    // MOV Ob AL Move
-            case 0xa1:    // MOV Ovqp rAX Move
-            case 0xa2:    // MOV AL Ob Move
-            case 0xa3:    // MOV rAX Ovqp Move
+            case 0xa0: // MOV AL,
+            case 0xa1: // MOV AX,
+            case 0xa2: // MOV ,AL
+            case 0xa3: // MOV ,AX
                 if (CS_flags & 0x0100)
                     n += 2;
                 else
@@ -1917,13 +1917,13 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xc6:    // MOV Ib Eb Move
-            case 0x80:    // ADD Ib Eb Add
-            case 0x82:    // ADD Ib Eb Add
-            case 0x83:    // ADD Ibs Evqp Add
-            case 0x6b:    // IMUL Evqp Gvqp Signed Multiply
-            case 0xc0:    // ROL Ib Eb Rotate
-            case 0xc1:    // ROL Ib Evqp Rotate
+            case 0xc6: // MOV
+            case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+            case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+            case 0x83: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+            case 0x6b: // IMUL
+            case 0xc0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
+            case 0xc1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
@@ -2004,9 +2004,9 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xc7:    // MOV Ivds Evqp Move
-            case 0x81:    // ADD Ivds Evqp Add
-            case 0x69:    // IMUL Evqp Gvqp Signed Multiply
+            case 0xc7: // MOV
+            case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+            case 0x69: // IMUL
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc = (eip_offset + (n++)) >> 0;
@@ -2082,7 +2082,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xf6:    // TEST Eb  Logical Compare
+            case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
@@ -2165,7 +2165,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                         abort(6);
                 }
                 goto EXEC_LOOP;
-            case 0xf7:    // TEST Evqp  Logical Compare
+            case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
@@ -2248,28 +2248,28 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                         abort(6);
                 }
                 goto EXEC_LOOP;
-            case 0xea:    // JMPF Ap  Jump
-            case 0x9a:    // CALLF Ap SS:[rSP] Call Procedure
+            case 0xea: // JMPF
+            case 0x9a: // CALLF
                 n += 2 + stride;
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xc2:    // RETN SS:[rSP]  Return from procedure
-            case 0xca:    // RETF Iw  Return from procedure
+            case 0xc2: // RET
+            case 0xca: // RET
                 n += 2;
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xc8:    // ENTER Iw SS:[rSP] Make Stack Frame for Procedure Parameters
+            case 0xc8: // ENTER
                 n += 3;
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
-            case 0xd6:    // SALC   Undefined and Reserved; Does not Generate #UD
-            case 0xf1:    // INT1   Undefined and Reserved; Does not Generate #UD
+            case 0xd6: // -
+            case 0xf1: // -
             default:
                 abort(6);
-            case 0x0f:    // two-op instruction prefix
+            case 0x0f: // 2-byte instruction escape
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc = (eip_offset + (n++)) >> 0;
@@ -2277,102 +2277,102 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                                 ? __ld_8bits_mem8_read()
                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
                 switch (OPbyte) {
-                    case 0x06:    // CLTS  CR0 Clear Task-Switched Flag in CR0
-                    case 0xa2:    // CPUID  IA32_BIOS_SIGN_ID CPU Identification
-                    case 0x31:    // RDTSC IA32_TIME_STAMP_COUNTER EAX Read Time-Stamp Counter
-                    case 0xa0:    // PUSH FS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-                    case 0xa8:    // PUSH GS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-                    case 0xa1:    // POP SS:[rSP] FS Pop a Value from the Stack
-                    case 0xa9:    // POP SS:[rSP] GS Pop a Value from the Stack
-                    case 0xc8:    // BSWAP  Zvqp Byte Swap
-                    case 0xc9:
-                    case 0xca:
-                    case 0xcb:
-                    case 0xcc:
-                    case 0xcd:
-                    case 0xce:
-                    case 0xcf:
+                    case 0x06: // CLTS
+                    case 0xa2: // -
+                    case 0x31: // -
+                    case 0xa0: // PUSH FS
+                    case 0xa8: // PUSH GS
+                    case 0xa1: // POP FS
+                    case 0xa9: // POP GS
+                    case 0xc8: // -
+                    case 0xc9: // -
+                    case 0xca: // -
+                    case 0xcb: // -
+                    case 0xcc: // -
+                    case 0xcd: // -
+                    case 0xce: // -
+                    case 0xcf: // -
                         goto EXEC_LOOP;
-                    case 0x80:    // JO Jvds  Jump short if overflow (OF=1)
-                    case 0x81:    // JNO Jvds  Jump short if not overflow (OF=0)
-                    case 0x82:    // JB Jvds  Jump short if below/not above or equal/carry (CF=1)
-                    case 0x83:    // JNB Jvds  Jump short if not below/above or equal/not carry (CF=0)
-                    case 0x84:    // JZ Jvds  Jump short if zero/equal (ZF=0)
-                    case 0x85:    // JNZ Jvds  Jump short if not zero/not equal (ZF=1)
-                    case 0x86:    // JBE Jvds  Jump short if below or equal/not above (CF=1 AND ZF=1)
-                    case 0x87:    // JNBE Jvds  Jump short if not below or equal/above (CF=0 AND ZF=0)
-                    case 0x88:    // JS Jvds  Jump short if sign (SF=1)
-                    case 0x89:    // JNS Jvds  Jump short if not sign (SF=0)
-                    case 0x8a:    // JP Jvds  Jump short if parity/parity even (PF=1)
-                    case 0x8b:    // JNP Jvds  Jump short if not parity/parity odd
-                    case 0x8c:    // JL Jvds  Jump short if less/not greater (SF!=OF)
-                    case 0x8d:    // JNL Jvds  Jump short if not less/greater or equal (SF=OF)
-                    case 0x8e:    // JLE Jvds  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
-                    case 0x8f:    // JNLE Jvds  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
+                    case 0x80: // JO
+                    case 0x81: // JNO
+                    case 0x82: // JB
+                    case 0x83: // JNB
+                    case 0x84: // JZ
+                    case 0x85: // JNZ
+                    case 0x86: // JBE
+                    case 0x87: // JNBE
+                    case 0x88: // JS
+                    case 0x89: // JNS
+                    case 0x8a: // JP
+                    case 0x8b: // JNP
+                    case 0x8c: // JL
+                    case 0x8d: // JNL
+                    case 0x8e: // JLE
+                    case 0x8f: // JNLE
                         n += stride;
                         if (n > 15)
                             abort(6);
                         goto EXEC_LOOP;
-                    case 0x90:    // SETO  Eb Set Byte on Condition - overflow (OF=1)
-                    case 0x91:    // SETNO  Eb Set Byte on Condition - not overflow (OF=0)
-                    case 0x92:    // SETB  Eb Set Byte on Condition - below/not above or equal/carry (CF=1)
-                    case 0x93:    // SETNB  Eb Set Byte on Condition - not below/above or equal/not carry (CF=0)
-                    case 0x94:    // SETZ  Eb Set Byte on Condition - zero/equal (ZF=0)
-                    case 0x95:    // SETNZ  Eb Set Byte on Condition - not zero/not equal (ZF=1)
-                    case 0x96:    // SETBE  Eb Set Byte on Condition - below or equal/not above (CF=1 AND ZF=1)
-                    case 0x97:    // SETNBE  Eb Set Byte on Condition - not below or equal/above (CF=0 AND ZF=0)
-                    case 0x98:    // SETS  Eb Set Byte on Condition - sign (SF=1)
-                    case 0x99:    // SETNS  Eb Set Byte on Condition - not sign (SF=0)
-                    case 0x9a:    // SETP  Eb Set Byte on Condition - parity/parity even (PF=1)
-                    case 0x9b:    // SETNP  Eb Set Byte on Condition - not parity/parity odd
-                    case 0x9c:    // SETL  Eb Set Byte on Condition - less/not greater (SF!=OF)
-                    case 0x9d:    // SETNL  Eb Set Byte on Condition - not less/greater or equal (SF=OF)
-                    case 0x9e:    // SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR (SF!=OF))
-                    case 0x9f:    // SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0) AND (SF=OF))
-                    case 0x40:    // CMOVO Evqp Gvqp Conditional Move - overflow (OF=1)
-                    case 0x41:    // CMOVNO Evqp Gvqp Conditional Move - not overflow (OF=0)
-                    case 0x42:    // CMOVB Evqp Gvqp Conditional Move - below/not above or equal/carry (CF=1)
-                    case 0x43:    // CMOVNB Evqp Gvqp Conditional Move - not below/above or equal/not carry (CF=0)
-                    case 0x44:    // CMOVZ Evqp Gvqp Conditional Move - zero/equal (ZF=0)
-                    case 0x45:    // CMOVNZ Evqp Gvqp Conditional Move - not zero/not equal (ZF=1)
-                    case 0x46:    // CMOVBE Evqp Gvqp Conditional Move - below or equal/not above (CF=1 AND ZF=1)
-                    case 0x47:    // CMOVNBE Evqp Gvqp Conditional Move - not below or equal/above (CF=0 AND ZF=0)
-                    case 0x48:    // CMOVS Evqp Gvqp Conditional Move - sign (SF=1)
-                    case 0x49:    // CMOVNS Evqp Gvqp Conditional Move - not sign (SF=0)
-                    case 0x4a:    // CMOVP Evqp Gvqp Conditional Move - parity/parity even (PF=1)
-                    case 0x4b:    // CMOVNP Evqp Gvqp Conditional Move - not parity/parity odd
-                    case 0x4c:    // CMOVL Evqp Gvqp Conditional Move - less/not greater (SF!=OF)
-                    case 0x4d:    // CMOVNL Evqp Gvqp Conditional Move - not less/greater or equal (SF=OF)
-                    case 0x4e:    // CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1) OR (SF!=OF))
-                    case 0x4f:    // CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater ((ZF=0) AND
+                    case 0x90: // SETO
+                    case 0x91: // SETNO
+                    case 0x92: // SETB
+                    case 0x93: // SETNB
+                    case 0x94: // SETZ
+                    case 0x95: // SETNZ
+                    case 0x96: // SETBE
+                    case 0x97: // SETNBE
+                    case 0x98: // SETS
+                    case 0x99: // SETNS
+                    case 0x9a: // SETP
+                    case 0x9b: // SETNP
+                    case 0x9c: // SETL
+                    case 0x9d: // SETNL
+                    case 0x9e: // SETLE
+                    case 0x9f: // SETNLE
+                    case 0x40: // -
+                    case 0x41: // -
+                    case 0x42: // -
+                    case 0x43: // -
+                    case 0x44: // -
+                    case 0x45: // -
+                    case 0x46: // -
+                    case 0x47: // -
+                    case 0x48: // -
+                    case 0x49: // -
+                    case 0x4a: // -
+                    case 0x4b: // -
+                    case 0x4c: // -
+                    case 0x4d: // -
+                    case 0x4e: // -
+                    case 0x4f: // -
                                   // (SF=OF))
-                    case 0xb6:    // MOVZX Eb Gvqp Move with Zero-Extend
-                    case 0xb7:    // MOVZX Ew Gvqp Move with Zero-Extend
-                    case 0xbe:    // MOVSX Eb Gvqp Move with Sign-Extension
-                    case 0xbf:    // MOVSX Ew Gvqp Move with Sign-Extension
-                    case 0x00:    // SLDT LDTR Mw Store Local Descriptor Table Register
-                    case 0x01:    // SGDT GDTR Ms Store Global Descriptor Table Register
-                    case 0x02:    // LAR Mw Gvqp Load Access Rights Byte
-                    case 0x03:    // LSL Mw Gvqp Load Segment Limit
-                    case 0x20:    // MOV Cd Rd Move to/from Control Registers
-                    case 0x22:    // MOV Rd Cd Move to/from Control Registers
-                    case 0x23:    // MOV Rd Dd Move to/from Debug Registers
-                    case 0xb2:    // LSS Mptp SS Load Far Pointer
-                    case 0xb4:    // LFS Mptp FS Load Far Pointer
-                    case 0xb5:    // LGS Mptp GS Load Far Pointer
-                    case 0xa5:    // SHLD Gvqp Evqp Double Precision Shift Left
-                    case 0xad:    // SHRD Gvqp Evqp Double Precision Shift Right
-                    case 0xa3:    // BT Evqp  Bit Test
-                    case 0xab:    // BTS Gvqp Evqp Bit Test and Set
-                    case 0xb3:    // BTR Gvqp Evqp Bit Test and Reset
-                    case 0xbb:    // BTC Gvqp Evqp Bit Test and Complement
-                    case 0xbc:    // BSF Evqp Gvqp Bit Scan Forward
-                    case 0xbd:    // BSR Evqp Gvqp Bit Scan Reverse
-                    case 0xaf:    // IMUL Evqp Gvqp Signed Multiply
-                    case 0xc0:    // XADD  Eb Exchange and Add
-                    case 0xc1:    // XADD  Evqp Exchange and Add
-                    case 0xb0:    // CMPXCHG Gb Eb Compare and Exchange
-                    case 0xb1:    // CMPXCHG Gvqp Evqp Compare and Exchange
+                    case 0xb6: // MOVZX
+                    case 0xb7: // MOVZX
+                    case 0xbe: // MOVSX
+                    case 0xbf: // MOVSX
+                    case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
+                    case 0x01: // G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)
+                    case 0x02: // LAR
+                    case 0x03: // LSL
+                    case 0x20: // MOV
+                    case 0x22: // MOV
+                    case 0x23: // MOV
+                    case 0xb2: // LSS
+                    case 0xb4: // LFS
+                    case 0xb5: // LGS
+                    case 0xa5: // SHLD
+                    case 0xad: // SHRD
+                    case 0xa3: // BT
+                    case 0xab: // BTS
+                    case 0xb3: // BTR
+                    case 0xbb: // BTC
+                    case 0xbc: // BSF
+                    case 0xbd: // BSR
+                    case 0xaf: // IMUL
+                    case 0xc0: // -
+                    case 0xc1: // -
+                    case 0xb0: // -
+                    case 0xb1: // -
                         if ((n + 1) > 15)
                             abort(6);
                         mem8_loc           = (eip_offset + (n++)) >> 0;
@@ -2449,9 +2449,9 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                         if (n > 15)
                             abort(6);
                         goto EXEC_LOOP;
-                    case 0xa4:    // SHLD Gvqp Evqp Double Precision Shift Left
-                    case 0xac:    // SHRD Gvqp Evqp Double Precision Shift Right
-                    case 0xba:    // BT Evqp  Bit Test
+                    case 0xa4: // SHLD
+                    case 0xac: // SHRD
+                    case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
                         if ((n + 1) > 15)
                             abort(6);
                         mem8_loc           = (eip_offset + (n++)) >> 0;
@@ -2531,122 +2531,122 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                         if (n > 15)
                             abort(6);
                         goto EXEC_LOOP;
-                    case 0x04:
-                    case 0x05:    // LOADALL  AX Load All of the CPU Registers
-                    case 0x07:    // LOADALL  EAX Load All of the CPU Registers
-                    case 0x08:    // INVD   Invalidate Internal Caches
-                    case 0x09:    // WBINVD   Write Back and Invalidate Cache
-                    case 0x0a:
-                    case 0x0b:    // UD2   Undefined Instruction
-                    case 0x0c:
-                    case 0x0d:    // NOP Ev  No Operation
-                    case 0x0e:
-                    case 0x0f:
-                    case 0x10:    // MOVUPS Wps Vps Move Unaligned Packed Single-FP Values
-                    case 0x11:    // MOVUPS Vps Wps Move Unaligned Packed Single-FP Values
-                    case 0x12:    // MOVHLPS Uq Vq Move Packed Single-FP Values High to Low
-                    case 0x13:    // MOVLPS Vq Mq Move Low Packed Single-FP Values
-                    case 0x14:    // UNPCKLPS Wq Vps Unpack and Interleave Low Packed Single-FP Values
-                    case 0x15:    // UNPCKHPS Wq Vps Unpack and Interleave High Packed Single-FP Values
-                    case 0x16:    // MOVLHPS Uq Vq Move Packed Single-FP Values Low to High
-                    case 0x17:    // MOVHPS Vq Mq Move High Packed Single-FP Values
-                    case 0x18:    // HINT_NOP Ev  Hintable NOP
-                    case 0x19:    // HINT_NOP Ev  Hintable NOP
-                    case 0x1a:    // HINT_NOP Ev  Hintable NOP
-                    case 0x1b:    // HINT_NOP Ev  Hintable NOP
-                    case 0x1c:    // HINT_NOP Ev  Hintable NOP
-                    case 0x1d:    // HINT_NOP Ev  Hintable NOP
-                    case 0x1e:    // HINT_NOP Ev  Hintable NOP
-                    case 0x1f:    // HINT_NOP Ev  Hintable NOP
-                    case 0x21:    // MOV Dd Rd Move to/from Debug Registers
-                    case 0x24:    // MOV Td Rd Move to/from Test Registers
-                    case 0x25:
-                    case 0x26:    // MOV Rd Td Move to/from Test Registers
-                    case 0x27:
-                    case 0x28:    // MOVAPS Wps Vps Move Aligned Packed Single-FP Values
-                    case 0x29:    // MOVAPS Vps Wps Move Aligned Packed Single-FP Values
-                    case 0x2a:    // CVTPI2PS Qpi Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
-                    case 0x2b:    // MOVNTPS Vps Mps Store Packed Single-FP Values Using Non-Temporal Hint
-                    case 0x2c:    // CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11 PackedDW
+                    case 0x04: // -
+                    case 0x05: // -
+                    case 0x07: // -
+                    case 0x08: // -
+                    case 0x09: // -
+                    case 0x0a: // -
+                    case 0x0b: // -
+                    case 0x0c: // -
+                    case 0x0d: // -
+                    case 0x0e: // -
+                    case 0x0f: // -
+                    case 0x10: // -
+                    case 0x11: // -
+                    case 0x12: // -
+                    case 0x13: // -
+                    case 0x14: // -
+                    case 0x15: // -
+                    case 0x16: // -
+                    case 0x17: // -
+                    case 0x18: // -
+                    case 0x19: // -
+                    case 0x1a: // -
+                    case 0x1b: // -
+                    case 0x1c: // -
+                    case 0x1d: // -
+                    case 0x1e: // -
+                    case 0x1f: // -
+                    case 0x21: // MOV
+                    case 0x24: // MOV
+                    case 0x25: // -
+                    case 0x26: // MOV
+                    case 0x27: // -
+                    case 0x28: // -
+                    case 0x29: // -
+                    case 0x2a: // -
+                    case 0x2b: // -
+                    case 0x2c: // -
                                   // Integers
-                    case 0x2d:    // CVTPS2PI Wpsq Ppi Convert Packed Single-FP Values to1.11 PackedDW Integers
-                    case 0x2e:    // UCOMISS Vss  Unordered Compare Scalar Single-FP Values and Set EFLAGS
-                    case 0x2f:    // COMISS Vss  Compare Scalar Ordered Single-FP Values and Set EFLAGS
-                    case 0x30:    // WRMSR rCX MSR Write to Model Specific Register
-                    case 0x32:    // RDMSR rCX rAX Read from Model Specific Register
-                    case 0x33:    // RDPMC PMC EAX Read Performance-Monitoring Counters
-                    case 0x34:    // SYSENTER IA32_SYSENTER_CS SS Fast System Call
-                    case 0x35:    // SYSEXIT IA32_SYSENTER_CS SS Fast Return from Fast System Call
-                    case 0x36:
-                    case 0x37:    // GETSEC EAX  GETSEC Leaf Functions
-                    case 0x38:    // PSHUFB Qq Pq Packed Shuffle Bytes
-                    case 0x39:
-                    case 0x3a:    // ROUNDPS Wps Vps Round Packed Single-FP Values
-                    case 0x3b:
-                    case 0x3c:
-                    case 0x3d:
-                    case 0x3e:
-                    case 0x3f:
-                    case 0x50:    // MOVMSKPS Ups Gdqp Extract Packed Single-FP Sign Mask
-                    case 0x51:    // SQRTPS Wps Vps Compute Square Roots of Packed Single-FP Values
-                    case 0x52:    // RSQRTPS Wps Vps Compute Recipr. of Square Roots of Packed Single-FP Values
-                    case 0x53:    // RCPPS Wps Vps Compute Reciprocals of Packed Single-FP Values
-                    case 0x54:    // ANDPS Wps Vps Bitwise Logical AND of Packed Single-FP Values
-                    case 0x55:    // ANDNPS Wps Vps Bitwise Logical AND NOT of Packed Single-FP Values
-                    case 0x56:    // ORPS Wps Vps Bitwise Logical OR of Single-FP Values
-                    case 0x57:    // XORPS Wps Vps Bitwise Logical XOR for Single-FP Values
-                    case 0x58:    // ADDPS Wps Vps Add Packed Single-FP Values
-                    case 0x59:    // MULPS Wps Vps Multiply Packed Single-FP Values
-                    case 0x5a:    // CVTPS2PD Wps Vpd Convert Packed Single-FP Values to1.11 PackedDouble-FP Values
-                    case 0x5b:    // CVTDQ2PS Wdq Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
-                    case 0x5c:    // SUBPS Wps Vps Subtract Packed Single-FP Values
-                    case 0x5d:    // MINPS Wps Vps Return Minimum Packed Single-FP Values
-                    case 0x5e:    // DIVPS Wps Vps Divide Packed Single-FP Values
-                    case 0x5f:    // MAXPS Wps Vps Return Maximum Packed Single-FP Values
-                    case 0x60:    // PUNPCKLBW Qd Pq Unpack Low Data
-                    case 0x61:    // PUNPCKLWD Qd Pq Unpack Low Data
-                    case 0x62:    // PUNPCKLDQ Qd Pq Unpack Low Data
-                    case 0x63:    // PACKSSWB Qd Pq Pack with Signed Saturation
-                    case 0x64:    // PCMPGTB Qd Pq Compare Packed Signed Integers for Greater Than
-                    case 0x65:    // PCMPGTW Qd Pq Compare Packed Signed Integers for Greater Than
-                    case 0x66:    // PCMPGTD Qd Pq Compare Packed Signed Integers for Greater Than
-                    case 0x67:    // PACKUSWB Qq Pq Pack with Unsigned Saturation
-                    case 0x68:    // PUNPCKHBW Qq Pq Unpack High Data
-                    case 0x69:    // PUNPCKHWD Qq Pq Unpack High Data
-                    case 0x6a:    // PUNPCKHDQ Qq Pq Unpack High Data
-                    case 0x6b:    // PACKSSDW Qq Pq Pack with Signed Saturation
-                    case 0x6c:    // PUNPCKLQDQ Wdq Vdq Unpack Low Data
-                    case 0x6d:    // PUNPCKHQDQ Wdq Vdq Unpack High Data
-                    case 0x6e:    // MOVD Ed Pq Move Doubleword
-                    case 0x6f:    // MOVQ Qq Pq Move Quadword
-                    case 0x70:    // PSHUFW Qq Pq Shuffle Packed Words
-                    case 0x71:    // PSRLW Ib Nq Shift Packed Data Right Logical
-                    case 0x72:    // PSRLD Ib Nq Shift Double Quadword Right Logical
-                    case 0x73:    // PSRLQ Ib Nq Shift Packed Data Right Logical
-                    case 0x74:    // PCMPEQB Qq Pq Compare Packed Data for Equal
-                    case 0x75:    // PCMPEQW Qq Pq Compare Packed Data for Equal
-                    case 0x76:    // PCMPEQD Qq Pq Compare Packed Data for Equal
-                    case 0x77:    // EMMS   Empty MMX Technology State
-                    case 0x78:    // VMREAD Gd Ed Read Field from Virtual-Machine Control Structure
-                    case 0x79:    // VMWRITE Gd  Write Field to Virtual-Machine Control Structure
-                    case 0x7a:
-                    case 0x7b:
-                    case 0x7c:    // HADDPD Wpd Vpd Packed Double-FP Horizontal Add
-                    case 0x7d:    // HSUBPD Wpd Vpd Packed Double-FP Horizontal Subtract
-                    case 0x7e:    // MOVD Pq Ed Move Doubleword
-                    case 0x7f:    // MOVQ Pq Qq Move Quadword
-                    case 0xa6:
-                    case 0xa7:
-                    case 0xaa:    // RSM  Flags Resume from System Management Mode
-                    case 0xae:    // FXSAVE ST Mstx Save x87 FPU, MMX, XMM, and MXCSR State
-                    case 0xb8:    // JMPE   Jump to IA-64 Instruction Set
-                    case 0xb9:    // UD G  Undefined Instruction
-                    case 0xc2:    // CMPPS Wps Vps Compare Packed Single-FP Values
-                    case 0xc3:    // MOVNTI Gdqp Mdqp Store Doubleword Using Non-Temporal Hint
-                    case 0xc4:    // PINSRW Rdqp Pq Insert Word
-                    case 0xc5:    // PEXTRW Nq Gdqp Extract Word
-                    case 0xc6:    // SHUFPS Wps Vps Shuffle Packed Single-FP Values
-                    case 0xc7:    // CMPXCHG8B EBX Mq Compare and Exchange Bytes
+                    case 0x2d: // -
+                    case 0x2e: // -
+                    case 0x2f: // -
+                    case 0x30: // -
+                    case 0x32: // -
+                    case 0x33: // -
+                    case 0x34: // -
+                    case 0x35: // -
+                    case 0x36: // -
+                    case 0x37: // -
+                    case 0x38: // -
+                    case 0x39: // -
+                    case 0x3a: // -
+                    case 0x3b: // -
+                    case 0x3c: // -
+                    case 0x3d: // -
+                    case 0x3e: // -
+                    case 0x3f: // -
+                    case 0x50: // -
+                    case 0x51: // -
+                    case 0x52: // -
+                    case 0x53: // -
+                    case 0x54: // -
+                    case 0x55: // -
+                    case 0x56: // -
+                    case 0x57: // -
+                    case 0x58: // -
+                    case 0x59: // -
+                    case 0x5a: // -
+                    case 0x5b: // -
+                    case 0x5c: // -
+                    case 0x5d: // -
+                    case 0x5e: // -
+                    case 0x5f: // -
+                    case 0x60: // -
+                    case 0x61: // -
+                    case 0x62: // -
+                    case 0x63: // -
+                    case 0x64: // -
+                    case 0x65: // -
+                    case 0x66: // -
+                    case 0x67: // -
+                    case 0x68: // -
+                    case 0x69: // -
+                    case 0x6a: // -
+                    case 0x6b: // -
+                    case 0x6c: // -
+                    case 0x6d: // -
+                    case 0x6e: // -
+                    case 0x6f: // -
+                    case 0x70: // -
+                    case 0x71: // -
+                    case 0x72: // -
+                    case 0x73: // -
+                    case 0x74: // -
+                    case 0x75: // -
+                    case 0x76: // -
+                    case 0x77: // -
+                    case 0x78: // -
+                    case 0x79: // -
+                    case 0x7a: // -
+                    case 0x7b: // -
+                    case 0x7c: // -
+                    case 0x7d: // -
+                    case 0x7e: // -
+                    case 0x7f: // -
+                    case 0xa6: // -
+                    case 0xa7: // -
+                    case 0xaa: // -
+                    case 0xae: // -
+                    case 0xb8: // -
+                    case 0xb9: // -
+                    case 0xc2: // -
+                    case 0xc3: // -
+                    case 0xc4: // -
+                    case 0xc5: // -
+                    case 0xc6: // -
+                    case 0xc7: // -
                     default:
                         abort(6);
                 }
