@@ -2,10 +2,11 @@ cmake_minimum_required(VERSION 3.12)
 project(cpp_app)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/exe)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
-add_executable(${PROJECT_NAME} ${sourcefiles}
-)
+
+add_executable(${PROJECT_NAME} ${sourcefiles})
 
 set_property(TARGET cpp_app PROPERTY CXX_STANDARD 20)
 
