@@ -188,8 +188,10 @@ bool x86Internal::check_below_or_equal() // `below' for signed comparison, PM p.
             flg = ((cc_dst + cc_src) & 0xffff) <= (cc_src & 0xffff);
             break;
         case 8:
+{
             uint32_t val = cc_dst + cc_src;
             flg          = (val >> 0) <= (cc_src >> 0);
+}
             break;
         case 24:
             flg = (cc_src & (0x0040 | 0x0001)) != 0;

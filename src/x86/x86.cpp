@@ -1575,10 +1575,12 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                 uint32_t mem8_locu = mem8_loc;
                 OPbyte             = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                           ? __ld_8bits_mem8_read()
                                           : phys_mem8[mem8_loc ^ last_tlb_val]);
+}
                 break;
             case 0x67:    //   Address-size override prefix
                 if (init_CS_flags & 0x0080) {
@@ -1589,10 +1591,12 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                 uint32_t mem8_locu = mem8_loc;
                 OPbyte             = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                           ? __ld_8bits_mem8_read()
                                           : phys_mem8[mem8_loc ^ last_tlb_val]);
+}
                 break;
             case 0x91:
             case 0x92:
@@ -1827,6 +1831,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                 uint32_t mem8_locu = mem8_loc;
                 mem8               = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                           ? __ld_8bits_mem8_read()
@@ -1850,6 +1855,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                             if ((n + 1) > 15)
                                 abort(6);
                             mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                             uint32_t mem8_locu = mem8_loc;
                             localcc_opbyte_var =
                                 (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
@@ -1858,6 +1864,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                             if ((localcc_opbyte_var & 7) == 5) {
                                 n += 4;
                             }
+}
                             break;
                         case 0x0c:
                             n += 2;
@@ -1895,6 +1902,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                             break;
                     }
                 }
+}
                 if (n > 15)
                     abort(6);
                 goto EXEC_LOOP;
@@ -1919,6 +1927,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                 uint32_t mem8_locu = mem8_loc;
                 mem8               = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                           ? __ld_8bits_mem8_read()
@@ -1988,6 +1997,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                             break;
                     }
                 }
+}
                 if (n > 15)
                     abort(6);
                 n++;
@@ -2076,6 +2086,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                 uint32_t mem8_locu = mem8_loc;
                 mem8               = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                           ? __ld_8bits_mem8_read()
@@ -2144,6 +2155,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                             break;
                     }
                 }
+}
                 if (n > 15)
                     abort(6);
                 conditional_var = (mem8 >> 3) & 7;
@@ -2157,6 +2169,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                 if ((n + 1) > 15)
                     abort(6);
                 mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                 uint32_t mem8_locu = mem8_loc;
                 mem8               = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                           ? __ld_8bits_mem8_read()
@@ -2225,6 +2238,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                             break;
                     }
                 }
+}
                 if (n > 15)
                     abort(6);
                 conditional_var = (mem8 >> 3) & 7;
@@ -2362,6 +2376,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                         if ((n + 1) > 15)
                             abort(6);
                         mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                         uint32_t mem8_locu = mem8_loc;
                         mem8               = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                                   ? __ld_8bits_mem8_read()
@@ -2430,6 +2445,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                                     break;
                             }
                         }
+}
                         if (n > 15)
                             abort(6);
                         goto EXEC_LOOP;
@@ -2439,6 +2455,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                         if ((n + 1) > 15)
                             abort(6);
                         mem8_loc           = (eip_offset + (n++)) >> 0;
+{
                         uint32_t mem8_locu = mem8_loc;
                         mem8               = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                                   ? __ld_8bits_mem8_read()
@@ -2507,6 +2524,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                                     break;
                             }
                         }
+}
                         if (n > 15)
                             abort(6);
                         n++;

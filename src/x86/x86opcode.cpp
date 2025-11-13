@@ -2256,9 +2256,11 @@ void x86Internal::instruction(int cycles)
                         case 0xcf:
                             reg_idx1       = OPbyte & 7;
                             x              = regs[reg_idx1];
+{
                             uint32_t xuint = x;
                             x = (xuint >> 24) | ((x >> 8) & 0x0000ff00) | ((x << 8) & 0x00ff0000) | (x << 24);
                             regs[reg_idx1] = x;
+}
                             goto EXEC_LOOP;
                         case 0x04:
                         case 0x05:    // LOADALL  AX Load All of the CPU Registers
