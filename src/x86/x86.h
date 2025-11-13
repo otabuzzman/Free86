@@ -1,22 +1,17 @@
 #ifndef _X86_H
 #define _X86_H
-
 #include <cstdio>
 #include <fstream>
 #include <cmath>
 #include <cstddef>
 #include <string>
 #include <vector>
-
 #include "../CMOS.h"
 #include "../KBD.h"
-
 #include "../ringbuffer.h"
-
 class PIT;
 class Serial;
 class PIC_Controller;
-
 typedef struct DescriptorTable
 {
     int selector = 0;
@@ -24,18 +19,15 @@ typedef struct DescriptorTable
     uint32_t limit = 0;
     int flags    = 0;
 } DescriptorTable;
-
 typedef struct ErrorInfo
 {
     int intno      = -1;
     int error_code = 0;
 } ErrorInfo;
-
 class x86Internal {
   public:
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
-
     int  tlb_size         = 0x100000; // 1M
     int *tlb_read_kernel  = nullptr;
     int *tlb_write_kernel = nullptr;
@@ -43,19 +35,15 @@ class x86Internal {
     int *tlb_write_user   = nullptr;
     int *tlb_read  = nullptr; // current (user or kernel)
     int *tlb_write = nullptr;
-
     uint8_t  *phys_mem   = nullptr;
     uint8_t  *phys_mem8  = nullptr;
     uint16_t *phys_mem16 = nullptr;
     uint32_t *phys_mem32 = nullptr;
-
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     int regs[8]{0};
     int eflags = 0x2;
-
     int eip = 0xfff0;
     int eip_offset = 0;
-
     // ES, CS, SS, DS, FS, GS, LDT, TR
     DescriptorTable segs[7] = {
         {0, 0, 0, 0},
@@ -66,37 +54,29 @@ class x86Internal {
         {0, 0, 0, 0},
         {0, 0, 0, 0}
     };
-
     int df  = 1; // direction Flag
-
     int cpl  = 0; // current privilege level
     int dpl  = 0; // descriptor privilege level
     int iopl = 0; // IO privilege level
-
     DescriptorTable gdt; // GDT register
     DescriptorTable ldt; // LDT register
     DescriptorTable tr;  // task register
     DescriptorTable idt = {0, 0, 0x03ff, 0}; // IDT register
-
     int cr0 = 0;
     int cr2 = 0;
     int cr3 = 0;
     int cr4 = 0;
-
     int OPbyte = 0;
-
     int cc_src  = 0;
     int cc_dst  = 0;
     int cc_op   = 0;
     int cc_op2  = 0;
     int cc_dst2 = 0;
-
     int cccc_op   = 0;    // current op
     int cccc_dst  = 0;    // current dest
     int cccc_src  = 0;    // current src
     int cccc_op2  = 0;    // current op, byte2
     int cccc_dst2 = 0;    // current dest, byte2
-
     // 0x0001 ES segment override prefix    (0x26)
     // 0x0002 CS segment override prefix    (0x2e)
     // 0x0003 SS segment override prefix    (0x36)
@@ -110,35 +90,25 @@ class x86Internal {
     // 0x0100 operand-size override prefix  (0x66)
     int CS_flags = 0;
     int init_CS_flags = 0; // reflects D flag (PM (1986), 16.1)
-
     int CS_base;
-
     int SS_base;
     int SS_mask = -1; // 16 or 32 bit SS size
-
     bool x86_64_long_mode = false; // https://en.wikipedia.org/wiki/X86_memory_segmentation
-
     int conditional_var = 0; // opcode_543 bits 5, 4, and 3 of opcode or modR/M byte
     int mem8; // byte_value
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v; // intermediate values
-
     int last_tlb_val; // tlb_hash_value
     int physmem8_ptr    = 0; // fetch_address
     int initial_mem_ptr = 0; // fetch_address_byte0
     uint32_t mem8_loc; // byte_address
-
     int cycles_requested = 0;
     int cycles_remaining = 0;
     int cycles_processed = 0;
-
     int halted     = 0;
-
     int hard_irq   = 0;
     int hard_intno = -1;
-
     ErrorInfo interrupt;
-
     const std::vector<int> parity_LUT = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -165,66 +135,51 @@ class x86Internal {
          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
         16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
     };
-
     int mem_size     = 16 * 1024 * 1024;
     int new_mem_size = mem_size + ((15 + 3) & ~3);
-
     x86Internal(int _mem_size);
     ~x86Internal();
-
     void st8_phys(int mem8_loc, std::string str)
     {
         auto s = str.c_str();
-
         for (int i = 0; i < str.length(); i++)
             st8_phys(mem8_loc++, s[i] & 0xff);
         st8_phys(mem8_loc, 0);
     }
-
     uint8_t ld8_phys(int mem8_loc)
     {
         return phys_mem8[mem8_loc];
     }
-
     void st8_phys(int mem8_loc, uint8_t x)
     {
         phys_mem8[mem8_loc] = x;
     }
-
     int ld32_phys(int mem8_loc)
     {
         return phys_mem32[mem8_loc >> 2];
     }
-
     void st32_phys(int mem8_loc, int x)
     {
         uint32_t mem8_locu         = mem8_loc;
-
         phys_mem32[mem8_locu >> 2] = x;
     }
-
     void tlb_set_page(int mem8_loc, int page_val, int set_write_tlb, int set_user_tlb)
     {
         mem8_loc &= -4096; // top 20 bits matter
         page_val &= -4096;
-
         uint32_t mem8_locu = mem8_loc;
         int      x         = mem8_locu ^ page_val; // poor man's XOR hashing
         int      i         = mem8_locu >> 12;
-
         if (tlb_read_kernel[i] == -1) {
             if (tlb_pages_count >= 2048)
                 tlb_flush_all1((i - 1) & 0xfffff);
             tlb_pages[tlb_pages_count++] = i;
         }
-
         tlb_read_kernel[i] = x;
-
         if (set_write_tlb)
             tlb_write_kernel[i] = x;
         else
             tlb_write_kernel[i] = -1;
-
         if (set_user_tlb) {
             tlb_read_user[i] = x;
             if (set_write_tlb)
@@ -236,30 +191,25 @@ class x86Internal {
             tlb_write_user[i] = -1;
         }
     }
-
     void tlb_flush_page(int mem8_loc)
     {
         uint32_t mem8_locu = mem8_loc;
         int      i         = mem8_locu >> 12;
         tlb_clear(i);
     }
-
     void tlb_flush_all()
     {
         int n = tlb_pages_count;
-
         for (int j = 0; j < n; j++) {
             int i = tlb_pages[j];
             tlb_clear(i);
         }
         tlb_pages_count = 0;
     }
-
     void tlb_flush_all1(int la)
     {
         int n     = tlb_pages_count;
         int new_n = 0;
-
         for (int j = 0; j < n; j++) {
             int i = tlb_pages[j];
             if (i == la)
@@ -269,7 +219,6 @@ class x86Internal {
         }
         tlb_pages_count = new_n;
     }
-
     void tlb_clear(int i)
     {
         tlb_read_kernel[i]  = -1;
@@ -277,54 +226,41 @@ class x86Internal {
         tlb_read_user[i]    = -1;
         tlb_write_user[i]   = -1;
     }
-
     std::string hex_rep(int x, int n)
     {
         std::string s = "";
         char h[] = "0123456789ABCDEF";
-
         for (int i = n - 1; i >= 0; i--)
             s = s + h[(x >> (i * 4)) & 15];
         return s;
     }
-
     std::string _4_bytes_(int n)
     {
         return hex_rep(n, 8);
     }
-
     std::string _2_bytes_(int n)
     {
         return hex_rep(n, 2);
     }
-
     std::string _1_byte_(int n)
     {
         return hex_rep(n, 4);
     }
-
     void instruction(int cycles);
     int  init(int cycles);
     int  check_halted();
     void check_interrupt();
     void init_segment_local_vars();
-
     void check_opbyte();
-
     int  ioport_read(int mem8_loc);
     void ioport_write(int mem8_loc, int data);
-
     int ld8_port(int port_num);
     int ld16_port(int port_num);
     int ld32_port(int port_num);
-
     void st8_port(int port_num, int x);
     void st16_port(int port_num, int x);
     void st32_port(int port_num, int x);
-
     void do_tlb_set_page(int Gd, int Hd, bool ja);
-
-
     int __ld8_mem8_kernel_read();
     int ld8_mem8_kernel_read();
     int __ld16_mem8_kernel_read();
@@ -332,53 +268,44 @@ class x86Internal {
     int __ld32_mem8_kernel_read();
     int ld32_mem8_kernel_read();
     int ld16_mem8_direct();
-
     int __ld_8bits_mem8_read();
     int ld_8bits_mem8_read();
     int __ld_16bits_mem8_read();
     int ld_16bits_mem8_read();
     int __ld_32bits_mem8_read();
     int ld_32bits_mem8_read();
-
     int __ld_8bits_mem8_write();
     int ld_8bits_mem8_write();
     int __ld_16bits_mem8_write();
     int ld_16bits_mem8_write();
     int __ld_32bits_mem8_write();
     int ld_32bits_mem8_write();
-
     void __st8_mem8_write(int x);
     void st8_mem8_write(int x);
     void __st16_mem8_write(int x);
     void st16_mem8_write(int x);
     void __st32_mem8_write(int x);
     void st32_mem8_write(int x);
-
     void __st8_mem8_kernel_write(int x);
     void st8_mem8_kernel_write(int x);
     void __st16_mem8_kernel_write(int x);
     void st16_mem8_kernel_write(int x);
     void __st32_mem8_kernel_write(int x);
     void st32_mem8_kernel_write(int x);
-
     int  segment_translation(int mem8);
     int  segmented_mem8_loc_for_MOV(bool is_verw);
     void set_word_in_register(int reg_idx1, int x);
     void set_lower_word_in_register(int reg_idx1, int x);
-
     int do_32bit_math(int conditional_var, int Yb, int Zb);
     int do_16bit_math(int conditional_var, int Yb, int Zb);
     int do_8bit_math(int conditional_var, int Yb, int Zb);
-
     int increment_16bit(int x);
     int decrement_16bit(int x);
     int increment_8bit(int x);
     int decrement_8bit(int x);
-
     int shift8(int conditional_var, int Yb, int Zb);
     int shift16(int conditional_var, int Yb, int Zb);
     int shift32(int conditional_var, uint32_t Yb, int Zb);
-
     int  op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc);
     int  op_SHLD(int Yb, int Zb, int pc);
     int  op_SHRD(int Yb, int Zb, int pc);
@@ -403,7 +330,6 @@ class x86Internal {
     int  do_multiply32(int _a, int cc_opbyte);
     int  op_MUL32(int a, int OPbyte);
     int  op_IMUL32(int a, int OPbyte);
-
     bool check_carry();
     bool check_overflow();
     bool check_below_or_equal();
@@ -420,7 +346,6 @@ class x86Internal {
     void abort(int intno);
     void change_permission_level(int sd);
     int  do_tlb_lookup(int mem8_loc, int ud);
-
     void push_word_to_stack(int x);
     void push_dword_to_stack(int x);
     int  pop_word_from_stack_read();
@@ -428,14 +353,11 @@ class x86Internal {
     int  pop_dword_from_stack_read();
     void pop_dword_from_stack_incr_ptr();
     int  operation_size_function(int eip_offset, int OPbyte);
-
     void set_CR0(int Qd);
     void set_CR3(int new_pdb);
     void set_CR4(int newval);
-
     bool check_real_mode();
     bool check_protected();
-
     int  SS_mask_from_flags(int descriptor_high4bytes);
     void load_from_descriptor_table(int selector, int *desary);
     int  calc_desp_limit(int descriptor_low4bytes, int descriptor_high4bytes);
@@ -443,12 +365,10 @@ class x86Internal {
     void set_descriptor_register(DescriptorTable *descriptor_table, int descriptor_low4bytes, int descriptor_high4bytes);
     void set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags);
     void init_segment_vars_with_selector(int Sb, int selector);
-
     void load_from_TR(int he, int *desary);
     void do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe);
     void do_interrupt_not_protected_mode(int intno, int ne, int error_code, int oe, int pe);
     void do_interrupt(int intno, int ne, int error_code, int oe, int pe);
-
     void op_LDTR(int selector);
     void op_LTR(int selector);
     void set_protected_mode_segment_register(int reg, int selector);
@@ -457,16 +377,13 @@ class x86Internal {
     void do_JMPF(int selector, int Le);
     void op_JMPF(int selector, int Le);
     void Pe(int reg, int cpl_var);
-
     void op_CALLF_not_protected_mode(bool is_32_bit, int selector, int Le, int oe);
     void op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe);
     void op_CALLF(bool is_32_bit, int selector, int Le, int oe);
     void do_return_not_protected_mode(bool is_32_bit, bool is_iret, int imm16);
     void do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16);
-
     void op_IRET(bool is_32_bit);
     void op_RETF(bool is_32_bit, int imm16);
-
     int  of(int selector, bool is_lsl);
     void op_LAR_LSL(bool is_32_bit, bool is_lsl);
     int  segment_isnt_accessible(int selector, bool is_verw);
@@ -489,10 +406,8 @@ class x86Internal {
     void op_LEAVE();
     void op_16_ENTER();
     void op_ENTER();
-
     void op_16_load_far_pointer32(int Sb);
     void op_16_load_far_pointer16(int Sb);
-
     void stringOp_INSB();
     void stringOp_OUTSB();
     void stringOp_MOVSB();
@@ -500,7 +415,6 @@ class x86Internal {
     void stringOp_CMPSB();
     void stringOp_LODSB();
     void stringOp_SCASB();
-
     void op_16_INS();
     void op_16_OUTS();
     void op_16_MOVS();
@@ -508,7 +422,6 @@ class x86Internal {
     void op_16_CMPS();
     void op_16_LODS();
     void op_16_SCAS();
-
     void stringOp_INSW();
     void stringOp_OUTSW();
     void stringOp_MOVSW();
@@ -516,7 +429,6 @@ class x86Internal {
     void stringOp_CMPSW();
     void stringOp_LODSW();
     void stringOp_SCASW();
-
     void stringOp_INSD();
     void stringOp_OUTSD();
     void stringOp_MOVSD();
@@ -524,31 +436,24 @@ class x86Internal {
     void stringOp_CMPSD();
     void stringOp_LODSD();
     void stringOp_SCASD();
-
-
-
     CMOS           *cmos     = nullptr;
     KBD            *kbd      = nullptr;
     PIC_Controller *pic      = nullptr;
     PIT            *pit      = nullptr;
     Serial         *serial   = nullptr;
-
     bool logcheck        = true;
     std::string filename = "log.txt";
     int  filecheck_start = 0;
     int  filecheck_end   = 1000;
     int  fileoffset      = 0;
     bool stepinfo        = false;
-
     int count = 0; // used by x86Internal::dump()
     std::vector<std::string> lines;
-
     bool do_dump = false;
     void dump();
     void dump(int OPbyte);
     int  file_read();
 };
-
 class PIC {
     int  last_irr           = 0;
     int  irr                = 0;    // Interrupt Request Register
@@ -563,27 +468,21 @@ class PIC {
     int  init4              = 0;
     int  elcr               = 0;    // Edge/Level Control Register
     bool rotate_on_auto_eoi = false;
-
     PIC_Controller *ppic = nullptr;
-
   public:
     int elcr_mask = 0;
     int irq_base  = 0;
-
     PIC(PIC_Controller *_ppic)
     {
         ppic = _ppic;
         reset();
     }
-
     ~PIC()
     {
     }
-
     void init()
     {
     }
-
     void reset()
     {
         last_irr          = 0;
@@ -601,11 +500,9 @@ class PIC {
         elcr              = 0;    // Edge/Level Control Register
         elcr_mask         = 0;
     }
-
     void set_irq1(int irq, bool Qf)
     {
         int ir_register = 1 << irq;
-
         if (Qf) {
             if ((last_irr & ir_register) == 0)
                 irr |= ir_register;
@@ -613,38 +510,28 @@ class PIC {
         } else
             last_irr &= ~ir_register;
     }
-
     int get_priority(int ir_register)
     {
         int priority = 7;
-
         if (ir_register == 0)
             return -1;
-
         while ((ir_register & (1 << ((priority + priority_add) & 7))) == 0)
             priority--;
-
         return priority;
     }
-
     int get_irq()
     {
         int ir_register, in_service_priority, priority;
-
         ir_register = irr & ~imr;
         priority    = get_priority(ir_register);
-
         if (priority < 0)
             return -1;
-
         in_service_priority = get_priority(isr);
-
         if (priority > in_service_priority)
             return priority;
         else
             return -1;
     }
-
     void intack(int irq)
     {
         if (auto_eoi) {
@@ -652,17 +539,13 @@ class PIC {
                 priority_add = (irq + 1) & 7;
         } else
             isr |= (1 << irq);
-
         if (!(elcr & (1 << irq)))
             irr &= ~(1 << irq);
     }
-
     void ioport_write(int mem8_loc, int x)
     {
         mem8_loc &= 1;
-
         int priority;
-
         if (mem8_loc == 0) {
             if (x & 0x10) {
                 reset();
@@ -749,11 +632,9 @@ class PIC {
             }
         }
     }
-
     int ioport_read(int Ug)
     {
         int mem8_loc, return_register;
-
         mem8_loc = Ug & 1;
         if (mem8_loc == 0) {
             if (read_reg_select)
@@ -762,47 +643,37 @@ class PIC {
                 return_register = irr;
         } else
             return_register = imr;
-
         return return_register;
     }
-
     void update_irq();
 };
-
 class PIC_Controller {
     int          irq_requested = 0;
     x86Internal *cpu;
-
   public:
     PIC *pics[2];
-
     PIC_Controller(x86Internal *_cpu)
     {
         cpu     = _cpu;
         pics[0] = new PIC(this);
         pics[1] = new PIC(this);
-
         pics[0]->elcr_mask = 0xf8;
         pics[1]->elcr_mask = 0xde;
     }
-
     ~PIC_Controller()
     {
         delete pics[0];
         delete pics[1];
     }
-
     void set_irq(int irq, int Qf)
     {
         pics[irq >> 3]->set_irq1(irq & 7, Qf);
         update_irq();
     }
-
     int get_hard_intno()
     {
         int intno = 0;
         int irq   = pics[0]->get_irq();
-
         if (irq >= 0) {
             pics[0]->intack(irq);
             if (irq == 2) {
@@ -811,7 +682,6 @@ class PIC_Controller {
                     pics[1]->intack(slave_irq);
                 else
                     slave_irq = 7;
-
                 intno = pics[1]->irq_base + slave_irq;
                 irq   = slave_irq + 8;
             } else
@@ -823,20 +693,16 @@ class PIC_Controller {
         update_irq();
         return intno;
     }
-
     void update_irq();
 };
-
 inline void PIC::update_irq()
 {
     ppic->update_irq();
 }
-
 inline void PIC_Controller::update_irq()
 {
     int slave_irq = pics[1]->get_irq();
     int irq = pics[0]->get_irq();
-
     if (slave_irq >= 0) {
         pics[0]->set_irq1(2, 1);
         pics[0]->set_irq1(2, 0);
@@ -846,7 +712,6 @@ inline void PIC_Controller::update_irq()
     else
         cpu->hard_irq = 0;
 }
-
 class Serial {
     int divider = 0;
     int rbr = 0;
@@ -860,10 +725,8 @@ class Serial {
     int set_irq_func = 0;
     int write_func = 0;
     PIC_Controller *pic;
-
     RingBuffer<int> input_fifo{RingBuffer<int>(1000)};
     RingBuffer<int> print_fifo{RingBuffer<int>(1000)};
-
   public:
     Serial(PIC_Controller *_pic, int kh, int lh)
     {
@@ -871,12 +734,10 @@ class Serial {
         set_irq_func = kh;
         write_func   = lh;
     }
-
     void store_char(int x)
     {
         print_fifo.push(x);
     }
-
     void update_irq()
     {
         if ((lsr & 0x01) && (ier & 0x01))
@@ -885,17 +746,14 @@ class Serial {
             iir = 0x02;
         else
             iir = 0x01;
-
         if (iir != 0x01)
             set_irq(1);
         else
             set_irq(0);
     }
-
     void ioport_write(int mem8_loc, int x)
     {
         mem8_loc &= 7;
-
         switch (mem8_loc) {
             default:
             case 0:
@@ -936,13 +794,10 @@ class Serial {
                 break;
         }
     }
-
     int ioport_read(int mem8_loc)
     {
         mem8_loc &= 7;
-
         int Pg;
-
         switch (mem8_loc) {
             default:
             case 0:
@@ -982,75 +837,62 @@ class Serial {
         }
         return Pg;
     }
-
     void send_break()
     {
         rbr = 0;
         lsr |= 0x10 | 0x01;
         update_irq();
     }
-
     void send_char(int mh)
     {
         rbr = mh;
         lsr |= 0x01;
         update_irq();
     }
-
     void send_char_from_fifo()
     {
         if (!input_fifo.isempty() && !(lsr & 0x01)) {
             send_char(input_fifo.pop());
         }
     }
-
     void input_fifo_push(int na)
     {
         input_fifo.push(na);
         send_char_from_fifo();
     }
-
     char print_fifo_pop()
     {
         return print_fifo.pop();
     }
-
     void set_irq(int x);
 };
-
 inline void Serial::set_irq(int x)
 {
     pic->set_irq(4, x);
 }
-
 class IRQCH {
     int last_irr        = 0;
     int count           = 0;
     int count_load_time = 0;
     float pit_time_unit = 0.596591f;
     x86Internal *cpu;
-
   public:
     int latched_count   = 0;
     int rw_state        = 0;
     int mode            = 0;
     int bcd             = 0;
     int gate            = 0;
-
     IRQCH(x86Internal *_cpu)
     {
         cpu = _cpu;
     }
-
     int get_time()
     {
         return static_cast<int>(std::floor(cpu->cycles_processed * pit_time_unit));
     }
-
     int pit_get_count()
     {
         int d, dh;
-
         d = get_time() - count_load_time;
         switch (mode) {
             case 0:
@@ -1065,11 +907,9 @@ class IRQCH {
         }
         return dh;
     }
-
     int pit_get_out()
     {
         int d, eh;
-
         d = get_time() - count_load_time;
         switch (mode) {
             default:
@@ -1095,11 +935,9 @@ class IRQCH {
         }
         return eh;
     }
-
     int get_next_transition_time()
     {
         int d, fh, base, gh;
-
         d = get_time() - count_load_time;
         switch (mode) {
             default:
@@ -1138,7 +976,6 @@ class IRQCH {
         fh = count_load_time + fh;
         return fh;
     }
-
     void pit_load_count(int x)
     {
         if (x == 0)
@@ -1147,19 +984,16 @@ class IRQCH {
         count           = x;
     }
 };
-
 class PIT {
     IRQCH          *pit_channels[3];
     x86Internal    *cpu;
     PIC_Controller *pic;
     int             speaker_data_on = 0;
-
   public:
     PIT(x86Internal *_cpu, PIC_Controller *_pic)
     {
         cpu = _cpu;
         pic = _pic;
-
         for (int i = 0; i < 3; i++) {
             pit_channels[i]       = new IRQCH(cpu);
             pit_channels[i]->mode = 3;
@@ -1167,20 +1001,15 @@ class PIT {
             pit_channels[i]->pit_load_count(0);
         }
     }
-
     void ioport_write(int mem8_loc, int x)
     {
         mem8_loc &= 3;
-
         int hh, ih;
-
         if (mem8_loc == 3) {
             hh = x >> 6;
             if (hh == 3)
                 return;
-
             auto s = pit_channels[hh];
-
             ih     = (x >> 4) & 3;
             switch (ih) {
                 case 0:
@@ -1195,7 +1024,6 @@ class PIT {
             }
         } else {
             auto s = pit_channels[mem8_loc];
-
             switch (s->rw_state) {
                 case 0:
                     s->pit_load_count(x);
@@ -1214,14 +1042,11 @@ class PIT {
             }
         }
     }
-
     int ioport_read(int mem8_loc)
     {
         mem8_loc &= 3;
-
         int Pg, ma;
         auto s = pit_channels[mem8_loc];
-
         switch (s->rw_state) {
             case 0:
             case 1:
@@ -1247,42 +1072,34 @@ class PIT {
         }
         return Pg;
     }
-
     void speaker_ioport_write(int mem8_loc, int x)
     {
         speaker_data_on       = (x >> 1) & 1;
         pit_channels[2]->gate = x & 1;
     }
-
     int speaker_ioport_read(int mem8_loc)
     {
         int  eh, x;
         auto s = pit_channels[2];
-
         eh     = s->pit_get_out();
         x      = (speaker_data_on << 1) | s->gate | (eh << 5);
         return x;
     }
-
     void speaker_ioport_write()
     {
         set_irq(1);
         set_irq(0);
     }
-
     void set_irq(int x);
     void update_irq();
 };
-
 inline void PIT::set_irq(int x)
 {
     pic->set_irq(0, x);
 }
-
 inline void PIT::update_irq()
 {
     set_irq(1);
     set_irq(0);
 }
-
 #endif // _X86_H

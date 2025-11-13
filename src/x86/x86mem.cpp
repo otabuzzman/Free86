@@ -1,5 +1,4 @@
 #include "x86.h"
-
 int x86Internal::__ld_8bits_mem8_read()
 {
     int mem8_val;
@@ -22,7 +21,6 @@ int x86Internal::ld_8bits_mem8_read()
                 ? __ld_8bits_mem8_read()
                 : phys_mem8[mem8_loc ^ last_tlb_val]);
 }
-
 int x86Internal::__ld_16bits_mem8_read()
 {
     int x = ld_8bits_mem8_read();
@@ -39,7 +37,6 @@ int x86Internal::ld_16bits_mem8_read()
                 ? __ld_16bits_mem8_read()
                 : phys_mem16[(mem8_loc ^ last_tlb_val) >> 1]);
 }
-
 int x86Internal::__ld_32bits_mem8_read()
 {
     int x = ld_8bits_mem8_read();
@@ -60,7 +57,6 @@ int x86Internal::ld_32bits_mem8_read()
                 ? __ld_32bits_mem8_read()
                 : phys_mem32[(mem8_loc ^ last_tlb_val) >> 2]);
 }
-
 int x86Internal::__ld_8bits_mem8_write()
 {
     int mem8_val;
@@ -117,7 +113,6 @@ int x86Internal::ld_32bits_mem8_write()
                ? __ld_32bits_mem8_write()
                : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
 }
-
 int x86Internal::__ld8_mem8_kernel_read()
 {
     do_tlb_set_page(mem8_loc, 0, 0);
@@ -172,7 +167,6 @@ int x86Internal::ld16_mem8_direct()
     int y = phys_mem8[physmem8_ptr++];
     return x | (y << 8);
 }
-
 void x86Internal::__st8_mem8_write(int x)
 {
     if (check_protected()) {
@@ -234,7 +228,6 @@ void x86Internal::st32_mem8_write(int x)
         phys_mem32[idx] = x;
     }
 }
-
 void x86Internal::__st8_mem8_kernel_write(int x)
 {
     do_tlb_set_page(mem8_loc, 1, 0);
@@ -290,7 +283,6 @@ void x86Internal::st32_mem8_kernel_write(int x)
         phys_mem32[(mem8_loc ^ tlb_lookup) >> 2] = x;
     }
 }
-
 void x86Internal::push_word_to_stack(int x)
 {
     int wd;

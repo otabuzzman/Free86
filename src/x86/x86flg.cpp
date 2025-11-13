@@ -1,11 +1,9 @@
 #include "x86.h"
-
 bool x86Internal::check_carry()
 {
     bool     rval;
     int      currentcc_op;
     uint32_t reldst;
-
     if (cc_op >= 25) {
         currentcc_op = cc_op2;
         reldst       = cc_dst2;
@@ -13,7 +11,6 @@ bool x86Internal::check_carry()
         currentcc_op = cc_op;
         reldst       = cc_dst;
     }
-
     switch (currentcc_op % 25) {
         case 0:
             rval = (reldst & 0xff) < (cc_src & 0xff);
@@ -21,9 +18,9 @@ bool x86Internal::check_carry()
         case 1:
             rval = (reldst & 0xffff) < (cc_src & 0xffff);
             break;
-        case 2: {
+        case 2:
             rval = (reldst >> 0) < (cc_src >> 0);
-        } break;
+            break;
         case 3:
             rval = (reldst & 0xff) <= (cc_src & 0xff);
             break;
@@ -85,7 +82,6 @@ bool x86Internal::check_overflow()
 {
     bool rval;
     int  Yb;
-
     switch (cc_op % 0x1f) {
         case 0:
             Yb   = (cc_dst - cc_src) >> 0;
@@ -191,10 +187,10 @@ bool x86Internal::check_below_or_equal() // `below' for signed comparison, PM p.
         case 7:
             flg = ((cc_dst + cc_src) & 0xffff) <= (cc_src & 0xffff);
             break;
-        case 8: {
+        case 8:
             uint32_t val = cc_dst + cc_src;
             flg          = (val >> 0) <= (cc_src >> 0);
-        } break;
+            break;
         case 24:
             flg = (cc_src & (0x0040 | 0x0001)) != 0;
             break;
@@ -282,7 +278,6 @@ int x86Internal::check_adjust_flag()
 {
     int Yb;
     int rval;
-
     switch (cc_op % 0x1f) {
         case 0:
         case 1:
@@ -396,8 +391,8 @@ int x86Internal::get_conditional_flags()
 int x86Internal::get_FLAGS()
 {
     int flag_bits = get_conditional_flags();
-    flag_bits |= df & 0x00000400;    // direction flag
-    flag_bits |= eflags;             // get extended flags
+    flag_bits |= df & 0x00000400;
+    flag_bits |= eflags;
     return flag_bits;
 }
 void x86Internal::set_FLAGS(int flag_bits, int ld)

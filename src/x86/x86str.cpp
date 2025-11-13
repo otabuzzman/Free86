@@ -1,5 +1,4 @@
 #include "x86.h"
-
 void x86Internal::stringOp_INSB()
 {
     int Xf, Yf, Zf, ag, iopl, x;
@@ -119,7 +118,6 @@ void x86Internal::stringOp_STOSB()
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ag & Xf)
             physmem8_ptr = initial_mem_ptr;
-
     } else {
         st8_mem8_write(regs[0]);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);

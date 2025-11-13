@@ -1,15 +1,12 @@
 #include "x86.h"
-
 void x86Internal::instruction(int cycles)
 {
     if (init(cycles))
         return;
-
     do {
         check_opbyte();
         CS_flags = init_CS_flags;
         OPbyte |= CS_flags & 0x0100;
-
         while (true) {
             dump();
             switch (OPbyte) {
@@ -92,11 +89,10 @@ void x86Internal::instruction(int cycles)
                 case 0xbc:
                 case 0xbd:
                 case 0xbe:
-                case 0xbf: {
+                case 0xbf:
                     x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-                }
                     regs[OPbyte & 7] = x;
                     goto EXEC_LOOP;
                 case 0x88:    // MOV Gb Eb Move
@@ -110,7 +106,6 @@ void x86Internal::instruction(int cycles)
                             (regs[reg_idx0 & 3] & ~(0xff << last_tlb_val)) | (((x)&0xff) << last_tlb_val);
                     } else {
                         mem8_loc = segment_translation(mem8);
-
                         uint32_t mem8_locu = mem8_loc;
                         last_tlb_val       = tlb_write[mem8_locu >> 12];
                         if (last_tlb_val == -1) {
@@ -127,7 +122,6 @@ void x86Internal::instruction(int cycles)
                         regs[mem8 & 7] = x;
                     } else {
                         mem8_loc = segment_translation(mem8);
-
                         uint32_t mem8_locu = mem8_loc;
                         last_tlb_val       = tlb_write[mem8_locu >> 12];
                         if ((last_tlb_val | mem8_loc) & 3) {
@@ -214,19 +208,15 @@ void x86Internal::instruction(int cycles)
                 case 0xc7:    // MOV Ivds Evqp Move
                     mem8 = phys_mem8[physmem8_ptr++];
                     if ((mem8 >> 6) == 3) {
-
                         x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                             (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                         physmem8_ptr += 4;
-
                         regs[mem8 & 7] = x;
                     } else {
                         mem8_loc = segment_translation(mem8);
-
                         x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                             (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                         physmem8_ptr += 4;
-
                         st32_mem8_write(x);
                     }
                     goto EXEC_LOOP;
@@ -339,19 +329,15 @@ void x86Internal::instruction(int cycles)
                     y    = regs[(mem8 >> 3) & 7];
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-
                         cc_src = y;
                         cc_dst = regs[reg_idx0] = (regs[reg_idx0] + cc_src) >> 0;
                         cc_op                   = 2;
-
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x        = ld_32bits_mem8_write();
-
                         cc_src = y;
                         cc_dst = x = (x + cc_src) >> 0;
                         cc_op      = 2;
-
                         st32_mem8_write(x);
                     }
                     goto EXEC_LOOP;
@@ -380,15 +366,12 @@ void x86Internal::instruction(int cycles)
                     y               = regs[(mem8 >> 3) & 7];
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-
                         cc_src = y;
                         cc_dst = (regs[reg_idx0] - cc_src) >> 0;
                         cc_op  = 8;
-
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x        = ld_32bits_mem8_read();
-
                         cc_src = y;
                         cc_dst = (x - cc_src) >> 0;
                         cc_op  = 8;
@@ -424,11 +407,9 @@ void x86Internal::instruction(int cycles)
                         mem8_loc = segment_translation(mem8);
                         y        = ld_32bits_mem8_read();
                     }
-
                     cc_src = y;
                     cc_dst = regs[reg_idx1] = (regs[reg_idx1] + cc_src) >> 0;
                     cc_op                   = 2;
-
                     goto EXEC_LOOP;
                 case 0x0b:    // OR Evqp Gvqp Logical Inclusive OR
                 case 0x13:    // ADC Evqp Gvqp Add with Carry
@@ -457,11 +438,9 @@ void x86Internal::instruction(int cycles)
                         mem8_loc = segment_translation(mem8);
                         y        = ld_32bits_mem8_read();
                     }
-
                     cc_src = y;
                     cc_dst = (regs[reg_idx1] - cc_src) >> 0;
                     cc_op  = 8;
-
                     goto EXEC_LOOP;
                 case 0x04:    // ADD Ib AL Add
                 case 0x0c:    // OR Ib AL Logical Inclusive OR
@@ -476,50 +455,38 @@ void x86Internal::instruction(int cycles)
                     set_word_in_register(0, do_8bit_math(conditional_var, regs[0] & 0xff, y));
                     goto EXEC_LOOP;
                 case 0x05:    // ADD Ivds rAX Add
-                {
                     y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     cc_src = y;
                     cc_dst = regs[0] = (regs[0] + cc_src) >> 0;
                     cc_op            = 2;
-                }
                     goto EXEC_LOOP;
                 case 0x0d:    // OR Ivds rAX Logical Inclusive OR
                 case 0x15:    // ADC Ivds rAX Add with Carry
                 case 0x1d:    // SBB Ivds rAX Integer Subtraction with Borrow
                 case 0x25:    // AND Ivds rAX Logical AND
                 case 0x2d:    // SUB Ivds rAX Subtract
-                {
                     y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     conditional_var = OPbyte >> 3;
                     regs[0]         = do_32bit_math(conditional_var, regs[0], y);
-                }
                     goto EXEC_LOOP;
                 case 0x35:    // XOR Ivds rAX Logical Exclusive OR
-                {
                     y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     cc_dst = regs[0] = regs[0] ^ y;
                     cc_op            = 14;
-                }
                     goto EXEC_LOOP;
                 case 0x3d:    // CMP rAX  Compare Two Operands
-                {
                     y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     cc_src = y;
                     cc_dst = (regs[0] - cc_src) >> 0;
                     cc_op  = 8;
-                }
                     goto EXEC_LOOP;
                 case 0x80:    // ADD Ib Eb Add
                 case 0x82:    // ADD Ib Eb Add
@@ -553,31 +520,24 @@ void x86Internal::instruction(int cycles)
                             mem8_loc = segment_translation(mem8);
                             x        = ld_32bits_mem8_read();
                         }
-
                         y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                             (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                         physmem8_ptr += 4;
-
                         cc_src = y;
                         cc_dst = (x - cc_src) >> 0;
                         cc_op  = 8;
-
                     } else {
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-
                             y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                                 (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                             physmem8_ptr += 4;
-
                             regs[reg_idx0] = do_32bit_math(conditional_var, regs[reg_idx0], y);
                         } else {
                             mem8_loc = segment_translation(mem8);
-
                             y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                                 (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                             physmem8_ptr += 4;
-
                             x = ld_32bits_mem8_write();
                             x = do_32bit_math(conditional_var, x, y);
                             st32_mem8_write(x);
@@ -595,11 +555,9 @@ void x86Internal::instruction(int cycles)
                             x        = ld_32bits_mem8_read();
                         }
                         y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-
                         cc_src = y;
                         cc_dst = (x - cc_src) >> 0;
                         cc_op  = 8;
-
                     } else {
                         if ((mem8 >> 6) == 3) {
                             reg_idx0       = mem8 & 7;
@@ -622,16 +580,13 @@ void x86Internal::instruction(int cycles)
                 case 0x45:    // REX.RB   REX.R and REX.B combination
                 case 0x46:    // REX.RX   REX.R and REX.X combination
                 case 0x47:    // REX.RXB   REX.R, REX.X and REX.B combination
-                {
                     reg_idx1 = OPbyte & 7;
-
                     if (cc_op < 25) {
                         cc_op2  = cc_op;
                         cc_dst2 = cc_dst;
                     }
                     regs[reg_idx1] = cc_dst = (regs[reg_idx1] + 1) >> 0;
                     cc_op                   = 27;
-                }
                     goto EXEC_LOOP;
                 case 0x48:    // DEC  Zv Decrement by 1
                 case 0x49:    // REX.WB   REX.W and REX.B combination
@@ -641,16 +596,13 @@ void x86Internal::instruction(int cycles)
                 case 0x4d:    // REX.WRB   REX.W, REX.R and REX.B combination
                 case 0x4e:    // REX.WRX   REX.W, REX.R and REX.X combination
                 case 0x4f:    // REX.WRXB   REX.W, REX.R, REX.X and REX.B combination
-                {
                     reg_idx1 = OPbyte & 7;
-
                     if (cc_op < 25) {
                         cc_op2  = cc_op;
                         cc_dst2 = cc_dst;
                     }
                     regs[reg_idx1] = cc_dst = (regs[reg_idx1] - 1) >> 0;
                     cc_op                   = 30;
-                }
                     goto EXEC_LOOP;
                 case 0x6b:    // IMUL Evqp Gvqp Signed Multiply
                     mem8     = phys_mem8[physmem8_ptr++];
@@ -673,11 +625,9 @@ void x86Internal::instruction(int cycles)
                         mem8_loc = segment_translation(mem8);
                         y        = ld_32bits_mem8_read();
                     }
-
                     z = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     regs[reg_idx1] = op_IMUL32(y, z);
                     goto EXEC_LOOP;
                 case 0x84:    // TEST Eb  Logical Compare
@@ -691,10 +641,8 @@ void x86Internal::instruction(int cycles)
                     }
                     reg_idx1 = (mem8 >> 3) & 7;
                     y        = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
-
                     cc_dst = (((x & y) << 24) >> 24);
                     cc_op  = 12;
-
                     goto EXEC_LOOP;
                 case 0x85:    // TEST Evqp  Logical Compare
                     mem8 = phys_mem8[physmem8_ptr++];
@@ -705,27 +653,20 @@ void x86Internal::instruction(int cycles)
                         x        = ld_32bits_mem8_read();
                     }
                     y = regs[(mem8 >> 3) & 7];
-
                     cc_dst = x & y;
                     cc_op  = 14;
-
                     goto EXEC_LOOP;
                 case 0xa8:    // TEST AL  Logical Compare
                     y = phys_mem8[physmem8_ptr++];
-
                     cc_dst = (((regs[0] & y) << 24) >> 24);
                     cc_op  = 12;
-
                     goto EXEC_LOOP;
                 case 0xa9:    // TEST rAX  Logical Compare
-                {
                     y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     cc_dst = regs[0] & y;
                     cc_op  = 14;
-                }
                     goto EXEC_LOOP;
                 case 0xf6:    // TEST Eb  Logical Compare
                     mem8            = phys_mem8[physmem8_ptr++];
@@ -740,10 +681,8 @@ void x86Internal::instruction(int cycles)
                                 x        = ld_8bits_mem8_read();
                             }
                             y = phys_mem8[physmem8_ptr++];
-
                             cc_dst = (((x & y) << 24) >> 24);
                             cc_op  = 12;
-
                             break;
                         case 2:
                             if ((mem8 >> 6) == 3) {
@@ -823,14 +762,11 @@ void x86Internal::instruction(int cycles)
                                 mem8_loc = segment_translation(mem8);
                                 x        = ld_32bits_mem8_read();
                             }
-
                             y = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                                 (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                             physmem8_ptr += 4;
-
                             cc_dst = x & y;
                             cc_op  = 14;
-
                             break;
                         case 2:
                             if ((mem8 >> 6) == 3) {
@@ -898,7 +834,6 @@ void x86Internal::instruction(int cycles)
                             abort(6);
                     }
                     goto EXEC_LOOP;
-                // Rotate and Shift ops ---------------------------------------------------------------
                 case 0xc0:    // ROL Ib Eb Rotate
                     mem8            = phys_mem8[physmem8_ptr++];
                     conditional_var = (mem8 >> 3) & 7;
@@ -1031,7 +966,6 @@ void x86Internal::instruction(int cycles)
                         last_tlb_val       = tlb_read[mem8_locu >> 12];
                         bool     flg       = (last_tlb_val | mem8_loc) & 3;
                         uint32_t midx      = (mem8_loc ^ last_tlb_val) >> 2;
-
                         x       = (flg ? __ld_32bits_mem8_read() : phys_mem32[midx]);
                         regs[4] = (mem8_loc + 4) >> 0;
                     } else {
@@ -1040,7 +974,6 @@ void x86Internal::instruction(int cycles)
                     }
                     regs[OPbyte & 7] = x;
                     goto EXEC_LOOP;
-
                 case 0x60:    // PUSHA AX SS:[rSP] Push All General-Purpose Registers
                     op_PUSHA();
                     goto EXEC_LOOP;
@@ -1065,11 +998,9 @@ void x86Internal::instruction(int cycles)
                     }
                     goto EXEC_LOOP;
                 case 0x68:    // PUSH Ivs SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
-                {
                     x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     if (x86_64_long_mode) {
                         mem8_loc = (regs[4] - 4) >> 0;
                         st32_mem8_write(x);
@@ -1077,7 +1008,6 @@ void x86Internal::instruction(int cycles)
                     } else {
                         push_dword_to_stack(x);
                     }
-                }
                     goto EXEC_LOOP;
                 case 0x6a:    // PUSH Ibss SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
@@ -1134,10 +1064,8 @@ void x86Internal::instruction(int cycles)
                             z |= 0x00000200;
                     }
                     set_FLAGS(x, z & y);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0x06:    // PUSH ES SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
                 case 0x0e:    // PUSH CS SS:[rSP] Push Word, Doubleword or Quadword Onto the Stack
@@ -1195,53 +1123,45 @@ void x86Internal::instruction(int cycles)
                     mem8            = phys_mem8[physmem8_ptr++];
                     conditional_var = (mem8 >> 3) & 7;
                     switch (conditional_var) {
-                        case 0:    // INC  Evqp Increment by 1
+                        case 0:    // INC
                             if ((mem8 >> 6) == 3) {
                                 reg_idx0 = mem8 & 7;
-
                                 if (cc_op < 25) {
                                     cc_op2  = cc_op;
                                     cc_dst2 = cc_dst;
                                 }
                                 regs[reg_idx0] = cc_dst = (regs[reg_idx0] + 1) >> 0;
                                 cc_op                   = 27;
-
                             } else {
                                 mem8_loc = segment_translation(mem8);
                                 x        = ld_32bits_mem8_write();
-
                                 if (cc_op < 25) {
                                     cc_op2  = cc_op;
                                     cc_dst2 = cc_dst;
                                 }
                                 x = cc_dst = (x + 1) >> 0;
                                 cc_op      = 27;
-
                                 st32_mem8_write(x);
                             }
                             break;
                         case 1:    // DEC
                             if ((mem8 >> 6) == 3) {
                                 reg_idx0 = mem8 & 7;
-
                                 if (cc_op < 25) {
                                     cc_op2  = cc_op;
                                     cc_dst2 = cc_dst;
                                 }
                                 regs[reg_idx0] = cc_dst = (regs[reg_idx0] - 1) >> 0;
                                 cc_op                   = 30;
-
                             } else {
                                 mem8_loc = segment_translation(mem8);
                                 x        = ld_32bits_mem8_write();
-
                                 if (cc_op < 25) {
                                     cc_op2  = cc_op;
                                     cc_dst2 = cc_dst;
                                 }
                                 x = cc_dst = (x - 1) >> 0;
                                 cc_op      = 30;
-
                                 st32_mem8_write(x);
                             }
                             break;
@@ -1308,13 +1228,10 @@ void x86Internal::instruction(int cycles)
                     physmem8_ptr = (physmem8_ptr + x) >> 0;
                     goto EXEC_LOOP;
                 case 0xe9:    // JMP Jvds  Jump
-                {
                     x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     physmem8_ptr = (physmem8_ptr + x) >> 0;
-                }
                     goto EXEC_LOOP;
                 case 0xea:    // JMPF Ap  Jump
                     if ((((CS_flags >> 8) & 1) ^ 1)) {
@@ -1516,11 +1433,9 @@ void x86Internal::instruction(int cycles)
                     eip = x, physmem8_ptr = initial_mem_ptr = 0;
                     goto EXEC_LOOP;
                 case 0xe8:    // CALL Jvds SS:[rSP] Call Procedure
-                {
                     x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                         (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-
                     y = (eip + physmem8_ptr - initial_mem_ptr);
                     if (x86_64_long_mode) {
                         mem8_loc = (regs[4] - 4) >> 0;
@@ -1530,47 +1445,36 @@ void x86Internal::instruction(int cycles)
                         push_dword_to_stack(y);
                     }
                     physmem8_ptr = (physmem8_ptr + x) >> 0;
-                }
                     goto EXEC_LOOP;
                 case 0x9a:    // CALLF Ap SS:[rSP] Call Procedure
                     z = (((CS_flags >> 8) & 1) ^ 1);
                     if (z) {
-
                         x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                             (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                         physmem8_ptr += 4;
-
                     } else {
                         x = ld16_mem8_direct();
                     }
                     y = ld16_mem8_direct();
                     op_CALLF(z, y, x, (eip + physmem8_ptr - initial_mem_ptr));
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xca:                                   // RETF Iw  Return from procedure
                     y = (ld16_mem8_direct() << 16) >> 16;    // 16 bit immediate field
                     op_RETF((((CS_flags >> 8) & 1) ^ 1), y);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xcb:    // RETF SS:[rSP]  Return from procedure
                     op_RETF((((CS_flags >> 8) & 1) ^ 1), 0);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xcf:    // IRET SS:[rSP] Flags Interrupt Return
                     op_IRET((((CS_flags >> 8) & 1) ^ 1));
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0x90:    // XCHG  Zvqp Exchange Register/Memory with Register
                     goto EXEC_LOOP;
@@ -1626,10 +1530,8 @@ void x86Internal::instruction(int cycles)
                     if (cpl > iopl)
                         abort(13);
                     eflags |= 0x00000200;
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0x9e:    // SAHF AH  Store AH into Flags
                     cc_src = ((regs[0] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (check_overflow() << 11);
@@ -1677,31 +1579,23 @@ void x86Internal::instruction(int cycles)
                     goto EXEC_LOOP;
                 case 0x6c:    // INS DX (ES:)[rDI] Input from Port to String
                     stringOp_INSB();
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0x6d:    // INS DX ES:[DI] Input from Port to String
                     CS_flags & 0x0100 ? stringOp_INSW() : stringOp_INSD();
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0x6e:    // OUTS (DS):[rSI] DX Output String to Port
                     stringOp_OUTSB();
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0x6f:    // OUTS DS:[SI] DX Output String to Port
                     CS_flags & 0x0100 ? stringOp_OUTSW() : stringOp_OUTSD();
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xd8:    // FADD Msr ST Add
                 case 0xd9:    // FLD ESsr ST Load Floating Point Value
@@ -1726,28 +1620,23 @@ void x86Internal::instruction(int cycles)
                     goto EXEC_LOOP;
                 case 0x9b:    // FWAIT   Check pending unmasked floating-point exceptions
                     goto EXEC_LOOP;
-                case 0xe4: {    // IN Ib AL Input from Port
+                case 0xe4:    // IN Ib AL Input from Port
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl)
                         abort(13);
                     x = phys_mem8[physmem8_ptr++];
                     set_word_in_register(0, ld8_port(x));
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
-                } break;
                 case 0xe5:    // IN Ib eAX Input from Port
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl)
                         abort(13);
                     x       = phys_mem8[physmem8_ptr++];
                     regs[0] = ld32_port(x);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xe6:    // OUT AL Ib Output to Port
                     iopl = (eflags >> 12) & 3;
@@ -1755,10 +1644,8 @@ void x86Internal::instruction(int cycles)
                         abort(13);
                     x = phys_mem8[physmem8_ptr++];
                     st8_port(x, regs[0] & 0xff);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xe7:    // OUT eAX Ib Output to Port
                     iopl = (eflags >> 12) & 3;
@@ -1766,50 +1653,40 @@ void x86Internal::instruction(int cycles)
                         abort(13);
                     x = phys_mem8[physmem8_ptr++];
                     st32_port(x, regs[0]);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xec:    // IN DX AL Input from Port
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl)
                         abort(13);
                     set_word_in_register(0, ld8_port(regs[2] & 0xffff));
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xed:    // IN DX eAX Input from Port
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl)
                         abort(13);
                     regs[0] = ld32_port(regs[2] & 0xffff);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xee:    // OUT AL DX Output to Port
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl)
                         abort(13);
                     st8_port(regs[2] & 0xffff, regs[0] & 0xff);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0xef:    // OUT eAX DX Output to Port
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl)
                         abort(13);
                     st32_port(regs[2] & 0xffff, regs[0]);
-
                     if (hard_irq != 0 && (eflags & 0x00000200))
                         goto OUTER_LOOP;
-
                     goto EXEC_LOOP;
                 case 0x27:    // DAA  AL Decimal Adjust AL after Addition
                     op_DAA();
@@ -1837,8 +1714,6 @@ void x86Internal::instruction(int cycles)
                 case 0xd6:    // SALC   Undefined and Reserved; Does not Generate #UD
                 case 0xf1:    // INT1   Undefined and Reserved; Does not Generate #UD
                     abort(6);
-                    break;
-
                 case 0x0f:
                     OPbyte = phys_mem8[physmem8_ptr++];
                     switch (OPbyte) {
@@ -1858,14 +1733,11 @@ void x86Internal::instruction(int cycles)
                         case 0x8d:    // JNL Jvds  Jump short if not less/greater or equal (SF=OF)
                         case 0x8e:    // JLE Jvds  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
                         case 0x8f:    // JNLE Jvds  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
-                        {
                             x = phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
                                 (phys_mem8[physmem8_ptr + 2] << 16) | (phys_mem8[physmem8_ptr + 3] << 24);
                             physmem8_ptr += 4;
-
                             if (check_status_bits_for_jump(OPbyte & 0xf))
                                 physmem8_ptr = (physmem8_ptr + x) >> 0;
-                        }
                             goto EXEC_LOOP;
                         case 0x90:    // SETO  Eb Set Byte on Condition - overflow (OF=1)
                         case 0x91:    // SETNO  Eb Set Byte on Condition - not overflow (OF=0)
@@ -1881,10 +1753,8 @@ void x86Internal::instruction(int cycles)
                         case 0x9b:    // SETNP  Eb Set Byte on Condition - not parity/parity odd
                         case 0x9c:    // SETL  Eb Set Byte on Condition - less/not greater (SF!=OF)
                         case 0x9d:    // SETNL  Eb Set Byte on Condition - not less/greater or equal (SF=OF)
-                        case 0x9e:    // SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR
-                                      // (SF!=OF))
-                        case 0x9f:    // SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0) AND
-                                      // (SF=OF))
+                        case 0x9e:    // SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x9f:    // SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0) AND (SF=OF))
                             mem8 = phys_mem8[physmem8_ptr++];
                             x    = check_status_bits_for_jump(OPbyte & 0xf);
                             if ((mem8 >> 6) == 3) {
@@ -1908,10 +1778,8 @@ void x86Internal::instruction(int cycles)
                         case 0x4b:    // CMOVNP Evqp Gvqp Conditional Move - not parity/parity odd
                         case 0x4c:    // CMOVL Evqp Gvqp Conditional Move - less/not greater (SF!=OF)
                         case 0x4d:    // CMOVNL Evqp Gvqp Conditional Move - not less/greater or equal (SF=OF)
-                        case 0x4e:    // CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1) OR
-                                      // (SF!=OF))
-                        case 0x4f:    // CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater ((ZF=0) AND
-                                      // (SF=OF))
+                        case 0x4e:    // CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                        case 0x4f:    // CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater ((ZF=0) AND (SF=OF))
                             mem8 = phys_mem8[physmem8_ptr++];
                             if ((mem8 >> 6) == 3) {
                                 x = regs[mem8 & 7];
@@ -2385,14 +2253,13 @@ void x86Internal::instruction(int cycles)
                         case 0xcc:
                         case 0xcd:
                         case 0xce:
-                        case 0xcf: {
+                        case 0xcf:
                             reg_idx1       = OPbyte & 7;
                             x              = regs[reg_idx1];
                             uint32_t xuint = x;
                             x = (xuint >> 24) | ((x >> 8) & 0x0000ff00) | ((x << 8) & 0x00ff0000) | (x << 24);
                             regs[reg_idx1] = x;
                             goto EXEC_LOOP;
-                        } break;
                         case 0x04:
                         case 0x05:    // LOADALL  AX Load All of the CPU Registers
                         case 0x07:    // LOADALL  EAX Load All of the CPU Registers
@@ -2429,8 +2296,7 @@ void x86Internal::instruction(int cycles)
                         case 0x29:    // MOVAPS Vps Wps Move Aligned Packed Single-FP Values
                         case 0x2a:    // CVTPI2PS Qpi Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
                         case 0x2b:    // MOVNTPS Vps Mps Store Packed Single-FP Values Using Non-Temporal Hint
-                        case 0x2c:    // CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11 PackedDW
-                                      // Integers
+                        case 0x2c:    // CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11 PackedDW Integers
                         case 0x2d:    // CVTPS2PI Wpsq Ppi Convert Packed Single-FP Values to1.11 PackedDW Integers
                         case 0x2e:    // UCOMISS Vss  Unordered Compare Scalar Single-FP Values and Set EFLAGS
                         case 0x2f:    // COMISS Vss  Compare Scalar Ordered Single-FP Values and Set EFLAGS
@@ -2561,7 +2427,6 @@ void x86Internal::instruction(int cycles)
                             abort(6);
                     }
                     break;
-
                 default:
                     switch (OPbyte) {
                         case 0x189:    // MOV Gvqp Evqp Move
@@ -2798,17 +2663,13 @@ void x86Internal::instruction(int cycles)
                                 x        = ld_16bits_mem8_read();
                             }
                             y = regs[(mem8 >> 3) & 7];
-
                             cc_dst = (((x & y) << 16) >> 16);
                             cc_op  = 13;
-
                             goto EXEC_LOOP;
                         case 0x1a9:    // TEST rAX  Logical Compare
                             y = ld16_mem8_direct();
-
                             cc_dst = (((regs[0] & y) << 16) >> 16);
                             cc_op  = 13;
-
                             goto EXEC_LOOP;
                         case 0x1f7:    // TEST Evqp  Logical Compare
                             mem8            = phys_mem8[physmem8_ptr++];
@@ -2822,10 +2683,8 @@ void x86Internal::instruction(int cycles)
                                         x        = ld_16bits_mem8_read();
                                     }
                                     y = ld16_mem8_direct();
-
                                     cc_dst = (((x & y) << 16) >> 16);
                                     cc_op  = 13;
-
                                     break;
                                 case 2:
                                     if ((mem8 >> 6) == 3) {
@@ -3162,17 +3021,13 @@ void x86Internal::instruction(int cycles)
                             goto EXEC_LOOP;
                         case 0x16d:    // INS DX ES:[DI] Input from Port to String
                             op_16_INS();
-
                             if (hard_irq != 0 && (eflags & 0x00000200))
                                 goto OUTER_LOOP;
-
                             goto EXEC_LOOP;
                         case 0x16f:    // OUTS DS:[SI] DX Output String to Port
                             op_16_OUTS();
-
                             if (hard_irq != 0 && (eflags & 0x00000200))
                                 goto OUTER_LOOP;
-
                             goto EXEC_LOOP;
                         case 0x1e5:    // IN Ib eAX Input from Port
                             iopl = (eflags >> 12) & 3;
@@ -3180,10 +3035,8 @@ void x86Internal::instruction(int cycles)
                                 abort(13);
                             x = phys_mem8[physmem8_ptr++];
                             set_lower_word_in_register(0, ld16_port(x));
-
                             if (hard_irq != 0 && (eflags & 0x00000200))
                                 goto OUTER_LOOP;
-
                             goto EXEC_LOOP;
                         case 0x1e7:    // OUT eAX Ib Output to Port
                             iopl = (eflags >> 12) & 3;
@@ -3191,30 +3044,24 @@ void x86Internal::instruction(int cycles)
                                 abort(13);
                             x = phys_mem8[physmem8_ptr++];
                             st16_port(x, regs[0] & 0xffff);
-
                             if (hard_irq != 0 && (eflags & 0x00000200))
                                 goto OUTER_LOOP;
-
                             goto EXEC_LOOP;
                         case 0x1ed:    // IN DX eAX Input from Port
                             iopl = (eflags >> 12) & 3;
                             if (cpl > iopl)
                                 abort(13);
                             set_lower_word_in_register(0, ld16_port(regs[2] & 0xffff));
-
                             if (hard_irq != 0 && (eflags & 0x00000200))
                                 goto OUTER_LOOP;
-
                             goto EXEC_LOOP;
                         case 0x1ef:    // OUT eAX DX Output to Port
                             iopl = (eflags >> 12) & 3;
                             if (cpl > iopl)
                                 abort(13);
                             st16_port(regs[2] & 0xffff, regs[0] & 0xffff);
-
                             if (hard_irq != 0 && (eflags & 0x00000200))
                                 goto OUTER_LOOP;
-
                             goto EXEC_LOOP;
                         case 0x166:    //   Operand-size override prefix
                         case 0x167:    //   Address-size override prefix
@@ -3351,8 +3198,7 @@ void x86Internal::instruction(int cycles)
                                 case 0x18c:    // JL Jvds  Jump short if less/not greater (SF!=OF)
                                 case 0x18d:    // JNL Jvds  Jump short if not less/greater or equal (SF=OF)
                                 case 0x18e:    // JLE Jvds  Jump short if less or equal/not greater ((ZF=1) OR (SF!=OF))
-                                case 0x18f:    // JNLE Jvds  Jump short if not less nor equal/greater ((ZF=0) AND
-                                               // (SF=OF))
+                                case 0x18f:    // JNLE Jvds  Jump short if not less nor equal/greater ((ZF=0) AND (SF=OF))
                                     x = ld16_mem8_direct();
                                     if (check_status_bits_for_jump(OPbyte & 0xf))
                                         eip          = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff,
@@ -3360,26 +3206,20 @@ void x86Internal::instruction(int cycles)
                                     goto EXEC_LOOP;
                                 case 0x140:    // CMOVO Evqp Gvqp Conditional Move - overflow (OF=1)
                                 case 0x141:    // CMOVNO Evqp Gvqp Conditional Move - not overflow (OF=0)
-                                case 0x142:    // CMOVB Evqp Gvqp Conditional Move - below/not above or equal/carry
-                                               // (CF=1)
-                                case 0x143:    // CMOVNB Evqp Gvqp Conditional Move - not below/above or equal/not carry
-                                               // (CF=0)
+                                case 0x142:    // CMOVB Evqp Gvqp Conditional Move - below/not above or equal/carry (CF=1)
+                                case 0x143:    // CMOVNB Evqp Gvqp Conditional Move - not below/above or equal/not carry (CF=0)
                                 case 0x144:    // CMOVZ Evqp Gvqp Conditional Move - zero/equal (ZF=0)
                                 case 0x145:    // CMOVNZ Evqp Gvqp Conditional Move - not zero/not equal (ZF=1)
-                                case 0x146:    // CMOVBE Evqp Gvqp Conditional Move - below or equal/not above (CF=1 AND
-                                               // ZF=1)
-                                case 0x147:    // CMOVNBE Evqp Gvqp Conditional Move - not below or equal/above (CF=0
-                                               // AND ZF=0)
+                                case 0x146:    // CMOVBE Evqp Gvqp Conditional Move - below or equal/not above (CF=1 AND ZF=1)
+                                case 0x147:    // CMOVNBE Evqp Gvqp Conditional Move - not below or equal/above (CF=0 AND ZF=0)
                                 case 0x148:    // CMOVS Evqp Gvqp Conditional Move - sign (SF=1)
                                 case 0x149:    // CMOVNS Evqp Gvqp Conditional Move - not sign (SF=0)
                                 case 0x14a:    // CMOVP Evqp Gvqp Conditional Move - parity/parity even (PF=1)
                                 case 0x14b:    // CMOVNP Evqp Gvqp Conditional Move - not parity/parity odd
                                 case 0x14c:    // CMOVL Evqp Gvqp Conditional Move - less/not greater (SF!=OF)
                                 case 0x14d:    // CMOVNL Evqp Gvqp Conditional Move - not less/greater or equal (SF=OF)
-                                case 0x14e:    // CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1)
-                                               // OR (SF!=OF))
-                                case 0x14f:    // CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater
-                                               // ((ZF=0) AND (SF=OF))
+                                case 0x14e:    // CMOVLE Evqp Gvqp Conditional Move - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                                case 0x14f:    // CMOVNLE Evqp Gvqp Conditional Move - not less nor equal/greater ((ZF=0) AND (SF=OF))
                                     mem8 = phys_mem8[physmem8_ptr++];
                                     if ((mem8 >> 6) == 3) {
                                         x = regs[mem8 & 7];
@@ -3610,24 +3450,19 @@ void x86Internal::instruction(int cycles)
                                 case 0x190:    // SETO  Eb Set Byte on Condition - overflow (OF=1)
                                 case 0x191:    // SETNO  Eb Set Byte on Condition - not overflow (OF=0)
                                 case 0x192:    // SETB  Eb Set Byte on Condition - below/not above or equal/carry (CF=1)
-                                case 0x193:    // SETNB  Eb Set Byte on Condition - not below/above or equal/not carry
-                                               // (CF=0)
+                                case 0x193:    // SETNB  Eb Set Byte on Condition - not below/above or equal/not carry (CF=0)
                                 case 0x194:    // SETZ  Eb Set Byte on Condition - zero/equal (ZF=0)
                                 case 0x195:    // SETNZ  Eb Set Byte on Condition - not zero/not equal (ZF=1)
-                                case 0x196:    // SETBE  Eb Set Byte on Condition - below or equal/not above (CF=1 AND
-                                               // ZF=1)
-                                case 0x197:    // SETNBE  Eb Set Byte on Condition - not below or equal/above (CF=0 AND
-                                               // ZF=0)
+                                case 0x196:    // SETBE  Eb Set Byte on Condition - below or equal/not above (CF=1 AND ZF=1)
+                                case 0x197:    // SETNBE  Eb Set Byte on Condition - not below or equal/above (CF=0 AND ZF=0)
                                 case 0x198:    // SETS  Eb Set Byte on Condition - sign (SF=1)
                                 case 0x199:    // SETNS  Eb Set Byte on Condition - not sign (SF=0)
                                 case 0x19a:    // SETP  Eb Set Byte on Condition - parity/parity even (PF=1)
                                 case 0x19b:    // SETNP  Eb Set Byte on Condition - not parity/parity odd
                                 case 0x19c:    // SETL  Eb Set Byte on Condition - less/not greater (SF!=OF)
                                 case 0x19d:    // SETNL  Eb Set Byte on Condition - not less/greater or equal (SF=OF)
-                                case 0x19e:    // SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR
-                                               // (SF!=OF))
-                                case 0x19f:    // SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0)
-                                               // AND (SF=OF))
+                                case 0x19e:    // SETLE  Eb Set Byte on Condition - less or equal/not greater ((ZF=1) OR (SF!=OF))
+                                case 0x19f:    // SETNLE  Eb Set Byte on Condition - not less nor equal/greater ((ZF=0) AND (SF=OF))
                                 case 0x1b0:    // CMPXCHG Gb Eb Compare and Exchange
                                     OPbyte = 0x0f;
                                     physmem8_ptr--;
@@ -3666,13 +3501,10 @@ void x86Internal::instruction(int cycles)
                                 case 0x127:
                                 case 0x128:    // MOVAPS Wps Vps Move Aligned Packed Single-FP Values
                                 case 0x129:    // MOVAPS Vps Wps Move Aligned Packed Single-FP Values
-                                case 0x12a:    // CVTPI2PS Qpi Vps Convert Packed DW Integers to1.11 PackedSingle-FP
-                                               // Values
+                                case 0x12a:    // CVTPI2PS Qpi Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
                                 case 0x12b:    // MOVNTPS Vps Mps Store Packed Single-FP Values Using Non-Temporal Hint
-                                case 0x12c:    // CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11
-                                               // PackedDW Integers
-                                case 0x12d:    // CVTPS2PI Wpsq Ppi Convert Packed Single-FP Values to1.11 PackedDW
-                                               // Integers
+                                case 0x12c:    // CVTTPS2PI Wpsq Ppi Convert with Trunc. Packed Single-FP Values to1.11 PackedDW Integers
+                                case 0x12d:    // CVTPS2PI Wpsq Ppi Convert Packed Single-FP Values to1.11 PackedDW Integers
                                 case 0x12e:    // UCOMISS Vss  Unordered Compare Scalar Single-FP Values and Set EFLAGS
                                 case 0x12f:    // COMISS Vss  Compare Scalar Ordered Single-FP Values and Set EFLAGS
                                 case 0x130:    // WRMSR rCX MSR Write to Model Specific Register
@@ -3701,10 +3533,8 @@ void x86Internal::instruction(int cycles)
                                 case 0x157:    // XORPS Wps Vps Bitwise Logical XOR for Single-FP Values
                                 case 0x158:    // ADDPS Wps Vps Add Packed Single-FP Values
                                 case 0x159:    // MULPS Wps Vps Multiply Packed Single-FP Values
-                                case 0x15a:    // CVTPS2PD Wps Vpd Convert Packed Single-FP Values to1.11
-                                               // PackedDouble-FP Values
-                                case 0x15b:    // CVTDQ2PS Wdq Vps Convert Packed DW Integers to1.11 PackedSingle-FP
-                                               // Values
+                                case 0x15a:    // CVTPS2PD Wps Vpd Convert Packed Single-FP Values to1.11 PackedDouble-FP Values
+                                case 0x15b:    // CVTDQ2PS Wdq Vps Convert Packed DW Integers to1.11 PackedSingle-FP Values
                                 case 0x15c:    // SUBPS Wps Vps Subtract Packed Single-FP Values
                                 case 0x15d:    // MINPS Wps Vps Return Minimum Packed Single-FP Values
                                 case 0x15e:    // DIVPS Wps Vps Divide Packed Single-FP Values
@@ -3759,11 +3589,9 @@ void x86Internal::instruction(int cycles)
                     }
             }
         }
-
     EXEC_LOOP:
         ;
     } while (--cycles_remaining);
-
 OUTER_LOOP:
     cycles_processed += (cycles_requested - cycles_remaining);
     eip = (eip + physmem8_ptr - initial_mem_ptr);
