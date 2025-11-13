@@ -1,27 +1,33 @@
 #ifndef _X86_H
 #define _X86_H
-#include "../CMOS.h"
-#include "../KBD.h"
-#include "../ringbuffer.h"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <fstream>
 #include <string>
 #include <vector>
+
+#include "../CMOS.h"
+#include "../KBD.h"
+#include "../ringbuffer.h"
+
 class PIT;
 class Serial;
 class PIC_Controller;
+
 typedef struct DescriptorTable {
     int selector = 0;
     uint32_t base = 0;
     uint32_t limit = 0;
     int flags = 0;
 } DescriptorTable;
+
 typedef struct ErrorInfo {
     int intno = -1;
     int error_code = 0;
 } ErrorInfo;
+
 class x86Internal {
   public:
     int tlb_pages[2048]{0};
@@ -33,15 +39,20 @@ class x86Internal {
     int *tlb_write_user = nullptr;
     int *tlb_read = nullptr; // current (user or kernel)
     int *tlb_write = nullptr;
+    int last_tlb_val; // tlb_hash_value
+
     uint8_t *phys_mem = nullptr;
     uint8_t *phys_mem8 = nullptr;
     uint16_t *phys_mem16 = nullptr;
     uint32_t *phys_mem32 = nullptr;
+
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     int regs[8]{0};
     int eflags = 0x2;
+
     int eip = 0xfff0;
     int eip_offset = 0;
+
     // clang-format off
     // ES, CS, SS, DS, FS, GS, LDT, TR
     DescriptorTable segs[7] = {
@@ -54,18 +65,23 @@ class x86Internal {
         {0, 0, 0, 0}};
     // clang-format on
     int df = 1;                              // direction Flag
+
     int cpl = 0;                             // current privilege level
     int dpl = 0;                             // descriptor privilege level
     int iopl = 0;                            // IO privilege level
+
     DescriptorTable gdt;                     // GDT register
     DescriptorTable ldt;                     // LDT register
     DescriptorTable tr;                      // task register
     DescriptorTable idt = {0, 0, 0x03ff, 0}; // IDT register
+
     int cr0 = 0;
     int cr2 = 0;
     int cr3 = 0;
     int cr4 = 0;
+
     int OPbyte = 0;
+
     int cc_src = 0;
     int cc_dst = 0;
     int cc_op = 0;
@@ -76,6 +92,7 @@ class x86Internal {
     int cccc_src = 0;  // current src
     int cccc_op2 = 0;  // current op, byte2
     int cccc_dst2 = 0; // current dest, byte2
+
     // 0x0001 ES segment override prefix    (0x26)
     // 0x0002 CS segment override prefix    (0x2e)
     // 0x0003 SS segment override prefix    (0x36)
@@ -89,27 +106,34 @@ class x86Internal {
     // 0x0100 operand-size override prefix  (0x66)
     int CS_flags = 0;
     int init_CS_flags = 0; // reflects D flag (PM (1986), 16.1)
+
     int CS_base;
     int SS_base;
     int SS_mask = -1; // 16 or 32 bit SS size
+
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
-    int conditional_var =
-        0;    // opcode_543 bits 5, 4, and 3 of opcode or modR/M byte
+
+    int conditional_var = 0; // opcode_543 bits 5, 4, and 3 of opcode or modR/M byte
     int mem8; // byte_value
     int reg_idx0, reg_idx1;  // register indices (0-7)
     int x, y, z, v;          // intermediate values
-    int last_tlb_val;        // tlb_hash_value
+
     int physmem8_ptr = 0;    // fetch_address
     int initial_mem_ptr = 0; // fetch_address_byte0
     uint32_t mem8_loc;       // byte_address
+
     int cycles_requested = 0;
     int cycles_remaining = 0;
     int cycles_processed = 0;
+
     int halted = 0;
+
     int hard_irq = 0;
     int hard_intno = -1;
+
     ErrorInfo interrupt;
+
     // clang-format off
     const std::vector<int> parity_LUT = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
@@ -138,10 +162,13 @@ class x86Internal {
         16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
     };
     // clang-format on
+
     int mem_size = 16 * 1024 * 1024;
     int new_mem_size = mem_size + ((15 + 3) & ~3);
+
     x86Internal(int _mem_size);
     ~x86Internal();
+
     void st8_phys(int mem8_loc, std::string str) {
         auto s = str.c_str();
         for (int i = 0; i < str.length(); i++) {
@@ -227,6 +254,7 @@ class x86Internal {
         tlb_read_user[i] = -1;
         tlb_write_user[i] = -1;
     }
+
     std::string hex_rep(int x, int n) {
         std::string s;
         char h[] = "0123456789ABCDEF";
@@ -244,21 +272,36 @@ class x86Internal {
     std::string _1_byte_(int n) {
         return hex_rep(n, 4);
     }
+
     void instruction(int cycles);
     int init(int cycles);
     int check_halted();
     void check_interrupt();
     void init_segment_local_vars();
+
+    int operation_size_function(int eip_offset, int OPbyte);
+
+    void set_CR0(int Qd);
+    void set_CR3(int new_pdb);
+    void set_CR4(int newval);
+    bool check_real_mode();
+    bool check_protected();
+
     void check_opbyte();
+
     int ioport_read(int mem8_loc);
     void ioport_write(int mem8_loc, int data);
+
     int ld8_port(int port_num);
     int ld16_port(int port_num);
     int ld32_port(int port_num);
     void st8_port(int port_num, int x);
     void st16_port(int port_num, int x);
     void st32_port(int port_num, int x);
+
     void do_tlb_set_page(int Gd, int Hd, bool ja);
+    int do_tlb_lookup(int mem8_loc, int ud);
+
     int __ld8_mem8_kernel_read();
     int ld8_mem8_kernel_read();
     int __ld16_mem8_kernel_read();
@@ -290,10 +333,18 @@ class x86Internal {
     void st16_mem8_kernel_write(int x);
     void __st32_mem8_kernel_write(int x);
     void st32_mem8_kernel_write(int x);
+
     int segment_translation(int mem8);
     int segmented_mem8_loc_for_MOV(bool is_verw);
+    void set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags);
+    void init_segment_vars_with_selector(int Sb, int selector);
+    void set_protected_mode_segment_register(int reg, int selector);
+    void set_segment_register(int reg, int selector);
+    int segment_isnt_accessible(int selector, bool is_verw);
+
     void set_word_in_register(int reg_idx1, int x);
     void set_lower_word_in_register(int reg_idx1, int x);
+
     int do_32bit_math(int conditional_var, int Yb, int Zb);
     int do_16bit_math(int conditional_var, int Yb, int Zb);
     int do_8bit_math(int conditional_var, int Yb, int Zb);
@@ -304,6 +355,7 @@ class x86Internal {
     int shift8(int conditional_var, int Yb, int Zb);
     int shift16(int conditional_var, int Yb, int Zb);
     int shift32(int conditional_var, uint32_t Yb, int Zb);
+
     int op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc);
     int op_SHLD(int Yb, int Zb, int pc);
     int op_SHRD(int Yb, int Zb, int pc);
@@ -328,6 +380,7 @@ class x86Internal {
     int do_multiply32(int _a, int cc_opbyte);
     int op_MUL32(int a, int OPbyte);
     int op_IMUL32(int a, int OPbyte);
+
     bool check_carry();
     bool check_overflow();
     bool check_below_or_equal();
@@ -338,53 +391,49 @@ class x86Internal {
     int check_status_bits_for_jump(int gd);
     int conditional_flags_for_rot_shiftcc_ops();
     int get_conditional_flags();
+
     int get_FLAGS();
     void set_FLAGS(int flag_bits, int ld);
+
     void abort_with_error_code(int intno, int error_code);
     void abort(int intno);
+
     void change_permission_level(int sd);
-    int do_tlb_lookup(int mem8_loc, int ud);
+
     void push_word_to_stack(int x);
     void push_dword_to_stack(int x);
     int pop_word_from_stack_read();
     void pop_word_from_stack_incr_ptr();
     int pop_dword_from_stack_read();
     void pop_dword_from_stack_incr_ptr();
-    int operation_size_function(int eip_offset, int OPbyte);
-    void set_CR0(int Qd);
-    void set_CR3(int new_pdb);
-    void set_CR4(int newval);
-    bool check_real_mode();
-    bool check_protected();
+
     int SS_mask_from_flags(int desp_high4);
+
     void load_from_descriptor_table(int selector, int *desary);
+    void load_from_TR(int he, int *desary);
     int calc_desp_limit(int desp_low4, int desp_high4);
     int calc_desp_base(int desp_low4, int desp_high4);
     void set_descriptor_register(DescriptorTable *descriptor_table, int desp_low4, int desp_high4);
-    void set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags);
-    void init_segment_vars_with_selector(int Sb, int selector);
-    void load_from_TR(int he, int *desary);
+
     void do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe);
     void do_interrupt_not_protected_mode(int intno, int ne, int error_code, int oe, int pe);
     void do_interrupt(int intno, int ne, int error_code, int oe, int pe);
+
     void op_LDTR(int selector);
     void op_LTR(int selector);
-    void set_protected_mode_segment_register(int reg, int selector);
-    void set_segment_register(int reg, int selector);
     void do_JMPF_virtual_mode(int selector, int Le);
     void do_JMPF(int selector, int Le);
     void op_JMPF(int selector, int Le);
-    void Pe(int reg, int cpl_var);
     void op_CALLF_not_protected_mode(bool is_32_bit, int selector, int Le, int oe);
     void op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe);
     void op_CALLF(bool is_32_bit, int selector, int Le, int oe);
     void do_return_not_protected_mode(bool is_32_bit, bool is_iret, int imm16);
     void do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16);
+    void Pe(int reg, int cpl_var);
     void op_IRET(bool is_32_bit);
     void op_RETF(bool is_32_bit, int imm16);
-    int of(int selector, bool is_lsl);
     void op_LAR_LSL(bool is_32_bit, bool is_lsl);
-    int segment_isnt_accessible(int selector, bool is_verw);
+    int of(int selector, bool is_lsl);
     void op_VERR_VERW(int selector, bool is_verw);
     void op_ARPL();
     void op_CPUID();
@@ -434,11 +483,13 @@ class x86Internal {
     void stringOp_CMPSD();
     void stringOp_LODSD();
     void stringOp_SCASD();
+
     CMOS *cmos = nullptr;
     KBD *kbd = nullptr;
     PIC_Controller *pic = nullptr;
     PIT *pit = nullptr;
     Serial *serial = nullptr;
+
     bool logcheck = true;
     std::string filename = "log.txt";
     int filecheck_start = 0;

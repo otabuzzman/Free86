@@ -2137,7 +2137,7 @@ void x86Internal::instruction(int cycles) {
                     if (cpl != 0) {
                         abort(13);
                     }
-                    set_CR0(cr0 & ~(1 << 3)); // Clear Task-Switched Flag in CR0
+                    set_CR0(cr0 & ~(1 << 3));
                     goto EXEC_LOOP;
                 case 0x23: // MOV
                     if (cpl != 0) {
