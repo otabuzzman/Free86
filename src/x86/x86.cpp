@@ -2345,7 +2345,6 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                     case 0x4d: // -
                     case 0x4e: // -
                     case 0x4f: // -
-                                  // (SF=OF))
                     case 0xb6: // MOVZX
                     case 0xb7: // MOVZX
                     case 0xbe: // MOVSX
@@ -2568,7 +2567,6 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte)
                     case 0x2a: // -
                     case 0x2b: // -
                     case 0x2c: // -
-                                  // Integers
                     case 0x2d: // -
                     case 0x2e: // -
                     case 0x2f: // -

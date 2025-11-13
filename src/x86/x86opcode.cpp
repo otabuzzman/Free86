@@ -3527,7 +3527,6 @@ void x86Internal::instruction(int cycles)
                                 case 0x150: // -
                                 case 0x151: // -
                                 case 0x152: // -
-                                               // Values
                                 case 0x153: // -
                                 case 0x154: // -
                                 case 0x155: // -
