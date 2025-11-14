@@ -537,7 +537,7 @@ class PIC {
         irq_base = 0;
         read_reg_select = 0;
         special_mask = 0;
-        init_state = 0;
+        icwn = 0;
         auto_eoi = 0;
         rotate_on_autoeoi = 0;
         icw4 = 0;

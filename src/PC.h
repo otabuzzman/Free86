@@ -1,14 +1,16 @@
 #ifndef _H_PC
 #define _H_PC
 
-#include "x86/x86.h"
+#include <cstddef>
 #include <stdexcept>
 #include <vector>
+
 #ifndef NO_SDL
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #endif
-#include <cstddef>
+
+#include "x86/x86.h"
 
 class PC {
   public:
