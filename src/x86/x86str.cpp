@@ -1,4 +1,5 @@
 #include "x86.h"
+
 void x86Internal::stringOp_INSB() {
     int Xf, Yf, Zf, ag, iopl, x;
     iopl = (eflags >> 12) & 3;

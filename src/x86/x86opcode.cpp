@@ -1,4 +1,5 @@
 #include "x86.h"
+
 void x86Internal::instruction(int cycles) {
     if (init(cycles)) {
         return;
@@ -78,20 +79,18 @@ void x86Internal::instruction(int cycles) {
                 OPbyte = phys_mem8[physmem8_ptr++];
                 OPbyte |= (CS_flags & 0x0100);
                 break;
-            case 0xb0:                         // MOV AL
-            case 0xb1:                         // MOV CL
-            case 0xb2:                         // MOV DL
-            case 0xb3:                         // MOV BL
-            case 0xb4:                         // MOV AH
-            case 0xb5:                         // MOV CH
-            case 0xb6:                         // MOV DH
-            case 0xb7:                         // MOV BH
-                x = phys_mem8[physmem8_ptr++]; // r8
-                OPbyte &= 7;                   // last bits
+            case 0xb0: // MOV AL
+            case 0xb1: // MOV CL
+            case 0xb2: // MOV DL
+            case 0xb3: // MOV BL
+            case 0xb4: // MOV AH
+            case 0xb5: // MOV CH
+            case 0xb6: // MOV DH
+            case 0xb7: // MOV BH
+                x = phys_mem8[physmem8_ptr++];
+                OPbyte &= 7;
                 last_tlb_val = (OPbyte & 4) << 1;
-                regs[OPbyte & 3] =
-                    (regs[OPbyte & 3] & ~(0xff << last_tlb_val)) |
-                    (((x) & 0xff) << last_tlb_val);
+                regs[OPbyte & 3] = (regs[OPbyte & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
                 goto EXEC_LOOP;
             case 0xb8: // MOV A
             case 0xb9: // MOV C
@@ -115,9 +114,7 @@ void x86Internal::instruction(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     last_tlb_val = (reg_idx0 & 4) << 1;
-                    regs[reg_idx0 & 3] =
-                        (regs[reg_idx0 & 3] & ~(0xff << last_tlb_val)) |
-                        (((x) & 0xff) << last_tlb_val);
+                    regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     uint32_t mem8_locu = mem8_loc;
@@ -160,9 +157,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
                 last_tlb_val = (reg_idx1 & 4) << 1;
-                regs[reg_idx1 & 3] =
-                    (regs[reg_idx1 & 3] & ~(0xff << last_tlb_val)) |
-                    (((x) & 0xff) << last_tlb_val);
+                regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
                 goto EXEC_LOOP;
             case 0x8b: // MOV
                 mem8 = phys_mem8[physmem8_ptr++];
@@ -194,8 +189,7 @@ void x86Internal::instruction(int cycles) {
                 st8_mem8_write(regs[0]);
                 goto EXEC_LOOP;
             case 0xa3: // MOV ,AX
-                if (CS_flags &
-                    0x0040) { // test386, check LOCK prefix (not allowed)
+                if (CS_flags & 0x0040) { // test386, check LOCK prefix (not allowed)
                     abort(6);
                 }
                 mem8_loc = segmented_mem8_loc_for_MOV(true);
@@ -264,13 +258,11 @@ void x86Internal::instruction(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
-                    set_word_in_register(reg_idx0, (regs[reg_idx1 & 3] >>
-                                                    ((reg_idx1 & 4) << 1)));
+                    set_word_in_register(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_8bits_mem8_write();
-                    st8_mem8_write(
-                        (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                    st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                 }
                 set_word_in_register(reg_idx1, x);
                 goto EXEC_LOOP;
@@ -340,11 +332,7 @@ void x86Internal::instruction(int cycles) {
                 y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_word_in_register(reg_idx0,
-                                         do_8bit_math(conditional_var,
-                                                      (regs[reg_idx0 & 3] >>
-                                                       ((reg_idx0 & 4) << 1)),
-                                                      y));
+                    set_word_in_register(reg_idx0, do_8bit_math(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     if (conditional_var != 7) {
@@ -385,8 +373,7 @@ void x86Internal::instruction(int cycles) {
                 y = regs[(mem8 >> 3) & 7];
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] =
-                        do_32bit_math(conditional_var, regs[reg_idx0], y);
+                    regs[reg_idx0] = do_32bit_math(conditional_var, regs[reg_idx0], y);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_32bits_mem8_write();
@@ -429,11 +416,7 @@ void x86Internal::instruction(int cycles) {
                     mem8_loc = segment_translation(mem8);
                     y = ld_8bits_mem8_read();
                 }
-                set_word_in_register(
-                    reg_idx1,
-                    do_8bit_math(conditional_var,
-                                 (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)),
-                                 y));
+                set_word_in_register(reg_idx1, do_8bit_math(conditional_var, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
                 goto EXEC_LOOP;
             case 0x03: // ADD
                 mem8 = phys_mem8[physmem8_ptr++];
@@ -463,8 +446,7 @@ void x86Internal::instruction(int cycles) {
                     mem8_loc = segment_translation(mem8);
                     y = ld_32bits_mem8_read();
                 }
-                regs[reg_idx1] =
-                    do_32bit_math(conditional_var, regs[reg_idx1], y);
+                regs[reg_idx1] = do_32bit_math(conditional_var, regs[reg_idx1], y);
                 goto EXEC_LOOP;
             case 0x3b: // CMP
                 mem8 = phys_mem8[physmem8_ptr++];
@@ -490,8 +472,7 @@ void x86Internal::instruction(int cycles) {
             case 0x3c: // CMP
                 y = phys_mem8[physmem8_ptr++];
                 conditional_var = OPbyte >> 3;
-                set_word_in_register(
-                    0, do_8bit_math(conditional_var, regs[0] & 0xff, y));
+                set_word_in_register(0, do_8bit_math(conditional_var, regs[0] & 0xff, y));
                 goto EXEC_LOOP;
             case 0x05: // ADD
                 y = phys_mem8[physmem8_ptr] |
@@ -542,11 +523,7 @@ void x86Internal::instruction(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     y = phys_mem8[physmem8_ptr++];
-                    set_word_in_register(reg_idx0,
-                                         do_8bit_math(conditional_var,
-                                                      (regs[reg_idx0 & 3] >>
-                                                       ((reg_idx0 & 4) << 1)),
-                                                      y));
+                    set_word_in_register(reg_idx0, do_8bit_math(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[physmem8_ptr++];
@@ -586,8 +563,7 @@ void x86Internal::instruction(int cycles) {
                             (phys_mem8[physmem8_ptr + 2] << 16) |
                             (phys_mem8[physmem8_ptr + 3] << 24);
                         physmem8_ptr += 4;
-                        regs[reg_idx0] =
-                            do_32bit_math(conditional_var, regs[reg_idx0], y);
+                        regs[reg_idx0] = do_32bit_math(conditional_var, regs[reg_idx0], y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = phys_mem8[physmem8_ptr] |
@@ -619,8 +595,7 @@ void x86Internal::instruction(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-                        regs[reg_idx0] =
-                            do_32bit_math(conditional_var, regs[reg_idx0], y);
+                        regs[reg_idx0] = do_32bit_math(conditional_var, regs[reg_idx0], y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
@@ -730,8 +705,7 @@ void x86Internal::instruction(int cycles) {
                 cc_dst = regs[0] & y;
                 cc_op = 14;
                 goto EXEC_LOOP;
-            case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X,
-                       // IDIV AL/X)
+            case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, // IDIV AL/X)
                 mem8 = phys_mem8[physmem8_ptr++];
                 conditional_var = (mem8 >> 3) & 7;
                 switch (conditional_var) {
@@ -750,9 +724,7 @@ void x86Internal::instruction(int cycles) {
                 case 2:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_word_in_register(
-                            reg_idx0,
-                            ~(regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)));
+                        set_word_in_register(reg_idx0, ~(regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -763,10 +735,7 @@ void x86Internal::instruction(int cycles) {
                 case 3:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_word_in_register(
-                            reg_idx0, do_8bit_math(5, 0,
-                                                   (regs[reg_idx0 & 3] >>
-                                                    ((reg_idx0 & 4) << 1))));
+                        set_word_in_register(reg_idx0, do_8bit_math(5, 0, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -818,8 +787,7 @@ void x86Internal::instruction(int cycles) {
                     abort(6);
                 }
                 goto EXEC_LOOP;
-            case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X,
-                       // IDIV AL/X)
+            case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 mem8 = phys_mem8[physmem8_ptr++];
                 conditional_var = (mem8 >> 3) & 7;
                 switch (conditional_var) {
@@ -910,11 +878,7 @@ void x86Internal::instruction(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     y = phys_mem8[physmem8_ptr++];
                     reg_idx0 = mem8 & 7;
-                    set_word_in_register(
-                        reg_idx0,
-                        shift8(conditional_var,
-                               (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)),
-                               y));
+                    set_word_in_register(reg_idx0, shift8(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[physmem8_ptr++];
@@ -929,8 +893,7 @@ void x86Internal::instruction(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     y = phys_mem8[physmem8_ptr++];
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] =
-                        shift32(conditional_var, regs[reg_idx0], y);
+                    regs[reg_idx0] = shift32(conditional_var, regs[reg_idx0], y);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[physmem8_ptr++];
@@ -944,11 +907,7 @@ void x86Internal::instruction(int cycles) {
                 conditional_var = (mem8 >> 3) & 7;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_word_in_register(
-                        reg_idx0,
-                        shift8(conditional_var,
-                               (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)),
-                               1));
+                    set_word_in_register(reg_idx0, shift8(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), 1));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_8bits_mem8_write();
@@ -961,8 +920,7 @@ void x86Internal::instruction(int cycles) {
                 conditional_var = (mem8 >> 3) & 7;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] =
-                        shift32(conditional_var, regs[reg_idx0], 1);
+                    regs[reg_idx0] = shift32(conditional_var, regs[reg_idx0], 1);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_32bits_mem8_write();
@@ -976,11 +934,7 @@ void x86Internal::instruction(int cycles) {
                 y = regs[1] & 0xff;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_word_in_register(
-                        reg_idx0,
-                        shift8(conditional_var,
-                               (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)),
-                               y));
+                    set_word_in_register(reg_idx0, shift8(conditional_var, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_8bits_mem8_write();
@@ -994,8 +948,7 @@ void x86Internal::instruction(int cycles) {
                 y = regs[1] & 0xff;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] =
-                        shift32(conditional_var, regs[reg_idx0], y);
+                    regs[reg_idx0] = shift32(conditional_var, regs[reg_idx0], y);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_32bits_mem8_write();
@@ -1121,7 +1074,7 @@ void x86Internal::instruction(int cycles) {
                 if ((eflags & 0x00020000) && iopl != 3) {
                     abort(13);
                 }
-                x = get_FLAGS() & ~(0x00020000 | 0x00010000);
+                x = get_FLAGS() & ~(0x00010000 | 0x00020000);
                 if ((((CS_flags >> 8) & 1) ^ 1)) {
                     push_dword_to_stack(x);
                 } else {
@@ -1142,7 +1095,7 @@ void x86Internal::instruction(int cycles) {
                     pop_word_from_stack_incr_ptr();
                     y = 0xffff;
                 }
-                z = (0x00000100 | 0x00040000 | 0x00200000 | 0x00004000);
+                z = (0x00000100 | 0x00004000 | 0x00040000 | 0x00200000);
                 if (cpl == 0) {
                     z |= 0x00000200 | 0x00003000;
                 } else {
@@ -1183,9 +1136,7 @@ void x86Internal::instruction(int cycles) {
                 case 0:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_word_in_register(
-                            reg_idx0, increment_8bit((regs[reg_idx0 & 3] >>
-                                                      ((reg_idx0 & 4) << 1))));
+                        set_word_in_register(reg_idx0, increment_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -1196,9 +1147,7 @@ void x86Internal::instruction(int cycles) {
                 case 1:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_word_in_register(
-                            reg_idx0, decrement_8bit((regs[reg_idx0 & 3] >>
-                                                      ((reg_idx0 & 4) << 1))));
+                        set_word_in_register(reg_idx0, decrement_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -1307,8 +1256,7 @@ void x86Internal::instruction(int cycles) {
                     mem8_loc = (mem8_loc + 4) >> 0;
                     y = ld_16bits_mem8_read();
                     if (conditional_var == 3) {
-                        op_CALLF(1, y, x,
-                                 (eip + physmem8_ptr - initial_mem_ptr));
+                        op_CALLF(1, y, x, (eip + physmem8_ptr - initial_mem_ptr));
                     } else {
                         op_JMPF(y, x);
                     }
@@ -1493,9 +1441,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 if (y && z) {
                     if (CS_flags & 0x0100) {
-                        eip =
-                            (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff,
-                        physmem8_ptr = initial_mem_ptr = 0;
+                        eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     } else {
                         physmem8_ptr = (physmem8_ptr + x) >> 0;
                     }
@@ -1510,9 +1456,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 if ((regs[1] & conditional_var) == 0) {
                     if (CS_flags & 0x0100) {
-                        eip =
-                            (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff,
-                        physmem8_ptr = initial_mem_ptr = 0;
+                        eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     } else {
                         physmem8_ptr = (physmem8_ptr + x) >> 0;
                     }
@@ -1568,8 +1512,8 @@ void x86Internal::instruction(int cycles) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
-            case 0xca:                                // RET
-                y = (ld16_mem8_direct() << 16) >> 16; // 16 bit immediate field
+            case 0xca: // RET
+                y = (ld16_mem8_direct() << 16) >> 16;
                 op_RETF((((CS_flags >> 8) & 1) ^ 1), y);
                 if (hard_irq != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
@@ -1649,9 +1593,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x9e: // SAHF
-                cc_src = ((regs[0] >> 8) &
-                          (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) |
-                         (check_overflow() << 11);
+                cc_src = ((regs[0] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (check_overflow() << 11);
                 cc_dst = ((cc_src >> 6) & 1) ^ 1;
                 cc_op = 24;
                 goto EXEC_LOOP;
@@ -1937,8 +1879,7 @@ void x86Internal::instruction(int cycles) {
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) &
-                            0xff;
+                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                     } else {
                         mem8_loc = segment_translation(mem8);
                         uint32_t mem8_locu = mem8_loc;
@@ -2223,7 +2164,7 @@ void x86Internal::instruction(int cycles) {
                     mem8 = phys_mem8[physmem8_ptr++];
                     conditional_var = (mem8 >> 3) & 7;
                     switch (conditional_var) {
-                    case 4: // BT Evqp  Bit Test
+                    case 4: // BT
                         if ((mem8 >> 6) == 3) {
                             x = regs[mem8 & 7];
                             y = phys_mem8[physmem8_ptr++];
@@ -2234,14 +2175,13 @@ void x86Internal::instruction(int cycles) {
                         }
                         op_BT(x, y);
                         break;
-                    case 5: // BTS  Bit Test and Set
-                    case 6: // BTR  Bit Test and Reset
-                    case 7: // BTC  Bit Test and Complement
+                    case 5: // BTS
+                    case 6: // BTR
+                    case 7: // BTC
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
                             y = phys_mem8[physmem8_ptr++];
-                            regs[reg_idx0] = op_BTS_BTR_BTC(conditional_var & 3,
-                                                            regs[reg_idx0], y);
+                            regs[reg_idx0] = op_BTS_BTR_BTC(conditional_var & 3, regs[reg_idx0], y);
                         } else {
                             mem8_loc = segment_translation(mem8);
                             y = phys_mem8[physmem8_ptr++];
@@ -2274,8 +2214,7 @@ void x86Internal::instruction(int cycles) {
                     conditional_var = (OPbyte >> 3) & 3;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        regs[reg_idx0] =
-                            op_BTS_BTR_BTC(conditional_var, regs[reg_idx0], y);
+                        regs[reg_idx0] = op_BTS_BTR_BTC(conditional_var, regs[reg_idx0], y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         mem8_loc = (mem8_loc + ((y >> 5) << 2)) >> 0;
@@ -2315,8 +2254,7 @@ void x86Internal::instruction(int cycles) {
                     if ((cr4 & (1 << 2)) && cpl != 0) {
                         abort(13);
                     }
-                    x = cycles_processed +
-                        (cycles_requested - cycles_remaining);
+                    x = cycles_processed + (cycles_requested - cycles_remaining);
                     regs[0] = x >> 0;
                     regs[2] = (x / 0x100000000) >> 0;
                     goto EXEC_LOOP;
@@ -2326,17 +2264,13 @@ void x86Internal::instruction(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
-                        y = do_8bit_math(
-                            0, x,
-                            (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                        y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         set_word_in_register(reg_idx1, x);
                         set_word_in_register(reg_idx0, y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
-                        y = do_8bit_math(
-                            0, x,
-                            (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                        y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         st8_mem8_write(y);
                         set_word_in_register(reg_idx1, x);
                     }
@@ -2366,9 +2300,7 @@ void x86Internal::instruction(int cycles) {
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                         y = do_8bit_math(5, regs[0], x);
                         if (y == 0) {
-                            set_word_in_register(
-                                reg_idx0,
-                                (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                            set_word_in_register(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
                             set_word_in_register(0, x);
                         }
@@ -2377,8 +2309,7 @@ void x86Internal::instruction(int cycles) {
                         x = ld_8bits_mem8_write();
                         y = do_8bit_math(5, regs[0], x);
                         if (y == 0) {
-                            st8_mem8_write(
-                                (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                            st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
                             set_word_in_register(0, x);
                         }
@@ -2429,8 +2360,7 @@ void x86Internal::instruction(int cycles) {
                     x = regs[reg_idx1];
                     {
                         uint32_t xuint = x;
-                        x = (xuint >> 24) | ((x >> 8) & 0x0000ff00) |
-                            ((x << 8) & 0x00ff0000) | (x << 24);
+                        x = (xuint >> 24) | ((x >> 8) & 0x0000ff00) | ((x << 8) & 0x00ff0000) | (x << 24);
                         regs[reg_idx1] = x;
                     }
                     goto EXEC_LOOP;
@@ -2698,9 +2628,7 @@ void x86Internal::instruction(int cycles) {
                     y = regs[(mem8 >> 3) & 7];
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_in_register(
-                            reg_idx0,
-                            do_16bit_math(conditional_var, regs[reg_idx0], y));
+                        set_lower_word_in_register(reg_idx0, do_16bit_math(conditional_var, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         if (conditional_var != 7) {
@@ -2730,9 +2658,7 @@ void x86Internal::instruction(int cycles) {
                         mem8_loc = segment_translation(mem8);
                         y = ld_16bits_mem8_read();
                     }
-                    set_lower_word_in_register(
-                        reg_idx1,
-                        do_16bit_math(conditional_var, regs[reg_idx1], y));
+                    set_lower_word_in_register(reg_idx1, do_16bit_math(conditional_var, regs[reg_idx1], y));
                     goto EXEC_LOOP;
                 case 0x105: // ADD
                 case 0x10d: // OR
@@ -2744,8 +2670,7 @@ void x86Internal::instruction(int cycles) {
                 case 0x13d: // CMP
                     y = ld16_mem8_direct();
                     conditional_var = (OPbyte >> 3) & 7;
-                    set_lower_word_in_register(
-                        0, do_16bit_math(conditional_var, regs[0], y));
+                    set_lower_word_in_register(0, do_16bit_math(conditional_var, regs[0], y));
                     goto EXEC_LOOP;
                 case 0x181: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                     mem8 = phys_mem8[physmem8_ptr++];
@@ -2753,9 +2678,7 @@ void x86Internal::instruction(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         y = ld16_mem8_direct();
-                        set_lower_word_in_register(
-                            reg_idx0,
-                            do_16bit_math(conditional_var, regs[reg_idx0], y));
+                        set_lower_word_in_register(reg_idx0, do_16bit_math(conditional_var, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = ld16_mem8_direct();
@@ -2775,9 +2698,7 @@ void x86Internal::instruction(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-                        set_lower_word_in_register(
-                            reg_idx0,
-                            do_16bit_math(conditional_var, regs[reg_idx0], y));
+                        set_lower_word_in_register(reg_idx0, do_16bit_math(conditional_var, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
@@ -2800,8 +2721,7 @@ void x86Internal::instruction(int cycles) {
                 case 0x146: // INC SI
                 case 0x147: // INC DI
                     reg_idx1 = OPbyte & 7;
-                    set_lower_word_in_register(reg_idx1,
-                                               increment_16bit(regs[reg_idx1]));
+                    set_lower_word_in_register(reg_idx1, increment_16bit(regs[reg_idx1]));
                     goto EXEC_LOOP;
                 case 0x148: // DEC A
                 case 0x149: // DEC C
@@ -2812,8 +2732,7 @@ void x86Internal::instruction(int cycles) {
                 case 0x14e: // DEC SI
                 case 0x14f: // DEC DI
                     reg_idx1 = OPbyte & 7;
-                    set_lower_word_in_register(reg_idx1,
-                                               decrement_16bit(regs[reg_idx1]));
+                    set_lower_word_in_register(reg_idx1, decrement_16bit(regs[reg_idx1]));
                     goto EXEC_LOOP;
                 case 0x16b: // IMUL
                     mem8 = phys_mem8[physmem8_ptr++];
@@ -2856,8 +2775,7 @@ void x86Internal::instruction(int cycles) {
                     cc_dst = (((regs[0] & y) << 16) >> 16);
                     cc_op = 13;
                     goto EXEC_LOOP;
-                case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV
-                            // AL/X, IDIV AL/X)
+                case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                     mem8 = phys_mem8[physmem8_ptr++];
                     conditional_var = (mem8 >> 3) & 7;
                     switch (conditional_var) {
@@ -2875,8 +2793,7 @@ void x86Internal::instruction(int cycles) {
                     case 2:
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word_in_register(reg_idx0,
-                                                       ~regs[reg_idx0]);
+                            set_lower_word_in_register(reg_idx0, ~regs[reg_idx0]);
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld_16bits_mem8_write();
@@ -2887,8 +2804,7 @@ void x86Internal::instruction(int cycles) {
                     case 3:
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word_in_register(
-                                reg_idx0, do_16bit_math(5, 0, regs[reg_idx0]));
+                            set_lower_word_in_register(reg_idx0, do_16bit_math(5, 0, regs[reg_idx0]));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld_16bits_mem8_write();
@@ -2946,9 +2862,7 @@ void x86Internal::instruction(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         y = phys_mem8[physmem8_ptr++];
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_in_register(
-                            reg_idx0,
-                            shift16(conditional_var, regs[reg_idx0], y));
+                        set_lower_word_in_register(reg_idx0, shift16(conditional_var, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = phys_mem8[physmem8_ptr++];
@@ -2962,9 +2876,7 @@ void x86Internal::instruction(int cycles) {
                     conditional_var = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_in_register(
-                            reg_idx0,
-                            shift16(conditional_var, regs[reg_idx0], 1));
+                        set_lower_word_in_register(reg_idx0, shift16(conditional_var, regs[reg_idx0], 1));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_16bits_mem8_write();
@@ -2978,9 +2890,7 @@ void x86Internal::instruction(int cycles) {
                     y = regs[1] & 0xff;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_in_register(
-                            reg_idx0,
-                            shift16(conditional_var, regs[reg_idx0], y));
+                        set_lower_word_in_register(reg_idx0, shift16(conditional_var, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_16bits_mem8_write();
@@ -3074,8 +2984,7 @@ void x86Internal::instruction(int cycles) {
                         abort(6);
                     }
                     CS_flags = (CS_flags & ~0x000f) | (6 + 1);
-                    set_lower_word_in_register((mem8 >> 3) & 7,
-                                               segment_translation(mem8));
+                    set_lower_word_in_register((mem8 >> 3) & 7, segment_translation(mem8));
                     goto EXEC_LOOP;
                 case 0x1ff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
                     mem8 = phys_mem8[physmem8_ptr++];
@@ -3084,8 +2993,7 @@ void x86Internal::instruction(int cycles) {
                     case 0:
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word_in_register(
-                                reg_idx0, increment_16bit(regs[reg_idx0]));
+                            set_lower_word_in_register(reg_idx0, increment_16bit(regs[reg_idx0]));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld_16bits_mem8_write();
@@ -3096,8 +3004,7 @@ void x86Internal::instruction(int cycles) {
                     case 1:
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word_in_register(
-                                reg_idx0, decrement_16bit(regs[reg_idx0]));
+                            set_lower_word_in_register(reg_idx0, decrement_16bit(regs[reg_idx0]));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld_16bits_mem8_write();
@@ -3112,8 +3019,7 @@ void x86Internal::instruction(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             x = ld_16bits_mem8_read();
                         }
-                        push_word_to_stack(
-                            (eip + physmem8_ptr - initial_mem_ptr));
+                        push_word_to_stack((eip + physmem8_ptr - initial_mem_ptr));
                         eip = x, physmem8_ptr = initial_mem_ptr = 0;
                         break;
                     case 4:
@@ -3144,8 +3050,7 @@ void x86Internal::instruction(int cycles) {
                         mem8_loc = (mem8_loc + 2) >> 0;
                         y = ld_16bits_mem8_read();
                         if (conditional_var == 3) {
-                            op_CALLF(0, y, x,
-                                     (eip + physmem8_ptr - initial_mem_ptr));
+                            op_CALLF(0, y, x, (eip + physmem8_ptr - initial_mem_ptr));
                         } else {
                             op_JMPF(y, x);
                         }
@@ -3156,13 +3061,11 @@ void x86Internal::instruction(int cycles) {
                     goto EXEC_LOOP;
                 case 0x1eb: // JMP
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-                    eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff,
-                    physmem8_ptr = initial_mem_ptr = 0;
+                    eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     goto EXEC_LOOP;
                 case 0x1e9: // JMP
                     x = ld16_mem8_direct();
-                    eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff,
-                    physmem8_ptr = initial_mem_ptr = 0;
+                    eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     goto EXEC_LOOP;
                 case 0x170: // JO
                 case 0x171: // JNO
@@ -3183,16 +3086,13 @@ void x86Internal::instruction(int cycles) {
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                     y = check_status_bits_for_jump(OPbyte & 0xf);
                     if (y) {
-                        eip =
-                            (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff,
-                        physmem8_ptr = initial_mem_ptr = 0;
+                        eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     }
                     goto EXEC_LOOP;
                 case 0x1c2: // RET
                     y = (ld16_mem8_direct() << 16) >> 16;
                     x = pop_word_from_stack_read();
-                    regs[4] =
-                        (regs[4] & ~SS_mask) | ((regs[4] + 2 + y) & SS_mask);
+                    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + y) & SS_mask);
                     eip = x, physmem8_ptr = initial_mem_ptr = 0;
                     goto EXEC_LOOP;
                 case 0x1c3: // RET
@@ -3203,8 +3103,7 @@ void x86Internal::instruction(int cycles) {
                 case 0x1e8: // CALL
                     x = ld16_mem8_direct();
                     push_word_to_stack((eip + physmem8_ptr - initial_mem_ptr));
-                    eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff,
-                    physmem8_ptr = initial_mem_ptr = 0;
+                    eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     goto EXEC_LOOP;
                 case 0x162: // BOUND
                     op_16_BOUND();
@@ -3325,8 +3224,7 @@ void x86Internal::instruction(int cycles) {
                 case 0x1df: // ESC (80387)
                 case 0x184: // TEST
                 case 0x1a8: // TEST
-                case 0x1f6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV
-                            // AL/X, IDIV AL/X)
+                case 0x1f6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 case 0x1c0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
                 case 0x1d0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
                 case 0x1d2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
@@ -3417,9 +3315,7 @@ void x86Internal::instruction(int cycles) {
                     case 0x18f: // JNLE
                         x = ld16_mem8_direct();
                         if (check_status_bits_for_jump(OPbyte & 0xf)) {
-                            eip = (eip + physmem8_ptr - initial_mem_ptr + x) &
-                                  0xffff,
-                            physmem8_ptr = initial_mem_ptr = 0;
+                            eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                         }
                         goto EXEC_LOOP;
                     case 0x140: // -
@@ -3454,8 +3350,7 @@ void x86Internal::instruction(int cycles) {
                         reg_idx1 = (mem8 >> 3) & 7;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) &
-                                0xff;
+                            x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld_8bits_mem8_read();
@@ -3472,8 +3367,7 @@ void x86Internal::instruction(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             x = ld_8bits_mem8_read();
                         }
-                        set_lower_word_in_register(reg_idx1,
-                                                   (((x) << 24) >> 24));
+                        set_lower_word_in_register(reg_idx1, (((x) << 24) >> 24));
                         goto EXEC_LOOP;
                     case 0x1af: // IMUL
                         mem8 = phys_mem8[physmem8_ptr++];
@@ -3484,8 +3378,7 @@ void x86Internal::instruction(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             y = ld_16bits_mem8_read();
                         }
-                        set_lower_word_in_register(
-                            reg_idx1, op_16_IMUL(regs[reg_idx1], y));
+                        set_lower_word_in_register(reg_idx1, op_16_IMUL(regs[reg_idx1], y));
                         goto EXEC_LOOP;
                     case 0x1c1: // -
                         mem8 = phys_mem8[physmem8_ptr++];
@@ -3527,10 +3420,7 @@ void x86Internal::instruction(int cycles) {
                         if ((mem8 >> 6) == 3) {
                             z = phys_mem8[physmem8_ptr++];
                             reg_idx0 = mem8 & 7;
-                            set_lower_word_in_register(
-                                reg_idx0,
-                                op_16_SHRD_SHLD(conditional_var, regs[reg_idx0],
-                                                y, z));
+                            set_lower_word_in_register(reg_idx0, op_16_SHRD_SHLD(conditional_var, regs[reg_idx0], y, z));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             z = phys_mem8[physmem8_ptr++];
@@ -3547,10 +3437,7 @@ void x86Internal::instruction(int cycles) {
                         conditional_var = (OPbyte >> 3) & 1;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word_in_register(
-                                reg_idx0,
-                                op_16_SHRD_SHLD(conditional_var, regs[reg_idx0],
-                                                y, z));
+                            set_lower_word_in_register(reg_idx0, op_16_SHRD_SHLD(conditional_var, regs[reg_idx0], y, z));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld_16bits_mem8_write();
@@ -3579,14 +3466,12 @@ void x86Internal::instruction(int cycles) {
                             if ((mem8 >> 6) == 3) {
                                 reg_idx0 = mem8 & 7;
                                 y = phys_mem8[physmem8_ptr++];
-                                regs[reg_idx0] = op_16_BTS_BTR_BTC(
-                                    conditional_var & 3, regs[reg_idx0], y);
+                                regs[reg_idx0] = op_16_BTS_BTR_BTC(conditional_var & 3, regs[reg_idx0], y);
                             } else {
                                 mem8_loc = segment_translation(mem8);
                                 y = phys_mem8[physmem8_ptr++];
                                 x = ld_16bits_mem8_write();
-                                x = op_16_BTS_BTR_BTC(conditional_var & 3, x,
-                                                      y);
+                                x = op_16_BTS_BTR_BTC(conditional_var & 3, x, y);
                                 st16_mem8_write(x);
                             }
                             break;
@@ -3601,8 +3486,7 @@ void x86Internal::instruction(int cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             mem8_loc = segment_translation(mem8);
-                            mem8_loc =
-                                (mem8_loc + (((y & 0xffff) >> 4) << 1)) >> 0;
+                            mem8_loc = (mem8_loc + (((y & 0xffff) >> 4) << 1)) >> 0;
                             x = ld_16bits_mem8_read();
                         }
                         op_16_BT(x, y);
@@ -3615,13 +3499,10 @@ void x86Internal::instruction(int cycles) {
                         conditional_var = (OPbyte >> 3) & 3;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word_in_register(
-                                reg_idx0, op_16_BTS_BTR_BTC(conditional_var,
-                                                            regs[reg_idx0], y));
+                            set_lower_word_in_register(reg_idx0, op_16_BTS_BTR_BTC(conditional_var, regs[reg_idx0], y));
                         } else {
                             mem8_loc = segment_translation(mem8);
-                            mem8_loc =
-                                (mem8_loc + (((y & 0xffff) >> 4) << 1)) >> 0;
+                            mem8_loc = (mem8_loc + (((y & 0xffff) >> 4) << 1)) >> 0;
                             x = ld_16bits_mem8_write();
                             x = op_16_BTS_BTR_BTC(conditional_var, x, y);
                             st16_mem8_write(x);
@@ -3653,8 +3534,7 @@ void x86Internal::instruction(int cycles) {
                             x = regs[reg_idx0];
                             y = do_16bit_math(5, regs[0], x);
                             if (y == 0) {
-                                set_lower_word_in_register(reg_idx0,
-                                                           regs[reg_idx1]);
+                                set_lower_word_in_register(reg_idx0, regs[reg_idx1]);
                             } else {
                                 set_lower_word_in_register(0, x);
                             }

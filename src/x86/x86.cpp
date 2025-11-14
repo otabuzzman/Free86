@@ -1,4 +1,3 @@
-#include "x86.h"
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -8,6 +7,9 @@
 #include <string>
 #include <sys/types.h>
 #include <thread>
+
+#include "x86.h"
+
 x86Internal::x86Internal(int _mem_size) {
     cmos = new CMOS();
     kbd = new KBD();
@@ -232,9 +234,7 @@ void x86Internal::init_segment_local_vars() {
     } else {
         SS_mask = 0xffff;
     }
-    x86_64_long_mode =
-        (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) &&
-         SS_mask == -1);
+    x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
     if (segs[1].flags & (1 << 22)) {
         init_CS_flags = 0;
     } else {
@@ -261,8 +261,7 @@ void x86Internal::check_opbyte() {
                 for (y = 0; y < x; y++) {
                     mem8_loc = (eip_offset + y) >> 0;
                     uint32_t mem8_locu = mem8_loc;
-                    phys_mem8[physmem8_ptr + y] =
-                        (((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                    phys_mem8[physmem8_ptr + y] = (((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
                              : phys_mem8[mem8_loc ^ last_tlb_val]);
                 }
@@ -317,8 +316,7 @@ void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja) {
                 Md = Ld & Jd;
                 if (ja && !(Md & 0x00000004)) {
                     error_code = 0x01;
-                } else if ((ja || (cr0 & (1 << 16))) && Hd &&
-                           !(Md & 0x00000002)) {
+                } else if ((ja || (cr0 & (1 << 16))) && Hd && !(Md & 0x00000002)) {
                     error_code = 0x01;
                 } else {
                     if (!(Jd & 0x00000020)) {
@@ -362,13 +360,11 @@ int x86Internal::segment_translation(int mem8) {
             Qb = phys_mem8[physmem8_ptr++];
             base = Qb & 7;
             if (base == 5) {
-                {
-                    mem8_loc = phys_mem8[physmem8_ptr] |
-                               (phys_mem8[physmem8_ptr + 1] << 8) |
-                               (phys_mem8[physmem8_ptr + 2] << 16) |
-                               (phys_mem8[physmem8_ptr + 3] << 24);
-                    physmem8_ptr += 4;
-                }
+                mem8_loc = phys_mem8[physmem8_ptr] |
+                           (phys_mem8[physmem8_ptr + 1] << 8) |
+                           (phys_mem8[physmem8_ptr + 2] << 16) |
+                           (phys_mem8[physmem8_ptr + 3] << 24);
+                physmem8_ptr += 4;
             } else {
                 mem8_loc = regs[base];
             }
@@ -512,13 +508,11 @@ int x86Internal::segment_translation(int mem8) {
             Qb = phys_mem8[physmem8_ptr++];
             base = Qb & 7;
             if (base == 5) {
-                {
-                    mem8_loc = phys_mem8[physmem8_ptr] |
-                               (phys_mem8[physmem8_ptr + 1] << 8) |
-                               (phys_mem8[physmem8_ptr + 2] << 16) |
-                               (phys_mem8[physmem8_ptr + 3] << 24);
-                    physmem8_ptr += 4;
-                }
+                mem8_loc = phys_mem8[physmem8_ptr] |
+                           (phys_mem8[physmem8_ptr + 1] << 8) |
+                           (phys_mem8[physmem8_ptr + 2] << 16) |
+                           (phys_mem8[physmem8_ptr + 3] << 24);
+                physmem8_ptr += 4;
                 base = 0;
             } else {
                 mem8_loc = regs[base];
@@ -619,11 +613,10 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
         mem8_loc = ld16_mem8_direct() & 0xffff;
         Ls = 1; // 16 bit mode
     } else {
-        mem8_loc =
-            (phys_mem8[physmem8_ptr] | (phys_mem8[physmem8_ptr + 1] << 8) |
-             (phys_mem8[physmem8_ptr + 2] << 16) |
-             (phys_mem8[physmem8_ptr + 3] << 24)) &
-            0xffffffff;
+        mem8_loc = phys_mem8[physmem8_ptr] |
+                   (phys_mem8[physmem8_ptr + 1] << 8) |
+                   (phys_mem8[physmem8_ptr + 2] << 16) |
+                   (phys_mem8[physmem8_ptr + 3] << 24) & 0xffffffff;
         physmem8_ptr += 4;
         Ls = 3; // 32 bit mode
     }
@@ -1603,9 +1596,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
             mem8_loc = (eip_offset + (n++)) >> 0;
             {
                 uint32_t mem8_locu = mem8_loc;
-                OPbyte =
-                    (check_real_mode() ||
-                             ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                          ? __ld_8bits_mem8_read()
                          : phys_mem8[mem8_loc ^ last_tlb_val]);
             }
@@ -1622,9 +1613,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
             mem8_loc = (eip_offset + (n++)) >> 0;
             {
                 uint32_t mem8_locu = mem8_loc;
-                OPbyte =
-                    (check_real_mode() ||
-                             ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                          ? __ld_8bits_mem8_read()
                          : phys_mem8[mem8_loc ^ last_tlb_val]);
             }
@@ -1867,9 +1856,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
             mem8_loc = (eip_offset + (n++)) >> 0;
             {
                 uint32_t mem8_locu = mem8_loc;
-                mem8 =
-                    (check_real_mode() ||
-                             ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                          ? __ld_8bits_mem8_read()
                          : phys_mem8[mem8_loc ^ last_tlb_val]);
                 if (CS_flags & 0x0080) {
@@ -1895,10 +1882,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                         mem8_loc = (eip_offset + (n++)) >> 0;
                         {
                             uint32_t mem8_locu = mem8_loc;
-                            localcc_opbyte_var =
-                                (check_real_mode() ||
-                                         ((last_tlb_val =
-                                               tlb_read[mem8_locu >> 12]) == -1)
+                            localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                      ? __ld_8bits_mem8_read()
                                      : phys_mem8[mem8_loc ^ last_tlb_val]);
                             if ((localcc_opbyte_var & 7) == 5) {
@@ -1973,9 +1957,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
             mem8_loc = (eip_offset + (n++)) >> 0;
             {
                 uint32_t mem8_locu = mem8_loc;
-                mem8 =
-                    (check_real_mode() ||
-                             ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                          ? __ld_8bits_mem8_read()
                          : phys_mem8[mem8_loc ^ last_tlb_val]);
                 if (CS_flags & 0x0080) {
@@ -2000,17 +1982,13 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                         }
                         mem8_loc = (eip_offset + (n++)) >> 0;
                         uint32_t mem8_locu = mem8_loc;
-                        localcc_opbyte_var =
-                            (check_real_mode() ||
-                                     ((last_tlb_val =
-                                           tlb_read[mem8_locu >> 12]) == -1)
+                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                  ? __ld_8bits_mem8_read()
                                  : phys_mem8[mem8_loc ^ last_tlb_val]);
-                    }
                         if ((localcc_opbyte_var & 7) == 5) {
                             n += 4;
                         }
-                        break;
+                    } break;
                     case 0x0c:
                         n += 2;
                         break;
@@ -2063,8 +2041,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            mem8 = (check_real_mode() ||
-                            ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                         ? __ld_8bits_mem8_read()
                         : phys_mem8[mem8_loc ^ last_tlb_val]);
             if (CS_flags & 0x0080) {
@@ -2083,18 +2060,14 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 }
             } else {
                 switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-                case 0x04: {
+                case 0x04:
                     if ((n + 1) > 15) {
                         abort(6);
                     }
                     mem8_loc = (eip_offset + (n++)) >> 0;
-                    localcc_opbyte_var =
-                        (check_real_mode() ||
-                                 ((last_tlb_val = tlb_read[mem8_loc >> 12]) ==
-                                  -1)
+                    localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
                              : phys_mem8[mem8_loc ^ last_tlb_val]);
-                }
                     if ((localcc_opbyte_var & 7) == 5) {
                         n += 4;
                     }
@@ -2143,17 +2116,14 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             goto EXEC_LOOP;
-        case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV
-                   // AL/X)
+        case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
             {
                 uint32_t mem8_locu = mem8_loc;
-                mem8 =
-                    (check_real_mode() ||
-                             ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                          ? __ld_8bits_mem8_read()
                          : phys_mem8[mem8_loc ^ last_tlb_val]);
                 if (CS_flags & 0x0080) {
@@ -2178,10 +2148,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                         }
                         mem8_loc = (eip_offset + (n++)) >> 0;
                         uint32_t mem8_locu = mem8_loc;
-                        localcc_opbyte_var =
-                            (check_real_mode() ||
-                                     ((last_tlb_val =
-                                           tlb_read[mem8_locu >> 12]) == -1)
+                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                  ? __ld_8bits_mem8_read()
                                  : phys_mem8[mem8_loc ^ last_tlb_val]);
                         if ((localcc_opbyte_var & 7) == 5) {
@@ -2236,17 +2203,14 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 }
             }
             goto EXEC_LOOP;
-        case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV
-                   // AL/X)
+        case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
             {
                 uint32_t mem8_locu = mem8_loc;
-                mem8 =
-                    (check_real_mode() ||
-                             ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                          ? __ld_8bits_mem8_read()
                          : phys_mem8[mem8_loc ^ last_tlb_val]);
                 if (CS_flags & 0x0080) {
@@ -2271,10 +2235,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                         }
                         mem8_loc = (eip_offset + (n++)) >> 0;
                         uint32_t mem8_locu = mem8_loc;
-                        localcc_opbyte_var =
-                            (check_real_mode() ||
-                                     ((last_tlb_val =
-                                           tlb_read[mem8_locu >> 12]) == -1)
+                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                  ? __ld_8bits_mem8_read()
                                  : phys_mem8[mem8_loc ^ last_tlb_val]);
                         if ((localcc_opbyte_var & 7) == 5) {
@@ -2358,8 +2319,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            OPbyte = (check_real_mode() ||
-                              ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                           ? __ld_8bits_mem8_read()
                           : phys_mem8[mem8_loc ^ last_tlb_val]);
             switch (OPbyte) {
@@ -2465,9 +2425,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 mem8_loc = (eip_offset + (n++)) >> 0;
                 {
                     uint32_t mem8_locu = mem8_loc;
-                    mem8 = (check_real_mode() ||
-                                    ((last_tlb_val =
-                                          tlb_read[mem8_locu >> 12]) == -1)
+                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                 ? __ld_8bits_mem8_read()
                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
                     if (CS_flags & 0x0080) {
@@ -2492,10 +2450,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                             }
                             mem8_loc = (eip_offset + (n++)) >> 0;
                             uint32_t mem8_locu = mem8_loc;
-                            localcc_opbyte_var =
-                                (check_real_mode() ||
-                                         ((last_tlb_val =
-                                               tlb_read[mem8_locu >> 12]) == -1)
+                            localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                      ? __ld_8bits_mem8_read()
                                      : phys_mem8[mem8_loc ^ last_tlb_val]);
                             if ((localcc_opbyte_var & 7) == 5) {
@@ -2552,9 +2507,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 mem8_loc = (eip_offset + (n++)) >> 0;
                 {
                     uint32_t mem8_locu = mem8_loc;
-                    mem8 = (check_real_mode() ||
-                                    ((last_tlb_val =
-                                          tlb_read[mem8_locu >> 12]) == -1)
+                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                 ? __ld_8bits_mem8_read()
                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
                     if (CS_flags & 0x0080) {
@@ -2579,10 +2532,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                             }
                             mem8_loc = (eip_offset + (n++)) >> 0;
                             uint32_t mem8_locu = mem8_loc;
-                            localcc_opbyte_var =
-                                (check_real_mode() ||
-                                         ((last_tlb_val =
-                                               tlb_read[mem8_locu >> 12]) == -1)
+                            localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
                                      ? __ld_8bits_mem8_read()
                                      : phys_mem8[mem8_loc ^ last_tlb_val]);
                             if ((localcc_opbyte_var & 7) == 5) {
@@ -2760,8 +2710,7 @@ EXEC_LOOP:;
 }
 void x86Internal::set_CR0(int Qd) {
     // if changing flags 31, 16, or 0, must flush tlb
-    if ((Qd & ((1 << 31) | (1 << 16) | (1 << 0))) !=
-        (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
+    if ((Qd & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
         tlb_flush_all();
     }
     cr0 = Qd | (1 << 4); // keep bit 4 set to 1 (80387 present)
@@ -2815,27 +2764,19 @@ int x86Internal::calc_desp_limit(int desp_low4, int desp_high4) {
     return limit;
 }
 int x86Internal::calc_desp_base(int desp_low4, int desp_high4) {
-    return ((((desp_low4 >> 16) & 0xffff) | ((desp_high4 & 0xff) << 16) |
-             (desp_high4 & 0xff000000))) &
-           -1;
+    return ((((desp_low4 >> 16) & 0xffff) | ((desp_high4 & 0xff) << 16) | (desp_high4 & 0xff000000))) & -1;
 }
-void x86Internal::set_descriptor_register(DescriptorTable *descriptor_table,
-                                          int desp_low4,
-                                          int desp_high4) {
+void x86Internal::set_descriptor_register(DescriptorTable *descriptor_table, int desp_low4, int desp_high4) {
     descriptor_table->base = calc_desp_base(desp_low4, desp_high4);
     descriptor_table->limit = calc_desp_limit(desp_low4, desp_high4);
     descriptor_table->flags = desp_high4;
 }
-void x86Internal::set_segment_vars(
-    int ee, int selector, uint32_t base, uint32_t limit, int flags) {
-    segs[ee] = {
-        .selector = selector, .base = base, .limit = limit, .flags = flags};
+void x86Internal::set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags) {
+    segs[ee] = {.selector = selector, .base = base, .limit = limit, .flags = flags};
     init_segment_local_vars();
 }
 void x86Internal::init_segment_vars_with_selector(int Sb, int selector) {
-    set_segment_vars(Sb, selector, (selector << 4), 0xffff,
-                     (1 << 15) | (3 << 13) | (1 << 12) | (1 << 8) | (1 << 12) |
-                         (1 << 9));
+    set_segment_vars(Sb, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
 }
 void x86Internal::load_from_TR(int he, int *desary) {
     int tr_type, Rb, is_32_bit, ke, le;
@@ -2863,8 +2804,7 @@ void x86Internal::load_from_TR(int he, int *desary) {
     desary[0] = ke;
     desary[1] = le;
 }
-void x86Internal::do_interrupt_protected_mode(
-    int intno, int ne, int error_code, int oe, int pe) {
+void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe) {
     DescriptorTable descriptor_table;
     int qe, descriptor_type, selector, re, cpl_var;
     int te, ue, is_32_bit;
@@ -3074,8 +3014,7 @@ void x86Internal::do_interrupt_protected_mode(
     }
     regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
     selector = (selector & ~3) | dpl;
-    set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4),
-                     calc_desp_limit(desp_low4, desp_high4), desp_high4);
+    set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
     change_permission_level(dpl);
     eip = ve, physmem8_ptr = initial_mem_ptr = 0;
     if ((descriptor_type & 1) == 0) {
@@ -3083,8 +3022,7 @@ void x86Internal::do_interrupt_protected_mode(
     }
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
 }
-void x86Internal::do_interrupt_not_protected_mode(
-    int intno, int ne, int error_code, int oe, int pe) {
+void x86Internal::do_interrupt_not_protected_mode(int intno, int ne, int error_code, int oe, int pe) {
     DescriptorTable descriptor_table;
     int selector, ve, le, ye;
     descriptor_table = idt;
@@ -3116,8 +3054,7 @@ void x86Internal::do_interrupt_not_protected_mode(
     segs[1].base = (selector << 4);
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void x86Internal::do_interrupt(
-    int intno, int ne, int error_code, int oe, int pe) {
+void x86Internal::do_interrupt(nt intno, int ne, int error_code, int oe, int pe) {
     if (intno == 0x06) {
         int eip_tmp = eip;
         int eip_offset;
@@ -3204,8 +3141,7 @@ void x86Internal::op_LTR(int selector) {
         mem8_loc += 4;
         desp_high4 = ld32_mem8_kernel_read();
         descriptor_type = (desp_high4 >> 8) & 0xf;
-        if ((desp_high4 & (1 << 12)) ||
-            (descriptor_type != 1 && descriptor_type != 9)) {
+        if ((desp_high4 & (1 << 12)) || (descriptor_type != 1 && descriptor_type != 9)) {
             abort_with_error_code(13, selector & 0xfffc);
         }
         if (!(desp_high4 & (1 << 15))) {
@@ -3273,8 +3209,7 @@ void x86Internal::set_protected_mode_segment_register(int reg, int selector) {
             desp_high4 |= (1 << 8);
             st32_mem8_kernel_write(desp_high4);
         }
-        set_segment_vars(reg, selector, calc_desp_base(desp_low4, desp_high4),
-                         calc_desp_limit(desp_low4, desp_high4), desp_high4);
+        set_segment_vars(reg, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
     }
 }
 void x86Internal::set_segment_register(int reg, int selector) {
@@ -3334,9 +3269,7 @@ void x86Internal::do_JMPF(int selector, int Le) {
         if ((Le >> 0) > (limit >> 0)) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        set_segment_vars(1, (selector & 0xfffc) | cpl_var,
-                         calc_desp_base(desp_low4, desp_high4), limit,
-                         desp_high4);
+        set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit,  desp_high4);
         eip = Le, physmem8_ptr = initial_mem_ptr = 0;
     } else {
         throw "fatal: unsupported TSS or task gate in JMP";
@@ -3362,10 +3295,7 @@ void x86Internal::Pe(int reg, int cpl_var) {
         }
     }
 }
-void x86Internal::op_CALLF_not_protected_mode(bool is_32_bit,
-                                              int selector,
-                                              int Le,
-                                              int oe) {
+void x86Internal::op_CALLF_not_protected_mode(bool is_32_bit, int selector, int Le, int oe) {
     int le;
     le = regs[4];
     if (is_32_bit) {
@@ -3389,10 +3319,7 @@ void x86Internal::op_CALLF_not_protected_mode(bool is_32_bit,
     segs[1].base = (selector << 4);
     init_segment_local_vars();
 }
-void x86Internal::op_CALLF_protected_mode(bool is_32_bit,
-                                          int selector,
-                                          int Le,
-                                          int oe) {
+void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe) {
     int ue, i;
     int desp_low4, desp_high4, cpl_var, dpl, rpl, ve, Se;
     int ke, we, xe, esp, descriptor_type, re, SS_mask;
@@ -3454,9 +3381,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit,
             abort_with_error_code(13, selector & 0xfffc);
         }
         regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
-        set_segment_vars(1, (selector & 0xfffc) | cpl_var,
-                         calc_desp_base(desp_low4, desp_high4), limit,
-                         desp_high4);
+        set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit, desp_high4);
         eip = Le, physmem8_ptr = initial_mem_ptr = 0;
     } else {
         descriptor_type = (desp_high4 >> 8) & 0x1f;
@@ -3588,8 +3513,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit,
             set_segment_vars(2, ke, qe, calc_desp_limit(we, xe), xe);
         }
         selector = (selector & ~3) | dpl;
-        set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4),
-                         calc_desp_limit(desp_low4, desp_high4), desp_high4);
+        set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
         change_permission_level(dpl);
         regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
         eip = ve, physmem8_ptr = initial_mem_ptr = 0;
@@ -3602,9 +3526,7 @@ void x86Internal::op_CALLF(bool is_32_bit, int selector, int Le, int oe) {
         op_CALLF_protected_mode(is_32_bit, selector, Le, oe);
     }
 }
-void x86Internal::do_return_not_protected_mode(bool is_32_bit,
-                                               bool is_iret,
-                                               int imm16) {
+void x86Internal::do_return_not_protected_mode(bool is_32_bit, bool is_iret, int imm16) {
     int esp, selector, stack_eip, stack_eflags, SS_mask, qe, ef;
     SS_mask = 0xffff;
     esp = regs[4];
@@ -3641,11 +3563,9 @@ void x86Internal::do_return_not_protected_mode(bool is_32_bit,
     eip = stack_eip, physmem8_ptr = initial_mem_ptr = 0;
     if (is_iret) {
         if (eflags & 0x00020000) {
-            ef = 0x00000100 | 0x00000200 | 0x00004000 | 0x00010000 |
-                 0x00040000 | 0x00200000;
+            ef = 0x00000100 | 0x00000200 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         } else {
-            ef = 0x00000100 | 0x00000200 | 0x00003000 | 0x00004000 |
-                 0x00010000 | 0x00040000 | 0x00200000;
+            ef = 0x00000100 | 0x00000200 | 0x00003000 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         }
         if (is_32_bit == 0) {
             ef &= 0xffff;
@@ -3654,9 +3574,7 @@ void x86Internal::do_return_not_protected_mode(bool is_32_bit,
     }
     init_segment_local_vars();
 }
-void x86Internal::do_return_protected_mode(bool is_32_bit,
-                                           bool is_iret,
-                                           int imm16) {
+void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16) {
     int selector, stack_eflags, gf;
     int hf, jf, kf, lf;
     int desp_low4, desp_high4, we, xe;
@@ -3700,15 +3618,10 @@ void x86Internal::do_return_protected_mode(bool is_32_bit,
                 lf = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 // clang-format off
-                set_FLAGS(stack_eflags, 0x00000100 |
-                                        0x00000200 |
-                                        0x00003000 |
-                                        0x00004000 |
-                                        0x00020000 |
-                                        0x00040000 |
-                                        0x00080000 |
-                                        0x00100000 |
-                                        0x00200000);
+                set_FLAGS(stack_eflags, 0x00000100 | 0x00000200 |
+                                        0x00003000 | 0x00004000 |
+                                        0x00020000 | 0x00040000 | 0x00080000 |
+                                        0x00100000 | 0x00200000);
                 // clang-format on
                 init_segment_vars_with_selector(1, selector & 0xffff);
                 change_permission_level(3);
@@ -3767,8 +3680,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit,
     }
     esp = (esp + imm16) & -1;
     if (rpl == cpl_var) {
-        set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4),
-                         calc_desp_limit(desp_low4, desp_high4), desp_high4);
+        set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
     } else {
         if (is_32_bit == 1) {
             mem8_loc = (qe + (esp & SS_mask)) & -1;
@@ -3808,11 +3720,9 @@ void x86Internal::do_return_protected_mode(bool is_32_bit,
             if (!(xe & (1 << 15))) {
                 abort_with_error_code(11, gf & 0xfffc);
             }
-            set_segment_vars(2, gf, calc_desp_base(we, xe),
-                             calc_desp_limit(we, xe), xe);
+            set_segment_vars(2, gf, calc_desp_base(we, xe), calc_desp_limit(we, xe), xe);
         }
-        set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4),
-                         calc_desp_limit(desp_low4, desp_high4), desp_high4);
+        set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
         change_permission_level(rpl);
         esp = wd;
         SS_mask = SS_mask_from_flags(xe);
@@ -4312,8 +4222,9 @@ void x86Internal::op_ENTER() {
 void x86Internal::op_16_load_far_pointer32(int Sb) {
     int x, y, mem8;
     mem8 = phys_mem8[physmem8_ptr++];
-    if ((mem8 >> 3) == 3)
+    if ((mem8 >> 3) == 3) {
         ; // abort(6);
+    }
     mem8_loc = segment_translation(mem8);
     x = ld_32bits_mem8_read();
     mem8_loc += 4;
@@ -4324,8 +4235,9 @@ void x86Internal::op_16_load_far_pointer32(int Sb) {
 void x86Internal::op_16_load_far_pointer16(int Sb) {
     int x, y, mem8;
     mem8 = phys_mem8[physmem8_ptr++];
-    if ((mem8 >> 3) == 3)
+    if ((mem8 >> 3) == 3) {
         ; // abort(6);
+    }
     mem8_loc = segment_translation(mem8);
     x = ld_16bits_mem8_read();
     mem8_loc += 2;
@@ -4646,7 +4558,7 @@ int x86Internal::ioport_read(int mem8_loc) {
 void x86Internal::ioport_write(int mem8_loc, int data) {
     int port = mem8_loc & (1024 - 1);
 #ifdef TEST386
-    if (port == 0x0190) { // default POST_POST in test386
+    if (port == 0x0190) { // default POST_PORT in test386
         printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
     } else { // any other value considered OUT_PORT
         printf("%c", data);

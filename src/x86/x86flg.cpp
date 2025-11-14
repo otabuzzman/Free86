@@ -1,4 +1,5 @@
 #include "x86.h"
+
 bool x86Internal::check_carry() {
     bool rval;
     int currentcc_op;
@@ -218,13 +219,13 @@ int x86Internal::check_less_than() {
         flg = ((cc_dst + cc_src) >> 0) < cc_src;
         break;
     case 12:
-    case 25:
-    case 28:
     case 13:
-    case 26:
-    case 29:
     case 14:
+    case 25:
+    case 26:
     case 27:
+    case 28:
+    case 29:
     case 30:
         flg = cc_dst < 0;
         break;
@@ -232,8 +233,7 @@ int x86Internal::check_less_than() {
         flg = ((cc_src >> 7) ^ (cc_src >> 11)) & 1;
         break;
     default:
-        flg = (cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) ^
-              check_overflow();
+        flg = (cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) ^ check_overflow();
         break;
     }
     return flg;
@@ -252,13 +252,13 @@ int x86Internal::check_less_or_equal() // `less' for unsigned comparison, PM p. 
         flg = ((cc_dst + cc_src) >> 0) <= cc_src;
         break;
     case 12:
-    case 25:
-    case 28:
     case 13:
-    case 26:
-    case 29:
     case 14:
+    case 25:
+    case 26:
     case 27:
+    case 28:
+    case 29:
     case 30:
         flg = cc_dst <= 0;
         break;
@@ -266,9 +266,7 @@ int x86Internal::check_less_or_equal() // `less' for unsigned comparison, PM p. 
         flg = (((cc_src >> 7) ^ (cc_src >> 11)) | (cc_src >> 6)) & 1;
         break;
     default:
-        flg = ((cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) ^
-               check_overflow()) |
-              (cc_dst == 0);
+        flg = ((cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) ^ check_overflow()) | (cc_dst == 0);
         break;
     }
     return flg;
@@ -307,10 +305,10 @@ int x86Internal::check_adjust_flag() {
         rval = 0;
         break;
     case 15:
-    case 18:
     case 16:
-    case 19:
     case 17:
+    case 18:
+    case 19:
     case 20:
     case 21:
     case 22:
@@ -364,12 +362,12 @@ int x86Internal::check_status_bits_for_jump(int gd) {
     return flg ^ (gd & 1);
 }
 int x86Internal::conditional_flags_for_rot_shiftcc_ops() {
-    //    int c0  = (check_carry() << 0);
+    // int c0  = (check_carry() << 0);
     int c2 = (check_parity() << 2);
     int c4 = check_adjust_flag();
     int c6 = ((cc_dst == 0) << 6);
     int c7 = ((cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0)) << 7);
-    //    int c11 = (check_overflow() << 11);
+    // int c11 = (check_overflow() << 11);
     int val = c2 | c4 | c6 | c7;
     return val;
 }

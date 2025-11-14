@@ -1,4 +1,5 @@
 #include "x86.h"
+
 int x86Internal::__ld_8bits_mem8_read() {
     int mem8_val;
     if (check_protected()) {
@@ -85,8 +86,7 @@ int x86Internal::ld_16bits_mem8_write() {
     int tlb_lookup;
     uint32_t mem8_locu = mem8_loc;
     return (check_real_mode() ||
-            (tlb_lookup = tlb_write[mem8_locu >> 12]) | mem8_loc) &
-                   1
+            (tlb_lookup = tlb_write[mem8_locu >> 12]) | mem8_loc) & 1
                ? __ld_16bits_mem8_write()
                : phys_mem16[(mem8_loc ^ tlb_lookup) >> 1];
 }

@@ -64,15 +64,15 @@ class x86Internal {
         {0, 0, 0, 0},
         {0, 0, 0, 0}};
     // clang-format on
-    int df = 1;                              // direction Flag
+    int df = 1; // direction Flag
 
-    int cpl = 0;                             // current privilege level
-    int dpl = 0;                             // descriptor privilege level
-    int iopl = 0;                            // IO privilege level
+    int cpl = 0;  // current privilege level
+    int dpl = 0;  // descriptor privilege level
+    int iopl = 0; // IO privilege level
 
-    DescriptorTable gdt;                     // GDT register
-    DescriptorTable ldt;                     // LDT register
-    DescriptorTable tr;                      // task register
+    DescriptorTable gdt; // GDT register
+    DescriptorTable ldt; // LDT register
+    DescriptorTable tr;  // task register
     DescriptorTable idt = {0, 0, 0x03ff, 0}; // IDT register
 
     int cr0 = 0;
@@ -189,10 +189,7 @@ class x86Internal {
         uint32_t mem8_locu = mem8_loc;
         phys_mem32[mem8_locu >> 2] = x;
     }
-    void tlb_set_page(int mem8_loc,
-                      int page_val,
-                      int set_write_tlb,
-                      int set_user_tlb) {
+ void tlb_set_page(int mem8_loc, int page_val, int set_write_tlb, int set_user_tlb) {
         mem8_loc &= -4096; // top 20 bits matter
         page_val &= -4096;
         uint32_t mem8_locu = mem8_loc;
@@ -936,8 +933,7 @@ class IRQCH {
         cpu = _cpu;
     }
     int get_time() {
-        return static_cast<int>(
-            std::floor(cpu->cycles_processed * pit_time_unit));
+        return static_cast<int>(std::floor(cpu->cycles_processed * pit_time_unit));
     }
     int pit_get_count() {
         int d, dh;
