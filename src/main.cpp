@@ -1,17 +1,19 @@
 #include <cstddef>
-#ifndef NO_SDL
-#define SDL_MAIN_HANDLED
-#endif
-#include "PC.h"
-#ifndef NO_SDL
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-#endif
+
 #include <cstdio>
 #include <iostream>
 #include <signal.h>
 #include <time.h>
 #include <thread>
+
+#ifndef NO_SDL
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#endif
+
+#include "PC.h"
+
 #ifdef TEST386
 #include "Test386.h"
 #endif

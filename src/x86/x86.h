@@ -500,18 +500,19 @@ class x86Internal {
     void dump(int OPbyte);
     int file_read();
 };
+// https://pdos.csail.mit.edu/6.828/2017/readings/hardware/8259A.pdf
 class PIC {
     int last_irr = 0;
-    int irr = 0; // Interrupt Request Register
-    int imr = 0; // Interrupt Mask Register
-    int isr = 0; // In-Service Register
+    int irr = 0; // interrupt request register
+    int imr = 0; // interrupt mask register
+    int isr = 0; // in-service register
     int priority_add = 0;
     int read_reg_select = 0;
     int special_mask = 0;
-    int init_state = 0;
+    int icwn = 0; // ICW sequence 1..4
     int auto_eoi = 0;
     int rotate_on_autoeoi = 0;
-    int init4 = 0;
+    int icw4 = 0;
     int elcr = 0; // Edge/Level Control Register
     bool rotate_on_auto_eoi = false;
     PIC_Controller *ppic = nullptr;
@@ -529,9 +530,9 @@ class PIC {
     }
     void reset() {
         last_irr = 0;
-        irr = 0; // Interrupt Request Register
-        imr = 0; // Interrupt Mask Register
-        isr = 0; // In-Service Register
+        irr = 0;
+        imr = 0;
+        isr = 0;
         priority_add = 0;
         irq_base = 0;
         read_reg_select = 0;
@@ -539,8 +540,8 @@ class PIC {
         init_state = 0;
         auto_eoi = 0;
         rotate_on_autoeoi = 0;
-        init4 = 0;
-        elcr = 0; // Edge/Level Control Register
+        icw4 = 0;
+        elcr = 0;
         elcr_mask = 0;
     }
     void set_irq1(int irq, bool Qf) {
@@ -591,34 +592,34 @@ class PIC {
         }
     }
     void ioport_write(int mem8_loc, int x) {
-        mem8_loc &= 1;
+        mem8_loc &= 1; // pin A0
         int priority;
-        if (mem8_loc == 0) {
-            if (x & 0x10) {
+        if (mem8_loc == 0) { // (A0 == 0) and...
+            if (x & 0x10) {  // ...(bit 4 == 1) is ICW1 (after reset)
                 reset();
-                init_state = 1;
-                init4 = x & 1;
-                if (x & 0x02) {
-                    throw "PIC: SNGL == 1 not supported";
+                icwn = 1; // start ICW sequence
+                icw4 = x & 1;   // ICW1.IC4
+                if (x & 0x02) { // ICW1.SNGL
+                    throw "ICW1: SNGL == 1 not supported";
                 }
-                if (x & 0x08) {
-                    throw "PIC: LTIM == 1 not supported";
+                if (x & 0x08) { // ICW1.LTIM
+                    throw "ICW1: LTIM == 1 not supported";
                 }
-            } else if (x & 0x08) {
-                if (x & 0x02) {
+            } else if (x & 0x08) { // ...(bit 3 == 1) are OCW3
+                if (x & 0x02) { // OCW3.RR (read register command)
                     read_reg_select = x & 1;
                 }
-                if (x & 0x40) {
+                if (x & 0x40) { // OCW3.ESMM (special mask mode)
                     special_mask = (x >> 5) & 1;
                 }
-            } else {
+            } else { // ...( bit 4 == 0 && bit 3 == 0) are OCW2
                 switch (x) {
                 case 0x00:
-                case 0x80:
+                case 0x80: // rotate in automatic EOI mode (clear)
                     rotate_on_autoeoi = x >> 7;
                     break;
-                case 0x20:
-                case 0xa0:
+                case 0x20: // non-specific EOI command
+                case 0xa0: // rotate on non-specific EOI command
                     priority = get_priority(isr);
                     if (priority >= 0) {
                         isr &= ~(1 << ((priority + priority_add) & 7));
@@ -627,61 +628,61 @@ class PIC {
                         priority_add = (priority_add + 1) & 7;
                     }
                     break;
-                case 0x60:
-                case 0x61:
-                case 0x62:
-                case 0x63:
-                case 0x64:
-                case 0x65:
-                case 0x66:
-                case 0x67:
+                case 0x60: // specific EOI command, IR priority level 0
+                case 0x61: // level 1
+                case 0x62: // level 2
+                case 0x63: // level 3
+                case 0x64: // level 4
+                case 0x65: // level 5
+                case 0x66: // level 6
+                case 0x67: // level 7
                     priority = x & 7;
                     isr &= ~(1 << priority);
                     break;
-                case 0xc0:
-                case 0xc1:
-                case 0xc2:
-                case 0xc3:
-                case 0xc4:
-                case 0xc5:
-                case 0xc6:
-                case 0xc7:
+                case 0xc0: // set priority command, IR priority level 0
+                case 0xc1: // level 1
+                case 0xc2: // level 2
+                case 0xc3: // level 3
+                case 0xc4: // level 4
+                case 0xc5: // level 5
+                case 0xc6: // level 6
+                case 0xc7: // level 7
                     priority_add = (x + 1) & 7;
                     break;
-                case 0xe0:
-                case 0xe1:
-                case 0xe2:
-                case 0xe3:
-                case 0xe4:
-                case 0xe5:
-                case 0xe6:
-                case 0xe7:
+                case 0xe0: // rotate on specific EOI command, IR level 0
+                case 0xe1: // level 1
+                case 0xe2: // level 2
+                case 0xe3: // level 3
+                case 0xe4: // level 4
+                case 0xe5: // level 5
+                case 0xe6: // level 6
+                case 0xe7: // level 7
                     priority = x & 7;
                     isr &= ~(1 << priority);
                     priority_add = (priority + 1) & 7;
                     break;
                 }
             }
-        } else {
-            switch (init_state) {
-            case 0:
+        } else { // ICW2, 3, 4, or OCW1
+            switch (icwn) {
+            case 0: // OCW1, set IMR
                 imr = x;
                 update_irq();
                 break;
-            case 1:
+            case 1: // ICW2, set page starting address of service routines
                 irq_base = x & 0xf8;
-                init_state = 2;
+                icwn = 2;
                 break;
-            case 2:
-                if (init4) {
-                    init_state = 3;
+            case 2: // ICW3, load slave register if ICW1.SNGL == 0
+                if (icw4) {
+                    icwn = 3;
                 } else {
-                    init_state = 0;
+                    icwn = 0;
                 }
                 break;
-            case 3:
+            case 3: // ICW4, program SFNM, BUF, M/S, AEOI and uPM if set
                 auto_eoi = (x >> 1) & 1;
-                init_state = 0;
+                icwn = 0;
                 break;
             }
         }
@@ -765,16 +766,17 @@ inline void PIC_Controller::update_irq() {
         cpu->hard_irq = 0;
     }
 }
+// https://wiki.osdev.org/Serial_Ports
 class Serial {
     int divider = 0;
-    int rbr = 0;
-    int ier = 0;
-    int iir = 0x01;
-    int lcr = 0;
-    int mcr;
-    int lsr = 0x40 | 0x20;
-    int msr = 0;
-    int scr = 0;
+    int rbr = 0;    // receive buffer
+    int ier = 0;    // interrupt enable register
+    int iir = 0x01; // interrupt identification register
+    int lcr = 0;    // line control register
+    int mcr;        // modem control register
+    int lsr = 0x40 | 0x20; // line status register
+    int msr = 0;    // modem status register
+    int scr = 0;    // scratch register
     int set_irq_func = 0;
     int write_func = 0;
     PIC_Controller *pic;
