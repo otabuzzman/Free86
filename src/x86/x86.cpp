@@ -3054,7 +3054,7 @@ void x86Internal::do_interrupt_not_protected_mode(int intno, int ne, int error_c
     segs[1].base = (selector << 4);
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void x86Internal::do_interrupt(nt intno, int ne, int error_code, int oe, int pe) {
+void x86Internal::do_interrupt(int intno, int ne, int error_code, int oe, int pe) {
     if (intno == 0x06) {
         int eip_tmp = eip;
         int eip_offset;
