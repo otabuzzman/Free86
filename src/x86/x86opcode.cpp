@@ -1104,7 +1104,7 @@ void x86Internal::instruction(int cycles) {
                     }
                 }
                 set_FLAGS(x, z & y);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1508,26 +1508,26 @@ void x86Internal::instruction(int cycles) {
                 }
                 y = ld16_mem8_direct();
                 op_CALLF(z, y, x, (eip + physmem8_ptr - initial_mem_ptr));
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xca: // RET
                 y = (ld16_mem8_direct() << 16) >> 16;
                 op_RETF((((CS_flags >> 8) & 1) ^ 1), y);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xcb: // RET
                 op_RETF((((CS_flags >> 8) & 1) ^ 1), 0);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xcf: // IRET
                 op_IRET((((CS_flags >> 8) & 1) ^ 1));
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1588,7 +1588,7 @@ void x86Internal::instruction(int cycles) {
                     abort(13);
                 }
                 eflags |= 0x00000200;
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1639,25 +1639,25 @@ void x86Internal::instruction(int cycles) {
                 goto EXEC_LOOP;
             case 0x6c: // INSB
                 stringOp_INSB();
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6d: // INSW/D
                 CS_flags & 0x0100 ? stringOp_INSW() : stringOp_INSD();
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6e: // OUTSB
                 stringOp_OUTSB();
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6f: // OUTSW/D
                 CS_flags & 0x0100 ? stringOp_OUTSW() : stringOp_OUTSD();
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1691,7 +1691,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 x = phys_mem8[physmem8_ptr++];
                 set_word_in_register(0, ld8_port(x));
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1702,7 +1702,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 x = phys_mem8[physmem8_ptr++];
                 regs[0] = ld32_port(x);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1713,7 +1713,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 x = phys_mem8[physmem8_ptr++];
                 st8_port(x, regs[0] & 0xff);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1724,7 +1724,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 x = phys_mem8[physmem8_ptr++];
                 st32_port(x, regs[0]);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1734,7 +1734,7 @@ void x86Internal::instruction(int cycles) {
                     abort(13);
                 }
                 set_word_in_register(0, ld8_port(regs[2] & 0xffff));
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1744,7 +1744,7 @@ void x86Internal::instruction(int cycles) {
                     abort(13);
                 }
                 regs[0] = ld32_port(regs[2] & 0xffff);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1754,7 +1754,7 @@ void x86Internal::instruction(int cycles) {
                     abort(13);
                 }
                 st8_port(regs[2] & 0xffff, regs[0] & 0xff);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1764,7 +1764,7 @@ void x86Internal::instruction(int cycles) {
                     abort(13);
                 }
                 st32_port(regs[2] & 0xffff, regs[0]);
-                if (hard_irq != 0 && (eflags & 0x00000200)) {
+                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -3125,13 +3125,13 @@ void x86Internal::instruction(int cycles) {
                     goto EXEC_LOOP;
                 case 0x16d: // INSW/D
                     op_16_INS();
-                    if (hard_irq != 0 && (eflags & 0x00000200)) {
+                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
                 case 0x16f: // OUTSW/D
                     op_16_OUTS();
-                    if (hard_irq != 0 && (eflags & 0x00000200)) {
+                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3142,7 +3142,7 @@ void x86Internal::instruction(int cycles) {
                     }
                     x = phys_mem8[physmem8_ptr++];
                     set_lower_word_in_register(0, ld16_port(x));
-                    if (hard_irq != 0 && (eflags & 0x00000200)) {
+                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3153,7 +3153,7 @@ void x86Internal::instruction(int cycles) {
                     }
                     x = phys_mem8[physmem8_ptr++];
                     st16_port(x, regs[0] & 0xffff);
-                    if (hard_irq != 0 && (eflags & 0x00000200)) {
+                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3163,7 +3163,7 @@ void x86Internal::instruction(int cycles) {
                         abort(13);
                     }
                     set_lower_word_in_register(0, ld16_port(regs[2] & 0xffff));
-                    if (hard_irq != 0 && (eflags & 0x00000200)) {
+                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3173,7 +3173,7 @@ void x86Internal::instruction(int cycles) {
                         abort(13);
                     }
                     st16_port(regs[2] & 0xffff, regs[0] & 0xffff);
-                    if (hard_irq != 0 && (eflags & 0x00000200)) {
+                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;

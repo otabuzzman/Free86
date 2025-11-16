@@ -10,7 +10,7 @@
 #include <SDL2/SDL_ttf.h>
 #endif
 
-#include "x86/x86.h"
+#include "CPU.h"
 
 class PC {
   public:
@@ -29,7 +29,7 @@ class PC {
 #endif
 
   private:
-    x86Internal *cpu  = nullptr;
+    CPU *cpu  = nullptr;
 #ifndef NO_SDL
     TTF_Font    *font = nullptr;
 #endif

@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <iostream>
+
 #ifndef NO_SDL
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -13,7 +14,7 @@
 
 PC::PC(int mem_size)
 {
-    cpu = new x86Internal(mem_size);
+    cpu = new CPU(mem_size);
 #ifndef NO_SDL
     TTF_Init();
     font = TTF_OpenFont("bin/cp437.ttf", 14);
@@ -153,3 +154,100 @@ void PC::input()
     cpu->serial->input_fifo_push(chr);
 }
 #endif // NO_SDL
+int CPU::get_hard_irq() {
+    return pic->irq;
+}
+int CPU::get_hard_intno() {
+    return pic->get_hard_intno();
+}
+int CPU::ioport_read(int mem8_loc) {
+    int port = mem8_loc & (1024 - 1);
+#ifdef TEST386
+    printf("*** ioport_read 0x%04x\n", port);
+#endif
+    switch (port) {
+    case 0x70:
+    case 0x71:
+        return cmos->ioport_read(mem8_loc);
+    case 0x64:
+        return kbd->read_status(mem8_loc);
+    case 0x20:
+    case 0x21:
+        return pic->pics[0]->ioport_read(mem8_loc);
+    case 0xa0:
+    case 0xa1:
+        return pic->pics[1]->ioport_read(mem8_loc);
+    case 0x40:
+    case 0x41:
+    case 0x42:
+    case 0x43:
+        return pit->ioport_read(mem8_loc);
+    case 0x61:
+        return pit->speaker_ioport_read(mem8_loc);
+    case 0x3f8:
+    case 0x3f9:
+    case 0x3fa:
+    case 0x3fb:
+    case 0x3fc:
+    case 0x3fd:
+    case 0x3fe:
+    case 0x3ff:
+        return serial->ioport_read(mem8_loc);
+    default:
+        return 0xff;
+    }
+}
+void CPU::ioport_write(int mem8_loc, int data) {
+    int port = mem8_loc & (1024 - 1);
+#ifdef TEST386
+    if (port == 0x0190) { // default POST_PORT in test386
+        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
+    } else { // any other value considered OUT_PORT
+        printf("%c", data);
+    }
+#endif
+    switch (port) {
+    case 0x80: // POST
+        break;
+    case 0x70:
+    case 0x71:
+        cmos->ioport_write(mem8_loc, data);
+        break;
+    case 0x64:
+        kbd->write_command(mem8_loc, data);
+        break;
+    case 0x20:
+    case 0x21:
+        try {
+            pic->pics[0]->ioport_write(mem8_loc, data);
+        } catch (const char *) {
+        }
+        break;
+    case 0xa0:
+    case 0xa1:
+        try {
+            pic->pics[1]->ioport_write(mem8_loc, data);
+        } catch (const char *) {
+        }
+        break;
+    case 0x40:
+    case 0x41:
+    case 0x42:
+    case 0x43:
+        pit->ioport_write(mem8_loc, data);
+        break;
+    case 0x61:
+        pit->speaker_ioport_write(mem8_loc, data);
+        break;
+    case 0x3f8:
+    case 0x3f9:
+    case 0x3fa:
+    case 0x3fb:
+    case 0x3fc:
+    case 0x3fd:
+    case 0x3fe:
+    case 0x3ff:
+        serial->ioport_write(mem8_loc, data);
+        break;
+    }
+}

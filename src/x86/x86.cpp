@@ -5,18 +5,12 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <sys/types.h>
 #include <thread>
+#include <sys/types.h>
 
 #include "x86.h"
 
 x86Internal::x86Internal(int _mem_size) {
-    cmos = new CMOS();
-    kbd = new KBD();
-    pic = new PIC_Controller(this);
-    serial = new Serial(pic, 0, 0);
-    pit = new PIT(this, pic);
-    file_read();
     mem_size = _mem_size;
     new_mem_size = mem_size + ((15 + 3) & ~3);
     phys_mem = (uint8_t *)malloc(sizeof(uint8_t) * new_mem_size);
@@ -35,11 +29,6 @@ x86Internal::x86Internal(int _mem_size) {
     }
 }
 x86Internal::~x86Internal() {
-    delete cmos;
-    delete kbd;
-    delete pic;
-    delete pit;
-    delete serial;
     free(phys_mem8);
     delete[] tlb_read_kernel;
     delete[] tlb_write_kernel;
@@ -168,7 +157,7 @@ void x86Internal::dump(int OPbyte) {
                  cr0, cr2, cr3, cr4);
         // printf("%s", buf4);
         char buf5[1000];
-        snprintf(buf5, 1000, "hard_irq=%d", hard_irq);
+        snprintf(buf5, 1000, "hard_irq=%d", get_hard_irq());
         if (stepinfo) {
             printf("\n");
             printf("count : %d\n", count);
@@ -275,7 +264,7 @@ void x86Internal::check_opbyte() {
 }
 int x86Internal::check_halted() {
     if (halted) {
-        if (hard_irq != 0 && (eflags & 0x00000200)) {
+        if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
             halted = 0;
         } else {
             return 257;
@@ -288,14 +277,8 @@ void x86Internal::check_interrupt() {
         do_interrupt(interrupt.intno, 0, interrupt.error_code, 0, 0);
         interrupt = {-1, 0};
     }
-    if (hard_intno >= 0) {
-        do_interrupt(hard_intno, 0, 0, 0, 1);
-        hard_intno = -1;
-    }
-    if (hard_irq != 0 && (eflags & 0x00000200)) {
-        hard_intno = pic->get_hard_intno();
-        do_interrupt(hard_intno, 0, 0, 0, 1);
-        hard_intno = -1;
+    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+        do_interrupt(get_hard_intno(), 0, 0, 0, 1);
     }
 }
 void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja) {
@@ -4517,97 +4500,6 @@ void x86Internal::st16_port(int port_num, int x) {
 }
 void x86Internal::st32_port(int port_num, int x) {
     ioport_write(port_num, x);
-}
-int x86Internal::ioport_read(int mem8_loc) {
-    int port = mem8_loc & (1024 - 1);
-#ifdef TEST386
-    printf("*** ioport_read 0x%04x\n", port);
-#endif
-    switch (port) {
-    case 0x70:
-    case 0x71:
-        return cmos->ioport_read(mem8_loc);
-    case 0x64:
-        return kbd->read_status(mem8_loc);
-    case 0x20:
-    case 0x21:
-        return pic->pics[0]->ioport_read(mem8_loc);
-    case 0xa0:
-    case 0xa1:
-        return pic->pics[1]->ioport_read(mem8_loc);
-    case 0x40:
-    case 0x41:
-    case 0x42:
-    case 0x43:
-        return pit->ioport_read(mem8_loc);
-    case 0x61:
-        return pit->speaker_ioport_read(mem8_loc);
-    case 0x3f8:
-    case 0x3f9:
-    case 0x3fa:
-    case 0x3fb:
-    case 0x3fc:
-    case 0x3fd:
-    case 0x3fe:
-    case 0x3ff:
-        return serial->ioport_read(mem8_loc);
-    default:
-        return 0xff;
-    }
-}
-void x86Internal::ioport_write(int mem8_loc, int data) {
-    int port = mem8_loc & (1024 - 1);
-#ifdef TEST386
-    if (port == 0x0190) { // default POST_PORT in test386
-        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
-    } else { // any other value considered OUT_PORT
-        printf("%c", data);
-    }
-#endif
-    switch (port) {
-    case 0x80: // POST
-        break;
-    case 0x70:
-    case 0x71:
-        cmos->ioport_write(mem8_loc, data);
-        break;
-    case 0x64:
-        kbd->write_command(mem8_loc, data);
-        break;
-    case 0x20:
-    case 0x21:
-        try {
-            pic->pics[0]->ioport_write(mem8_loc, data);
-        } catch (const char *) {
-        }
-        break;
-    case 0xa0:
-    case 0xa1:
-        try {
-            pic->pics[1]->ioport_write(mem8_loc, data);
-        } catch (const char *) {
-        }
-        break;
-    case 0x40:
-    case 0x41:
-    case 0x42:
-    case 0x43:
-        pit->ioport_write(mem8_loc, data);
-        break;
-    case 0x61:
-        pit->speaker_ioport_write(mem8_loc, data);
-        break;
-    case 0x3f8:
-    case 0x3f9:
-    case 0x3fa:
-    case 0x3fb:
-    case 0x3fc:
-    case 0x3fd:
-    case 0x3fe:
-    case 0x3ff:
-        serial->ioport_write(mem8_loc, data);
-        break;
-    }
 }
 void x86Internal::abort_with_error_code(int intno, int error_code) {
     cycles_processed += (cycles_requested - cycles_remaining);
