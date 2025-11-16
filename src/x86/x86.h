@@ -476,18 +476,5 @@ class x86Internal {
     void stringOp_CMPSD();
     void stringOp_LODSD();
     void stringOp_SCASD();
-
-    bool logcheck = true;
-    std::string filename = "log.txt";
-    int filecheck_start = 0;
-    int filecheck_end = 1000;
-    int fileoffset = 0;
-    bool stepinfo = false;
-    int count = 0; // used by x86Internal::dump()
-    std::vector<std::string> lines;
-    bool do_dump = false;
-    void dump();
-    void dump(int OPbyte);
-    int file_read();
 };
 #endif // _X86_H

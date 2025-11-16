@@ -9,7 +9,6 @@ void x86Internal::instruction(int cycles) {
         CS_flags = init_CS_flags;
         OPbyte |= CS_flags & 0x0100;
         while (true) {
-            dump();
             switch (OPbyte) {
             case 0x66: // operand-size override prefix
                 if (CS_flags == init_CS_flags) {

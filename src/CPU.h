@@ -665,7 +665,6 @@ class CPU : public x86Internal {
         pic = new PIC();
         serial = new Serial(pic, 0, 0);
         pit = new PIT(this, pic);
-        file_read();
     }
     ~CPU() {
         delete cmos;
