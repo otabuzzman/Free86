@@ -78,6 +78,67 @@ class x86Internal {
 
     int OPbyte = 0;
 
+/*
+   Operand Size Mode
+
+   The operand size mode (OSM) of an instruction defines how each status flag modified by
+   the instruction is calculated from the source and destination operands of the instruction.
+   Instructions with multiple operand sizes may have multiple OSM or share an OSM with some
+   or all sizes. OSM is specific to this emulator and not part of the processor architecture,
+   from which it was derived. There are 31 OSMs, which are encoded by integers 0 to 30.
+
+                             +-------+----+----+-----------+
+                             |  (implicit) OSM             |
+   +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
+   | instruction | condition | 8 bit | 16 | 32 | condition | OF | SF | ZF | AF | PF | CF |
+   +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
+   | AAA         |           | (i)24 |    |    |           | -  | -  | -  | TM | -  | M  |
+   | AAS         |           | (i)24 |    |    |           | -  | -  | -  | TM | -  | M  |
+   | AAD         |           |   12  |    |    |           | -  | M  | M  | -  | M  | -  |
+   | AAM         |           |   12  |    |    |           | -  | M  | M  | -  | M  | -  |
+   | DAA         |           | (i)24 |    |    |           | -  | M  | M  | TM | M  | TM |
+   | DAS         |           | (i)24 |    |    |           | -  | M  | M  | TM | M  | TM |
+   | ADC         |           |    0  |  1 |  2 | CF 0      | M  | M  | M  | M  | M  | TM |
+   | ADC         |           |    3  |  4 |  5 | CF 1      | M  | M  | M  | M  | M  | TM |
+   | ADD         |           |    0  |  1 |  2 |           | M  | M  | M  | M  | M  | M  |
+   | ADD         |           |       |    |  8 | OP 0x81,  | M  | M  | M  | M  | M  | M  |
+   |             |           |       |    |    | OP 0x83   | M  | M  | M  | M  | M  | M  |
+   | SBB         |           |    6  |  7 |  8 | CF 0      | M  | M  | M  | M  | M  | TM |
+   | SBB         |           |    9  | 10 | 11 | CF 1      | M  | M  | M  | M  | M  | TM |
+   | SUB         |           |    6  |  7 |  8 |           | M  | M  | M  | M  | M  | M  |
+   | CMP         |           |    6  |  7 |  8 |           | M  | M  | M  | M  | M  | M  |
+   | CMPS        |           |       |    |    |           | M  | M  | M  | M  | M  | M  |
+   | SCAS        |           |       |    |    |           | M  | M  | M  | M  | M  | M  |
+   | NEG         |           |       |    |    |           | M  | M  | M  | M  | M  | M  |
+   | DEC         |           |   28  | 29 | 30 |           | M  | M  | M  | M  | M  | U  |
+   | INC         |           |   25  | 26 | 27 |           | M  | M  | M  | M  | M  | U  |
+   | IMUL        |           |   21  | 22 | 23 |           | M  | -  | -  | -  | -  | M  |
+   | MUL         |           |   21  | 22 | 23 |           | M  | -  | -  | -  | -  | M  |
+   | RCL/RCR     | count  1  |   24  | 24 | 24 |           | M  | U  | U  | U  | U  | TM |
+   | RCL/RCR     | count >1  |   24  | 24 | 24 |           | -  | U  | U  | U  | U  | TM |
+   | ROL/ROR     | count  1  |   24  | 24 | 24 |           | M  | U  | U  | U  | U  | M  |
+   | ROL/ROR     | count >1  |   24  | 24 | 24 |           | -  | U  | U  | U  | U  | M  |
+   | SAR/SHR     | count  1  |   18  | 19 | 20 |           | M  | M  | M  | -  | M  | M  |
+   | SAR/SHR     | count >1  |   18  | 19 | 20 |           | -  | M  | M  | -  | M  | M  |
+   | SAL/SHL     | count  1  |   15  | 16 | 17 |           | M  | M  | M  | -  | M  | M  |
+   | SAL/SHL     | count >1  |   15  | 16 | 17 |           | -  | M  | M  | -  | M  | M  |
+   | SHLD        |           |       | 19 | 17 |           | -  | M  | M  | -  | M  | M  |
+   | SHRD        |           |       | 19 | 20 |           | -  | M  | M  | -  | M  | M  |
+   | BSF/BSR     |           |       |    | 14 |           | -  | -  | M  | -  | -  | -  |
+   | BT/BT[SRC]  |           |       | 19 | 20 |           | -  | -  | -  | -  | -  | M  |
+   | AND         |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+   | OR          |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+   | TEST        |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+   | XOR         |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+   +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
+                                                                   (PM (1986), Appendix C)
+
+   0 : instruction resets,
+   T : tests,
+   M : modifies flag,
+   U : leaves flag undefined,
+   - : does not affect flag.
+ */
     int cc_src = 0;
     int cc_dst = 0;
     int cc_op = 0;
@@ -89,17 +150,26 @@ class x86Internal {
     int cccc_op2 = 0;  // current op, byte2
     int cccc_dst2 = 0; // current dest, byte2
 
-    // 0x0001 ES segment override prefix    (0x26)
-    // 0x0002 CS segment override prefix    (0x2e)
-    // 0x0003 SS segment override prefix    (0x36)
-    // 0x0004 DS segment override prefix    (0x3e)
-    // 0x0005 FS segment override prefix    (0x64)
-    // 0x0006 GS segment override prefix    (0x65)
-    // 0x0010 REPZ  string operation prefix (0xf3)
-    // 0x0020 REPNZ string operation prefix (0xf2)
-    // 0x0040 LOCK  signal prefix           (0xf0)
-    // 0x0080 address-size override prefix  (0x67)
-    // 0x0100 operand-size override prefix  (0x66)
+/*
+   Instruction prefix register
+
+   The instruction prefix register (IPR) captures the instruction prefixes
+   of the current retrieval cycle, each in its own bit. IPR is specific to
+   this emulator and not part of the processor architecture, from which it
+   was derived.
+
+   0x0001 ES segment override prefix    (0x26)
+   0x0002 CS segment override prefix    (0x2e)
+   0x0003 SS segment override prefix    (0x36)
+   0x0004 DS segment override prefix    (0x3e)
+   0x0005 FS segment override prefix    (0x64)
+   0x0006 GS segment override prefix    (0x65)
+   0x0010 REPZ  string operation prefix (0xf3)
+   0x0020 REPNZ string operation prefix (0xf2)
+   0x0040 LOCK  signal prefix           (0xf0)
+   0x0080 address-size override prefix  (0x67)
+   0x0100 operand-size override prefix  (0x66)
+ */
     int CS_flags = 0;
     int init_CS_flags = 0; // reflects D flag (PM (1986), 16.1)
 
