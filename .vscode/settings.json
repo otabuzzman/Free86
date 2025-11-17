@@ -5,6 +5,6 @@
   },
   "cmake.configureArgs": [
     "-DNO_SDL=ON",
-    "-DTEST386=ON"
+    "-DTEST386=OFF"
   ],
 }

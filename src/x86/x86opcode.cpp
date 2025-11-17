@@ -991,9 +991,9 @@ void x86Internal::instruction(int cycles) {
                     mem8_loc = regs[4];
                     last_tlb_val = tlb_read[mem8_loc >> 12];
                     if ((last_tlb_val | mem8_loc) & 3) {
-                        __ld_32bits_mem8_read();
+                        x = __ld_32bits_mem8_read();
                     } else {
-                        phys_mem32[(mem8_loc ^ last_tlb_val) >> 2]);
+                        x = phys_mem32[(mem8_loc ^ last_tlb_val) >> 2];
                     }
                     regs[4] = (mem8_loc + 4) >> 0;
                 } else {

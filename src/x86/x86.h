@@ -181,11 +181,11 @@ class x86Internal {
     void st32_phys(int mem8_loc, int x) {
         phys_mem32[mem8_loc >> 2] = x;
     }
-    void tlb_set_page(int mem8_loc, int page_val, int set_write_tlb, int set_user_tlb) {
+    void tlb_set_page(uint32_t mem8_loc, int page_val, int set_write_tlb, int set_user_tlb) {
         mem8_loc &= -4096; // top 20 bits matter
         page_val &= -4096;
         int x = mem8_loc ^ page_val; // poor man's XOR hashing
-        int i = mem8_loc >> 12;
+        uint32_t i = mem8_loc >> 12;
         if (tlb_read_kernel[i] == -1) {
             if (tlb_pages_count >= 2048) {
                 tlb_flush_all1((i - 1) & 0xfffff);
@@ -210,8 +210,8 @@ class x86Internal {
             tlb_write_user[i] = -1;
         }
     }
-    void tlb_flush_page(int mem8_loc) {
-        int i = mem8_loc >> 12;
+    void tlb_flush_page(uint32_t mem8_loc) {
+        uint32_t i = mem8_loc >> 12;
         tlb_clear(i);
     }
     void tlb_flush_all() {
@@ -222,7 +222,7 @@ class x86Internal {
         }
         tlb_pages_count = 0;
     }
-    void tlb_flush_all1(int la) {
+    void tlb_flush_all1(uint32_t la) {
         int n = tlb_pages_count;
         int new_n = 0;
         for (int j = 0; j < n; j++) {
@@ -235,7 +235,7 @@ class x86Internal {
         }
         tlb_pages_count = new_n;
     }
-    void tlb_clear(int i) {
+    void tlb_clear(uint32_t i) {
         tlb_read_kernel[i] = -1;
         tlb_write_kernel[i] = -1;
         tlb_read_user[i] = -1;
