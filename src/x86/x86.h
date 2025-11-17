@@ -47,7 +47,7 @@ class x86Internal {
     int eflags = 0x2;
 
     int eip = 0xfff0;
-    int eip_offset = 0;
+    int eip_linear = 0;
 
     // clang-format off
     // ES, CS, SS, DS, FS, GS, LDT, TR
@@ -190,7 +190,7 @@ class x86Internal {
     int x, y, z, v;          // intermediate values
 
     int physmem8_ptr = 0;    // fetch_address
-    int initial_mem_ptr = 0; // fetch_address_byte0
+    int initial_mem_ptr = 0; // fetch_byte0_address
     uint32_t mem8_loc;       // byte_address
 
     int cycles_requested = 0;
@@ -340,7 +340,7 @@ class x86Internal {
     void check_interrupt();
     void init_segment_local_vars();
 
-    int operation_size_function(int eip_offset, int OPbyte);
+    int operation_size_function(int eip_linear, int OPbyte);
 
     void set_CR0(int Qd);
     void set_CR3(int new_pdb);
