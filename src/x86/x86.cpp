@@ -86,8 +86,7 @@ void x86Internal::check_opbyte() {
                 initial_mem_ptr = physmem8_ptr = mem_size;
                 for (y = 0; y < x; y++) {
                     mem8_loc = (eip_offset + y) >> 0;
-                    uint32_t mem8_locu = mem8_loc;
-                    phys_mem8[physmem8_ptr + y] = (((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
+                    phys_mem8[physmem8_ptr + y] = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
                              : phys_mem8[mem8_loc ^ last_tlb_val]);
                 }
@@ -1366,18 +1365,17 @@ void x86Internal::change_permission_level(int sd) {
 }
 int x86Internal::do_tlb_lookup(int mem8_loc, int ud) {
     int tlb_lookup;
-    uint32_t mem8_locu = mem8_loc;
     if (ud) {
-        tlb_lookup = tlb_write[mem8_locu >> 12];
+        tlb_lookup = tlb_write[mem8_loc >> 12];
     } else {
-        tlb_lookup = tlb_read[mem8_locu >> 12];
+        tlb_lookup = tlb_read[mem8_loc >> 12];
     }
     if (tlb_lookup == -1) {
         do_tlb_set_page(mem8_loc, ud, cpl == 3);
         if (ud) {
-            tlb_lookup = tlb_write[mem8_locu >> 12];
+            tlb_lookup = tlb_write[mem8_loc >> 12];
         } else {
-            tlb_lookup = tlb_read[mem8_locu >> 12];
+            tlb_lookup = tlb_read[mem8_loc >> 12];
         }
     }
     return tlb_lookup ^ mem8_loc;
@@ -1414,12 +1412,9 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            {
-                uint32_t mem8_locu = mem8_loc;
-                OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                         ? __ld_8bits_mem8_read()
-                         : phys_mem8[mem8_loc ^ last_tlb_val]);
-            }
+            OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                     ? __ld_8bits_mem8_read()
+                     : phys_mem8[mem8_loc ^ last_tlb_val]);
             break;
         case 0x67: // address-size override prefix
             if (init_CS_flags & 0x0080) {
@@ -1431,12 +1426,9 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            {
-                uint32_t mem8_locu = mem8_loc;
-                OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                         ? __ld_8bits_mem8_read()
-                         : phys_mem8[mem8_loc ^ last_tlb_val]);
-            }
+            OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                     ? __ld_8bits_mem8_read()
+                     : phys_mem8[mem8_loc ^ last_tlb_val]);
             break;
         case 0x91: // XCHG C
         case 0x92: // XCHG D
@@ -1674,77 +1666,71 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            {
-                uint32_t mem8_locu = mem8_loc;
-                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                         ? __ld_8bits_mem8_read()
-                         : phys_mem8[mem8_loc ^ last_tlb_val]);
-                if (CS_flags & 0x0080) {
-                    switch (mem8 >> 6) {
-                    case 0:
-                        if ((mem8 & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
+            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                     ? __ld_8bits_mem8_read()
+                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+            if (CS_flags & 0x0080) {
+                switch (mem8 >> 6) {
+                case 0:
+                    if ((mem8 & 7) == 6) {
                         n += 2;
-                        break;
                     }
-                } else {
-                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-                    case 0x04:
-                        if ((n + 1) > 15) {
-                            abort(6);
-                        }
-                        mem8_loc = (eip_offset + (n++)) >> 0;
-                        {
-                            uint32_t mem8_locu = mem8_loc;
-                            localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                     ? __ld_8bits_mem8_read()
-                                     : phys_mem8[mem8_loc ^ last_tlb_val]);
-                            if ((localcc_opbyte_var & 7) == 5) {
-                                n += 4;
-                            }
-                        }
-                        break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    case 0x05:
-                        n += 4;
-                        break;
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
+                    break;
+                case 1:
+                    n++;
+                    break;
+                default:
+                    n += 2;
+                    break;
+                }
+            } else {
+                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                case 0x04:
+                    if ((n + 1) > 15) {
+                        abort(6);
                     }
+                    mem8_loc = (eip_offset + (n++)) >> 0;
+                    localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                             ? __ld_8bits_mem8_read()
+                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                    if ((localcc_opbyte_var & 7) == 5) {
+                        n += 4;
+                    }
+                    break;
+                case 0x0c:
+                    n += 2;
+                    break;
+                case 0x14:
+                    n += 5;
+                    break;
+                case 0x05:
+                    n += 4;
+                    break;
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x06:
+                case 0x07:
+                    break;
+                case 0x08:
+                case 0x09:
+                case 0x0a:
+                case 0x0b:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                    n++;
+                    break;
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                    n += 4;
+                    break;
                 }
             }
             if (n > 15) {
@@ -1775,75 +1761,71 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            {
-                uint32_t mem8_locu = mem8_loc;
-                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                         ? __ld_8bits_mem8_read()
-                         : phys_mem8[mem8_loc ^ last_tlb_val]);
-                if (CS_flags & 0x0080) {
-                    switch (mem8 >> 6) {
-                    case 0:
-                        if ((mem8 & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
+            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                     ? __ld_8bits_mem8_read()
+                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+            if (CS_flags & 0x0080) {
+                switch (mem8 >> 6) {
+                case 0:
+                    if ((mem8 & 7) == 6) {
                         n += 2;
-                        break;
                     }
-                } else {
-                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-                    case 0x04: {
-                        if ((n + 1) > 15) {
-                            abort(6);
-                        }
-                        mem8_loc = (eip_offset + (n++)) >> 0;
-                        uint32_t mem8_locu = mem8_loc;
-                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                 ? __ld_8bits_mem8_read()
-                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
-                        if ((localcc_opbyte_var & 7) == 5) {
-                            n += 4;
-                        }
-                    } break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    case 0x05:
-                        n += 4;
-                        break;
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
+                    break;
+                case 1:
+                    n++;
+                    break;
+                default:
+                    n += 2;
+                    break;
+                }
+            } else {
+                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                case 0x04:
+                    if ((n + 1) > 15) {
+                        abort(6);
                     }
+                    mem8_loc = (eip_offset + (n++)) >> 0;
+                    localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                             ? __ld_8bits_mem8_read()
+                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                    if ((localcc_opbyte_var & 7) == 5) {
+                        n += 4;
+                    }
+                    break;
+                case 0x0c:
+                    n += 2;
+                    break;
+                case 0x14:
+                    n += 5;
+                    break;
+                case 0x05:
+                    n += 4;
+                    break;
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x06:
+                case 0x07:
+                    break;
+                case 0x08:
+                case 0x09:
+                case 0x0a:
+                case 0x0b:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                    n++;
+                    break;
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                    n += 4;
+                    break;
                 }
             }
             if (n > 15) {
@@ -1941,75 +1923,71 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            {
-                uint32_t mem8_locu = mem8_loc;
-                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                         ? __ld_8bits_mem8_read()
-                         : phys_mem8[mem8_loc ^ last_tlb_val]);
-                if (CS_flags & 0x0080) {
-                    switch (mem8 >> 6) {
-                    case 0:
-                        if ((mem8 & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
+            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                     ? __ld_8bits_mem8_read()
+                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+            if (CS_flags & 0x0080) {
+                switch (mem8 >> 6) {
+                case 0:
+                    if ((mem8 & 7) == 6) {
                         n += 2;
-                        break;
                     }
-                } else {
-                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-                    case 0x04: {
-                        if ((n + 1) > 15) {
-                            abort(6);
-                        }
-                        mem8_loc = (eip_offset + (n++)) >> 0;
-                        uint32_t mem8_locu = mem8_loc;
-                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                 ? __ld_8bits_mem8_read()
-                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
-                        if ((localcc_opbyte_var & 7) == 5) {
-                            n += 4;
-                        }
-                    } break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    case 0x05:
-                        n += 4;
-                        break;
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
+                    break;
+                case 1:
+                    n++;
+                    break;
+                default:
+                    n += 2;
+                    break;
+                }
+            } else {
+                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                case 0x04:
+                    if ((n + 1) > 15) {
+                        abort(6);
                     }
+                    mem8_loc = (eip_offset + (n++)) >> 0;
+                    localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                             ? __ld_8bits_mem8_read()
+                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                    if ((localcc_opbyte_var & 7) == 5) {
+                        n += 4;
+                    }
+                    break;
+                case 0x0c:
+                    n += 2;
+                    break;
+                case 0x14:
+                    n += 5;
+                    break;
+                case 0x05:
+                    n += 4;
+                    break;
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x06:
+                case 0x07:
+                    break;
+                case 0x08:
+                case 0x09:
+                case 0x0a:
+                case 0x0b:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                    n++;
+                    break;
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                    n += 4;
+                    break;
                 }
             }
             if (n > 15) {
@@ -2028,75 +2006,71 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                 abort(6);
             }
             mem8_loc = (eip_offset + (n++)) >> 0;
-            {
-                uint32_t mem8_locu = mem8_loc;
-                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                         ? __ld_8bits_mem8_read()
-                         : phys_mem8[mem8_loc ^ last_tlb_val]);
-                if (CS_flags & 0x0080) {
-                    switch (mem8 >> 6) {
-                    case 0:
-                        if ((mem8 & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
+            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                     ? __ld_8bits_mem8_read()
+                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+            if (CS_flags & 0x0080) {
+                switch (mem8 >> 6) {
+                case 0:
+                    if ((mem8 & 7) == 6) {
                         n += 2;
-                        break;
                     }
-                } else {
-                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-                    case 0x04: {
-                        if ((n + 1) > 15) {
-                            abort(6);
-                        }
-                        mem8_loc = (eip_offset + (n++)) >> 0;
-                        uint32_t mem8_locu = mem8_loc;
-                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                 ? __ld_8bits_mem8_read()
-                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
-                        if ((localcc_opbyte_var & 7) == 5) {
-                            n += 4;
-                        }
-                    } break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    case 0x05:
-                        n += 4;
-                        break;
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
+                    break;
+                case 1:
+                    n++;
+                    break;
+                default:
+                    n += 2;
+                    break;
+                }
+            } else {
+                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                case 0x04:
+                    if ((n + 1) > 15) {
+                        abort(6);
                     }
+                    mem8_loc = (eip_offset + (n++)) >> 0;
+                    localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                             ? __ld_8bits_mem8_read()
+                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                    if ((localcc_opbyte_var & 7) == 5) {
+                        n += 4;
+                    }
+                    break;
+                case 0x0c:
+                    n += 2;
+                    break;
+                case 0x14:
+                    n += 5;
+                    break;
+                case 0x05:
+                    n += 4;
+                    break;
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x06:
+                case 0x07:
+                    break;
+                case 0x08:
+                case 0x09:
+                case 0x0a:
+                case 0x0b:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                    n++;
+                    break;
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                    n += 4;
+                    break;
                 }
             }
             if (n > 15) {
@@ -2243,75 +2217,71 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                     abort(6);
                 }
                 mem8_loc = (eip_offset + (n++)) >> 0;
-                {
-                    uint32_t mem8_locu = mem8_loc;
-                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                ? __ld_8bits_mem8_read()
-                                : phys_mem8[mem8_loc ^ last_tlb_val]);
-                    if (CS_flags & 0x0080) {
-                        switch (mem8 >> 6) {
-                        case 0:
-                            if ((mem8 & 7) == 6) {
-                                n += 2;
-                            }
-                            break;
-                        case 1:
-                            n++;
-                            break;
-                        default:
+                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                            ? __ld_8bits_mem8_read()
+                            : phys_mem8[mem8_loc ^ last_tlb_val]);
+                if (CS_flags & 0x0080) {
+                    switch (mem8 >> 6) {
+                    case 0:
+                        if ((mem8 & 7) == 6) {
                             n += 2;
-                            break;
                         }
-                    } else {
-                        switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-                        case 0x04: {
-                            if ((n + 1) > 15) {
-                                abort(6);
-                            }
-                            mem8_loc = (eip_offset + (n++)) >> 0;
-                            uint32_t mem8_locu = mem8_loc;
-                            localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                     ? __ld_8bits_mem8_read()
-                                     : phys_mem8[mem8_loc ^ last_tlb_val]);
-                            if ((localcc_opbyte_var & 7) == 5) {
-                                n += 4;
-                            }
-                        } break;
-                        case 0x0c:
-                            n += 2;
-                            break;
-                        case 0x14:
-                            n += 5;
-                            break;
-                        case 0x05:
-                            n += 4;
-                            break;
-                        case 0x00:
-                        case 0x01:
-                        case 0x02:
-                        case 0x03:
-                        case 0x06:
-                        case 0x07:
-                            break;
-                        case 0x08:
-                        case 0x09:
-                        case 0x0a:
-                        case 0x0b:
-                        case 0x0d:
-                        case 0x0e:
-                        case 0x0f:
-                            n++;
-                            break;
-                        case 0x10:
-                        case 0x11:
-                        case 0x12:
-                        case 0x13:
-                        case 0x15:
-                        case 0x16:
-                        case 0x17:
-                            n += 4;
-                            break;
+                        break;
+                    case 1:
+                        n++;
+                        break;
+                    default:
+                        n += 2;
+                        break;
+                    }
+                } else {
+                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                    case 0x04:
+                        if ((n + 1) > 15) {
+                            abort(6);
                         }
+                        mem8_loc = (eip_offset + (n++)) >> 0;
+                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                                 ? __ld_8bits_mem8_read()
+                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
+                        if ((localcc_opbyte_var & 7) == 5) {
+                            n += 4;
+                        }
+                        break;
+                    case 0x0c:
+                        n += 2;
+                        break;
+                    case 0x14:
+                        n += 5;
+                        break;
+                    case 0x05:
+                        n += 4;
+                        break;
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
+                    case 0x06:
+                    case 0x07:
+                        break;
+                    case 0x08:
+                    case 0x09:
+                    case 0x0a:
+                    case 0x0b:
+                    case 0x0d:
+                    case 0x0e:
+                    case 0x0f:
+                        n++;
+                        break;
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x15:
+                    case 0x16:
+                    case 0x17:
+                        n += 4;
+                        break;
                     }
                 }
                 if (n > 15) {
@@ -2325,75 +2295,71 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                     abort(6);
                 }
                 mem8_loc = (eip_offset + (n++)) >> 0;
-                {
-                    uint32_t mem8_locu = mem8_loc;
-                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                ? __ld_8bits_mem8_read()
-                                : phys_mem8[mem8_loc ^ last_tlb_val]);
-                    if (CS_flags & 0x0080) {
-                        switch (mem8 >> 6) {
-                        case 0:
-                            if ((mem8 & 7) == 6) {
-                                n += 2;
-                            }
-                            break;
-                        case 1:
-                            n++;
-                            break;
-                        default:
+                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                            ? __ld_8bits_mem8_read()
+                            : phys_mem8[mem8_loc ^ last_tlb_val]);
+                if (CS_flags & 0x0080) {
+                    switch (mem8 >> 6) {
+                    case 0:
+                        if ((mem8 & 7) == 6) {
                             n += 2;
-                            break;
                         }
-                    } else {
-                        switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
-                        case 0x04: {
-                            if ((n + 1) > 15) {
-                                abort(6);
-                            }
-                            mem8_loc = (eip_offset + (n++)) >> 0;
-                            uint32_t mem8_locu = mem8_loc;
-                            localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_locu >> 12]) == -1)
-                                     ? __ld_8bits_mem8_read()
-                                     : phys_mem8[mem8_loc ^ last_tlb_val]);
-                            if ((localcc_opbyte_var & 7) == 5) {
-                                n += 4;
-                            }
-                        } break;
-                        case 0x0c:
-                            n += 2;
-                            break;
-                        case 0x14:
-                            n += 5;
-                            break;
-                        case 0x05:
-                            n += 4;
-                            break;
-                        case 0x00:
-                        case 0x01:
-                        case 0x02:
-                        case 0x03:
-                        case 0x06:
-                        case 0x07:
-                            break;
-                        case 0x08:
-                        case 0x09:
-                        case 0x0a:
-                        case 0x0b:
-                        case 0x0d:
-                        case 0x0e:
-                        case 0x0f:
-                            n++;
-                            break;
-                        case 0x10:
-                        case 0x11:
-                        case 0x12:
-                        case 0x13:
-                        case 0x15:
-                        case 0x16:
-                        case 0x17:
-                            n += 4;
-                            break;
+                        break;
+                    case 1:
+                        n++;
+                        break;
+                    default:
+                        n += 2;
+                        break;
+                    }
+                } else {
+                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                    case 0x04:
+                        if ((n + 1) > 15) {
+                            abort(6);
                         }
+                        mem8_loc = (eip_offset + (n++)) >> 0;
+                        localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                                 ? __ld_8bits_mem8_read()
+                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
+                        if ((localcc_opbyte_var & 7) == 5) {
+                            n += 4;
+                        }
+                        break;
+                    case 0x0c:
+                        n += 2;
+                        break;
+                    case 0x14:
+                        n += 5;
+                        break;
+                    case 0x05:
+                        n += 4;
+                        break;
+                    case 0x00:
+                    case 0x01:
+                    case 0x02:
+                    case 0x03:
+                    case 0x06:
+                    case 0x07:
+                        break;
+                    case 0x08:
+                    case 0x09:
+                    case 0x0a:
+                    case 0x0b:
+                    case 0x0d:
+                    case 0x0e:
+                    case 0x0f:
+                        n++;
+                        break;
+                    case 0x10:
+                    case 0x11:
+                    case 0x12:
+                    case 0x13:
+                    case 0x15:
+                    case 0x16:
+                    case 0x17:
+                        n += 4;
+                        break;
                     }
                 }
                 if (n > 15) {

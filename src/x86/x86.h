@@ -179,15 +179,13 @@ class x86Internal {
         return phys_mem32[mem8_loc >> 2];
     }
     void st32_phys(int mem8_loc, int x) {
-        uint32_t mem8_locu = mem8_loc;
-        phys_mem32[mem8_locu >> 2] = x;
+        phys_mem32[mem8_loc >> 2] = x;
     }
     void tlb_set_page(int mem8_loc, int page_val, int set_write_tlb, int set_user_tlb) {
         mem8_loc &= -4096; // top 20 bits matter
         page_val &= -4096;
-        uint32_t mem8_locu = mem8_loc;
-        int x = mem8_locu ^ page_val; // poor man's XOR hashing
-        int i = mem8_locu >> 12;
+        int x = mem8_loc ^ page_val; // poor man's XOR hashing
+        int i = mem8_loc >> 12;
         if (tlb_read_kernel[i] == -1) {
             if (tlb_pages_count >= 2048) {
                 tlb_flush_all1((i - 1) & 0xfffff);
@@ -213,8 +211,7 @@ class x86Internal {
         }
     }
     void tlb_flush_page(int mem8_loc) {
-        uint32_t mem8_locu = mem8_loc;
-        int i = mem8_locu >> 12;
+        int i = mem8_loc >> 12;
         tlb_clear(i);
     }
     void tlb_flush_all() {
