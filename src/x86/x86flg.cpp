@@ -176,8 +176,7 @@ bool x86Internal::check_overflow() {
     }
     return rval;
 }
-bool x86Internal::check_below_or_equal() // `below' for signed comparison, PM p. 317
-{
+bool x86Internal::check_below_or_equal() { // `below' for signed comparison, PM p. 317
     bool flg = false;
     switch (cc_op) {
     case 6:
@@ -238,8 +237,7 @@ int x86Internal::check_less_than() {
     }
     return flg;
 }
-int x86Internal::check_less_or_equal() // `less' for unsigned comparison, PM p. 317
-{
+int x86Internal::check_less_or_equal() { // `less' for unsigned comparison, PM p. 317
     bool flg;
     switch (cc_op) {
     case 6:

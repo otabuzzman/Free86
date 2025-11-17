@@ -182,7 +182,7 @@ class x86Internal {
         uint32_t mem8_locu = mem8_loc;
         phys_mem32[mem8_locu >> 2] = x;
     }
- void tlb_set_page(int mem8_loc, int page_val, int set_write_tlb, int set_user_tlb) {
+    void tlb_set_page(int mem8_loc, int page_val, int set_write_tlb, int set_user_tlb) {
         mem8_loc &= -4096; // top 20 bits matter
         page_val &= -4096;
         uint32_t mem8_locu = mem8_loc;
