@@ -4,8 +4,7 @@ int x86Internal::__ld_8bits_mem8_read() {
     int mem8_val;
     if (check_protected()) {
         do_tlb_set_page(mem8_loc, 0, cpl == 3);
-        int idx = mem8_loc >> 12;
-        int tlb_lookup = tlb_read[idx];
+        int tlb_lookup = tlb_read[mem8_loc >> 12];
         mem8_val = phys_mem8[mem8_loc ^ tlb_lookup];
     } else {
         mem8_val = phys_mem8[mem8_loc];
@@ -157,8 +156,7 @@ void x86Internal::__st8_mem8_write(int x) {
     }
 }
 void x86Internal::st8_mem8_write(int x) {
-    int idx = mem8_loc >> 12;
-    int last_tlb_val = tlb_write[idx];
+    int last_tlb_val = tlb_write[mem8_loc >> 12];
     if (check_real_mode() || last_tlb_val == -1) {
         __st8_mem8_write(x);
     } else {

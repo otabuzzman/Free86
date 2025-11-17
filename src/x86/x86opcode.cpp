@@ -146,8 +146,7 @@ void x86Internal::instruction(int cycles) {
                     x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                 } else {
                     mem8_loc = segment_translation(mem8);
-                    int idx = mem8_loc >> 12;
-                    x = (((last_tlb_val = tlb_read[idx]) == -1)
+                    x = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
                              : phys_mem8[mem8_loc ^ last_tlb_val]);
                 }
@@ -161,8 +160,7 @@ void x86Internal::instruction(int cycles) {
                     x = regs[mem8 & 7];
                 } else {
                     mem8_loc = segment_translation(mem8);
-                    int idx = mem8_loc >> 12;
-                    last_tlb_val = tlb_read[idx];
+                    last_tlb_val = tlb_read[mem8_loc >> 12];
                     x = ((last_tlb_val | mem8_loc) & 3
                              ? __ld_32bits_mem8_read()
                              : phys_mem32[(mem8_loc ^ last_tlb_val) >> 2]);
@@ -2346,14 +2344,11 @@ void x86Internal::instruction(int cycles) {
                 case 0xcc: // -
                 case 0xcd: // -
                 case 0xce: // -
-                case 0xcf: // -
+                case 0xcf: // BSWAP (80486)
                     reg_idx1 = OPbyte & 7;
                     x = regs[reg_idx1];
-                    {
-                        uint32_t xuint = x;
-                        x = (xuint >> 24) | ((x >> 8) & 0x0000ff00) | ((x << 8) & 0x00ff0000) | (x << 24);
-                        regs[reg_idx1] = x;
-                    }
+                    x = ((x >> 24) & 0xff) | ((x >> 8) & 0xff00) | ((x << 8) & 0xff0000) | (x << 24);
+                    regs[reg_idx1] = x;
                     goto EXEC_LOOP;
                 case 0x04: // -
                 case 0x05: // -
