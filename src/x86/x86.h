@@ -139,9 +139,18 @@ class x86Internal {
    U : leaves flag undefined,
    - : does not affect flag.
  */
+    int cc_op = 0;
     int cc_src = 0;
     int cc_dst = 0;
-    int cc_op = 0;
+/*
+   `osm_preserved'/ `osm_dst_preserved' preserve OMS/ destination of instruction
+   before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
+   which is not modified by INC/ DEC. CF calculation after one or more
+   successive INC/ DEC is therefore based on the values for OSM, source and
+   destination before INC/ DEC. It is not necessary to also preserve source,
+   since INC/ DEC do not store the implicit value 1 in `osm_src', which therefore
+   remains valid.
+ */
     int cc_op2 = 0;
     int cc_dst2 = 0;
     int cccc_op = 0;   // current op
