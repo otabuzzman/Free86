@@ -6,77 +6,77 @@ void x86Internal::instruction(int cycles) {
     }
     do {
         check_opbyte();
-        CS_flags = init_CS_flags;
-        OPbyte |= CS_flags & 0x0100;
+        ipr = ipr_default;
+        OPbyte |= ipr & 0x0100;
         while (true) {
             switch (OPbyte) {
             case 0x66: // operand-size override prefix
-                if (CS_flags == init_CS_flags) {
+                if (ipr == ipr_default) {
                     operation_size_function(eip_offset, OPbyte);
                 }
-                if (init_CS_flags & 0x0100) {
-                    CS_flags &= ~0x0100;
+                if (ipr_default & 0x0100) {
+                    ipr &= ~0x0100;
                 } else {
-                    CS_flags |= 0x0100;
+                    ipr |= 0x0100;
                 }
                 OPbyte = phys_mem8[physmem8_ptr++];
-                OPbyte |= (CS_flags & 0x0100);
+                OPbyte |= (ipr & 0x0100);
                 break;
             case 0x67: // address-size override prefix
-                if (CS_flags == init_CS_flags) {
+                if (ipr == ipr_default) {
                     operation_size_function(eip_offset, OPbyte);
                 }
-                if (init_CS_flags & 0x0080) {
-                    CS_flags &= ~0x0080;
+                if (ipr_default & 0x0080) {
+                    ipr &= ~0x0080;
                 } else {
-                    CS_flags |= 0x0080;
+                    ipr |= 0x0080;
                 }
                 OPbyte = phys_mem8[physmem8_ptr++];
-                OPbyte |= (CS_flags & 0x0100);
+                OPbyte |= (ipr & 0x0100);
                 break;
             case 0xf0: // LOCK prefix
-                if (CS_flags == init_CS_flags) {
+                if (ipr == ipr_default) {
                     operation_size_function(eip_offset, OPbyte);
                 }
-                CS_flags |= 0x0040;
+                ipr |= 0x0040;
                 OPbyte = phys_mem8[physmem8_ptr++];
-                OPbyte |= (CS_flags & 0x0100);
+                OPbyte |= (ipr & 0x0100);
                 break;
             case 0xf2: // REPN[EZ] repeat string operation prefix
-                if (CS_flags == init_CS_flags) {
+                if (ipr == ipr_default) {
                     operation_size_function(eip_offset, OPbyte);
                 }
-                CS_flags |= 0x0020;
+                ipr |= 0x0020;
                 OPbyte = phys_mem8[physmem8_ptr++];
-                OPbyte |= (CS_flags & 0x0100);
+                OPbyte |= (ipr & 0x0100);
                 break;
             case 0xf3: // REP[EZ] repeat string operation prefix
-                if (CS_flags == init_CS_flags) {
+                if (ipr == ipr_default) {
                     operation_size_function(eip_offset, OPbyte);
                 }
-                CS_flags |= 0x0010;
+                ipr |= 0x0010;
                 OPbyte = phys_mem8[physmem8_ptr++];
-                OPbyte |= (CS_flags & 0x0100);
+                OPbyte |= (ipr & 0x0100);
                 break;
             case 0x26: // ES segment override prefix
             case 0x2e: // CS segment override prefix
             case 0x36: // SS segment override prefix
             case 0x3e: // DS segment override prefix
-                if (CS_flags == init_CS_flags) {
+                if (ipr == ipr_default) {
                     operation_size_function(eip_offset, OPbyte);
                 }
-                CS_flags = (CS_flags & ~0x000f) | (((OPbyte >> 3) & 3) + 1);
+                ipr = (ipr & ~0x000f) | (((OPbyte >> 3) & 3) + 1);
                 OPbyte = phys_mem8[physmem8_ptr++];
-                OPbyte |= (CS_flags & 0x0100);
+                OPbyte |= (ipr & 0x0100);
                 break;
             case 0x64: // FS segment override prefix
             case 0x65: // GS segment override prefix
-                if (CS_flags == init_CS_flags) {
+                if (ipr == ipr_default) {
                     operation_size_function(eip_offset, OPbyte);
                 }
-                CS_flags = (CS_flags & ~0x000f) | ((OPbyte & 7) + 1);
+                ipr = (ipr & ~0x000f) | ((OPbyte & 7) + 1);
                 OPbyte = phys_mem8[physmem8_ptr++];
-                OPbyte |= (CS_flags & 0x0100);
+                OPbyte |= (ipr & 0x0100);
                 break;
             case 0xb0: // MOV AL
             case 0xb1: // MOV CL
@@ -182,7 +182,7 @@ void x86Internal::instruction(int cycles) {
                 st8_mem8_write(regs[0]);
                 goto EXEC_LOOP;
             case 0xa3: // MOV ,AX
-                if (CS_flags & 0x0040) { // test386, check LOCK prefix (not allowed)
+                if (ipr & 0x0040) { // test386, check LOCK prefix (not allowed)
                     abort(6);
                 }
                 mem8_loc = segmented_mem8_loc_for_MOV(true);
@@ -190,10 +190,10 @@ void x86Internal::instruction(int cycles) {
                 goto EXEC_LOOP;
             case 0xd7: // XLAT
                 mem8_loc = (regs[3] + (regs[0] & 0xff)) >> 0;
-                if (CS_flags & 0x0080) {
+                if (ipr & 0x0080) {
                     mem8_loc &= 0xffff;
                 }
-                reg_idx1 = CS_flags & 0x000f;
+                reg_idx1 = ipr & 0x000f;
                 if (reg_idx1 == 0) {
                     reg_idx1 = 3;
                 } else {
@@ -295,7 +295,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 x = segs[reg_idx1].selector;
                 if ((mem8 >> 6) == 3) {
-                    if ((((CS_flags >> 8) & 1) ^ 1)) {
+                    if ((((ipr >> 8) & 1) ^ 1)) {
                         regs[mem8 & 7] = x;
                     } else {
                         set_lower_word_in_register(mem8 & 7, x);
@@ -343,15 +343,15 @@ void x86Internal::instruction(int cycles) {
                 y = regs[(mem8 >> 3) & 7];
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    cc_src = y;
-                    cc_dst = regs[reg_idx0] = (regs[reg_idx0] + cc_src) >> 0;
-                    cc_op = 2;
+                    osm_src = y;
+                    osm_dst = regs[reg_idx0] = (regs[reg_idx0] + osm_src) >> 0;
+                    osm = 2;
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_32bits_mem8_write();
-                    cc_src = y;
-                    cc_dst = x = (x + cc_src) >> 0;
-                    cc_op = 2;
+                    osm_src = y;
+                    osm_dst = x = (x + osm_src) >> 0;
+                    osm = 2;
                     st32_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -380,15 +380,15 @@ void x86Internal::instruction(int cycles) {
                 y = regs[(mem8 >> 3) & 7];
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    cc_src = y;
-                    cc_dst = (regs[reg_idx0] - cc_src) >> 0;
-                    cc_op = 8;
+                    osm_src = y;
+                    osm_dst = (regs[reg_idx0] - osm_src) >> 0;
+                    osm = 8;
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_32bits_mem8_read();
-                    cc_src = y;
-                    cc_dst = (x - cc_src) >> 0;
-                    cc_op = 8;
+                    osm_src = y;
+                    osm_dst = (x - osm_src) >> 0;
+                    osm = 8;
                 }
                 goto EXEC_LOOP;
             case 0x02: // ADD
@@ -420,9 +420,9 @@ void x86Internal::instruction(int cycles) {
                     mem8_loc = segment_translation(mem8);
                     y = ld_32bits_mem8_read();
                 }
-                cc_src = y;
-                cc_dst = regs[reg_idx1] = (regs[reg_idx1] + cc_src) >> 0;
-                cc_op = 2;
+                osm_src = y;
+                osm_dst = regs[reg_idx1] = (regs[reg_idx1] + osm_src) >> 0;
+                osm = 2;
                 goto EXEC_LOOP;
             case 0x0b: // OR
             case 0x13: // ADC
@@ -451,9 +451,9 @@ void x86Internal::instruction(int cycles) {
                     mem8_loc = segment_translation(mem8);
                     y = ld_32bits_mem8_read();
                 }
-                cc_src = y;
-                cc_dst = (regs[reg_idx1] - cc_src) >> 0;
-                cc_op = 8;
+                osm_src = y;
+                osm_dst = (regs[reg_idx1] - osm_src) >> 0;
+                osm = 8;
                 goto EXEC_LOOP;
             case 0x04: // ADD
             case 0x0c: // OR
@@ -473,9 +473,9 @@ void x86Internal::instruction(int cycles) {
                     (phys_mem8[physmem8_ptr + 2] << 16) |
                     (phys_mem8[physmem8_ptr + 3] << 24);
                 physmem8_ptr += 4;
-                cc_src = y;
-                cc_dst = regs[0] = (regs[0] + cc_src) >> 0;
-                cc_op = 2;
+                osm_src = y;
+                osm_dst = regs[0] = (regs[0] + osm_src) >> 0;
+                osm = 2;
                 goto EXEC_LOOP;
             case 0x0d: // OR
             case 0x15: // ADC
@@ -496,8 +496,8 @@ void x86Internal::instruction(int cycles) {
                     (phys_mem8[physmem8_ptr + 2] << 16) |
                     (phys_mem8[physmem8_ptr + 3] << 24);
                 physmem8_ptr += 4;
-                cc_dst = regs[0] = regs[0] ^ y;
-                cc_op = 14;
+                osm_dst = regs[0] = regs[0] ^ y;
+                osm = 14;
                 goto EXEC_LOOP;
             case 0x3d: // CMP
                 y = phys_mem8[physmem8_ptr] |
@@ -505,9 +505,9 @@ void x86Internal::instruction(int cycles) {
                     (phys_mem8[physmem8_ptr + 2] << 16) |
                     (phys_mem8[physmem8_ptr + 3] << 24);
                 physmem8_ptr += 4;
-                cc_src = y;
-                cc_dst = (regs[0] - cc_src) >> 0;
-                cc_op = 8;
+                osm_src = y;
+                osm_dst = (regs[0] - osm_src) >> 0;
+                osm = 8;
                 goto EXEC_LOOP;
             case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
             case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
@@ -545,9 +545,9 @@ void x86Internal::instruction(int cycles) {
                         (phys_mem8[physmem8_ptr + 2] << 16) |
                         (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-                    cc_src = y;
-                    cc_dst = (x - cc_src) >> 0;
-                    cc_op = 8;
+                    osm_src = y;
+                    osm_dst = (x - osm_src) >> 0;
+                    osm = 8;
                 } else {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
@@ -581,9 +581,9 @@ void x86Internal::instruction(int cycles) {
                         x = ld_32bits_mem8_read();
                     }
                     y = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-                    cc_src = y;
-                    cc_dst = (x - cc_src) >> 0;
-                    cc_op = 8;
+                    osm_src = y;
+                    osm_dst = (x - osm_src) >> 0;
+                    osm = 8;
                 } else {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
@@ -607,12 +607,12 @@ void x86Internal::instruction(int cycles) {
             case 0x46: // INC SI
             case 0x47: // INC DI
                 reg_idx1 = OPbyte & 7;
-                if (cc_op < 25) {
-                    cc_op2 = cc_op;
-                    cc_dst2 = cc_dst;
+                if (osm < 25) {
+                    ocm_preserved = osm;
+                    ocm_dst_preserved = osm_dst;
                 }
-                regs[reg_idx1] = cc_dst = (regs[reg_idx1] + 1) >> 0;
-                cc_op = 27;
+                regs[reg_idx1] = osm_dst = (regs[reg_idx1] + 1) >> 0;
+                osm = 27;
                 goto EXEC_LOOP;
             case 0x48: // DEC A
             case 0x49: // DEC C
@@ -623,12 +623,12 @@ void x86Internal::instruction(int cycles) {
             case 0x4e: // DEC SI
             case 0x4f: // DEC DI
                 reg_idx1 = OPbyte & 7;
-                if (cc_op < 25) {
-                    cc_op2 = cc_op;
-                    cc_dst2 = cc_dst;
+                if (osm < 25) {
+                    ocm_preserved = osm;
+                    ocm_dst_preserved = osm_dst;
                 }
-                regs[reg_idx1] = cc_dst = (regs[reg_idx1] - 1) >> 0;
-                cc_op = 30;
+                regs[reg_idx1] = osm_dst = (regs[reg_idx1] - 1) >> 0;
+                osm = 30;
                 goto EXEC_LOOP;
             case 0x6b: // IMUL
                 mem8 = phys_mem8[physmem8_ptr++];
@@ -669,8 +669,8 @@ void x86Internal::instruction(int cycles) {
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
                 y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
-                cc_dst = (((x & y) << 24) >> 24);
-                cc_op = 12;
+                osm_dst = (((x & y) << 24) >> 24);
+                osm = 12;
                 goto EXEC_LOOP;
             case 0x85: // TEST
                 mem8 = phys_mem8[physmem8_ptr++];
@@ -681,13 +681,13 @@ void x86Internal::instruction(int cycles) {
                     x = ld_32bits_mem8_read();
                 }
                 y = regs[(mem8 >> 3) & 7];
-                cc_dst = x & y;
-                cc_op = 14;
+                osm_dst = x & y;
+                osm = 14;
                 goto EXEC_LOOP;
             case 0xa8: // TEST
                 y = phys_mem8[physmem8_ptr++];
-                cc_dst = (((regs[0] & y) << 24) >> 24);
-                cc_op = 12;
+                osm_dst = (((regs[0] & y) << 24) >> 24);
+                osm = 12;
                 goto EXEC_LOOP;
             case 0xa9: // TEST
                 y = phys_mem8[physmem8_ptr] |
@@ -695,8 +695,8 @@ void x86Internal::instruction(int cycles) {
                     (phys_mem8[physmem8_ptr + 2] << 16) |
                     (phys_mem8[physmem8_ptr + 3] << 24);
                 physmem8_ptr += 4;
-                cc_dst = regs[0] & y;
-                cc_op = 14;
+                osm_dst = regs[0] & y;
+                osm = 14;
                 goto EXEC_LOOP;
             case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, // IDIV AL/X)
                 mem8 = phys_mem8[physmem8_ptr++];
@@ -711,8 +711,8 @@ void x86Internal::instruction(int cycles) {
                         x = ld_8bits_mem8_read();
                     }
                     y = phys_mem8[physmem8_ptr++];
-                    cc_dst = (((x & y) << 24) >> 24);
-                    cc_op = 12;
+                    osm_dst = (((x & y) << 24) >> 24);
+                    osm = 12;
                     break;
                 case 2:
                     if ((mem8 >> 6) == 3) {
@@ -796,8 +796,8 @@ void x86Internal::instruction(int cycles) {
                         (phys_mem8[physmem8_ptr + 2] << 16) |
                         (phys_mem8[physmem8_ptr + 3] << 24);
                     physmem8_ptr += 4;
-                    cc_dst = x & y;
-                    cc_op = 14;
+                    osm_dst = x & y;
+                    osm = 14;
                     break;
                 case 2:
                     if ((mem8 >> 6) == 3) {
@@ -1066,7 +1066,7 @@ void x86Internal::instruction(int cycles) {
                     abort(13);
                 }
                 x = get_FLAGS() & ~(0x00010000 | 0x00020000);
-                if ((((CS_flags >> 8) & 1) ^ 1)) {
+                if ((((ipr >> 8) & 1) ^ 1)) {
                     push_dword_to_stack(x);
                 } else {
                     push_word_to_stack(x);
@@ -1077,7 +1077,7 @@ void x86Internal::instruction(int cycles) {
                 if ((eflags & 0x00020000) && iopl != 3) {
                     abort(13);
                 }
-                if ((((CS_flags >> 8) & 1) ^ 1)) {
+                if ((((ipr >> 8) & 1) ^ 1)) {
                     x = pop_dword_from_stack_read();
                     pop_dword_from_stack_incr_ptr();
                     y = -1;
@@ -1117,7 +1117,7 @@ void x86Internal::instruction(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     abort(6);
                 }
-                CS_flags = (CS_flags & ~0x000f) | (6 + 1);
+                ipr = (ipr & ~0x000f) | (6 + 1);
                 regs[(mem8 >> 3) & 7] = segment_translation(mem8);
                 goto EXEC_LOOP;
             case 0xfe: // G4 (INC, DEC, -, -, -, -, -)
@@ -1157,42 +1157,42 @@ void x86Internal::instruction(int cycles) {
                 case 0: // INC
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        if (cc_op < 25) {
-                            cc_op2 = cc_op;
-                            cc_dst2 = cc_dst;
+                        if (osm < 25) {
+                            ocm_preserved = osm;
+                            ocm_dst_preserved = osm_dst;
                         }
-                        regs[reg_idx0] = cc_dst = (regs[reg_idx0] + 1) >> 0;
-                        cc_op = 27;
+                        regs[reg_idx0] = osm_dst = (regs[reg_idx0] + 1) >> 0;
+                        osm = 27;
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_32bits_mem8_write();
-                        if (cc_op < 25) {
-                            cc_op2 = cc_op;
-                            cc_dst2 = cc_dst;
+                        if (osm < 25) {
+                            ocm_preserved = osm;
+                            ocm_dst_preserved = osm_dst;
                         }
-                        x = cc_dst = (x + 1) >> 0;
-                        cc_op = 27;
+                        x = osm_dst = (x + 1) >> 0;
+                        osm = 27;
                         st32_mem8_write(x);
                     }
                     break;
                 case 1: // DEC
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        if (cc_op < 25) {
-                            cc_op2 = cc_op;
-                            cc_dst2 = cc_dst;
+                        if (osm < 25) {
+                            ocm_preserved = osm;
+                            ocm_dst_preserved = osm_dst;
                         }
-                        regs[reg_idx0] = cc_dst = (regs[reg_idx0] - 1) >> 0;
-                        cc_op = 30;
+                        regs[reg_idx0] = osm_dst = (regs[reg_idx0] - 1) >> 0;
+                        osm = 30;
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_32bits_mem8_write();
-                        if (cc_op < 25) {
-                            cc_op2 = cc_op;
-                            cc_dst2 = cc_dst;
+                        if (osm < 25) {
+                            ocm_preserved = osm;
+                            ocm_dst_preserved = osm_dst;
                         }
-                        x = cc_dst = (x - 1) >> 0;
-                        cc_op = 30;
+                        x = osm_dst = (x - 1) >> 0;
+                        osm = 30;
                         st32_mem8_write(x);
                     }
                     break;
@@ -1269,7 +1269,7 @@ void x86Internal::instruction(int cycles) {
                 physmem8_ptr = (physmem8_ptr + x) >> 0;
                 goto EXEC_LOOP;
             case 0xea: // JMPF
-                if ((((CS_flags >> 8) & 1) ^ 1)) {
+                if ((((ipr >> 8) & 1) ^ 1)) {
                     {
                         x = phys_mem8[physmem8_ptr] |
                             (phys_mem8[physmem8_ptr + 1] << 8) |
@@ -1316,7 +1316,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x74: // JZ
-                if (cc_dst == 0) {
+                if (osm_dst == 0) {
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                     physmem8_ptr = (physmem8_ptr + x) >> 0;
                 } else {
@@ -1324,7 +1324,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x75: // JNZ
-                if (!(cc_dst == 0)) {
+                if (!(osm_dst == 0)) {
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                     physmem8_ptr = (physmem8_ptr + x) >> 0;
                 } else {
@@ -1348,7 +1348,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x78: // JS
-                if ((cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0))) {
+                if ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                     physmem8_ptr = (physmem8_ptr + x) >> 0;
                 } else {
@@ -1356,7 +1356,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x79: // JNS
-                if (!(cc_op == 24 ? ((cc_src >> 7) & 1) : (cc_dst < 0))) {
+                if (!(osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
                     x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
                     physmem8_ptr = (physmem8_ptr + x) >> 0;
                 } else {
@@ -1415,7 +1415,7 @@ void x86Internal::instruction(int cycles) {
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
                 x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-                if (CS_flags & 0x0080) {
+                if (ipr & 0x0080) {
                     conditional_var = 0xffff;
                 } else {
                     conditional_var = -1;
@@ -1424,14 +1424,14 @@ void x86Internal::instruction(int cycles) {
                 regs[1] = (regs[1] & ~conditional_var) | y;
                 OPbyte &= 3;
                 if (OPbyte == 0) {
-                    z = !(cc_dst == 0);
+                    z = !(osm_dst == 0);
                 } else if (OPbyte == 1) {
-                    z = (cc_dst == 0);
+                    z = (osm_dst == 0);
                 } else {
                     z = 1;
                 }
                 if (y && z) {
-                    if (CS_flags & 0x0100) {
+                    if (ipr & 0x0100) {
                         eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     } else {
                         physmem8_ptr = (physmem8_ptr + x) >> 0;
@@ -1440,13 +1440,13 @@ void x86Internal::instruction(int cycles) {
                 goto EXEC_LOOP;
             case 0xe3: // JCXZ
                 x = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
-                if (CS_flags & 0x0080) {
+                if (ipr & 0x0080) {
                     conditional_var = 0xffff;
                 } else {
                     conditional_var = -1;
                 }
                 if ((regs[1] & conditional_var) == 0) {
-                    if (CS_flags & 0x0100) {
+                    if (ipr & 0x0100) {
                         eip = (eip + physmem8_ptr - initial_mem_ptr + x) & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
                     } else {
                         physmem8_ptr = (physmem8_ptr + x) >> 0;
@@ -1487,7 +1487,7 @@ void x86Internal::instruction(int cycles) {
                 physmem8_ptr = (physmem8_ptr + x) >> 0;
                 goto EXEC_LOOP;
             case 0x9a: // CALLF
-                z = (((CS_flags >> 8) & 1) ^ 1);
+                z = (((ipr >> 8) & 1) ^ 1);
                 if (z) {
                     x = phys_mem8[physmem8_ptr] |
                         (phys_mem8[physmem8_ptr + 1] << 8) |
@@ -1505,19 +1505,19 @@ void x86Internal::instruction(int cycles) {
                 goto EXEC_LOOP;
             case 0xca: // RET
                 y = (ld16_mem8_direct() << 16) >> 16;
-                op_RETF((((CS_flags >> 8) & 1) ^ 1), y);
+                op_RETF((((ipr >> 8) & 1) ^ 1), y);
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xcb: // RET
-                op_RETF((((CS_flags >> 8) & 1) ^ 1), 0);
+                op_RETF((((ipr >> 8) & 1) ^ 1), 0);
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xcf: // IRET
-                op_IRET((((CS_flags >> 8) & 1) ^ 1));
+                op_IRET((((ipr >> 8) & 1) ^ 1));
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1546,19 +1546,19 @@ void x86Internal::instruction(int cycles) {
                 checkOp_BOUND();
                 goto EXEC_LOOP;
             case 0xf5: // CMC
-                cc_src = get_conditional_flags() ^ 0x0001;
-                cc_dst = ((cc_src >> 6) & 1) ^ 1;
-                cc_op = 24;
+                osm_src = get_conditional_flags() ^ 0x0001;
+                osm_dst = ((osm_src >> 6) & 1) ^ 1;
+                osm = 24;
                 goto EXEC_LOOP;
             case 0xf8: // CLC
-                cc_src = get_conditional_flags() & ~0x0001;
-                cc_dst = ((cc_src >> 6) & 1) ^ 1;
-                cc_op = 24;
+                osm_src = get_conditional_flags() & ~0x0001;
+                osm_dst = ((osm_src >> 6) & 1) ^ 1;
+                osm = 24;
                 goto EXEC_LOOP;
             case 0xf9: // STC
-                cc_src = get_conditional_flags() | 0x0001;
-                cc_dst = ((cc_src >> 6) & 1) ^ 1;
-                cc_op = 24;
+                osm_src = get_conditional_flags() | 0x0001;
+                osm_dst = ((osm_src >> 6) & 1) ^ 1;
+                osm = 24;
                 goto EXEC_LOOP;
             case 0xfc: // CLD
                 df = 1;
@@ -1584,9 +1584,9 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x9e: // SAHF
-                cc_src = ((regs[0] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (check_overflow() << 11);
-                cc_dst = ((cc_src >> 6) & 1) ^ 1;
-                cc_op = 24;
+                osm_src = ((regs[0] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (check_overflow() << 11);
+                osm_dst = ((osm_src >> 6) & 1) ^ 1;
+                osm = 24;
                 goto EXEC_LOOP;
             case 0x9f: // LAHF
                 x = get_FLAGS();
@@ -1602,31 +1602,31 @@ void x86Internal::instruction(int cycles) {
                 stringOp_MOVSB();
                 goto EXEC_LOOP;
             case 0xa5: // MOVSW/D
-                CS_flags & 0x0100 ? stringOp_MOVSW() : stringOp_MOVSD();
+                ipr & 0x0100 ? stringOp_MOVSW() : stringOp_MOVSD();
                 goto EXEC_LOOP;
             case 0xaa: // STOSB
                 stringOp_STOSB();
                 goto EXEC_LOOP;
             case 0xab: // STOSW/D
-                CS_flags & 0x0100 ? stringOp_STOSW() : stringOp_STOSD();
+                ipr & 0x0100 ? stringOp_STOSW() : stringOp_STOSD();
                 goto EXEC_LOOP;
             case 0xa6: // CMPSB
                 stringOp_CMPSB();
                 goto EXEC_LOOP;
             case 0xa7: // CMPSW/D
-                CS_flags & 0x0100 ? stringOp_CMPSW() : stringOp_CMPSD();
+                ipr & 0x0100 ? stringOp_CMPSW() : stringOp_CMPSD();
                 goto EXEC_LOOP;
             case 0xac: // LOSB
                 stringOp_LODSB();
                 goto EXEC_LOOP;
             case 0xad: // LOSW/D
-                CS_flags & 0x0100 ? stringOp_LODSW() : stringOp_LODSD();
+                ipr & 0x0100 ? stringOp_LODSW() : stringOp_LODSD();
                 goto EXEC_LOOP;
             case 0xae: // SCASB
                 stringOp_SCASB();
                 goto EXEC_LOOP;
             case 0xaf: // SCASW/D
-                CS_flags & 0x0100 ? stringOp_SCASW() : stringOp_SCASD();
+                ipr & 0x0100 ? stringOp_SCASW() : stringOp_SCASD();
                 goto EXEC_LOOP;
             case 0x6c: // INSB
                 stringOp_INSB();
@@ -1635,7 +1635,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x6d: // INSW/D
-                CS_flags & 0x0100 ? stringOp_INSW() : stringOp_INSD();
+                ipr & 0x0100 ? stringOp_INSW() : stringOp_INSD();
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1647,7 +1647,7 @@ void x86Internal::instruction(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x6f: // OUTSW/D
-                CS_flags & 0x0100 ? stringOp_OUTSW() : stringOp_OUTSD();
+                ipr & 0x0100 ? stringOp_OUTSW() : stringOp_OUTSD();
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -2007,7 +2007,7 @@ void x86Internal::instruction(int cycles) {
                     goto EXEC_LOOP;
                 case 0x02: // LAR
                 case 0x03: // LSL
-                    op_LAR_LSL((((CS_flags >> 8) & 1) ^ 1), OPbyte & 1);
+                    op_LAR_LSL((((ipr >> 8) & 1) ^ 1), OPbyte & 1);
                     goto EXEC_LOOP;
                 case 0x20: // MOV
                     if (cpl != 0) {
@@ -2753,13 +2753,13 @@ void x86Internal::instruction(int cycles) {
                         x = ld_16bits_mem8_read();
                     }
                     y = regs[(mem8 >> 3) & 7];
-                    cc_dst = (((x & y) << 16) >> 16);
-                    cc_op = 13;
+                    osm_dst = (((x & y) << 16) >> 16);
+                    osm = 13;
                     goto EXEC_LOOP;
                 case 0x1a9: // TEST
                     y = ld16_mem8_direct();
-                    cc_dst = (((regs[0] & y) << 16) >> 16);
-                    cc_op = 13;
+                    osm_dst = (((regs[0] & y) << 16) >> 16);
+                    osm = 13;
                     goto EXEC_LOOP;
                 case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                     mem8 = phys_mem8[physmem8_ptr++];
@@ -2773,8 +2773,8 @@ void x86Internal::instruction(int cycles) {
                             x = ld_16bits_mem8_read();
                         }
                         y = ld16_mem8_direct();
-                        cc_dst = (((x & y) << 16) >> 16);
-                        cc_op = 13;
+                        osm_dst = (((x & y) << 16) >> 16);
+                        osm = 13;
                         break;
                     case 2:
                         if ((mem8 >> 6) == 3) {
@@ -2969,7 +2969,7 @@ void x86Internal::instruction(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         abort(6);
                     }
-                    CS_flags = (CS_flags & ~0x000f) | (6 + 1);
+                    ipr = (ipr & ~0x000f) | (6 + 1);
                     set_lower_word_in_register((mem8 >> 3) & 7, segment_translation(mem8));
                     goto EXEC_LOOP;
                 case 0x1ff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)

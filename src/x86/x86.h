@@ -139,9 +139,9 @@ class x86Internal {
    U : leaves flag undefined,
    - : does not affect flag.
  */
-    int cc_op = 0;
-    int cc_src = 0;
-    int cc_dst = 0;
+    int osm = 0;
+    int osm_src = 0;
+    int osm_dst = 0;
 /*
    `osm_preserved'/ `osm_dst_preserved' preserve OMS/ destination of instruction
    before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
@@ -151,13 +151,8 @@ class x86Internal {
    since INC/ DEC do not store the implicit value 1 in `osm_src', which therefore
    remains valid.
  */
-    int cc_op2 = 0;
-    int cc_dst2 = 0;
-    int cccc_op = 0;   // current op
-    int cccc_dst = 0;  // current dest
-    int cccc_src = 0;  // current src
-    int cccc_op2 = 0;  // current op, byte2
-    int cccc_dst2 = 0; // current dest, byte2
+    int ocm_preserved = 0;
+    int ocm_dst_preserved = 0;
 
 /*
    Instruction prefix register
@@ -179,11 +174,11 @@ class x86Internal {
    0x0080 address-size override prefix  (0x67)
    0x0100 operand-size override prefix  (0x66)
  */
-    int CS_flags = 0;
-    int init_CS_flags = 0; // reflects D flag (PM (1986), 16.1)
+    int ipr = 0; // instruction prefix register
+    int ipr_default = 0; // reflects D flag (PM (1986), 16.1)
 
-    int CS_base;
-    int SS_base;
+    int CS_base; // shortcut for segs[1].base
+    int SS_base; // shortcut for segs[2].base
     int SS_mask = -1; // 16 or 32 bit SS size
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation

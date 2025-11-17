@@ -38,7 +38,7 @@ x86Internal::~x86Internal() {
 int x86Internal::init(int cycles) {
     cycles_requested = cycles;
     cycles_remaining = cycles;
-    CS_flags = init_CS_flags;
+    ipr = ipr_default;
     mem8_loc = 0;
     last_tlb_val = 0;
     physmem8_ptr = 0;
@@ -53,8 +53,8 @@ int x86Internal::init(int cycles) {
     return 0;
 }
 void x86Internal::init_segment_local_vars() {
-    CS_base = segs[1].base; // CS
-    SS_base = segs[2].base; // SS
+    CS_base = segs[1].base;
+    SS_base = segs[2].base;
     if (segs[2].flags & (1 << 22)) {
         SS_mask = -1;
     } else {
@@ -62,9 +62,9 @@ void x86Internal::init_segment_local_vars() {
     }
     x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
     if (segs[1].flags & (1 << 22)) {
-        init_CS_flags = 0;
+        ipr_default = 0;
     } else {
-        init_CS_flags = 0x0100 | 0x0080;
+        ipr_default = 0x0100 | 0x0080;
     }
 }
 void x86Internal::check_opbyte() {
@@ -173,7 +173,7 @@ void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja) {
 }
 int x86Internal::segment_translation(int mem8) {
     int base, mem8_loc, Qb, Rb, Sb, Tb;
-    if (x86_64_long_mode && (CS_flags & (0x000f | 0x0080)) == 0) {
+    if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
         case 0x04: // ADD
             Qb = phys_mem8[physmem8_ptr++];
@@ -261,7 +261,7 @@ int x86Internal::segment_translation(int mem8) {
             break;
         }
         return mem8_loc;
-    } else if (CS_flags & 0x0080) {
+    } else if (ipr & 0x0080) {
         if ((mem8 & 0xc7) == 0x06) {
             mem8_loc = ld16_mem8_direct();
             Tb = 3;
@@ -313,7 +313,7 @@ int x86Internal::segment_translation(int mem8) {
                 break;
             }
         }
-        Sb = CS_flags & 0x000f;
+        Sb = ipr & 0x000f;
         if (Sb == 0) {
             Sb = Tb;
         } else {
@@ -410,7 +410,7 @@ int x86Internal::segment_translation(int mem8) {
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             break;
         }
-        Sb = CS_flags & 0x000f;
+        Sb = ipr & 0x000f;
         if (Sb == 0) {
             if (base == 4 || base == 5) {
                 Sb = 2;
@@ -428,7 +428,7 @@ int x86Internal::segment_translation(int mem8) {
 int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
     uint64_t mem8_loc;
     int Sb, Ls, Tc, Lc;
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         mem8_loc = ld16_mem8_direct() & 0xffff;
         Ls = 1; // 16 bit mode
     } else {
@@ -442,7 +442,7 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
     if (!(OPbyte & 0x01)) {
         Ls = 0; // byte mode, opcodes A0, A2
     }
-    Sb = CS_flags & 0x000f;
+    Sb = ipr & 0x000f;
     if (Sb == 0) {
         Sb = 3;
     } else {
@@ -487,50 +487,50 @@ int x86Internal::do_32bit_math(int conditional_var, int Yb, int Zb) {
     int ac;
     switch (conditional_var & 7) {
     case 0:
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (Yb + Zb) >> 0;
-        cc_dst = Yb;
-        cc_op = 2;
+        osm_dst = Yb;
+        osm = 2;
         break;
     case 1:
         Yb = Yb | Zb;
-        cc_dst = Yb;
-        cc_op = 14;
+        osm_dst = Yb;
+        osm = 14;
         break;
     case 2:
         ac = check_carry();
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (Yb + Zb + ac) >> 0;
-        cc_dst = Yb;
-        cc_op = ac ? 5 : 2;
+        osm_dst = Yb;
+        osm = ac ? 5 : 2;
         break;
     case 3:
         ac = check_carry();
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (Yb - Zb - ac) >> 0;
-        cc_dst = Yb;
-        cc_op = ac ? 11 : 8;
+        osm_dst = Yb;
+        osm = ac ? 11 : 8;
         break;
     case 4:
         Yb = Yb & Zb;
-        cc_dst = Yb;
-        cc_op = 14;
+        osm_dst = Yb;
+        osm = 14;
         break;
     case 5:
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (Yb - Zb) >> 0;
-        cc_dst = Yb;
-        cc_op = 8;
+        osm_dst = Yb;
+        osm = 8;
         break;
     case 6:
         Yb = Yb ^ Zb;
-        cc_dst = Yb;
-        cc_op = 14;
+        osm_dst = Yb;
+        osm = 14;
         break;
     case 7:
-        cc_src = Zb;
-        cc_dst = (Yb - Zb) >> 0;
-        cc_op = 8;
+        osm_src = Zb;
+        osm_dst = (Yb - Zb) >> 0;
+        osm = 8;
         break;
     }
     return Yb;
@@ -539,50 +539,50 @@ int x86Internal::do_16bit_math(int conditional_var, int Yb, int Zb) {
     int ac;
     switch (conditional_var & 7) {
     case 0:
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb + Zb) << 16) >> 16);
-        cc_dst = Yb;
-        cc_op = 1;
+        osm_dst = Yb;
+        osm = 1;
         break;
     case 1:
         Yb = (((Yb | Zb) << 16) >> 16);
-        cc_dst = Yb;
-        cc_op = 13;
+        osm_dst = Yb;
+        osm = 13;
         break;
     case 2:
         ac = check_carry();
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb + Zb + ac) << 16) >> 16);
-        cc_dst = Yb;
-        cc_op = ac ? 4 : 1;
+        osm_dst = Yb;
+        osm = ac ? 4 : 1;
         break;
     case 3:
         ac = check_carry();
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb - Zb - ac) << 16) >> 16);
-        cc_dst = Yb;
-        cc_op = ac ? 10 : 7;
+        osm_dst = Yb;
+        osm = ac ? 10 : 7;
         break;
     case 4:
         Yb = (((Yb & Zb) << 16) >> 16);
-        cc_dst = Yb;
-        cc_op = 13;
+        osm_dst = Yb;
+        osm = 13;
         break;
     case 5:
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb - Zb) << 16) >> 16);
-        cc_dst = Yb;
-        cc_op = 7;
+        osm_dst = Yb;
+        osm = 7;
         break;
     case 6:
         Yb = (((Yb ^ Zb) << 16) >> 16);
-        cc_dst = Yb;
-        cc_op = 13;
+        osm_dst = Yb;
+        osm = 13;
         break;
     case 7:
-        cc_src = Zb;
-        cc_dst = (((Yb - Zb) << 16) >> 16);
-        cc_op = 7;
+        osm_src = Zb;
+        osm_dst = (((Yb - Zb) << 16) >> 16);
+        osm = 7;
         break;
     }
     return Yb;
@@ -591,89 +591,89 @@ int x86Internal::do_8bit_math(int conditional_var, int Yb, int Zb) {
     int ac;
     switch (conditional_var & 7) {
     case 0:
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb + Zb) << 24) >> 24);
-        cc_dst = Yb;
-        cc_op = 0;
+        osm_dst = Yb;
+        osm = 0;
         break;
     case 1:
         Yb = (((Yb | Zb) << 24) >> 24);
-        cc_dst = Yb;
-        cc_op = 12;
+        osm_dst = Yb;
+        osm = 12;
         break;
     case 2:
         ac = check_carry();
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb + Zb + ac) << 24) >> 24);
-        cc_dst = Yb;
-        cc_op = ac ? 3 : 0;
+        osm_dst = Yb;
+        osm = ac ? 3 : 0;
         break;
     case 3:
         ac = check_carry();
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb - Zb - ac) << 24) >> 24);
-        cc_dst = Yb;
-        cc_op = ac ? 9 : 6;
+        osm_dst = Yb;
+        osm = ac ? 9 : 6;
         break;
     case 4:
         Yb = (((Yb & Zb) << 24) >> 24);
-        cc_dst = Yb;
-        cc_op = 12;
+        osm_dst = Yb;
+        osm = 12;
         break;
     case 5:
-        cc_src = Zb;
+        osm_src = Zb;
         Yb = (((Yb - Zb) << 24) >> 24);
-        cc_dst = Yb;
-        cc_op = 6;
+        osm_dst = Yb;
+        osm = 6;
         break;
     case 6:
         Yb = (((Yb ^ Zb) << 24) >> 24);
-        cc_dst = Yb;
-        cc_op = 12;
+        osm_dst = Yb;
+        osm = 12;
         break;
     case 7:
-        cc_src = Zb;
-        cc_dst = (((Yb - Zb) << 24) >> 24);
-        cc_op = 6;
+        osm_src = Zb;
+        osm_dst = (((Yb - Zb) << 24) >> 24);
+        osm = 6;
         break;
     }
     return Yb;
 }
 int x86Internal::increment_16bit(int x) {
-    if (cc_op < 25) {
-        cc_op2 = cc_op;
-        cc_dst2 = cc_dst;
+    if (osm < 25) {
+        ocm_preserved = osm;
+        ocm_dst_preserved = osm_dst;
     }
-    cc_dst = (((x + 1) << 16) >> 16);
-    cc_op = 26;
-    return cc_dst;
+    osm_dst = (((x + 1) << 16) >> 16);
+    osm = 26;
+    return osm_dst;
 }
 int x86Internal::decrement_16bit(int x) {
-    if (cc_op < 25) {
-        cc_op2 = cc_op;
-        cc_dst2 = cc_dst;
+    if (osm < 25) {
+        ocm_preserved = osm;
+        ocm_dst_preserved = osm_dst;
     }
-    cc_dst = (((x - 1) << 16) >> 16);
-    cc_op = 29;
-    return cc_dst;
+    osm_dst = (((x - 1) << 16) >> 16);
+    osm = 29;
+    return osm_dst;
 }
 int x86Internal::increment_8bit(int x) {
-    if (cc_op < 25) {
-        cc_op2 = cc_op;
-        cc_dst2 = cc_dst;
+    if (osm < 25) {
+        ocm_preserved = osm;
+        ocm_dst_preserved = osm_dst;
     }
-    cc_dst = (((x + 1) << 24) >> 24);
-    cc_op = 25;
-    return cc_dst;
+    osm_dst = (((x + 1) << 24) >> 24);
+    osm = 25;
+    return osm_dst;
 }
 int x86Internal::decrement_8bit(int x) {
-    if (cc_op < 25) {
-        cc_op2 = cc_op;
-        cc_dst2 = cc_dst;
+    if (osm < 25) {
+        ocm_preserved = osm;
+        ocm_dst_preserved = osm_dst;
     }
-    cc_dst = (((x - 1) << 24) >> 24);
-    cc_op = 28;
-    return cc_dst;
+    osm_dst = (((x - 1) << 24) >> 24);
+    osm = 28;
+    return osm_dst;
 }
 int x86Internal::shift8(int conditional_var, int Yb, int Zb) {
     int kc, ac;
@@ -684,13 +684,13 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb) {
             Yb &= 0xff;
             kc = Yb;
             Yb = (Yb << Zb) | (Yb >> (8 - Zb));
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= (Yb & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= (Yb & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) << 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 1:
@@ -699,13 +699,13 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb) {
             Yb &= 0xff;
             kc = Yb;
             Yb = (Yb >> Zb) | (Yb << (8 - Zb));
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((Yb >> 7) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((Yb >> 7) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) << 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 2:
@@ -718,13 +718,13 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb) {
             if (Zb > 1) {
                 Yb |= kc >> (9 - Zb);
             }
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((kc >> (8 - Zb)) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((kc >> (8 - Zb)) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) << 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 3:
@@ -737,40 +737,40 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb) {
             if (Zb > 1) {
                 Yb |= kc << (9 - Zb);
             }
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((kc >> (Zb - 1)) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((kc >> (Zb - 1)) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) << 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 4:
     case 6:
         Zb &= 0x1f;
         if (Zb) {
-            cc_src = Yb << (Zb - 1);
-            cc_dst = Yb = (((Yb << Zb) << 24) >> 24);
-            cc_op = 15;
+            osm_src = Yb << (Zb - 1);
+            osm_dst = Yb = (((Yb << Zb) << 24) >> 24);
+            osm = 15;
         }
         break;
     case 5:
         Zb &= 0x1f;
         if (Zb) {
             Yb &= 0xff;
-            cc_src = Yb >> (Zb - 1);
-            cc_dst = Yb = (((Yb >> Zb) << 24) >> 24);
-            cc_op = 18;
+            osm_src = Yb >> (Zb - 1);
+            osm_dst = Yb = (((Yb >> Zb) << 24) >> 24);
+            osm = 18;
         }
         break;
     case 7:
         Zb &= 0x1f;
         if (Zb) {
             Yb = (Yb << 24) >> 24;
-            cc_src = Yb >> (Zb - 1);
-            cc_dst = Yb = (((Yb >> Zb) << 24) >> 24);
-            cc_op = 18;
+            osm_src = Yb >> (Zb - 1);
+            osm_dst = Yb = (((Yb >> Zb) << 24) >> 24);
+            osm = 18;
         }
         break;
     }
@@ -785,13 +785,13 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb) {
             Yb &= 0xffff;
             kc = Yb;
             Yb = (Yb << Zb) | (Yb >> (16 - Zb));
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= (Yb & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= (Yb & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 1:
@@ -800,13 +800,13 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb) {
             Yb &= 0xffff;
             kc = Yb;
             Yb = (Yb >> Zb) | (Yb << (16 - Zb));
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((Yb >> 15) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((Yb >> 15) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 2:
@@ -819,13 +819,13 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb) {
             if (Zb > 1) {
                 Yb |= kc >> (17 - Zb);
             }
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((kc >> (16 - Zb)) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((kc >> (16 - Zb)) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 3:
@@ -838,40 +838,40 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb) {
             if (Zb > 1) {
                 Yb |= kc << (17 - Zb);
             }
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((kc >> (Zb - 1)) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((kc >> (Zb - 1)) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 4) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 4:
     case 6:
         Zb &= 0x1f;
         if (Zb) {
-            cc_src = Yb << (Zb - 1);
-            cc_dst = Yb = (((Yb << Zb) << 16) >> 16);
-            cc_op = 16;
+            osm_src = Yb << (Zb - 1);
+            osm_dst = Yb = (((Yb << Zb) << 16) >> 16);
+            osm = 16;
         }
         break;
     case 5:
         Zb &= 0x1f;
         if (Zb) {
             Yb &= 0xffff;
-            cc_src = Yb >> (Zb - 1);
-            cc_dst = Yb = (((Yb >> Zb) << 16) >> 16);
-            cc_op = 19;
+            osm_src = Yb >> (Zb - 1);
+            osm_dst = Yb = (((Yb >> Zb) << 16) >> 16);
+            osm = 19;
         }
         break;
     case 7:
         Zb &= 0x1f;
         if (Zb) {
             Yb = (Yb << 16) >> 16;
-            cc_src = Yb >> (Zb - 1);
-            cc_dst = Yb = (((Yb >> Zb) << 16) >> 16);
-            cc_op = 19;
+            osm_src = Yb >> (Zb - 1);
+            osm_dst = Yb = (((Yb >> Zb) << 16) >> 16);
+            osm = 19;
         }
         break;
     }
@@ -886,13 +886,13 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb) {
         if (Zb) {
             kc = Yb;
             Yb = (Yb << Zb) | (Yb >> (32 - Zb));
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= (Yb & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= (Yb & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 1:
@@ -900,13 +900,13 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb) {
         if (Zb) {
             kc = Yb;
             Yb = (Yb >> Zb) | (Yb << (32 - Zb));
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((Yb >> 31) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((Yb >> 31) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 2:
@@ -918,13 +918,13 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb) {
             if (Zb > 1) {
                 Yb |= kc >> (33 - Zb);
             }
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((kc >> (32 - Zb)) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((kc >> (32 - Zb)) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 3:
@@ -936,39 +936,39 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb) {
             if (Zb > 1) {
                 Yb |= kc << (33 - Zb);
             }
-            cc_src = conditional_flags_for_rot_shiftcc_ops();
-            cc_src |= ((kc >> (Zb - 1)) & 0x0001);
+            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src |= ((kc >> (Zb - 1)) & 0x0001);
             if (Zb == 1) {
-                cc_src |= (((kc ^ Yb) >> 20) & 0x0800);
+                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
             }
-            cc_dst = ((cc_src >> 6) & 1) ^ 1;
-            cc_op = 24;
+            osm_dst = ((osm_src >> 6) & 1) ^ 1;
+            osm = 24;
         }
         break;
     case 4:
     case 6:
         Zb &= 0x1f;
         if (Zb) {
-            cc_src = Yb << (Zb - 1);
-            cc_dst = Yb = Yb << Zb;
-            cc_op = 17;
+            osm_src = Yb << (Zb - 1);
+            osm_dst = Yb = Yb << Zb;
+            osm = 17;
         }
         break;
     case 5:
         Zb &= 0x1f;
         if (Zb) {
-            cc_src = Yb >> (Zb - 1);
-            cc_dst = Yb = Yb >> Zb;
-            cc_op = 20;
+            osm_src = Yb >> (Zb - 1);
+            osm_dst = Yb = Yb >> Zb;
+            osm = 20;
         }
         break;
     case 7:
         Zb &= 0x1f;
         if (Zb) {
             int Ybi = Yb;
-            cc_src = Ybi >> (Zb - 1);
-            cc_dst = Yb = Ybi >> Zb;
-            cc_op = 20;
+            osm_src = Ybi >> (Zb - 1);
+            osm_dst = Yb = Ybi >> Zb;
+            osm = 20;
         }
         break;
     }
@@ -981,22 +981,22 @@ int x86Internal::op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc) {
         if (conditional_var == 0) {
             Zb &= 0xffff;
             flg = Zb | (Yb << 16);
-            cc_src = flg >> (32 - pc);
+            osm_src = flg >> (32 - pc);
             flg = flg << pc;
             if (pc > 16) {
                 flg |= Zb << (pc - 16);
             }
-            Yb = cc_dst = flg >> 16;
-            cc_op = 19;
+            Yb = osm_dst = flg >> 16;
+            osm = 19;
         } else {
             flg = (Yb & 0xffff) | (Zb << 16);
-            cc_src = flg >> (pc - 1);
+            osm_src = flg >> (pc - 1);
             flg = flg >> pc;
             if (pc > 16) {
                 flg |= Zb << (32 - pc);
             }
-            Yb = cc_dst = (((flg) << 16) >> 16);
-            cc_op = 19;
+            Yb = osm_dst = (((flg) << 16) >> 16);
+            osm = 19;
         }
     }
     return Yb;
@@ -1004,42 +1004,42 @@ int x86Internal::op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc) {
 int x86Internal::op_SHLD(int Yb, int Zb, int pc) {
     pc &= 0x1f;
     if (pc) {
-        cc_src = Yb << (pc - 1);
+        osm_src = Yb << (pc - 1);
         uint32_t Zbu = Zb;
         uint32_t lval = (Yb << pc);
         uint32_t rval = (Zbu >> (32 - pc));
-        cc_dst = Yb = lval | rval;
-        cc_op = 17;
+        osm_dst = Yb = lval | rval;
+        osm = 17;
     }
     return Yb;
 }
 int x86Internal::op_SHRD(int Yb, int Zb, int pc) {
     pc &= 0x1f;
     if (pc) {
-        cc_src = Yb >> (pc - 1);
+        osm_src = Yb >> (pc - 1);
         uint32_t Zbu = Zb;
         uint32_t Ybu = Yb;
         uint32_t lval = (Ybu >> pc);
         uint32_t rval = (Zbu << (32 - pc));
-        cc_dst = Yb = lval | rval;
-        cc_op = 20;
+        osm_dst = Yb = lval | rval;
+        osm = 20;
     }
     return Yb;
 }
 void x86Internal::op_16_BT(int Yb, int Zb) {
     Zb &= 0xf;
-    cc_src = Yb >> Zb;
-    cc_op = 19;
+    osm_src = Yb >> Zb;
+    osm = 19;
 }
 void x86Internal::op_BT(int Yb, int Zb) {
     Zb &= 0x1f;
-    cc_src = Yb >> Zb;
-    cc_op = 20;
+    osm_src = Yb >> Zb;
+    osm = 20;
 }
 int x86Internal::op_16_BTS_BTR_BTC(int conditional_var, int Yb, int Zb) {
     int wc;
     Zb &= 0xf;
-    cc_src = Yb >> Zb;
+    osm_src = Yb >> Zb;
     wc = 1 << Zb;
     switch (conditional_var) {
     case 1:
@@ -1053,13 +1053,13 @@ int x86Internal::op_16_BTS_BTR_BTC(int conditional_var, int Yb, int Zb) {
         Yb ^= wc;
         break;
     }
-    cc_op = 19;
+    osm = 19;
     return Yb;
 }
 int x86Internal::op_BTS_BTR_BTC(int conditional_var, int Yb, int Zb) {
     int wc;
     Zb &= 0x1f;
-    cc_src = Yb >> Zb;
+    osm_src = Yb >> Zb;
     wc = 1 << Zb;
     switch (conditional_var) {
     case 1:
@@ -1073,7 +1073,7 @@ int x86Internal::op_BTS_BTR_BTC(int conditional_var, int Yb, int Zb) {
         Yb ^= wc;
         break;
     }
-    cc_op = 20;
+    osm = 20;
     return Yb;
 }
 int x86Internal::op_16_BSF(int Yb, int Zb) {
@@ -1084,11 +1084,11 @@ int x86Internal::op_16_BSF(int Yb, int Zb) {
             Yb++;
             Zb >>= 1;
         }
-        cc_dst = 1;
+        osm_dst = 1;
     } else {
-        cc_dst = 0;
+        osm_dst = 0;
     }
-    cc_op = 14;
+    osm = 14;
     return Yb;
 }
 int x86Internal::op_BSF(int Yb, int Zb) {
@@ -1098,11 +1098,11 @@ int x86Internal::op_BSF(int Yb, int Zb) {
             Yb++;
             Zb >>= 1;
         }
-        cc_dst = 1;
+        osm_dst = 1;
     } else {
-        cc_dst = 0;
+        osm_dst = 0;
     }
-    cc_op = 14;
+    osm = 14;
     return Yb;
 }
 int x86Internal::op_16_BSR(int Yb, int Zb) {
@@ -1113,11 +1113,11 @@ int x86Internal::op_16_BSR(int Yb, int Zb) {
             Yb--;
             Zb <<= 1;
         }
-        cc_dst = 1;
+        osm_dst = 1;
     } else {
-        cc_dst = 0;
+        osm_dst = 0;
     }
-    cc_op = 14;
+    osm = 14;
     return Yb;
 }
 int x86Internal::op_BSR(int Yb, int Zb) {
@@ -1127,11 +1127,11 @@ int x86Internal::op_BSR(int Yb, int Zb) {
             Yb--;
             Zb <<= 1;
         }
-        cc_dst = 1;
+        osm_dst = 1;
     } else {
-        cc_dst = 0;
+        osm_dst = 0;
     }
-    cc_op = 14;
+    osm = 14;
     return Yb;
 }
 void x86Internal::op_DIV(int OPbyte) {
@@ -1255,9 +1255,9 @@ int x86Internal::op_MUL(int a, int OPbyte) {
     a &= 0xff;
     OPbyte &= 0xff;
     flg = (regs[0] & 0xff) * (OPbyte & 0xff);
-    cc_src = flg >> 8;
-    cc_dst = (((flg) << 24) >> 24);
-    cc_op = 21;
+    osm_src = flg >> 8;
+    osm_dst = (((flg) << 24) >> 24);
+    osm = 21;
     return flg;
 }
 int x86Internal::op_IMUL(int a, int OPbyte) {
@@ -1265,17 +1265,17 @@ int x86Internal::op_IMUL(int a, int OPbyte) {
     a = (((a) << 24) >> 24);
     OPbyte = (((OPbyte) << 24) >> 24);
     flg = (a * OPbyte) >> 0;
-    cc_dst = (((flg) << 24) >> 24);
-    cc_src = (flg != cc_dst) >> 0;
-    cc_op = 21;
+    osm_dst = (((flg) << 24) >> 24);
+    osm_src = (flg != osm_dst) >> 0;
+    osm = 21;
     return flg;
 }
 int x86Internal::op_16_MUL(int a, int OPbyte) {
     int flg;
     flg = ((a & 0xffff) * (OPbyte & 0xffff)) >> 0;
-    cc_src = flg >> 16;
-    cc_dst = (((flg) << 16) >> 16);
-    cc_op = 22;
+    osm_src = flg >> 16;
+    osm_dst = (((flg) << 16) >> 16);
+    osm = 22;
     return flg;
 }
 int x86Internal::op_16_IMUL(int a, int OPbyte) {
@@ -1283,9 +1283,9 @@ int x86Internal::op_16_IMUL(int a, int OPbyte) {
     a = (a << 16) >> 16;
     OPbyte = (OPbyte << 16) >> 16;
     flg = (a * OPbyte) >> 0;
-    cc_dst = (((flg) << 16) >> 16);
-    cc_src = (flg != cc_dst) >> 0;
-    cc_op = 22;
+    osm_dst = (((flg) << 16) >> 16);
+    osm_src = (flg != osm_dst) >> 0;
+    osm = 22;
     return flg;
 }
 int x86Internal::do_multiply32(int _a, int cc_opbyte) {
@@ -1324,10 +1324,10 @@ int x86Internal::do_multiply32(int _a, int cc_opbyte) {
     return r;
 }
 int x86Internal::op_MUL32(int a, int OPbyte) {
-    cc_dst = do_multiply32(a, OPbyte);
-    cc_src = v;
-    cc_op = 23;
-    return cc_dst;
+    osm_dst = do_multiply32(a, OPbyte);
+    osm_src = v;
+    osm = 23;
+    return osm_dst;
 }
 int x86Internal::op_IMUL32(int a, int OPbyte) {
     int s, r;
@@ -1348,9 +1348,9 @@ int x86Internal::op_IMUL32(int a, int OPbyte) {
             v = (v + 1) >> 0;
         }
     }
-    cc_dst = r;
-    cc_src = (v - (r >> 31)) >> 0;
-    cc_op = 23;
+    osm_dst = r;
+    osm_src = (v - (r >> 31)) >> 0;
+    osm = 23;
     return r;
 }
 void x86Internal::change_permission_level(int sd) {
@@ -1383,7 +1383,7 @@ int x86Internal::do_tlb_lookup(int mem8_loc, int ud) {
 int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
     int CS_flags, mem8, localcc_opbyte_var, conditional_var, stride;
     int n = 1;
-    CS_flags = init_CS_flags;
+    CS_flags = ipr_default;
     if (CS_flags & 0x0100) {
         stride = 2;
     } else {
@@ -1392,7 +1392,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
     while (true) {
         switch (OPbyte) {
         case 0x66: // operand-size override prefix
-            if (init_CS_flags & 0x0100) {
+            if (ipr_default & 0x0100) {
                 stride = 4;
                 CS_flags &= ~0x0100;
             } else {
@@ -1417,7 +1417,7 @@ int x86Internal::operation_size_function(int eip_offset, int OPbyte) {
                      : phys_mem8[mem8_loc ^ last_tlb_val]);
             break;
         case 0x67: // address-size override prefix
-            if (init_CS_flags & 0x0080) {
+            if (ipr_default & 0x0080) {
                 CS_flags &= ~0x0080;
             } else {
                 CS_flags |= 0x0080;
@@ -3625,19 +3625,19 @@ void x86Internal::op_LAR_LSL(bool is_32_bit, bool is_lsl) {
         selector = ld_16bits_mem8_read();
     }
     x = of(selector, is_lsl);
-    cc_src = get_conditional_flags();
+    osm_src = get_conditional_flags();
     if (x == -1) {
-        cc_src &= ~0x0040;
+        osm_src &= ~0x0040;
     } else {
-        cc_src |= 0x0040;
+        osm_src |= 0x0040;
         if (is_32_bit) {
             regs[reg_idx1] = x;
         } else {
             set_lower_word_in_register(reg_idx1, x);
         }
     }
-    cc_dst = ((cc_src >> 6) & 1) ^ 1;
-    cc_op = 24;
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
 }
 int x86Internal::segment_isnt_accessible(int selector, bool is_verw) {
     int desp_low4, desp_high4, rpl, dpl, cpl_var;
@@ -3683,14 +3683,14 @@ int x86Internal::segment_isnt_accessible(int selector, bool is_verw) {
 void x86Internal::op_VERR_VERW(int selector, bool is_verw) {
     int z;
     z = segment_isnt_accessible(selector, is_verw);
-    cc_src = get_conditional_flags();
+    osm_src = get_conditional_flags();
     if (z) {
-        cc_src |= 0x0040;
+        osm_src |= 0x0040;
     } else {
-        cc_src &= ~0x0040;
+        osm_src &= ~0x0040;
     }
-    cc_dst = ((cc_src >> 6) & 1) ^ 1;
-    cc_op = 24;
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
 }
 void x86Internal::op_ARPL() {
     int mem8, x, y, reg_idx0;
@@ -3706,7 +3706,7 @@ void x86Internal::op_ARPL() {
         x = ld_16bits_mem8_write();
     }
     y = regs[(mem8 >> 3) & 7];
-    cc_src = get_conditional_flags();
+    osm_src = get_conditional_flags();
     if ((x & 3) < (y & 3)) {
         x = (x & ~3) | (y & 3);
         if ((mem8 >> 6) == 3) {
@@ -3714,12 +3714,12 @@ void x86Internal::op_ARPL() {
         } else {
             st16_mem8_write(x);
         }
-        cc_src |= 0x0040;
+        osm_src |= 0x0040;
     } else {
-        cc_src &= ~0x0040;
+        osm_src &= ~0x0040;
     }
-    cc_dst = ((cc_src >> 6) & 1) ^ 1;
-    cc_op = 24;
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
 }
 void x86Internal::op_CPUID() {
     int eax;
@@ -3749,8 +3749,8 @@ void x86Internal::op_AAM(int base) {
     xf = (wf / base) & -1;
     wf = (wf % base);
     regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
-    cc_dst = (((wf) << 24) >> 24);
-    cc_op = 12;
+    osm_dst = (((wf) << 24) >> 24);
+    osm = 12;
 }
 void x86Internal::op_AAD(int base) {
     int wf, xf;
@@ -3758,8 +3758,8 @@ void x86Internal::op_AAD(int base) {
     xf = (regs[0] >> 8) & 0xff;
     wf = (xf * base + wf) & 0xff;
     regs[0] = (regs[0] & ~0xffff) | wf;
-    cc_dst = (((wf) << 24) >> 24);
-    cc_op = 12;
+    osm_dst = (((wf) << 24) >> 24);
+    osm = 12;
 }
 void x86Internal::op_AAA() {
     int Af, wf, xf, Bf, flag_bits;
@@ -3777,9 +3777,9 @@ void x86Internal::op_AAA() {
         wf &= 0x0f;
     }
     regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
-    cc_src = flag_bits;
-    cc_dst = ((cc_src >> 6) & 1) ^ 1;
-    cc_op = 24;
+    osm_src = flag_bits;
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
 }
 void x86Internal::op_AAS() {
     int Af, wf, xf, Bf, flag_bits;
@@ -3797,9 +3797,9 @@ void x86Internal::op_AAS() {
         wf &= 0x0f;
     }
     regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
-    cc_src = flag_bits;
-    cc_dst = ((cc_src >> 6) & 1) ^ 1;
-    cc_op = 24;
+    osm_src = flag_bits;
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
 }
 void x86Internal::op_DAA() {
     int wf, Bf, Ef, flag_bits;
@@ -3820,9 +3820,9 @@ void x86Internal::op_DAA() {
     flag_bits |= (wf == 0) << 6;
     flag_bits |= parity_LUT[wf] << 2;
     flag_bits |= (wf & 0x80);
-    cc_src = flag_bits;
-    cc_dst = ((cc_src >> 6) & 1) ^ 1;
-    cc_op = 24;
+    osm_src = flag_bits;
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
 }
 void x86Internal::op_DAS() {
     int wf, Gf, Bf, Ef, flag_bits;
@@ -3847,9 +3847,9 @@ void x86Internal::op_DAS() {
     flag_bits |= (wf == 0) << 6;
     flag_bits |= parity_LUT[wf] << 2;
     flag_bits |= (wf & 0x80);
-    cc_src = flag_bits;
-    cc_dst = ((cc_src >> 6) & 1) ^ 1;
-    cc_op = 24;
+    osm_src = flag_bits;
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
 }
 void x86Internal::checkOp_BOUND() {
     int mem8, x, y, z;
@@ -4037,14 +4037,14 @@ void x86Internal::op_16_INS() {
     if (cpl > iopl) {
         abort(13);
     }
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         Xf = 0xffff;
     } else {
         Xf = -1;
     }
     Yf = regs[7];
     Zf = regs[2] & 0xffff;
-    if (CS_flags & (0x0010 | 0x0020)) {
+    if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
             return;
@@ -4070,12 +4070,12 @@ void x86Internal::op_16_OUTS() {
     if (cpl > iopl) {
         abort(13);
     }
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         Xf = 0xffff;
     } else {
         Xf = -1;
     }
-    Sb = CS_flags & 0x000f;
+    Sb = ipr & 0x000f;
     if (Sb == 0) {
         Sb = 3;
     } else {
@@ -4083,7 +4083,7 @@ void x86Internal::op_16_OUTS() {
     }
     cg = regs[6];
     Zf = regs[2] & 0xffff;
-    if (CS_flags & (0x0010 | 0x0020)) {
+    if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
             return;
@@ -4105,12 +4105,12 @@ void x86Internal::op_16_OUTS() {
 }
 void x86Internal::op_16_MOVS() {
     int Xf, Yf, cg, ag, Sb, eg;
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         Xf = 0xffff;
     } else {
         Xf = -1;
     }
-    Sb = CS_flags & 0x000f;
+    Sb = ipr & 0x000f;
     if (Sb == 0) {
         Sb = 3;
     } else {
@@ -4120,7 +4120,7 @@ void x86Internal::op_16_MOVS() {
     Yf = regs[7];
     mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
     eg = ((Yf & Xf) + segs[0].base) >> 0;
-    if (CS_flags & (0x0010 | 0x0020)) {
+    if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
             return;
@@ -4144,14 +4144,14 @@ void x86Internal::op_16_MOVS() {
 }
 void x86Internal::op_16_STOS() {
     int Xf, Yf, ag;
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         Xf = 0xffff;
     } else {
         Xf = -1;
     }
     Yf = regs[7];
     mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
-    if (CS_flags & (0x0010 | 0x0020)) {
+    if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
             return;
@@ -4169,12 +4169,12 @@ void x86Internal::op_16_STOS() {
 }
 void x86Internal::op_16_CMPS() {
     int Xf, Yf, cg, ag, Sb, eg;
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         Xf = 0xffff;
     } else {
         Xf = -1;
     }
-    Sb = CS_flags & 0x000f;
+    Sb = ipr & 0x000f;
     if (Sb == 0) {
         Sb = 3;
     } else {
@@ -4184,7 +4184,7 @@ void x86Internal::op_16_CMPS() {
     Yf = regs[7];
     mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
     eg = ((Yf & Xf) + segs[0].base) >> 0;
-    if (CS_flags & (0x0010 | 0x0020)) {
+    if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
             return;
@@ -4196,12 +4196,12 @@ void x86Internal::op_16_CMPS() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (CS_flags & 0x0010) {
-            if (!(cc_dst == 0)) {
+        if (ipr & 0x0010) {
+            if (!(osm_dst == 0)) {
                 return;
             }
         } else {
-            if (cc_dst == 0) {
+            if (osm_dst == 0) {
                 return;
             }
         }
@@ -4219,12 +4219,12 @@ void x86Internal::op_16_CMPS() {
 }
 void x86Internal::op_16_LODS() {
     int Xf, cg, Sb, ag, x;
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         Xf = 0xffff;
     } else {
         Xf = -1;
     }
-    Sb = CS_flags & 0x000f;
+    Sb = ipr & 0x000f;
     if (Sb == 0) {
         Sb = 3;
     } else {
@@ -4232,7 +4232,7 @@ void x86Internal::op_16_LODS() {
     }
     cg = regs[6];
     mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
-    if (CS_flags & (0x0010 | 0x0020)) {
+    if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
             return;
@@ -4252,14 +4252,14 @@ void x86Internal::op_16_LODS() {
 }
 void x86Internal::op_16_SCAS() {
     int Xf, Yf, ag, x;
-    if (CS_flags & 0x0080) {
+    if (ipr & 0x0080) {
         Xf = 0xffff;
     } else {
         Xf = -1;
     }
     Yf = regs[7];
     mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
-    if (CS_flags & (0x0010 | 0x0020)) {
+    if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
             return;
@@ -4268,12 +4268,12 @@ void x86Internal::op_16_SCAS() {
         do_16bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (CS_flags & 0x0010) {
-            if (!(cc_dst == 0)) {
+        if (ipr & 0x0010) {
+            if (!(osm_dst == 0)) {
                 return;
             }
         } else {
-            if (cc_dst == 0) {
+            if (osm_dst == 0) {
                 return;
             }
         }
