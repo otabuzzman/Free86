@@ -12,17 +12,17 @@
 #include "../KBD.h"
 #include "../ringbuffer.h"
 
-typedef struct DescriptorTable {
+typedef struct SegmentDescriptor {
     int selector = 0;
     uint32_t base = 0;
     uint32_t limit = 0;
     int flags = 0;
-} DescriptorTable;
+} SegmentDescriptor;
 
-typedef struct ErrorInfo {
-    int intno = -1;
+typedef struct Exception {
+    int id = -1;
     int error_code = 0;
-} ErrorInfo;
+} Exception;
 
 class x86Internal {
   public:
@@ -51,7 +51,7 @@ class x86Internal {
 
     // clang-format off
     // ES, CS, SS, DS, FS, GS, LDT, TR
-    DescriptorTable segs[7] = {
+    SegmentDescriptor segs[7] = {
         {0, 0, 0, 0}, 
         {0, 0xffff0000, 0, 0}, // CS
         {0, 0, 0, 0},
@@ -66,10 +66,10 @@ class x86Internal {
     int dpl = 0;  // descriptor privilege level
     int iopl = 0; // IO privilege level
 
-    DescriptorTable gdt; // GDT register
-    DescriptorTable ldt; // LDT register
-    DescriptorTable tr;  // task register
-    DescriptorTable idt = {0, 0, 0x03ff, 0}; // IDT register
+    SegmentDescriptor gdt; // GDT register
+    SegmentDescriptor ldt; // LDT register
+    SegmentDescriptor tr;  // task register
+    SegmentDescriptor idt = {0, 0, 0x03ff, 0}; // IDT register
 
     int cr0 = 0;
     int cr2 = 0;
@@ -199,7 +199,7 @@ class x86Internal {
 
     int halted = 0;
 
-    ErrorInfo interrupt;
+    Exception interrupt;
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -477,7 +477,7 @@ class x86Internal {
     void load_from_TR(int he, int *desary);
     int calc_desp_limit(int desp_low4, int desp_high4);
     int calc_desp_base(int desp_low4, int desp_high4);
-    void set_descriptor_register(DescriptorTable *descriptor_table, int desp_low4, int desp_high4);
+    void set_descriptor_register(SegmentDescriptor *descriptor_table, int desp_low4, int desp_high4);
 
     void do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe);
     void do_interrupt_not_protected_mode(int intno, int ne, int error_code, int oe, int pe);

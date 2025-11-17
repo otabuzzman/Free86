@@ -90,7 +90,7 @@ void PC::cycle()
             cpu->instruction(cycles_requested - cpu->cycles_processed);
             if (cpu->halted)
                 break;
-        } catch (ErrorInfo) {}
+        } catch (Exception) {}
     }
 }
 

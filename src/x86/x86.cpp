@@ -109,8 +109,8 @@ int x86Internal::check_halted() {
     return 0;
 }
 void x86Internal::check_interrupt() {
-    if (interrupt.intno >= 0) {
-        do_interrupt(interrupt.intno, 0, interrupt.error_code, 0, 0);
+    if (interrupt.id >= 0) {
+        do_interrupt(interrupt.id, 0, interrupt.error_code, 0, 0);
         interrupt = {-1, 0};
     }
     if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
@@ -2524,7 +2524,7 @@ int x86Internal::SS_mask_from_flags(int desp_high4) {
     }
 }
 void x86Internal::load_from_descriptor_table(int selector, int *desary) {
-    DescriptorTable descriptor_table;
+    SegmentDescriptor descriptor_table;
     int Rb, desp_low4, desp_high4;
     if (selector & 0x4) {
         descriptor_table = ldt;
@@ -2552,7 +2552,7 @@ int x86Internal::calc_desp_limit(int desp_low4, int desp_high4) {
 int x86Internal::calc_desp_base(int desp_low4, int desp_high4) {
     return ((((desp_low4 >> 16) & 0xffff) | ((desp_high4 & 0xff) << 16) | (desp_high4 & 0xff000000))) & -1;
 }
-void x86Internal::set_descriptor_register(DescriptorTable *descriptor_table, int desp_low4, int desp_high4) {
+void x86Internal::set_descriptor_register(SegmentDescriptor *descriptor_table, int desp_low4, int desp_high4) {
     descriptor_table->base = calc_desp_base(desp_low4, desp_high4);
     descriptor_table->limit = calc_desp_limit(desp_low4, desp_high4);
     descriptor_table->flags = desp_high4;
@@ -2591,7 +2591,7 @@ void x86Internal::load_from_TR(int he, int *desary) {
     desary[1] = le;
 }
 void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe) {
-    DescriptorTable descriptor_table;
+    SegmentDescriptor descriptor_table;
     int qe, descriptor_type, selector, re, cpl_var;
     int te, ue, is_32_bit;
     int desp_low4, desp_high4, ve, ke, le, we, xe;
@@ -2809,7 +2809,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
 }
 void x86Internal::do_interrupt_not_protected_mode(int intno, int ne, int error_code, int oe, int pe) {
-    DescriptorTable descriptor_table;
+    SegmentDescriptor descriptor_table;
     int selector, ve, le, ye;
     descriptor_table = idt;
     if (intno * 4 + 3 > descriptor_table.limit) {
@@ -2874,7 +2874,7 @@ void x86Internal::do_interrupt(int intno, int ne, int error_code, int oe, int pe
     }
 }
 void x86Internal::op_LDTR(int selector) {
-    DescriptorTable descriptor_table;
+    SegmentDescriptor descriptor_table;
     int desp_low4, desp_high4, Rb, De;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2905,7 +2905,7 @@ void x86Internal::op_LDTR(int selector) {
     ldt.selector = selector;
 }
 void x86Internal::op_LTR(int selector) {
-    DescriptorTable descriptor_table;
+    SegmentDescriptor descriptor_table;
     int desp_low4, desp_high4, Rb, descriptor_type, De;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2940,7 +2940,7 @@ void x86Internal::op_LTR(int selector) {
     tr.selector = selector;
 }
 void x86Internal::set_protected_mode_segment_register(int reg, int selector) {
-    DescriptorTable descriptor_table;
+    SegmentDescriptor descriptor_table;
     int desp_low4, desp_high4, cpl_var, dpl, rpl, selector_index;
     cpl_var = cpl;
     if ((selector & 0xfffc) == 0) { // null selector
