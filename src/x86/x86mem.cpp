@@ -142,8 +142,8 @@ int x86Internal::ld32_mem8_kernel_read() {
                : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
 }
 int x86Internal::ld16_mem8_direct() {
-    int x = phys_mem8[physmem8_ptr++];
-    int y = phys_mem8[physmem8_ptr++];
+    int x = phys_mem8[far++];
+    int y = phys_mem8[far++];
     return x | (y << 8);
 }
 void x86Internal::__st8_mem8_write(int x) {

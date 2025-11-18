@@ -44,8 +44,8 @@ int x86Internal::init(int cycles) {
     ipr = ipr_default;
     mem8_loc = 0;
     last_tlb_val = 0;
-    physmem8_ptr = 0;
-    initial_mem_ptr = 0;
+    far = 0;
+    far_start = 0;
     conditional_var = 0;
     change_permission_level(cpl);
     if (check_halted()) {
@@ -71,7 +71,7 @@ void x86Internal::init_segment_local_vars() {
     }
 }
 void x86Internal::check_opbyte() {
-    eip = (eip + physmem8_ptr - initial_mem_ptr) >> 0;
+    eip = (eip + far - far_start) >> 0;
     eip_linear = check_real_mode() ? (eip + CS_base) & 0xfffff : eip + CS_base;
     int64_t eip_tlb_hash = tlb_read[eip_linear >> 12];
     // `eip_tlb_hash' equals -1 or instruction with maximum bytes (15)
@@ -82,25 +82,25 @@ void x86Internal::check_opbyte() {
             do_tlb_set_page(eip_linear, 0, cpl == 3);
         }
         eip_tlb_hash = tlb_read[eip_linear >> 12];
-        physmem8_ptr = initial_mem_ptr = eip_linear ^ eip_tlb_hash;
-        OPbyte = phys_mem8[physmem8_ptr++];
+        far = far_start = eip_linear ^ eip_tlb_hash;
+        OPbyte = phys_mem8[far++];
         int page_offset = eip_linear & 0xfff;
         if (page_offset > (4096 - 15)) {
             x = instruction_length(OPbyte, eip_linear);
             if ((page_offset + x) > 4096) { // instruction extends page boundary
-                physmem8_ptr = initial_mem_ptr = mem_size;
+                far = far_start = mem_size;
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
                     mem8_loc = (eip_linear + y) >> 0;
-                    phys_mem8[physmem8_ptr + y] = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    phys_mem8[far + y] = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
                              : phys_mem8[mem8_loc ^ last_tlb_val]);
                 }
-                physmem8_ptr++;
+                far++;
             }
         }
     } else {
-        physmem8_ptr = initial_mem_ptr = eip_linear ^ eip_tlb_hash;
-        OPbyte = phys_mem8[physmem8_ptr++];
+        far = far_start = eip_linear ^ eip_tlb_hash;
+        OPbyte = phys_mem8[far++];
     }
 }
 int x86Internal::check_halted() {
@@ -184,14 +184,14 @@ int x86Internal::segment_translation(int mem8) {
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
         case 0x04: // ADD
-            Qb = phys_mem8[physmem8_ptr++];
+            Qb = phys_mem8[far++];
             base = Qb & 7;
             if (base == 5) {
-                mem8_loc = phys_mem8[physmem8_ptr] |
-                           (phys_mem8[physmem8_ptr + 1] << 8) |
-                           (phys_mem8[physmem8_ptr + 2] << 16) |
-                           (phys_mem8[physmem8_ptr + 3] << 24);
-                physmem8_ptr += 4;
+                mem8_loc = phys_mem8[far] |
+                           (phys_mem8[far + 1] << 8) |
+                           (phys_mem8[far + 2] << 16) |
+                           (phys_mem8[far + 3] << 24);
+                far += 4;
             } else {
                 mem8_loc = regs[base];
             }
@@ -201,8 +201,8 @@ int x86Internal::segment_translation(int mem8) {
             }
             break;
         case 0x0c: // OR
-            Qb = phys_mem8[physmem8_ptr++];
-            mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+            Qb = phys_mem8[far++];
+            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
             base = Qb & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             Rb = (Qb >> 3) & 7;
@@ -211,12 +211,12 @@ int x86Internal::segment_translation(int mem8) {
             }
             break;
         case 0x14: // ADC
-            Qb = phys_mem8[physmem8_ptr++];
-            mem8_loc = phys_mem8[physmem8_ptr] |
-                       (phys_mem8[physmem8_ptr + 1] << 8) |
-                       (phys_mem8[physmem8_ptr + 2] << 16) |
-                       (phys_mem8[physmem8_ptr + 3] << 24);
-            physmem8_ptr += 4;
+            Qb = phys_mem8[far++];
+            mem8_loc = phys_mem8[far] |
+                       (phys_mem8[far + 1] << 8) |
+                       (phys_mem8[far + 2] << 16) |
+                       (phys_mem8[far + 3] << 24);
+            far += 4;
             base = Qb & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             Rb = (Qb >> 3) & 7;
@@ -225,11 +225,11 @@ int x86Internal::segment_translation(int mem8) {
             }
             break;
         case 0x05: // ADD
-            mem8_loc = phys_mem8[physmem8_ptr] |
-                       (phys_mem8[physmem8_ptr + 1] << 8) |
-                       (phys_mem8[physmem8_ptr + 2] << 16) |
-                       (phys_mem8[physmem8_ptr + 3] << 24);
-            physmem8_ptr += 4;
+            mem8_loc = phys_mem8[far] |
+                       (phys_mem8[far + 1] << 8) |
+                       (phys_mem8[far + 2] << 16) |
+                       (phys_mem8[far + 3] << 24);
+            far += 4;
             break;
         case 0x00: // ADD
         case 0x01: // ADD
@@ -247,7 +247,7 @@ int x86Internal::segment_translation(int mem8) {
         case 0x0d: // OR
         case 0x0e: // PUSH
         case 0x0f: // 2-byte instruction escape
-            mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
             base = mem8 & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             break;
@@ -259,11 +259,11 @@ int x86Internal::segment_translation(int mem8) {
         case 0x16: // PUSH
         case 0x17: // POP
         default:
-            mem8_loc = phys_mem8[physmem8_ptr] |
-                       (phys_mem8[physmem8_ptr + 1] << 8) |
-                       (phys_mem8[physmem8_ptr + 2] << 16) |
-                       (phys_mem8[physmem8_ptr + 3] << 24);
-            physmem8_ptr += 4;
+            mem8_loc = phys_mem8[far] |
+                       (phys_mem8[far + 1] << 8) |
+                       (phys_mem8[far + 2] << 16) |
+                       (phys_mem8[far + 3] << 24);
+            far += 4;
             base = mem8 & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             break;
@@ -279,7 +279,7 @@ int x86Internal::segment_translation(int mem8) {
                 mem8_loc = 0;
                 break;
             case 1:
-                mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+                mem8_loc = ((phys_mem8[far++] << 24) >> 24);
                 break;
             default:
                 mem8_loc = ld16_mem8_direct();
@@ -332,14 +332,14 @@ int x86Internal::segment_translation(int mem8) {
     } else {
         switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
         case 0x04: // ADD
-            Qb = phys_mem8[physmem8_ptr++];
+            Qb = phys_mem8[far++];
             base = Qb & 7;
             if (base == 5) {
-                mem8_loc = phys_mem8[physmem8_ptr] |
-                           (phys_mem8[physmem8_ptr + 1] << 8) |
-                           (phys_mem8[physmem8_ptr + 2] << 16) |
-                           (phys_mem8[physmem8_ptr + 3] << 24);
-                physmem8_ptr += 4;
+                mem8_loc = phys_mem8[far] |
+                           (phys_mem8[far + 1] << 8) |
+                           (phys_mem8[far + 2] << 16) |
+                           (phys_mem8[far + 3] << 24);
+                far += 4;
                 base = 0;
             } else {
                 mem8_loc = regs[base];
@@ -350,8 +350,8 @@ int x86Internal::segment_translation(int mem8) {
             }
             break;
         case 0x0c: // OR
-            Qb = phys_mem8[physmem8_ptr++];
-            mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+            Qb = phys_mem8[far++];
+            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
             base = Qb & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             Rb = (Qb >> 3) & 7;
@@ -360,12 +360,12 @@ int x86Internal::segment_translation(int mem8) {
             }
             break;
         case 0x14: // ADC
-            Qb = phys_mem8[physmem8_ptr++];
-            mem8_loc = phys_mem8[physmem8_ptr] |
-                       (phys_mem8[physmem8_ptr + 1] << 8) |
-                       (phys_mem8[physmem8_ptr + 2] << 16) |
-                       (phys_mem8[physmem8_ptr + 3] << 24);
-            physmem8_ptr += 4;
+            Qb = phys_mem8[far++];
+            mem8_loc = phys_mem8[far] |
+                       (phys_mem8[far + 1] << 8) |
+                       (phys_mem8[far + 2] << 16) |
+                       (phys_mem8[far + 3] << 24);
+            far += 4;
             base = Qb & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             Rb = (Qb >> 3) & 7;
@@ -374,11 +374,11 @@ int x86Internal::segment_translation(int mem8) {
             }
             break;
         case 0x05: // ADD
-            mem8_loc = phys_mem8[physmem8_ptr] |
-                       (phys_mem8[physmem8_ptr + 1] << 8) |
-                       (phys_mem8[physmem8_ptr + 2] << 16) |
-                       (phys_mem8[physmem8_ptr + 3] << 24);
-            physmem8_ptr += 4;
+            mem8_loc = phys_mem8[far] |
+                       (phys_mem8[far + 1] << 8) |
+                       (phys_mem8[far + 2] << 16) |
+                       (phys_mem8[far + 3] << 24);
+            far += 4;
             base = 0;
             break;
         case 0x00: // ADD
@@ -397,7 +397,7 @@ int x86Internal::segment_translation(int mem8) {
         case 0x0d: // OR
         case 0x0e: // PUSH
         case 0x0f: // 2-byte instruction escape
-            mem8_loc = ((phys_mem8[physmem8_ptr++] << 24) >> 24);
+            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
             base = mem8 & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             break;
@@ -409,11 +409,11 @@ int x86Internal::segment_translation(int mem8) {
         case 0x16: // PUSH
         case 0x17: // POP
         default:
-            mem8_loc = phys_mem8[physmem8_ptr] |
-                       (phys_mem8[physmem8_ptr + 1] << 8) |
-                       (phys_mem8[physmem8_ptr + 2] << 16) |
-                       (phys_mem8[physmem8_ptr + 3] << 24);
-            physmem8_ptr += 4;
+            mem8_loc = phys_mem8[far] |
+                       (phys_mem8[far + 1] << 8) |
+                       (phys_mem8[far + 2] << 16) |
+                       (phys_mem8[far + 3] << 24);
+            far += 4;
             base = mem8 & 7;
             mem8_loc = (mem8_loc + regs[base]) >> 0;
             break;
@@ -440,11 +440,11 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
         mem8_loc = ld16_mem8_direct() & 0xffff;
         Ls = 1; // 16 bit mode
     } else {
-        mem8_loc = phys_mem8[physmem8_ptr] |
-                   (phys_mem8[physmem8_ptr + 1] << 8) |
-                   (phys_mem8[physmem8_ptr + 2] << 16) |
-                   (phys_mem8[physmem8_ptr + 3] << 24) & 0xffffffff;
-        physmem8_ptr += 4;
+        mem8_loc = phys_mem8[far] |
+                   (phys_mem8[far + 1] << 8) |
+                   (phys_mem8[far + 2] << 16) |
+                   (phys_mem8[far + 3] << 24) & 0xffffffff;
+        far += 4;
         Ls = 3; // 32 bit mode
     }
     if (!(OPbyte & 0x01)) {
@@ -2810,7 +2810,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
     selector = (selector & ~3) | dpl;
     set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
     change_permission_level(dpl);
-    eip = ve, physmem8_ptr = initial_mem_ptr = 0;
+    eip = ve, far = far_start = 0;
     if ((descriptor_type & 1) == 0) {
         eflags &= ~0x00000200;
     }
@@ -2843,7 +2843,7 @@ void x86Internal::do_interrupt_not_protected_mode(int intno, int ne, int error_c
     mem8_loc = ((le & SS_mask) + SS_base) >> 0;
     st16_mem8_write(ye);
     regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
-    eip = ve, physmem8_ptr = initial_mem_ptr = 0;
+    eip = ve, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
@@ -3019,7 +3019,7 @@ void x86Internal::set_segment_register(int reg, int selector) {
     }
 }
 void x86Internal::do_JMPF_virtual_mode(int selector, int Le) {
-    eip = Le, physmem8_ptr = initial_mem_ptr = 0;
+    eip = Le, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     init_segment_local_vars();
@@ -3064,7 +3064,7 @@ void x86Internal::do_JMPF(int selector, int Le) {
             abort_with_error_code(13, selector & 0xfffc);
         }
         set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit,  desp_high4);
-        eip = Le, physmem8_ptr = initial_mem_ptr = 0;
+        eip = Le, far = far_start = 0;
     } else {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
@@ -3108,7 +3108,7 @@ void x86Internal::op_CALLF_not_protected_mode(bool is_32_bit, int selector, int 
         st16_mem8_write(oe);
     }
     regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
-    eip = Le, physmem8_ptr = initial_mem_ptr = 0;
+    eip = Le, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     init_segment_local_vars();
@@ -3176,7 +3176,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         }
         regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
         set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit, desp_high4);
-        eip = Le, physmem8_ptr = initial_mem_ptr = 0;
+        eip = Le, far = far_start = 0;
     } else {
         descriptor_type = (desp_high4 >> 8) & 0x1f;
         dpl = (desp_high4 >> 13) & 3;
@@ -3310,7 +3310,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
         change_permission_level(dpl);
         regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
-        eip = ve, physmem8_ptr = initial_mem_ptr = 0;
+        eip = ve, far = far_start = 0;
     }
 }
 void x86Internal::op_CALLF(bool is_32_bit, int selector, int Le, int oe) {
@@ -3354,7 +3354,7 @@ void x86Internal::do_return_not_protected_mode(bool is_32_bit, bool is_iret, int
     regs[4] = (regs[4] & ~SS_mask) | ((esp + imm16) & SS_mask);
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
-    eip = stack_eip, physmem8_ptr = initial_mem_ptr = 0;
+    eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         if (eflags & 0x00020000) {
             ef = 0x00000100 | 0x00000200 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
@@ -3424,7 +3424,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
                 init_segment_vars_with_selector(3, jf & 0xffff);
                 init_segment_vars_with_selector(4, kf & 0xffff);
                 init_segment_vars_with_selector(5, lf & 0xffff);
-                eip = stack_eip & 0xffff, physmem8_ptr = initial_mem_ptr = 0;
+                eip = stack_eip & 0xffff, far = far_start = 0;
                 regs[4] = (regs[4] & ~SS_mask) | ((wd)&SS_mask);
                 return;
             }
@@ -3527,7 +3527,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
         esp = (esp + imm16) & -1;
     }
     regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
-    eip = stack_eip, physmem8_ptr = initial_mem_ptr = 0;
+    eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         ef = 0x00000100 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         if (cpl_var == 0) {
@@ -3624,7 +3624,7 @@ void x86Internal::op_LAR_LSL(bool is_32_bit, bool is_lsl) {
     if (!(cr0 & (1 << 0)) || (eflags & 0x00020000)) {
         abort(6);
     }
-    mem8 = phys_mem8[physmem8_ptr++];
+    mem8 = phys_mem8[far++];
     reg_idx1 = (mem8 >> 3) & 7;
     if ((mem8 >> 6) == 3) {
         selector = regs[mem8 & 7] & 0xffff;
@@ -3705,7 +3705,7 @@ void x86Internal::op_ARPL() {
     if (!(cr0 & (1 << 0)) || (eflags & 0x00020000)) {
         abort(6);
     }
-    mem8 = phys_mem8[physmem8_ptr++];
+    mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         reg_idx0 = mem8 & 7;
         x = regs[reg_idx0] & 0xffff;
@@ -3861,7 +3861,7 @@ void x86Internal::op_DAS() {
 }
 void x86Internal::checkOp_BOUND() {
     int mem8, x, y, z;
-    mem8 = phys_mem8[physmem8_ptr++];
+    mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
     }
@@ -3877,7 +3877,7 @@ void x86Internal::checkOp_BOUND() {
 }
 void x86Internal::op_16_BOUND() {
     int mem8, x, y, z;
-    mem8 = phys_mem8[physmem8_ptr++];
+    mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
     }
@@ -3954,7 +3954,7 @@ void x86Internal::op_LEAVE() {
 void x86Internal::op_16_ENTER() {
     int cf, Qf, le, Rf, x, Sf;
     cf = ld16_mem8_direct();
-    Qf = phys_mem8[physmem8_ptr++];
+    Qf = phys_mem8[far++];
     Qf &= 0x1f;
     le = regs[4];
     Rf = regs[5];
@@ -3985,7 +3985,7 @@ void x86Internal::op_16_ENTER() {
 void x86Internal::op_ENTER() {
     int cf, Qf, le, Rf, x, Sf;
     cf = ld16_mem8_direct();
-    Qf = phys_mem8[physmem8_ptr++];
+    Qf = phys_mem8[far++];
     Qf &= 0x1f;
     le = regs[4];
     Rf = regs[5];
@@ -4015,7 +4015,7 @@ void x86Internal::op_ENTER() {
 }
 void x86Internal::op_16_load_far_pointer32(int Sb) {
     int x, y, mem8;
-    mem8 = phys_mem8[physmem8_ptr++];
+    mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
     }
@@ -4028,7 +4028,7 @@ void x86Internal::op_16_load_far_pointer32(int Sb) {
 }
 void x86Internal::op_16_load_far_pointer16(int Sb) {
     int x, y, mem8;
-    mem8 = phys_mem8[physmem8_ptr++];
+    mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
     }
@@ -4063,7 +4063,7 @@ void x86Internal::op_16_INS() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ag & Xf) {
-            physmem8_ptr = initial_mem_ptr;
+            far = far_start;
         }
     } else {
         x = ld16_port(Zf);
@@ -4102,7 +4102,7 @@ void x86Internal::op_16_OUTS() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ag & Xf) {
-            physmem8_ptr = initial_mem_ptr;
+            far = far_start;
         }
     } else {
         mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
@@ -4140,7 +4140,7 @@ void x86Internal::op_16_MOVS() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ag & Xf) {
-            physmem8_ptr = initial_mem_ptr;
+            far = far_start;
         }
     } else {
         x = ld_16bits_mem8_read();
@@ -4168,7 +4168,7 @@ void x86Internal::op_16_STOS() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ag & Xf) {
-            physmem8_ptr = initial_mem_ptr;
+            far = far_start;
         }
     } else {
         st16_mem8_write(regs[0]);
@@ -4214,7 +4214,7 @@ void x86Internal::op_16_CMPS() {
             }
         }
         if (ag & Xf) {
-            physmem8_ptr = initial_mem_ptr;
+            far = far_start;
         }
     } else {
         x = ld_16bits_mem8_read();
@@ -4250,7 +4250,7 @@ void x86Internal::op_16_LODS() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ag & Xf) {
-            physmem8_ptr = initial_mem_ptr;
+            far = far_start;
         }
     } else {
         x = ld_16bits_mem8_read();
@@ -4286,7 +4286,7 @@ void x86Internal::op_16_SCAS() {
             }
         }
         if (ag & Xf) {
-            physmem8_ptr = initial_mem_ptr;
+            far = far_start;
         }
     } else {
         x = ld_16bits_mem8_read();

@@ -48,6 +48,14 @@ class x86Internal {
 
     uint32_t eip = 0xfff0;
     uint32_t eip_linear = 0;
+/*
+   Fetch address register
+   
+   The fetch address register (FAR) stores the physical memory address
+   of the next byte to be retrieved in the current fetch cycle.
+ */
+    uint32_t far = 0;       // fetch address register
+    uint32_t far_start = 0; // first fetch address of current cycle
 
     // clang-format off
     // ES, CS, SS, DS, FS, GS, LDT, TR
@@ -184,14 +192,12 @@ class x86Internal {
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
 
+    uint32_t mem8_loc; // linear byte address
+    int mem8;          // and value
+
     int conditional_var = 0; // opcode_543 bits 5, 4, and 3 of opcode or modR/M byte
-    int mem8; // byte_value
     int reg_idx0, reg_idx1;  // register indices (0-7)
     int x, y, z, v;          // intermediate values
-
-    int physmem8_ptr = 0;    // fetch_address
-    int initial_mem_ptr = 0; // fetch_byte0_address
-    uint32_t mem8_loc;       // byte_address
 
     int cycles_requested = 0;
     int cycles_remaining = 0;
@@ -256,24 +262,24 @@ class x86Internal {
         phys_mem32[mem8_loc >> 2] = x;
     }
     void tlb_set_page(uint32_t linear_address, int pte, int tlb_set_write, int tlb_set_user) {
-        int tbl_hash = linear_address ^ pte; // poor man's XOR hash
+        int tlb_hash = linear_address ^ pte; // poor man's XOR hash
         uint32_t lat20 = linear_address >> 12;
         if (tlb_read_kernel[lat20] == -1) {
             if (tlb_pages_count >= 2048) {
-                tlb_flush_all1((lat20 - 1) & 0xfffff);
+                tlb_flush_all((lat20 - 1) & 0xfffff);
             }
             tlb_pages[tlb_pages_count++] = lat20;
         }
-        tlb_read_kernel[lat20] = tbl_hash;
+        tlb_read_kernel[lat20] = tlb_hash;
         if (tlb_set_write) {
-            tlb_write_kernel[lat20] = tbl_hash;
+            tlb_write_kernel[lat20] = tlb_hash;
         } else {
             tlb_write_kernel[lat20] = -1;
         }
         if (tlb_set_user) {
-            tlb_read_user[lat20] = tbl_hash;
+            tlb_read_user[lat20] = tlb_hash;
             if (tlb_set_write) {
-                tlb_write_user[lat20] = tbl_hash;
+                tlb_write_user[lat20] = tlb_hash;
             } else {
                 tlb_write_user[lat20] = -1;
             }
@@ -282,36 +288,34 @@ class x86Internal {
             tlb_write_user[lat20] = -1;
         }
     }
-    void tlb_flush_page(uint32_t mem8_loc) {
-        uint32_t i = mem8_loc >> 12;
-        tlb_clear(i);
+    void tlb_flush_page(uint32_t linear_address) {
+        uint32_t lat20 = linear_address >> 12;
+        tlb_clear(lat20);
     }
     void tlb_flush_all() {
-        int n = tlb_pages_count;
-        for (int j = 0; j < n; j++) {
-            int i = tlb_pages[j];
-            tlb_clear(i);
+        for (int i = 0; i < tlb_pages_count; i++) {
+            uint32_t lat20 = tlb_pages[i];
+            tlb_clear(lat20);
         }
         tlb_pages_count = 0;
     }
-    void tlb_flush_all1(uint32_t la) {
-        int n = tlb_pages_count;
-        int new_n = 0;
-        for (int j = 0; j < n; j++) {
-            int i = tlb_pages[j];
-            if (i == la) {
-                tlb_pages[new_n++] = i;
+    void tlb_flush_all(uint32_t lat20) {
+        int n = 0;
+        for (int i = 0; i < tlb_pages_count; i++) {
+            uint32_t tlb_lat20 = tlb_pages[i];
+            if (tlb_lat20 == lat20) {
+                tlb_pages[n++] = tlb_lat20;
             } else {
-                tlb_clear(i);
+                tlb_clear(tlb_lat20);
             }
         }
-        tlb_pages_count = new_n;
+        tlb_pages_count = n;
     }
-    void tlb_clear(uint32_t i) {
-        tlb_read_kernel[i] = -1;
-        tlb_write_kernel[i] = -1;
-        tlb_read_user[i] = -1;
-        tlb_write_user[i] = -1;
+    void tlb_clear(uint32_t lat20) {
+        tlb_read_kernel[lat20] = -1;
+        tlb_write_kernel[lat20] = -1;
+        tlb_read_user[lat20] = -1;
+        tlb_write_user[lat20] = -1;
     }
 
     std::string hex_rep(int x, int n) {
