@@ -12,6 +12,9 @@
 
 x86Internal::x86Internal(int _mem_size) {
     mem_size = _mem_size;
+    // size plus maximum possible number of bytes per instruction,
+    // rounded up to the nearest multiple of 32 bits, as buffer
+    // for instructions that span page boundaries.
     new_mem_size = mem_size + ((15 + 3) & ~3);
     phys_mem = (uint8_t *)malloc(sizeof(uint8_t) * new_mem_size);
     for (int i = 0; i < new_mem_size; i++) {
@@ -70,21 +73,23 @@ void x86Internal::init_segment_local_vars() {
 void x86Internal::check_opbyte() {
     eip = (eip + physmem8_ptr - initial_mem_ptr) >> 0;
     eip_linear = check_real_mode() ? (eip + CS_base) & 0xfffff : eip + CS_base;
-    uint32_t eip_offset2 = eip_linear;
-    int64_t eip_tlb_val = tlb_read[eip_offset2 >> 12];
-    if (((eip_tlb_val | eip_linear) & 0xfff) >= (4096 - 15 + 1)) {
-        if (eip_tlb_val == -1) {
+    int64_t eip_tlb_hash = tlb_read[eip_linear >> 12];
+    // `eip_tlb_hash' equals -1 or instruction with maximum bytes (15)
+    // would extend across the page boundary.
+    // combined check ok because bits 0-11 in `eip_tlb_hash' always 0.
+    if (((eip_tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
+        if (eip_tlb_hash == -1) {
             do_tlb_set_page(eip_linear, 0, cpl == 3);
         }
-        eip_tlb_val = tlb_read[eip_offset2 >> 12];
-        initial_mem_ptr = physmem8_ptr = eip_linear ^ eip_tlb_val;
+        eip_tlb_hash = tlb_read[eip_linear >> 12];
+        physmem8_ptr = initial_mem_ptr = eip_linear ^ eip_tlb_hash;
         OPbyte = phys_mem8[physmem8_ptr++];
-        int Cg = eip_linear & 0xfff;
-        if (Cg >= (4096 - 15 + 1)) {
-            x = operation_size_function(eip_linear, OPbyte);
-            if ((Cg + x) > 4096) {
-                initial_mem_ptr = physmem8_ptr = mem_size;
-                for (y = 0; y < x; y++) {
+        int page_offset = eip_linear & 0xfff;
+        if (page_offset > (4096 - 15)) {
+            x = instruction_length(OPbyte, eip_linear);
+            if ((page_offset + x) > 4096) { // instruction extends page boundary
+                physmem8_ptr = initial_mem_ptr = mem_size;
+                for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
                     mem8_loc = (eip_linear + y) >> 0;
                     phys_mem8[physmem8_ptr + y] = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
@@ -94,7 +99,7 @@ void x86Internal::check_opbyte() {
             }
         }
     } else {
-        initial_mem_ptr = physmem8_ptr = eip_linear ^ eip_tlb_val;
+        physmem8_ptr = initial_mem_ptr = eip_linear ^ eip_tlb_hash;
         OPbyte = phys_mem8[physmem8_ptr++];
     }
 }
@@ -117,57 +122,60 @@ void x86Internal::check_interrupt() {
         do_interrupt(get_hard_intno(), 0, 0, 0, 1);
     }
 }
-void x86Internal::do_tlb_set_page(int Gd, int Hd, bool ja) {
-    int Id, Jd, error_code, Kd, Ld, Md, Nd, ud, Od;
+void x86Internal::do_tlb_set_page(int linear_address, int write, bool user) {
+    int pde_address, pde, pte_address, pte, pxe, tlb_set_write = 0, tlb_set_user = 1, clean, error_code;
     if (!(cr0 & (1 << 31))) {
-        tlb_set_page(Gd & -4096, Gd & -4096, 1, 0);
-    } else {
-        Id = (cr3 & -4096) + ((Gd >> 20) & 0xffc);
-        Jd = ld32_phys(Id);
-        if (!(Jd & 0x00000001)) {
+        tlb_set_write = 1;
+        tlb_set_user = 0;
+        tlb_set_page(linear_address & -4096, linear_address & -4096, tlb_set_write, tlb_set_user);
+    } else { // paging enabled
+        pde_address = (cr3 & -4096) + ((linear_address >> 20) & 0xffc);
+        pde = ld32_phys(pde_address);
+        if (!(pde & 0x00000001)) { // page not present
             error_code = 0;
         } else {
-            Kd = (Jd & -4096) + ((Gd >> 10) & 0xffc);
-            Ld = ld32_phys(Kd);
-            if (!(Ld & 0x00000001)) {
+            pte_address = (pde & -4096) + ((linear_address >> 10) & 0xffc);
+            pte = ld32_phys(pte_address);
+            if (!(pte & 0x00000001)) { // page not present
                 error_code = 0;
             } else {
-                Md = Ld & Jd;
-                if (ja && !(Md & 0x00000004)) {
+                pxe = pde & pte;
+                if (user && !(pxe & 0x00000004)) { // user request and page supervisor
                     error_code = 0x01;
-                } else if ((ja || (cr0 & (1 << 16))) && Hd && !(Md & 0x00000002)) {
+                // user request or RF set and WR request and RO page
+                } else if ((user || (cr0 & (1 << 16))) && write && !(pxe & 0x00000002)) {
                     error_code = 0x01;
                 } else {
-                    if (!(Jd & 0x00000020)) {
-                        Jd |= 0x00000020;
-                        st32_phys(Id, Jd);
+                    if (!(pde & 0x00000020)) { // page not accessed
+                        pde |= 0x00000020;
+                        st32_phys(pde_address, pde);
                     }
-                    Nd = (Hd && !(Ld & 0x00000040));
-                    if (!(Ld & 0x00000020) || Nd) {
-                        Ld |= 0x00000020;
-                        if (Nd) {
-                            Ld |= 0x00000040;
+                    clean = (write && !(pte & 0x00000040)); // WR request and page not dirty
+                    if (!(pte & 0x00000020) || clean) {  // page not accessed or previous
+                        pte |= 0x00000020;     // set page accessed
+                        if (clean) {
+                            pte |= 0x00000040; // set page dirty
                         }
-                        st32_phys(Kd, Ld);
+                        st32_phys(pte_address, pte);
                     }
-                    ud = 0;
-                    if ((Ld & 0x00000040) && (!ja || (Md & 0x00000002))) {
-                        ud = 1;
+                    // page dirty and supervisor request and page not RO
+                    if ((pte & 0x00000040) && (!user || (pxe & 0x00000002))) {
+                        tlb_set_write = 1;
                     }
-                    Od = 0;
-                    if (Md & 0x00000004) {
-                        Od = 1;
+                    // page not supervisor
+                    if (pxe & 0x00000004) {
+                        tlb_set_user = 1;
                     }
-                    tlb_set_page(Gd & -4096, Ld & -4096, ud, Od);
+                    tlb_set_page(linear_address & -4096, pte & -4096, tlb_set_write, tlb_set_user);
                     return;
                 }
             }
         }
-        error_code |= Hd << 1;
-        if (ja) {
+        error_code |= write << 1;
+        if (user) {
             error_code |= 0x04;
         }
-        cr2 = Gd;
+        cr2 = linear_address;
         abort_with_error_code(14, error_code);
     }
 }
@@ -1380,7 +1388,7 @@ int x86Internal::do_tlb_lookup(int mem8_loc, int ud) {
     }
     return tlb_lookup ^ mem8_loc;
 }
-int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
+int x86Internal::instruction_length(int opcode, int eip_linear) {
     int CS_flags, mem8, localcc_opbyte_var, conditional_var, stride;
     int n = 1;
     CS_flags = ipr_default;
@@ -1390,7 +1398,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
         stride = 4;
     }
     while (true) {
-        switch (OPbyte) {
+        switch (opcode) {
         case 0x66: // operand-size override prefix
             if (ipr_default & 0x0100) {
                 stride = 4;
@@ -1409,10 +1417,10 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
         case 0x64: // FS segment override prefix
         case 0x65: // GS segment override prefix
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
                      : phys_mem8[mem8_loc ^ last_tlb_val]);
             break;
@@ -1423,10 +1431,10 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 CS_flags |= 0x0080;
             }
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
                      : phys_mem8[mem8_loc ^ last_tlb_val]);
             break;
@@ -1572,7 +1580,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
         case 0xd5: // AAD
             n++;
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xb8: // MOV A
@@ -1597,7 +1605,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
         case 0xe8: // CALL
             n += stride;
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0x88: // MOV
@@ -1663,7 +1671,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
         case 0x62: // BOUND
         case 0x63: // ARPL
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
             mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1687,7 +1695,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
-                        abort(6);
+                        abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
                     localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1734,7 +1742,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 }
             }
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xa0: // MOV AL,
@@ -1747,7 +1755,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 n += 4;
             }
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xc6: // MOV
@@ -1758,7 +1766,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
         case 0xc0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
         case 0xc1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
             mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1782,7 +1790,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
-                        abort(6);
+                        abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
                     localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1829,18 +1837,18 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 }
             }
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             n++;
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xc7: // MOV
         case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
         case 0x69: // IMUL
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
             mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1864,7 +1872,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
-                        abort(6);
+                        abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
                     localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1911,16 +1919,16 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 }
             }
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             n += stride;
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
             mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1944,7 +1952,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
-                        abort(6);
+                        abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
                     localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -1991,19 +1999,19 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 }
             }
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             conditional_var = (mem8 >> 3) & 7;
             if (conditional_var == 0) {
                 n++;
                 if (n > 15) {
-                    abort(6);
+                    abort(13);
                 }
             }
             goto EXEC_LOOP;
         case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
             mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -2027,7 +2035,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
-                        abort(6);
+                        abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
                     localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -2074,13 +2082,13 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                 }
             }
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             conditional_var = (mem8 >> 3) & 7;
             if (conditional_var == 0) {
                 n += stride;
                 if (n > 15) {
-                    abort(6);
+                    abort(13);
                 }
             }
             goto EXEC_LOOP;
@@ -2088,20 +2096,20 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
         case 0x9a: // CALLF
             n += 2 + stride;
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xc2: // RET
         case 0xca: // RET
             n += 2;
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xc8: // ENTER
             n += 3;
             if (n > 15) {
-                abort(6);
+                abort(13);
             }
             goto EXEC_LOOP;
         case 0xd6: // -
@@ -2110,13 +2118,13 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
             abort(6);
         case 0x0f: // 2-byte instruction escape
             if ((n + 1) > 15) {
-                abort(6);
+                abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            OPbyte = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
                           ? __ld_8bits_mem8_read()
                           : phys_mem8[mem8_loc ^ last_tlb_val]);
-            switch (OPbyte) {
+            switch (opcode) {
             case 0x06: // CLTS
             case 0xa2: // -
             case 0x31: // -
@@ -2151,7 +2159,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
             case 0x8f: // JNLE
                 n += stride;
                 if (n > 15) {
-                    abort(6);
+                    abort(13);
                 }
                 goto EXEC_LOOP;
             case 0x90: // SETO
@@ -2214,7 +2222,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
             case 0xb0: // -
             case 0xb1: // -
                 if ((n + 1) > 15) {
-                    abort(6);
+                    abort(13);
                 }
                 mem8_loc = (eip_linear + (n++)) >> 0;
                 mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -2238,7 +2246,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                     switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                     case 0x04:
                         if ((n + 1) > 15) {
-                            abort(6);
+                            abort(13);
                         }
                         mem8_loc = (eip_linear + (n++)) >> 0;
                         localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -2285,14 +2293,14 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                     }
                 }
                 if (n > 15) {
-                    abort(6);
+                    abort(13);
                 }
                 goto EXEC_LOOP;
             case 0xa4: // SHLD
             case 0xac: // SHRD
             case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
                 if ((n + 1) > 15) {
-                    abort(6);
+                    abort(13);
                 }
                 mem8_loc = (eip_linear + (n++)) >> 0;
                 mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -2316,7 +2324,7 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                     switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
                     case 0x04:
                         if ((n + 1) > 15) {
-                            abort(6);
+                            abort(13);
                         }
                         mem8_loc = (eip_linear + (n++)) >> 0;
                         localcc_opbyte_var = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
@@ -2363,11 +2371,11 @@ int x86Internal::operation_size_function(int eip_linear, int OPbyte) {
                     }
                 }
                 if (n > 15) {
-                    abort(6);
+                    abort(13);
                 }
                 n++;
                 if (n > 15) {
-                    abort(6);
+                    abort(13);
                 }
                 goto EXEC_LOOP;
             case 0x04: // -

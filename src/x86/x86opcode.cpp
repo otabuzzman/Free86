@@ -12,7 +12,7 @@ void x86Internal::instruction(int cycles) {
             switch (OPbyte) {
             case 0x66: // operand-size override prefix
                 if (ipr == ipr_default) {
-                    operation_size_function(eip_linear, OPbyte);
+                    instruction_length(OPbyte, eip_linear);
                 }
                 if (ipr_default & 0x0100) {
                     ipr &= ~0x0100;
@@ -24,7 +24,7 @@ void x86Internal::instruction(int cycles) {
                 break;
             case 0x67: // address-size override prefix
                 if (ipr == ipr_default) {
-                    operation_size_function(eip_linear, OPbyte);
+                    instruction_length(OPbyte, eip_linear);
                 }
                 if (ipr_default & 0x0080) {
                     ipr &= ~0x0080;
@@ -36,7 +36,7 @@ void x86Internal::instruction(int cycles) {
                 break;
             case 0xf0: // LOCK prefix
                 if (ipr == ipr_default) {
-                    operation_size_function(eip_linear, OPbyte);
+                    instruction_length(OPbyte, eip_linear);
                 }
                 ipr |= 0x0040;
                 OPbyte = phys_mem8[physmem8_ptr++];
@@ -44,7 +44,7 @@ void x86Internal::instruction(int cycles) {
                 break;
             case 0xf2: // REPN[EZ] repeat string operation prefix
                 if (ipr == ipr_default) {
-                    operation_size_function(eip_linear, OPbyte);
+                    instruction_length(OPbyte, eip_linear);
                 }
                 ipr |= 0x0020;
                 OPbyte = phys_mem8[physmem8_ptr++];
@@ -52,7 +52,7 @@ void x86Internal::instruction(int cycles) {
                 break;
             case 0xf3: // REP[EZ] repeat string operation prefix
                 if (ipr == ipr_default) {
-                    operation_size_function(eip_linear, OPbyte);
+                    instruction_length(OPbyte, eip_linear);
                 }
                 ipr |= 0x0010;
                 OPbyte = phys_mem8[physmem8_ptr++];
@@ -63,7 +63,7 @@ void x86Internal::instruction(int cycles) {
             case 0x36: // SS segment override prefix
             case 0x3e: // DS segment override prefix
                 if (ipr == ipr_default) {
-                    operation_size_function(eip_linear, OPbyte);
+                    instruction_length(OPbyte, eip_linear);
                 }
                 ipr = (ipr & ~0x000f) | (((OPbyte >> 3) & 3) + 1);
                 OPbyte = phys_mem8[physmem8_ptr++];
@@ -72,7 +72,7 @@ void x86Internal::instruction(int cycles) {
             case 0x64: // FS segment override prefix
             case 0x65: // GS segment override prefix
                 if (ipr == ipr_default) {
-                    operation_size_function(eip_linear, OPbyte);
+                    instruction_length(OPbyte, eip_linear);
                 }
                 ipr = (ipr & ~0x000f) | ((OPbyte & 7) + 1);
                 OPbyte = phys_mem8[physmem8_ptr++];

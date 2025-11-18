@@ -46,8 +46,8 @@ class x86Internal {
     int regs[8]{0};
     int eflags = 0x2;
 
-    int eip = 0xfff0;
-    int eip_linear = 0;
+    uint32_t eip = 0xfff0;
+    uint32_t eip_linear = 0;
 
     // clang-format off
     // ES, CS, SS, DS, FS, GS, LDT, TR
@@ -255,33 +255,31 @@ class x86Internal {
     void st32_phys(int mem8_loc, int x) {
         phys_mem32[mem8_loc >> 2] = x;
     }
-    void tlb_set_page(uint32_t mem8_loc, int page_val, int set_write_tlb, int set_user_tlb) {
-        mem8_loc &= -4096; // top 20 bits matter
-        page_val &= -4096;
-        int x = mem8_loc ^ page_val; // poor man's XOR hashing
-        uint32_t i = mem8_loc >> 12;
-        if (tlb_read_kernel[i] == -1) {
+    void tlb_set_page(uint32_t linear_address, int pte, int tlb_set_write, int tlb_set_user) {
+        int tbl_hash = linear_address ^ pte; // poor man's XOR hash
+        uint32_t lat20 = linear_address >> 12;
+        if (tlb_read_kernel[lat20] == -1) {
             if (tlb_pages_count >= 2048) {
-                tlb_flush_all1((i - 1) & 0xfffff);
+                tlb_flush_all1((lat20 - 1) & 0xfffff);
             }
-            tlb_pages[tlb_pages_count++] = i;
+            tlb_pages[tlb_pages_count++] = lat20;
         }
-        tlb_read_kernel[i] = x;
-        if (set_write_tlb) {
-            tlb_write_kernel[i] = x;
+        tlb_read_kernel[lat20] = tbl_hash;
+        if (tlb_set_write) {
+            tlb_write_kernel[lat20] = tbl_hash;
         } else {
-            tlb_write_kernel[i] = -1;
+            tlb_write_kernel[lat20] = -1;
         }
-        if (set_user_tlb) {
-            tlb_read_user[i] = x;
-            if (set_write_tlb) {
-                tlb_write_user[i] = x;
+        if (tlb_set_user) {
+            tlb_read_user[lat20] = tbl_hash;
+            if (tlb_set_write) {
+                tlb_write_user[lat20] = tbl_hash;
             } else {
-                tlb_write_user[i] = -1;
+                tlb_write_user[lat20] = -1;
             }
         } else {
-            tlb_read_user[i] = -1;
-            tlb_write_user[i] = -1;
+            tlb_read_user[lat20] = -1;
+            tlb_write_user[lat20] = -1;
         }
     }
     void tlb_flush_page(uint32_t mem8_loc) {
@@ -340,7 +338,7 @@ class x86Internal {
     void check_interrupt();
     void init_segment_local_vars();
 
-    int operation_size_function(int eip_linear, int OPbyte);
+    int instruction_length(int OPbyte, int eip_linear);
 
     void set_CR0(int Qd);
     void set_CR3(int new_pdb);
