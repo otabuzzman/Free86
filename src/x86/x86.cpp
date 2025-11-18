@@ -46,7 +46,7 @@ int x86Internal::init(int cycles) {
     last_tlb_val = 0;
     far = 0;
     far_start = 0;
-    conditional_var = 0;
+    operation = 0;
     change_permission_level(cpl);
     if (check_halted()) {
         return 257;
@@ -70,7 +70,7 @@ void x86Internal::init_segment_local_vars() {
         ipr_default = 0x0100 | 0x0080;
     }
 }
-void x86Internal::check_opbyte() {
+void x86Internal::check_opcode() {
     eip = (eip + far - far_start) >> 0;
     eip_linear = check_real_mode() ? (eip + CS_base) & 0xfffff : eip + CS_base;
     int64_t eip_tlb_hash = tlb_read[eip_linear >> 12];
@@ -83,10 +83,10 @@ void x86Internal::check_opbyte() {
         }
         eip_tlb_hash = tlb_read[eip_linear >> 12];
         far = far_start = eip_linear ^ eip_tlb_hash;
-        OPbyte = phys_mem8[far++];
+        opcode = phys_mem8[far++];
         int page_offset = eip_linear & 0xfff;
         if (page_offset > (4096 - 15)) {
-            x = instruction_length(OPbyte, eip_linear);
+            x = instruction_length(opcode, eip_linear);
             if ((page_offset + x) > 4096) { // instruction extends page boundary
                 far = far_start = mem_size;
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
@@ -100,7 +100,7 @@ void x86Internal::check_opbyte() {
         }
     } else {
         far = far_start = eip_linear ^ eip_tlb_hash;
-        OPbyte = phys_mem8[far++];
+        opcode = phys_mem8[far++];
     }
 }
 int x86Internal::check_halted() {
@@ -447,7 +447,7 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
         far += 4;
         Ls = 3; // 32 bit mode
     }
-    if (!(OPbyte & 0x01)) {
+    if (!(opcode & 0x01)) {
         Ls = 0; // byte mode, opcodes A0, A2
     }
     Sb = ipr & 0x000f;
@@ -491,9 +491,9 @@ void x86Internal::set_word_in_register(int reg_idx1, int x) {
 void x86Internal::set_lower_word_in_register(int reg_idx1, int x) {
     regs[reg_idx1] = (regs[reg_idx1] & -65536) | (x & 0xffff);
 }
-int x86Internal::do_32bit_math(int conditional_var, int Yb, int Zb) {
+int x86Internal::do_32bit_math(int operation, int Yb, int Zb) {
     int ac;
-    switch (conditional_var & 7) {
+    switch (operation & 7) {
     case 0:
         osm_src = Zb;
         Yb = (Yb + Zb) >> 0;
@@ -543,9 +543,9 @@ int x86Internal::do_32bit_math(int conditional_var, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::do_16bit_math(int conditional_var, int Yb, int Zb) {
+int x86Internal::do_16bit_math(int operation, int Yb, int Zb) {
     int ac;
-    switch (conditional_var & 7) {
+    switch (operation & 7) {
     case 0:
         osm_src = Zb;
         Yb = (((Yb + Zb) << 16) >> 16);
@@ -595,9 +595,9 @@ int x86Internal::do_16bit_math(int conditional_var, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::do_8bit_math(int conditional_var, int Yb, int Zb) {
+int x86Internal::do_8bit_math(int operation, int Yb, int Zb) {
     int ac;
-    switch (conditional_var & 7) {
+    switch (operation & 7) {
     case 0:
         osm_src = Zb;
         Yb = (((Yb + Zb) << 24) >> 24);
@@ -683,9 +683,9 @@ int x86Internal::decrement_8bit(int x) {
     osm = 28;
     return osm_dst;
 }
-int x86Internal::shift8(int conditional_var, int Yb, int Zb) {
+int x86Internal::shift8(int operation, int Yb, int Zb) {
     int kc, ac;
-    switch (conditional_var & 7) {
+    switch (operation & 7) {
     case 0:
         if (Zb & 0x1f) {
             Zb &= 0x7;
@@ -784,9 +784,9 @@ int x86Internal::shift8(int conditional_var, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::shift16(int conditional_var, int Yb, int Zb) {
+int x86Internal::shift16(int operation, int Yb, int Zb) {
     int kc, ac;
-    switch (conditional_var & 7) {
+    switch (operation & 7) {
     case 0:
         if (Zb & 0x1f) {
             Zb &= 0xf;
@@ -885,10 +885,10 @@ int x86Internal::shift16(int conditional_var, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb) {
+int x86Internal::shift32(int operation, uint32_t Yb, int Zb) {
     uint32_t kc;
     int ac;
-    switch (conditional_var & 7) {
+    switch (operation & 7) {
     case 0:
         Zb &= 0x1f;
         if (Zb) {
@@ -982,11 +982,11 @@ int x86Internal::shift32(int conditional_var, uint32_t Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc) {
+int x86Internal::op_16_SHRD_SHLD(int operation, int Yb, int Zb, int pc) {
     int flg;
     pc &= 0x1f;
     if (pc) {
-        if (conditional_var == 0) {
+        if (operation == 0) { // SHLD
             Zb &= 0xffff;
             flg = Zb | (Yb << 16);
             osm_src = flg >> (32 - pc);
@@ -996,7 +996,7 @@ int x86Internal::op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc) {
             }
             Yb = osm_dst = flg >> 16;
             osm = 19;
-        } else {
+        } else { // SHRD
             flg = (Yb & 0xffff) | (Zb << 16);
             osm_src = flg >> (pc - 1);
             flg = flg >> pc;
@@ -1044,19 +1044,19 @@ void x86Internal::op_BT(int Yb, int Zb) {
     osm_src = Yb >> Zb;
     osm = 20;
 }
-int x86Internal::op_16_BTS_BTR_BTC(int conditional_var, int Yb, int Zb) {
+int x86Internal::op_16_BTS_BTR_BTC(int operation, int Yb, int Zb) {
     int wc;
     Zb &= 0xf;
     osm_src = Yb >> Zb;
     wc = 1 << Zb;
-    switch (conditional_var) {
-    case 1:
+    switch (operation) {
+    case 1: // BTS
         Yb |= wc;
         break;
-    case 2:
+    case 2: // BTR
         Yb &= ~wc;
         break;
-    case 3:
+    case 3: // BTC
     default:
         Yb ^= wc;
         break;
@@ -1064,19 +1064,19 @@ int x86Internal::op_16_BTS_BTR_BTC(int conditional_var, int Yb, int Zb) {
     osm = 19;
     return Yb;
 }
-int x86Internal::op_BTS_BTR_BTC(int conditional_var, int Yb, int Zb) {
+int x86Internal::op_BTS_BTR_BTC(int operation, int Yb, int Zb) {
     int wc;
     Zb &= 0x1f;
     osm_src = Yb >> Zb;
     wc = 1 << Zb;
-    switch (conditional_var) {
-    case 1:
+    switch (operation) {
+    case 1: // BTS
         Yb |= wc;
         break;
-    case 2:
+    case 2: // BTR
         Yb &= ~wc;
         break;
-    case 3:
+    case 3: // BTC
     default:
         Yb ^= wc;
         break;
@@ -1142,78 +1142,78 @@ int x86Internal::op_BSR(int Yb, int Zb) {
     osm = 14;
     return Yb;
 }
-void x86Internal::op_DIV(int OPbyte) {
+void x86Internal::op_DIV(int opcode) {
     int a, q, r;
     a = regs[0] & 0xffff;
-    OPbyte &= 0xff;
-    if ((a >> 8) >= OPbyte) {
+    opcode &= 0xff;
+    if ((a >> 8) >= opcode) {
         abort(0);
     }
-    q = (a / OPbyte) >> 0;
-    r = (a % OPbyte);
+    q = (a / opcode) >> 0;
+    r = (a % opcode);
     set_lower_word_in_register(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_IDIV(int OPbyte) {
+void x86Internal::op_IDIV(int opcode) {
     int a, q, r;
     a = (regs[0] << 16) >> 16;
-    OPbyte = (OPbyte << 24) >> 24;
-    if (OPbyte == 0) {
+    opcode = (opcode << 24) >> 24;
+    if (opcode == 0) {
         abort(0);
     }
-    q = (a / OPbyte) >> 0;
+    q = (a / opcode) >> 0;
     if (((q << 24) >> 24) != q) {
         abort(0);
     }
-    r = (a % OPbyte);
+    r = (a % opcode);
     set_lower_word_in_register(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_16_DIV(int OPbyte) {
+void x86Internal::op_16_DIV(int opcode) {
     int a, q, r;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
-    OPbyte &= 0xffff;
+    opcode &= 0xffff;
     uint32_t au = a;
-    if ((au >> 16) >= OPbyte) {
+    if ((au >> 16) >= opcode) {
         abort(0);
     }
-    q = (au / OPbyte) >> 0;
-    r = (au % OPbyte);
+    q = (au / opcode) >> 0;
+    r = (au % opcode);
     set_lower_word_in_register(0, q);
     set_lower_word_in_register(2, r);
 }
-void x86Internal::op_16_IDIV(int OPbyte) {
+void x86Internal::op_16_IDIV(int opcode) {
     int a, q, r;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
-    OPbyte = (OPbyte << 16) >> 16;
-    if (OPbyte == 0) {
+    opcode = (opcode << 16) >> 16;
+    if (opcode == 0) {
         abort(0);
     }
-    q = (a / OPbyte) >> 0;
+    q = (a / opcode) >> 0;
     if (((q << 16) >> 16) != q) {
         abort(0);
     }
-    r = (a % OPbyte);
+    r = (a % opcode);
     set_lower_word_in_register(0, q);
     set_lower_word_in_register(2, r);
 }
-int x86Internal::op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t OPbyte) {
+int x86Internal::op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t opcode) {
     uint64_t a;
     uint32_t i, Kc;
     Ic = Ic >> 0;
     Jc = Jc >> 0;
-    OPbyte = OPbyte >> 0;
-    if (Ic >= OPbyte) {
+    opcode = opcode >> 0;
+    if (Ic >= opcode) {
         abort(0);
     }
     if (Ic >= 0 && Ic <= 0x200000) {
         a = Ic * 4294967296 + Jc;
-        v = (a % OPbyte) >> 0;
-        return (a / OPbyte) >> 0;
+        v = (a % opcode) >> 0;
+        return (a / opcode) >> 0;
     } else {
         for (i = 0; i < 32; i++) {
             Kc = Ic >> 31;
             Ic = ((Ic << 1) | (Jc >> 31)) >> 0;
-            if (Kc || Ic >= OPbyte) {
-                Ic = Ic - OPbyte;
+            if (Kc || Ic >= opcode) {
+                Ic = Ic - opcode;
                 Jc = (Jc << 1) | 1;
             } else {
                 Jc = Jc << 1;
@@ -1223,7 +1223,7 @@ int x86Internal::op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t OPbyte) {
         return Jc;
     }
 }
-int x86Internal::op_IDIV32(int Ic, int Jc, int OPbyte) {
+int x86Internal::op_IDIV32(int Ic, int Jc, int opcode) {
     int Mc, Nc, q;
     if (Ic < 0) {
         Mc = 1;
@@ -1235,13 +1235,13 @@ int x86Internal::op_IDIV32(int Ic, int Jc, int OPbyte) {
     } else {
         Mc = 0;
     }
-    if (OPbyte < 0) {
-        OPbyte = (-OPbyte) >> 0;
+    if (opcode < 0) {
+        opcode = (-opcode) >> 0;
         Nc = 1;
     } else {
         Nc = 0;
     }
-    q = op_DIV32(Ic, Jc, OPbyte);
+    q = op_DIV32(Ic, Jc, opcode);
     Nc ^= Mc;
     if (Nc) {
         if ((q >> 0) > 0x80000000) {
@@ -1258,39 +1258,39 @@ int x86Internal::op_IDIV32(int Ic, int Jc, int OPbyte) {
     }
     return q;
 }
-int x86Internal::op_MUL(int a, int OPbyte) {
+int x86Internal::op_MUL(int a, int opcode) {
     int flg;
     a &= 0xff;
-    OPbyte &= 0xff;
-    flg = (regs[0] & 0xff) * (OPbyte & 0xff);
+    opcode &= 0xff;
+    flg = (regs[0] & 0xff) * (opcode & 0xff);
     osm_src = flg >> 8;
     osm_dst = (((flg) << 24) >> 24);
     osm = 21;
     return flg;
 }
-int x86Internal::op_IMUL(int a, int OPbyte) {
+int x86Internal::op_IMUL(int a, int opcode) {
     int flg;
     a = (((a) << 24) >> 24);
-    OPbyte = (((OPbyte) << 24) >> 24);
-    flg = (a * OPbyte) >> 0;
+    opcode = (((opcode) << 24) >> 24);
+    flg = (a * opcode) >> 0;
     osm_dst = (((flg) << 24) >> 24);
     osm_src = (flg != osm_dst) >> 0;
     osm = 21;
     return flg;
 }
-int x86Internal::op_16_MUL(int a, int OPbyte) {
+int x86Internal::op_16_MUL(int a, int opcode) {
     int flg;
-    flg = ((a & 0xffff) * (OPbyte & 0xffff)) >> 0;
+    flg = ((a & 0xffff) * (opcode & 0xffff)) >> 0;
     osm_src = flg >> 16;
     osm_dst = (((flg) << 16) >> 16);
     osm = 22;
     return flg;
 }
-int x86Internal::op_16_IMUL(int a, int OPbyte) {
+int x86Internal::op_16_IMUL(int a, int opcode) {
     int flg;
     a = (a << 16) >> 16;
-    OPbyte = (OPbyte << 16) >> 16;
-    flg = (a * OPbyte) >> 0;
+    opcode = (opcode << 16) >> 16;
+    flg = (a * opcode) >> 0;
     osm_dst = (((flg) << 16) >> 16);
     osm_src = (flg != osm_dst) >> 0;
     osm = 22;
@@ -1300,16 +1300,16 @@ int x86Internal::do_multiply32(int _a, int cc_opbyte) {
     uint32_t Jc, Ic, Tc, Uc, m;
     uint64_t a = _a;
     uint32_t au = _a;
-    uint32_t OPbyte = cc_opbyte;
-    uint64_t r = a * OPbyte;
+    uint32_t opcode = cc_opbyte;
+    uint64_t r = a * opcode;
     if (r <= 0xffffffff) {
         v = 0;
         r &= -1;
     } else {
         Jc = a & 0xffff;
         Ic = au >> 16;
-        Tc = OPbyte & 0xffff;
-        Uc = OPbyte >> 16;
+        Tc = opcode & 0xffff;
+        Uc = opcode >> 16;
         r = Jc * Tc;
         v = Ic * Uc;
         m = Jc * Uc;
@@ -1331,24 +1331,24 @@ int x86Internal::do_multiply32(int _a, int cc_opbyte) {
     }
     return r;
 }
-int x86Internal::op_MUL32(int a, int OPbyte) {
-    osm_dst = do_multiply32(a, OPbyte);
+int x86Internal::op_MUL32(int a, int opcode) {
+    osm_dst = do_multiply32(a, opcode);
     osm_src = v;
     osm = 23;
     return osm_dst;
 }
-int x86Internal::op_IMUL32(int a, int OPbyte) {
+int x86Internal::op_IMUL32(int a, int opcode) {
     int s, r;
     s = 0;
     if (a < 0) {
         a = -a;
         s = 1;
     }
-    if (OPbyte < 0) {
-        OPbyte = -OPbyte;
+    if (opcode < 0) {
+        opcode = -opcode;
         s ^= 1;
     }
-    r = do_multiply32(a, OPbyte);
+    r = do_multiply32(a, opcode);
     if (s) {
         v = ~v;
         r = (-r) >> 0;
@@ -1389,7 +1389,7 @@ int x86Internal::do_tlb_lookup(int mem8_loc, int ud) {
     return tlb_lookup ^ mem8_loc;
 }
 int x86Internal::instruction_length(int opcode, int eip_linear) {
-    int CS_flags, mem8, localcc_opbyte_var, conditional_var, stride;
+    int CS_flags, mem8, localcc_opbyte_var, operation, stride;
     int n = 1;
     CS_flags = ipr_default;
     if (CS_flags & 0x0100) {
@@ -2001,8 +2001,8 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             if (n > 15) {
                 abort(13);
             }
-            conditional_var = (mem8 >> 3) & 7;
-            if (conditional_var == 0) {
+            operation = (mem8 >> 3) & 7;
+            if (operation == 0) {
                 n++;
                 if (n > 15) {
                     abort(13);
@@ -2084,8 +2084,8 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             if (n > 15) {
                 abort(13);
             }
-            conditional_var = (mem8 >> 3) & 7;
-            if (conditional_var == 0) {
+            operation = (mem8 >> 3) & 7;
+            if (operation == 0) {
                 n += stride;
                 if (n > 15) {
                     abort(13);

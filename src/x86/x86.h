@@ -84,7 +84,7 @@ class x86Internal {
     int cr3 = 0;
     int cr4 = 0;
 
-    int OPbyte = 0;
+    int opcode = 0;
 
 /*
    Operand Size Mode
@@ -195,9 +195,9 @@ class x86Internal {
     uint32_t mem8_loc; // linear byte address
     int mem8;          // and value
 
-    int conditional_var = 0; // opcode_543 bits 5, 4, and 3 of opcode or modR/M byte
-    int reg_idx0, reg_idx1;  // register indices (0-7)
-    int x, y, z, v;          // intermediate values
+    int operation = 0; // either bits 5, 4, and 3 of opcode or modR/M byte
+    int reg_idx0, reg_idx1; // register indices (0-7)
+    int x, y, z, v;         // intermediate values
 
     int cycles_requested = 0;
     int cycles_remaining = 0;
@@ -342,7 +342,7 @@ class x86Internal {
     void check_interrupt();
     void init_segment_local_vars();
 
-    int instruction_length(int OPbyte, int eip_linear);
+    int instruction_length(int opcode, int eip_linear);
 
     void set_CR0(int Qd);
     void set_CR3(int new_pdb);
@@ -350,7 +350,7 @@ class x86Internal {
     bool check_real_mode();
     bool check_protected();
 
-    void check_opbyte();
+    void check_opcode();
 
     virtual int get_hard_irq() = 0;
     virtual int get_hard_intno() = 0;
@@ -411,41 +411,41 @@ class x86Internal {
     void set_word_in_register(int reg_idx1, int x);
     void set_lower_word_in_register(int reg_idx1, int x);
 
-    int do_32bit_math(int conditional_var, int Yb, int Zb);
-    int do_16bit_math(int conditional_var, int Yb, int Zb);
-    int do_8bit_math(int conditional_var, int Yb, int Zb);
+    int do_32bit_math(int operation, int Yb, int Zb);
+    int do_16bit_math(int operation, int Yb, int Zb);
+    int do_8bit_math(int operation, int Yb, int Zb);
     int increment_16bit(int x);
     int decrement_16bit(int x);
     int increment_8bit(int x);
     int decrement_8bit(int x);
-    int shift8(int conditional_var, int Yb, int Zb);
-    int shift16(int conditional_var, int Yb, int Zb);
-    int shift32(int conditional_var, uint32_t Yb, int Zb);
+    int shift8(int operation, int Yb, int Zb);
+    int shift16(int operation, int Yb, int Zb);
+    int shift32(int operation, uint32_t Yb, int Zb);
 
-    int op_16_SHRD_SHLD(int conditional_var, int Yb, int Zb, int pc);
+    int op_16_SHRD_SHLD(int operation, int Yb, int Zb, int pc);
     int op_SHLD(int Yb, int Zb, int pc);
     int op_SHRD(int Yb, int Zb, int pc);
     void op_16_BT(int Yb, int Zb);
     void op_BT(int Yb, int Zb);
-    int op_16_BTS_BTR_BTC(int conditional_var, int Yb, int Zb);
-    int op_BTS_BTR_BTC(int conditional_var, int Yb, int Zb);
+    int op_16_BTS_BTR_BTC(int operation, int Yb, int Zb);
+    int op_BTS_BTR_BTC(int operation, int Yb, int Zb);
     int op_16_BSF(int Yb, int Zb);
     int op_BSF(int Yb, int Zb);
     int op_16_BSR(int Yb, int Zb);
     int op_BSR(int Yb, int Zb);
-    void op_DIV(int OPbyte);
-    void op_IDIV(int OPbyte);
-    void op_16_DIV(int OPbyte);
-    void op_16_IDIV(int OPbyte);
-    int op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t OPbyte);
-    int op_IDIV32(int Ic, int Jc, int OPbyte);
-    int op_MUL(int a, int OPbyte);
-    int op_IMUL(int a, int OPbyte);
-    int op_16_MUL(int a, int OPbyte);
-    int op_16_IMUL(int a, int OPbyte);
+    void op_DIV(int opcode);
+    void op_IDIV(int opcode);
+    void op_16_DIV(int opcode);
+    void op_16_IDIV(int opcode);
+    int op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t opcode);
+    int op_IDIV32(int Ic, int Jc, int opcode);
+    int op_MUL(int a, int opcode);
+    int op_IMUL(int a, int opcode);
+    int op_16_MUL(int a, int opcode);
+    int op_16_IMUL(int a, int opcode);
     int do_multiply32(int _a, int cc_opbyte);
-    int op_MUL32(int a, int OPbyte);
-    int op_IMUL32(int a, int OPbyte);
+    int op_MUL32(int a, int opcode);
+    int op_IMUL32(int a, int opcode);
 
     bool check_carry();
     bool check_overflow();
