@@ -19,7 +19,7 @@ void x86Internal::stringOp_INSB() {
             return;
         }
         x = ld8_port(Zf);
-        mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+        mem8_loc = (Yf & Xf) + segs[0].base;
         st8_mem8_write(x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -28,7 +28,7 @@ void x86Internal::stringOp_INSB() {
         }
     } else {
         x = ld8_port(Zf);
-        mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+        mem8_loc = (Yf & Xf) + segs[0].base;
         st8_mem8_write(x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
     }
@@ -57,7 +57,7 @@ void x86Internal::stringOp_OUTSB() {
         if ((ag & Xf) == 0) {
             return;
         }
-        mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+        mem8_loc = (cg & Xf) + segs[Sb].base;
         x = ld_8bits_mem8_read();
         st8_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
@@ -66,7 +66,7 @@ void x86Internal::stringOp_OUTSB() {
             far = far_start;
         }
     } else {
-        mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+        mem8_loc = (cg & Xf) + segs[Sb].base;
         x = ld_8bits_mem8_read();
         st8_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
@@ -87,8 +87,8 @@ void x86Internal::stringOp_MOVSB() {
     }
     cg = regs[6];
     Yf = regs[7];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
-    eg = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
+    eg = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -119,7 +119,7 @@ void x86Internal::stringOp_STOSB() {
         Xf = -1;
     }
     Yf = regs[7];
-    mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -151,8 +151,8 @@ void x86Internal::stringOp_CMPSB() {
     }
     cg = regs[6];
     Yf = regs[7];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
-    eg = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
+    eg = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -200,7 +200,7 @@ void x86Internal::stringOp_LODSB() {
         Sb--;
     }
     cg = regs[6];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -227,7 +227,7 @@ void x86Internal::stringOp_SCASB() {
         Xf = -1;
     }
     Yf = regs[7];
-    mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -274,7 +274,7 @@ void x86Internal::stringOp_INSW() {
             return;
         }
         x = ld16_port(Zf);
-        mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+        mem8_loc = (Yf & Xf) + segs[0].base;
         st16_mem8_write(x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -283,7 +283,7 @@ void x86Internal::stringOp_INSW() {
         }
     } else {
         x = ld16_port(Zf);
-        mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+        mem8_loc = (Yf & Xf) + segs[0].base;
         st16_mem8_write(x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
@@ -312,7 +312,7 @@ void x86Internal::stringOp_OUTSW() {
         if ((ag & Xf) == 0) {
             return;
         }
-        mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+        mem8_loc = (cg & Xf) + segs[Sb].base;
         x = ld_16bits_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
@@ -321,7 +321,7 @@ void x86Internal::stringOp_OUTSW() {
             far = far_start;
         }
     } else {
-        mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+        mem8_loc = (cg & Xf) + segs[Sb].base;
         x = ld_16bits_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
@@ -342,8 +342,8 @@ void x86Internal::stringOp_MOVSW() {
     }
     cg = regs[6];
     Yf = regs[7];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
-    eg = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
+    eg = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -374,7 +374,7 @@ void x86Internal::stringOp_STOSW() {
         Xf = -1;
     }
     Yf = regs[7];
-    mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -406,8 +406,8 @@ void x86Internal::stringOp_CMPSW() {
     }
     cg = regs[6];
     Yf = regs[7];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
-    eg = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
+    eg = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -455,7 +455,7 @@ void x86Internal::stringOp_LODSW() {
         Sb--;
     }
     cg = regs[6];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -482,7 +482,7 @@ void x86Internal::stringOp_SCASW() {
         Xf = -1;
     }
     Yf = regs[7];
-    mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -529,7 +529,7 @@ void x86Internal::stringOp_INSD() {
             return;
         }
         x = ld32_port(Zf);
-        mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+        mem8_loc = (Yf & Xf) + segs[0].base;
         st32_mem8_write(x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -538,7 +538,7 @@ void x86Internal::stringOp_INSD() {
         }
     } else {
         x = ld32_port(Zf);
-        mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+        mem8_loc = (Yf & Xf) + segs[0].base;
         st32_mem8_write(x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
     }
@@ -567,7 +567,7 @@ void x86Internal::stringOp_OUTSD() {
         if ((ag & Xf) == 0) {
             return;
         }
-        mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+        mem8_loc = (cg & Xf) + segs[Sb].base;
         x = ld_32bits_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
@@ -576,7 +576,7 @@ void x86Internal::stringOp_OUTSD() {
             far = far_start;
         }
     } else {
-        mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+        mem8_loc = (cg & Xf) + segs[Sb].base;
         x = ld_32bits_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
@@ -597,8 +597,8 @@ void x86Internal::stringOp_MOVSD() {
     }
     cg = regs[6];
     Yf = regs[7];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
-    eg = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
+    eg = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -629,7 +629,7 @@ void x86Internal::stringOp_STOSD() {
         Xf = -1;
     }
     Yf = regs[7];
-    mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -661,8 +661,8 @@ void x86Internal::stringOp_CMPSD() {
     }
     cg = regs[6];
     Yf = regs[7];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
-    eg = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
+    eg = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -710,7 +710,7 @@ void x86Internal::stringOp_LODSD() {
         Sb--;
     }
     cg = regs[6];
-    mem8_loc = ((cg & Xf) + segs[Sb].base) >> 0;
+    mem8_loc = (cg & Xf) + segs[Sb].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {
@@ -737,7 +737,7 @@ void x86Internal::stringOp_SCASD() {
         Xf = -1;
     }
     Yf = regs[7];
-    mem8_loc = ((Yf & Xf) + segs[0].base) >> 0;
+    mem8_loc = (Yf & Xf) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
         ag = regs[1];
         if ((ag & Xf) == 0) {

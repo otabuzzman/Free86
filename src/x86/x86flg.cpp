@@ -19,7 +19,7 @@ bool x86Internal::check_carry() {
         rval = (reldst & 0xffff) < (osm_src & 0xffff);
         break;
     case 2:
-        rval = (reldst >> 0) < (osm_src >> 0);
+        rval = reldst < osm_src;
         break;
     case 3:
         rval = (reldst & 0xff) <= (osm_src & 0xff);
@@ -28,7 +28,7 @@ bool x86Internal::check_carry() {
         rval = (reldst & 0xffff) <= (osm_src & 0xffff);
         break;
     case 5:
-        rval = (reldst >> 0) <= (osm_src >> 0);
+        rval = reldst <= osm_src;
         break;
     case 6:
         rval = ((reldst + osm_src) & 0xff) < (osm_src & 0xff);
@@ -37,7 +37,7 @@ bool x86Internal::check_carry() {
         rval = ((reldst + osm_src) & 0xffff) < (osm_src & 0xffff);
         break;
     case 8:
-        rval = ((reldst + osm_src) >> 0) < (osm_src >> 0);
+        rval = ((reldst + osm_src) < osm_src);
         break;
     case 9:
         rval = ((reldst + osm_src + 1) & 0xff) <= (osm_src & 0xff);
@@ -46,7 +46,7 @@ bool x86Internal::check_carry() {
         rval = ((reldst + osm_src + 1) & 0xffff) <= (osm_src & 0xffff);
         break;
     case 11:
-        rval = ((reldst + osm_src + 1) >> 0) <= (osm_src >> 0);
+        rval = ((reldst + osm_src + 1) <= osm_src);
         break;
     case 12:
     case 13:
@@ -83,51 +83,51 @@ bool x86Internal::check_overflow() {
     int Yb;
     switch (osm % 0x1f) {
     case 0:
-        Yb = (osm_dst - osm_src) >> 0;
+        Yb = osm_dst - osm_src;
         rval = (((Yb ^ osm_src ^ -1) & (Yb ^ osm_dst)) >> 7) & 1;
         break;
     case 1:
-        Yb = (osm_dst - osm_src) >> 0;
+        Yb = osm_dst - osm_src;
         rval = (((Yb ^ osm_src ^ -1) & (Yb ^ osm_dst)) >> 15) & 1;
         break;
     case 2:
-        Yb = (osm_dst - osm_src) >> 0;
+        Yb = osm_dst - osm_src;
         rval = (((Yb ^ osm_src ^ -1) & (Yb ^ osm_dst)) >> 31) & 1;
         break;
     case 3:
-        Yb = (osm_dst - osm_src - 1) >> 0;
+        Yb = osm_dst - osm_src - 1;
         rval = (((Yb ^ osm_src ^ -1) & (Yb ^ osm_dst)) >> 7) & 1;
         break;
     case 4:
-        Yb = (osm_dst - osm_src - 1) >> 0;
+        Yb = osm_dst - osm_src - 1;
         rval = (((Yb ^ osm_src ^ -1) & (Yb ^ osm_dst)) >> 15) & 1;
         break;
     case 5:
-        Yb = (osm_dst - osm_src - 1) >> 0;
+        Yb = osm_dst - osm_src - 1;
         rval = (((Yb ^ osm_src ^ -1) & (Yb ^ osm_dst)) >> 31) & 1;
         break;
     case 6:
-        Yb = (osm_dst + osm_src) >> 0;
+        Yb = osm_dst + osm_src;
         rval = (((Yb ^ osm_src) & (Yb ^ osm_dst)) >> 7) & 1;
         break;
     case 7:
-        Yb = (osm_dst + osm_src) >> 0;
+        Yb = osm_dst + osm_src;
         rval = (((Yb ^ osm_src) & (Yb ^ osm_dst)) >> 15) & 1;
         break;
     case 8:
-        Yb = (osm_dst + osm_src) >> 0;
+        Yb = osm_dst + osm_src;
         rval = (((Yb ^ osm_src) & (Yb ^ osm_dst)) >> 31) & 1;
         break;
     case 9:
-        Yb = (osm_dst + osm_src + 1) >> 0;
+        Yb = osm_dst + osm_src + 1;
         rval = (((Yb ^ osm_src) & (Yb ^ osm_dst)) >> 7) & 1;
         break;
     case 10:
-        Yb = (osm_dst + osm_src + 1) >> 0;
+        Yb = osm_dst + osm_src + 1;
         rval = (((Yb ^ osm_src) & (Yb ^ osm_dst)) >> 15) & 1;
         break;
     case 11:
-        Yb = (osm_dst + osm_src + 1) >> 0;
+        Yb = osm_dst + osm_src + 1;
         rval = (((Yb ^ osm_src) & (Yb ^ osm_dst)) >> 31) & 1;
         break;
     case 12:
@@ -187,7 +187,7 @@ bool x86Internal::check_below_or_equal() { // `below' for signed comparison, PM 
         break;
     case 8: {
         uint32_t val = osm_dst + osm_src;
-        flg = (val >> 0) <= (osm_src >> 0);
+        flg = val <= osm_src;
     } break;
     case 24:
         flg = (osm_src & (0x0040 | 0x0001)) != 0;
@@ -215,7 +215,7 @@ int x86Internal::check_less_than() {
         flg = ((osm_dst + osm_src) << 16) < (osm_src << 16);
         break;
     case 8:
-        flg = ((osm_dst + osm_src) >> 0) < osm_src;
+        flg = (osm_dst + osm_src) < osm_src;
         break;
     case 12:
     case 13:
@@ -247,7 +247,7 @@ int x86Internal::check_less_or_equal() { // `less' for unsigned comparison, PM p
         flg = ((osm_dst + osm_src) << 16) <= (osm_src << 16);
         break;
     case 8:
-        flg = ((osm_dst + osm_src) >> 0) <= osm_src;
+        flg = (osm_dst + osm_src) <= osm_src;
         break;
     case 12:
     case 13:
@@ -276,25 +276,25 @@ int x86Internal::check_adjust_flag() {
     case 0:
     case 1:
     case 2:
-        Yb = (osm_dst - osm_src) >> 0;
+        Yb = osm_dst - osm_src;
         rval = (osm_dst ^ Yb ^ osm_src) & 0x10;
         break;
     case 3:
     case 4:
     case 5:
-        Yb = (osm_dst - osm_src - 1) >> 0;
+        Yb = osm_dst - osm_src - 1;
         rval = (osm_dst ^ Yb ^ osm_src) & 0x10;
         break;
     case 6:
     case 7:
     case 8:
-        Yb = (osm_dst + osm_src) >> 0;
+        Yb = osm_dst + osm_src;
         rval = (osm_dst ^ Yb ^ osm_src) & 0x10;
         break;
     case 9:
     case 10:
     case 11:
-        Yb = (osm_dst + osm_src + 1) >> 0;
+        Yb = osm_dst + osm_src + 1;
         rval = (osm_dst ^ Yb ^ osm_src) & 0x10;
         break;
     case 12:
