@@ -495,7 +495,7 @@ class x86Internal {
     void op_CALLF(bool is_32_bit, int selector, int Le, int oe);
     void do_return_not_protected_mode(bool is_32_bit, bool is_iret, int imm16);
     void do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16);
-    void Pe(int reg, int cpl_var);
+    void Pe(int reg, int cpl);
     void op_IRET(bool is_32_bit);
     void op_RETF(bool is_32_bit, int imm16);
     void op_LAR_LSL(bool is_32_bit, bool is_lsl);

@@ -2600,7 +2600,7 @@ void x86Internal::load_from_TR(int he, int *desary) {
 }
 void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe) {
     SegmentDescriptor descriptor_table;
-    int qe, descriptor_type, selector, re, cpl_var;
+    int qe, descriptor_type, selector, re;
     int te, ue, is_32_bit;
     int desp_low4, desp_high4, ve, ke, le, we, xe;
     int ye, SS_mask;
@@ -2647,8 +2647,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
         break;
     }
     dpl = (desp_high4 >> 13) & 3;
-    cpl_var = cpl;
-    if (ne && dpl < cpl_var) {
+    if (ne && dpl < cpl) {
         abort_with_error_code(13, intno * 8 + 2);
     }
     if (!(desp_high4 & (1 << 15))) {
@@ -2669,13 +2668,13 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
         abort_with_error_code(13, selector & 0xfffc);
     }
     dpl = (desp_high4 >> 13) & 3;
-    if (dpl > cpl_var) {
+    if (dpl > cpl) {
         abort_with_error_code(13, selector & 0xfffc);
     }
     if (!(desp_high4 & (1 << 15))) {
         abort_with_error_code(11, selector & 0xfffc);
     }
-    if (!(desp_high4 & (1 << 10)) && dpl < cpl_var) {
+    if (!(desp_high4 & (1 << 10)) && dpl < cpl) {
         load_from_TR(dpl, e);
         ke = e[0];
         le = e[1];
@@ -2704,7 +2703,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
         ue = 1;
         SS_mask = SS_mask_from_flags(xe);
         qe = calc_desp_base(we, xe);
-    } else if ((desp_high4 & (1 << 10)) || dpl == cpl_var) {
+    } else if ((desp_high4 & (1 << 10)) || dpl == cpl) {
         if (eflags & 0x00020000) {
             abort_with_error_code(13, selector & 0xfffc);
         }
@@ -2712,7 +2711,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
         SS_mask = SS_mask_from_flags(segs[2].flags);
         qe = segs[2].base;
         le = regs[4];
-        dpl = cpl_var;
+        dpl = cpl;
     } else {
         abort_with_error_code(13, selector & 0xfffc);
         ue = 0;
@@ -2949,8 +2948,7 @@ void x86Internal::op_LTR(int selector) {
 }
 void x86Internal::set_protected_mode_segment_register(int reg, int selector) {
     SegmentDescriptor descriptor_table;
-    int desp_low4, desp_high4, cpl_var, dpl, rpl, selector_index;
-    cpl_var = cpl;
+    int desp_low4, desp_high4, dpl, rpl, selector_index;
     if ((selector & 0xfffc) == 0) { // null selector
         if (reg == 2) {
             abort_with_error_code(13, 0);
@@ -2979,7 +2977,7 @@ void x86Internal::set_protected_mode_segment_register(int reg, int selector) {
             if ((desp_high4 & (1 << 11)) || !(desp_high4 & (1 << 9))) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
-            if (rpl != cpl_var || dpl != cpl_var) {
+            if (rpl != cpl || dpl != cpl) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
         } else {
@@ -2987,7 +2985,7 @@ void x86Internal::set_protected_mode_segment_register(int reg, int selector) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
             if (!(desp_high4 & (1 << 11)) || !(desp_high4 & (1 << 10))) {
-                if (dpl < cpl_var || dpl < rpl) {
+                if (dpl < cpl || dpl < rpl) {
                     abort_with_error_code(13, selector & 0xfffc);
                 }
             }
@@ -3025,7 +3023,7 @@ void x86Internal::do_JMPF_virtual_mode(int selector, int Le) {
     init_segment_local_vars();
 }
 void x86Internal::do_JMPF(int selector, int Le) {
-    int desp_low4, desp_high4, cpl_var, dpl, rpl;
+    int desp_low4, desp_high4, dpl, rpl;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
         abort_with_error_code(13, 0);
@@ -3037,22 +3035,21 @@ void x86Internal::do_JMPF(int selector, int Le) {
     }
     desp_low4 = e[0];
     desp_high4 = e[1];
-    cpl_var = cpl;
     if (desp_high4 & (1 << 12)) {
         if (!(desp_high4 & (1 << 11))) {
             abort_with_error_code(13, selector & 0xfffc);
         }
         dpl = (desp_high4 >> 13) & 3;
         if (desp_high4 & (1 << 10)) {
-            if (dpl > cpl_var) {
+            if (dpl > cpl) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
         } else {
             rpl = selector & 3;
-            if (rpl > cpl_var) {
+            if (rpl > cpl) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
-            if (dpl != cpl_var) {
+            if (dpl != cpl) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
         }
@@ -3063,7 +3060,7 @@ void x86Internal::do_JMPF(int selector, int Le) {
         if ((Le >> 0) > (limit >> 0)) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit,  desp_high4);
+        set_segment_vars(1, (selector & 0xfffc) | cpl, calc_desp_base(desp_low4, desp_high4), limit,  desp_high4);
         eip = Le, far = far_start = 0;
     } else {
         throw "fatal: unsupported TSS or task gate in JMP";
@@ -3076,7 +3073,7 @@ void x86Internal::op_JMPF(int selector, int Le) {
         do_JMPF(selector, Le);
     }
 }
-void x86Internal::Pe(int reg, int cpl_var) {
+void x86Internal::Pe(int reg, int cpl) {
     int dpl, desp_high4;
     if ((reg == 4 || reg == 5) && (segs[reg].selector & 0xfffc) == 0) {
         return;
@@ -3084,7 +3081,7 @@ void x86Internal::Pe(int reg, int cpl_var) {
     desp_high4 = segs[reg].flags;
     dpl = (desp_high4 >> 13) & 3;
     if (!(desp_high4 & (1 << 11)) || !(desp_high4 & (1 << 10))) {
-        if (dpl < cpl_var) {
+        if (dpl < cpl) {
             set_segment_vars(reg, 0, 0, 0, 0);
         }
     }
@@ -3115,7 +3112,7 @@ void x86Internal::op_CALLF_not_protected_mode(bool is_32_bit, int selector, int 
 }
 void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe) {
     int ue, i;
-    int desp_low4, desp_high4, cpl_var, dpl, rpl, ve, Se;
+    int desp_low4, desp_high4, dpl, rpl, ve, Se;
     int ke, we, xe, esp, descriptor_type, re, SS_mask;
     int x = 0, limit, Ue;
     int qe, Ve, We;
@@ -3129,7 +3126,6 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
     }
     desp_low4 = e[0];
     desp_high4 = e[1];
-    cpl_var = cpl;
     We = regs[4];
     if (desp_high4 & (1 << 12)) {
         if (!(desp_high4 & (1 << 11))) {
@@ -3137,15 +3133,15 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         }
         dpl = (desp_high4 >> 13) & 3;
         if (desp_high4 & (1 << 10)) {
-            if (dpl > cpl_var) {
+            if (dpl > cpl) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
         } else {
             rpl = selector & 3;
-            if (rpl > cpl_var) {
+            if (rpl > cpl) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
-            if (dpl != cpl_var) {
+            if (dpl != cpl) {
                 abort_with_error_code(13, selector & 0xfffc);
             }
         }
@@ -3175,7 +3171,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             abort_with_error_code(13, selector & 0xfffc);
         }
         regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
-        set_segment_vars(1, (selector & 0xfffc) | cpl_var, calc_desp_base(desp_low4, desp_high4), limit, desp_high4);
+        set_segment_vars(1, (selector & 0xfffc) | cpl, calc_desp_base(desp_low4, desp_high4), limit, desp_high4);
         eip = Le, far = far_start = 0;
     } else {
         descriptor_type = (desp_high4 >> 8) & 0x1f;
@@ -3195,7 +3191,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             break;
         }
         is_32_bit = descriptor_type >> 3;
-        if (dpl < cpl_var || dpl < rpl) {
+        if (dpl < cpl || dpl < rpl) {
             abort_with_error_code(13, selector & 0xfffc);
         }
         if (!(desp_high4 & (1 << 15))) {
@@ -3217,13 +3213,13 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             abort_with_error_code(13, selector & 0xfffc);
         }
         dpl = (desp_high4 >> 13) & 3;
-        if (dpl > cpl_var) {
+        if (dpl > cpl) {
             abort_with_error_code(13, selector & 0xfffc);
         }
         if (!(desp_high4 & (1 << 15))) {
             abort_with_error_code(11, selector & 0xfffc);
         }
-        if (!(desp_high4 & (1 << 10)) && dpl < cpl_var) {
+        if (!(desp_high4 & (1 << 10)) && dpl < cpl) {
             load_from_TR(dpl, e);
             ke = e[0];
             esp = e[1];
@@ -3372,7 +3368,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
     int selector, stack_eflags, gf;
     int hf, jf, kf, lf;
     int desp_low4, desp_high4, we, xe;
-    int cpl_var, dpl, rpl, ef, iopl;
+    int _cpl = cpl, dpl, rpl, ef, iopl;
     int qe, esp, stack_eip, wd, SS_mask;
     int e[2];
     SS_mask = SS_mask_from_flags(segs[2].flags);
@@ -3454,9 +3450,8 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
     if (!(desp_high4 & (1 << 12)) || !(desp_high4 & (1 << 11))) {
         abort_with_error_code(13, selector & 0xfffc);
     }
-    cpl_var = cpl;
     rpl = selector & 3;
-    if (rpl < cpl_var) {
+    if (rpl < _cpl) {
         abort_with_error_code(13, selector & 0xfffc);
     }
     dpl = (desp_high4 >> 13) & 3;
@@ -3473,7 +3468,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
         abort_with_error_code(11, selector & 0xfffc);
     }
     esp = (esp + imm16) & -1;
-    if (rpl == cpl_var) {
+    if (rpl == _cpl) {
         set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
     } else {
         if (is_32_bit == 1) {
@@ -3530,11 +3525,11 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         ef = 0x00000100 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
-        if (cpl_var == 0) {
+        if (_cpl == 0) {
             ef |= 0x00003000;
         }
         iopl = (eflags >> 12) & 3;
-        if (cpl_var <= iopl) {
+        if (_cpl <= iopl) {
             ef |= 0x00000200;
         }
         if (is_32_bit == 0) {
@@ -3569,7 +3564,7 @@ void x86Internal::op_RETF(bool is_32_bit, int imm16) {
     }
 }
 int x86Internal::of(int selector, bool is_lsl) {
-    int desp_low4, desp_high4, rpl, dpl, cpl_var, descriptor_type;
+    int desp_low4, desp_high4, rpl, dpl, descriptor_type;
     int e[2];
     if ((selector & 0xfffc) == 0) {
         return -1;
@@ -3582,11 +3577,10 @@ int x86Internal::of(int selector, bool is_lsl) {
     desp_high4 = e[1];
     rpl = selector & 3;
     dpl = (desp_high4 >> 13) & 3;
-    cpl_var = cpl;
     if (desp_high4 & (1 << 12)) {
         if ((desp_high4 & (1 << 11)) && (desp_high4 & (1 << 10))) {
         } else {
-            if (dpl < cpl_var || dpl < rpl) {
+            if (dpl < cpl || dpl < rpl) {
                 return -1;
             }
         }
@@ -3609,7 +3603,7 @@ int x86Internal::of(int selector, bool is_lsl) {
         default:
             return -1;
         }
-        if (dpl < cpl_var || dpl < rpl) {
+        if (dpl < cpl || dpl < rpl) {
             return -1;
         }
     }
@@ -3648,7 +3642,7 @@ void x86Internal::op_LAR_LSL(bool is_32_bit, bool is_lsl) {
     osm = 24;
 }
 int x86Internal::segment_isnt_accessible(int selector, bool is_verw) {
-    int desp_low4, desp_high4, rpl, dpl, cpl_var;
+    int desp_low4, desp_high4, rpl, dpl;
     int e[2];
     if ((selector & 0xfffc) == 0) {
         return 0;
@@ -3664,7 +3658,6 @@ int x86Internal::segment_isnt_accessible(int selector, bool is_verw) {
     }
     rpl = selector & 3;
     dpl = (desp_high4 >> 13) & 3;
-    cpl_var = cpl;
     if (desp_high4 & (1 << 11)) { // code == 1, data == 0
         if (is_verw) {
             return 0;
@@ -3673,13 +3666,13 @@ int x86Internal::segment_isnt_accessible(int selector, bool is_verw) {
                 return 1;
             }
             if (!(desp_high4 & (1 << 10))) {
-                if (dpl < cpl_var || dpl < rpl) {
+                if (dpl < cpl || dpl < rpl) {
                     return 0;
                 }
             }
         }
     } else {
-        if (dpl < cpl_var || dpl < rpl) {
+        if (dpl < cpl || dpl < rpl) {
             return 0;
         }
         if (is_verw && !(desp_high4 & (1 << 9))) {
