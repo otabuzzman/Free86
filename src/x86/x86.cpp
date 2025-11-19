@@ -15,7 +15,7 @@ x86Internal::x86Internal(int mem_size) {
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
-    phys_mem8 = (uint8_t *)calloc(sizeof(uint8_t) * mem_size + ((15 + 3) & ~3));
+    phys_mem8 = (uint8_t *)calloc(1, mem_size + ((15 + 3) & ~3));
 
     phys_mem16 = reinterpret_cast<uint16_t *>(phys_mem8);
     phys_mem32 = reinterpret_cast<uint32_t *>(phys_mem8);
