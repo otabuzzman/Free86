@@ -10,17 +10,13 @@
 
 #include "x86.h"
 
-x86Internal::x86Internal(int _mem_size) {
-    mem_size = _mem_size;
+x86Internal::x86Internal(int mem_size) {
+    this->mem_size = mem_size;
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
-    new_mem_size = mem_size + ((15 + 3) & ~3);
-    phys_mem = (uint8_t *)malloc(sizeof(uint8_t) * new_mem_size);
-    for (int i = 0; i < new_mem_size; i++) {
-        phys_mem[i] = 0;
-    }
-    phys_mem8 = phys_mem;
+    phys_mem8 = (uint8_t *)calloc(sizeof(uint8_t) * mem_size + ((15 + 3) & ~3));
+
     phys_mem16 = reinterpret_cast<uint16_t *>(phys_mem8);
     phys_mem32 = reinterpret_cast<uint32_t *>(phys_mem8);
     tlb_read_kernel = new int[tlb_size];
@@ -43,7 +39,7 @@ int x86Internal::init(int cycles) {
     cycles_remaining = cycles;
     ipr = ipr_default;
     mem8_loc = 0;
-    last_tlb_val = 0;
+    tlb_hash = 0;
     far = 0;
     far_start = 0;
     operation = 0;
@@ -91,9 +87,9 @@ void x86Internal::check_opcode() {
                 far = far_start = mem_size;
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
                     mem8_loc = (eip_linear + y) >> 0;
-                    phys_mem8[far + y] = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    phys_mem8[far + y] = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
-                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
                 far++;
             }
@@ -1420,9 +1416,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            opcode = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
-                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+                     : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x67: // address-size override prefix
             if (ipr_default & 0x0080) {
@@ -1434,9 +1430,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            opcode = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
-                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+                     : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x91: // XCHG C
         case 0x92: // XCHG D
@@ -1674,9 +1670,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
-                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+                     : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
                 case 0:
@@ -1698,9 +1694,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                         abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
-                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
-                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                             : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
                     }
@@ -1769,9 +1765,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
-                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+                     : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
                 case 0:
@@ -1793,9 +1789,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                         abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
-                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
-                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                             : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
                     }
@@ -1851,9 +1847,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                         ? __ld_8bits_mem8_read()
-                        : phys_mem8[mem8_loc ^ last_tlb_val]);
+                        : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
                 case 0:
@@ -1875,9 +1871,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                         abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
-                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
-                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                             : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
                     }
@@ -1931,9 +1927,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
-                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+                     : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
                 case 0:
@@ -1955,9 +1951,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                         abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
-                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
-                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                             : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
                     }
@@ -2014,9 +2010,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld_8bits_mem8_read()
-                     : phys_mem8[mem8_loc ^ last_tlb_val]);
+                     : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
                 case 0:
@@ -2038,9 +2034,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                         abort(13);
                     }
                     mem8_loc = (eip_linear + (n++)) >> 0;
-                    mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
-                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                             : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
                     }
@@ -2121,9 +2117,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 abort(13);
             }
             mem8_loc = (eip_linear + (n++)) >> 0;
-            opcode = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                           ? __ld_8bits_mem8_read()
-                          : phys_mem8[mem8_loc ^ last_tlb_val]);
+                          : phys_mem8[mem8_loc ^ tlb_hash]);
             switch (opcode) {
             case 0x06: // CLTS
             case 0xa2: // -
@@ -2225,9 +2221,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                     abort(13);
                 }
                 mem8_loc = (eip_linear + (n++)) >> 0;
-                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                             ? __ld_8bits_mem8_read()
-                            : phys_mem8[mem8_loc ^ last_tlb_val]);
+                            : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
                     case 0:
@@ -2249,9 +2245,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                             abort(13);
                         }
                         mem8_loc = (eip_linear + (n++)) >> 0;
-                        mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                        mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                                  ? __ld_8bits_mem8_read()
-                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
+                                 : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
                         }
@@ -2303,9 +2299,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                     abort(13);
                 }
                 mem8_loc = (eip_linear + (n++)) >> 0;
-                mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                             ? __ld_8bits_mem8_read()
-                            : phys_mem8[mem8_loc ^ last_tlb_val]);
+                            : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
                     case 0:
@@ -2327,9 +2323,9 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                             abort(13);
                         }
                         mem8_loc = (eip_linear + (n++)) >> 0;
-                        mem8 = (check_real_mode() || ((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                        mem8 = (check_real_mode() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                                  ? __ld_8bits_mem8_read()
-                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
+                                 : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
                         }

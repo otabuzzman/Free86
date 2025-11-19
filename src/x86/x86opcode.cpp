@@ -88,8 +88,8 @@ void x86Internal::instruction(int cycles) {
             case 0xb7: // MOV BH
                 x = phys_mem8[far++];
                 opcode &= 7;
-                last_tlb_val = (opcode & 4) << 1;
-                regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
+                tlb_hash = (opcode & 4) << 1;
+                regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << tlb_hash)) | (((x) & 0xff) << tlb_hash);
                 goto EXEC_LOOP;
             case 0xb8: // MOV A
             case 0xb9: // MOV C
@@ -112,15 +112,15 @@ void x86Internal::instruction(int cycles) {
                 x = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    last_tlb_val = (reg_idx0 & 4) << 1;
-                    regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
+                    tlb_hash = (reg_idx0 & 4) << 1;
+                    regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << tlb_hash)) | (((x) & 0xff) << tlb_hash);
                 } else {
                     mem8_loc = segment_translation(mem8);
-                    last_tlb_val = tlb_write[mem8_loc >> 12];
-                    if (last_tlb_val == -1) {
+                    tlb_hash = tlb_write[mem8_loc >> 12];
+                    if (tlb_hash == -1) {
                         __st8_mem8_write(x);
                     } else {
-                        phys_mem8[mem8_loc ^ last_tlb_val] = x;
+                        phys_mem8[mem8_loc ^ tlb_hash] = x;
                     }
                 }
                 goto EXEC_LOOP;
@@ -131,11 +131,11 @@ void x86Internal::instruction(int cycles) {
                     regs[mem8 & 7] = x;
                 } else {
                     mem8_loc = segment_translation(mem8);
-                    last_tlb_val = tlb_write[mem8_loc >> 12];
-                    if ((last_tlb_val | mem8_loc) & 3) {
+                    tlb_hash = tlb_write[mem8_loc >> 12];
+                    if ((tlb_hash | mem8_loc) & 3) {
                         __st32_mem8_write(x);
                     } else {
-                        phys_mem32[(mem8_loc ^ last_tlb_val) >> 2] = x;
+                        phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
                     }
                 }
                 goto EXEC_LOOP;
@@ -146,13 +146,13 @@ void x86Internal::instruction(int cycles) {
                     x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                 } else {
                     mem8_loc = segment_translation(mem8);
-                    x = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                    x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld_8bits_mem8_read()
-                             : phys_mem8[mem8_loc ^ last_tlb_val]);
+                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
-                last_tlb_val = (reg_idx1 & 4) << 1;
-                regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & ~(0xff << last_tlb_val)) | (((x) & 0xff) << last_tlb_val);
+                tlb_hash = (reg_idx1 & 4) << 1;
+                regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & ~(0xff << tlb_hash)) | (((x) & 0xff) << tlb_hash);
                 goto EXEC_LOOP;
             case 0x8b: // MOV
                 mem8 = phys_mem8[far++];
@@ -160,10 +160,10 @@ void x86Internal::instruction(int cycles) {
                     x = regs[mem8 & 7];
                 } else {
                     mem8_loc = segment_translation(mem8);
-                    last_tlb_val = tlb_read[mem8_loc >> 12];
-                    x = ((last_tlb_val | mem8_loc) & 3
+                    tlb_hash = tlb_read[mem8_loc >> 12];
+                    x = ((tlb_hash | mem8_loc) & 3
                              ? __ld_32bits_mem8_read()
-                             : phys_mem32[(mem8_loc ^ last_tlb_val) >> 2]);
+                             : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
                 }
                 regs[(mem8 >> 3) & 7] = x;
                 goto EXEC_LOOP;
@@ -966,11 +966,11 @@ void x86Internal::instruction(int cycles) {
                 x = regs[opcode & 7];
                 if (x86_64_long_mode) {
                     mem8_loc = (regs[4] - 4) >> 0;
-                    last_tlb_val = tlb_write[mem8_loc >> 12];
-                    if ((last_tlb_val | mem8_loc) & 3) {
+                    tlb_hash = tlb_write[mem8_loc >> 12];
+                    if ((tlb_hash | mem8_loc) & 3) {
                         __st32_mem8_write(x);
                     } else {
-                        phys_mem32[(mem8_loc ^ last_tlb_val) >> 2] = x;
+                        phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
                     }
                     regs[4] = mem8_loc;
                 } else {
@@ -987,11 +987,11 @@ void x86Internal::instruction(int cycles) {
             case 0x5f: // POP DI
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4];
-                    last_tlb_val = tlb_read[mem8_loc >> 12];
-                    if ((last_tlb_val | mem8_loc) & 3) {
+                    tlb_hash = tlb_read[mem8_loc >> 12];
+                    if ((tlb_hash | mem8_loc) & 3) {
                         x = __ld_32bits_mem8_read();
                     } else {
-                        x = phys_mem32[(mem8_loc ^ last_tlb_val) >> 2];
+                        x = phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
                     }
                     regs[4] = (mem8_loc + 4) >> 0;
                 } else {
@@ -1873,9 +1873,9 @@ void x86Internal::instruction(int cycles) {
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                     } else {
                         mem8_loc = segment_translation(mem8);
-                        x = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                        x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                                  ? __ld_8bits_mem8_read()
-                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
+                                 : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
                     regs[reg_idx1] = x;
                     goto EXEC_LOOP;
@@ -1898,9 +1898,9 @@ void x86Internal::instruction(int cycles) {
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                     } else {
                         mem8_loc = segment_translation(mem8);
-                        x = (((last_tlb_val = tlb_read[mem8_loc >> 12]) == -1)
+                        x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                                  ? __ld_8bits_mem8_read()
-                                 : phys_mem8[mem8_loc ^ last_tlb_val]);
+                                 : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
                     regs[reg_idx1] = (((x) << 24) >> 24);
                     goto EXEC_LOOP;

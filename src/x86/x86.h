@@ -19,10 +19,10 @@ typedef struct SegmentDescriptor {
     int flags = 0;
 } SegmentDescriptor;
 
-typedef struct Exception {
-    int id = -1;
+typedef struct Interrupt {
+    int id = -1; // 0-31 termed `Exceptions'
     int error_code = 0;
-} Exception;
+} Interrupt;
 
 class x86Internal {
   public:
@@ -35,9 +35,10 @@ class x86Internal {
     int *tlb_write_user = nullptr;
     int *tlb_read = nullptr; // current (user or kernel)
     int *tlb_write = nullptr;
-    int last_tlb_val; // tlb_hash_value
+    int tlb_hash;
 
-    uint8_t *phys_mem = nullptr;
+    int mem_size = 0;
+
     uint8_t *phys_mem8 = nullptr;
     uint16_t *phys_mem16 = nullptr;
     uint32_t *phys_mem32 = nullptr;
@@ -195,9 +196,10 @@ class x86Internal {
     uint32_t mem8_loc; // linear byte address
     int mem8;          // and value
 
-    int operation = 0; // either bits 5, 4, and 3 of opcode or modR/M byte
+    // intermediate values
+    int operation = 0; // bits 5, 4, and 3 of either opcode or modR/M byte
     int reg_idx0, reg_idx1; // register indices (0-7)
-    int x, y, z, v;         // intermediate values
+    int x, y, z, v;         // anything else
 
     int cycles_requested = 0;
     int cycles_remaining = 0;
@@ -205,7 +207,7 @@ class x86Internal {
 
     int halted = 0;
 
-    Exception interrupt;
+    Interrupt interrupt;
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -236,10 +238,7 @@ class x86Internal {
     };
     // clang-format on
 
-    int mem_size = 16 * 1024 * 1024;
-    int new_mem_size = mem_size + ((15 + 3) & ~3);
-
-    x86Internal(int _mem_size);
+    x86Internal(int mem_size);
     ~x86Internal();
 
     void st8_phys(int mem8_loc, std::string str) {
