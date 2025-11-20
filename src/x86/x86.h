@@ -184,11 +184,10 @@ class x86Internal {
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
 
+    // intermediate values
     uint32_t mem8_loc; // linear byte address
     int mem8;          // and value
-
-    // intermediate values
-    int operation; // bits 5, 4, and 3 of either opcode or modR/M byte
+    int operation;     // bits 5, 4, and 3 of either opcode or modR/M byte
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
 
