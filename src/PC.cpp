@@ -87,7 +87,7 @@ void PC::cycle()
 #endif
 
         try {
-            cpu->instruction(cycles_requested - cpu->cycles_processed);
+            cpu->fetch_decode_execute(cycles_requested - cpu->cycles_processed);
             if (cpu->halted)
                 break;
         } catch (Interrupt) {}

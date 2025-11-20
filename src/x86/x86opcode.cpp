@@ -1,8 +1,23 @@
 #include "x86.h"
 
-void x86Internal::instruction(int cycles) {
-    if (init(cycles)) {
-        return;
+void x86Internal::fetch_decode_execute(int cycles) {
+    if (halted) {
+        if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+            halted = 0;
+        } else {
+            return;
+        }
+    }
+    cycles_requested = cycles;
+    cycles_remaining = cycles;
+    far = far_start = 0;
+    update_SSB(); // segments state block
+    if (interrupt.id >= 0) {
+        do_interrupt(interrupt.id, 0, interrupt.error_code, 0, 0);
+        interrupt = {-1, 0};
+    }
+    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+        do_interrupt(get_hard_intno(), 0, 0, 0, 1);
     }
     do {
         check_opcode();

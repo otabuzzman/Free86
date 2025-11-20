@@ -16,7 +16,6 @@ x86Internal::x86Internal(int mem_size) {
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
     phys_mem8 = (uint8_t *)calloc(1, mem_size + ((15 + 3) & ~3));
-
     phys_mem16 = reinterpret_cast<uint16_t *>(phys_mem8);
     phys_mem32 = reinterpret_cast<uint32_t *>(phys_mem8);
     tlb_read_kernel = new int[tlb_size];
@@ -27,6 +26,7 @@ x86Internal::x86Internal(int mem_size) {
         tlb_clear(i);
     }
     reset(); // chip
+    set_current_permission_level(0); // PM (1986), 10.3
 }
 x86Internal::~x86Internal() {
     free(phys_mem8);
@@ -35,25 +35,13 @@ x86Internal::~x86Internal() {
     delete[] tlb_read_user;
     delete[] tlb_write_user;
 }
-int x86Internal::init(int cycles) {
-    cycles_requested = cycles;
-    cycles_remaining = cycles;
-    ipr = ipr_default = 0;
-    mem8_loc = 0;
-    tlb_hash = 0;
-    far = 0;
-    far_start = 0;
-    operation = 0;
-    change_permission_level(cpl);
-    if (check_halted()) {
-        return 257;
-    }
-    init_segment_local_vars();
-    check_interrupt();
-    return 0;
-}
-void x86Internal::init_segment_local_vars() {
+void x86Internal::update_SSB() {
     CS_base = segs[1].base;
+    if (segs[1].flags & (1 << 22)) {
+        ipr_default = 0;
+    } else {
+        ipr_default = 0x0100 | 0x0080;
+    }
     SS_base = segs[2].base;
     if (segs[2].flags & (1 << 22)) {
         SS_mask = -1;
@@ -61,11 +49,6 @@ void x86Internal::init_segment_local_vars() {
         SS_mask = 0xffff;
     }
     x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
-    if (segs[1].flags & (1 << 22)) {
-        ipr_default = 0;
-    } else {
-        ipr_default = 0x0100 | 0x0080;
-    }
 }
 void x86Internal::check_opcode() {
     eip = eip + far - far_start;
@@ -98,25 +81,6 @@ void x86Internal::check_opcode() {
     } else {
         far = far_start = eip_linear ^ eip_tlb_hash;
         opcode = phys_mem8[far++];
-    }
-}
-int x86Internal::check_halted() {
-    if (halted) {
-        if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
-            halted = 0;
-        } else {
-            return 257;
-        }
-    }
-    return 0;
-}
-void x86Internal::check_interrupt() {
-    if (interrupt.id >= 0) {
-        do_interrupt(interrupt.id, 0, interrupt.error_code, 0, 0);
-        interrupt = {-1, 0};
-    }
-    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
-        do_interrupt(get_hard_intno(), 0, 0, 0, 1);
     }
 }
 void x86Internal::do_tlb_set_page(int linear_address, int write, bool user) {
@@ -1355,8 +1319,8 @@ int x86Internal::op_IMUL32(int a, int opcode) {
     osm = 23;
     return r;
 }
-void x86Internal::change_permission_level(int sd) {
-    cpl = sd;
+void x86Internal::set_current_permission_level(int value) {
+    cpl = value;
     if (cpl == 3) {
         tlb_read = tlb_read_user;
         tlb_write = tlb_write_user;
@@ -2561,7 +2525,7 @@ void x86Internal::set_descriptor_register(SegmentDescriptor *descriptor_table, i
 }
 void x86Internal::set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[ee] = {.selector = selector, .base = base, .limit = limit, .flags = flags};
-    init_segment_local_vars();
+    update_SSB();
 }
 void x86Internal::init_segment_vars_with_selector(int Sb, int selector) {
     set_segment_vars(Sb, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
@@ -2802,7 +2766,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
     selector = (selector & ~3) | dpl;
     set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
-    change_permission_level(dpl);
+    set_current_permission_level(dpl);
     eip = ve, far = far_start = 0;
     if ((descriptor_type & 1) == 0) {
         eflags &= ~0x00000200;
@@ -3014,7 +2978,7 @@ void x86Internal::do_JMPF_virtual_mode(int selector, int Le) {
     eip = Le, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
-    init_segment_local_vars();
+    update_SSB();
 }
 void x86Internal::do_JMPF(int selector, int Le) {
     int desp_low4, desp_high4, dpl, rpl;
@@ -3102,7 +3066,7 @@ void x86Internal::op_CALLF_not_protected_mode(bool is_32_bit, int selector, int 
     eip = Le, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
-    init_segment_local_vars();
+    update_SSB();
 }
 void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe) {
     int ue, i;
@@ -3298,7 +3262,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         }
         selector = (selector & ~3) | dpl;
         set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
-        change_permission_level(dpl);
+        set_current_permission_level(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         eip = ve, far = far_start = 0;
     }
@@ -3356,7 +3320,7 @@ void x86Internal::do_return_not_protected_mode(bool is_32_bit, bool is_iret, int
         }
         set_FLAGS(stack_eflags, ef);
     }
-    init_segment_local_vars();
+    update_SSB();
 }
 void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16) {
     int selector, stack_eflags, gf;
@@ -3408,7 +3372,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
                                         0x00100000 | 0x00200000);
                 // clang-format on
                 init_segment_vars_with_selector(1, selector & 0xffff);
-                change_permission_level(3);
+                set_current_permission_level(3);
                 init_segment_vars_with_selector(2, gf & 0xffff);
                 init_segment_vars_with_selector(0, hf & 0xffff);
                 init_segment_vars_with_selector(3, jf & 0xffff);
@@ -3506,7 +3470,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
             set_segment_vars(2, gf, calc_desp_base(we, xe), calc_desp_limit(we, xe), xe);
         }
         set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
-        change_permission_level(rpl);
+        set_current_permission_level(rpl);
         esp = wd;
         SS_mask = SS_mask_from_flags(xe);
         Pe(0, rpl);

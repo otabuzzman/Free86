@@ -76,7 +76,11 @@ class x86Internal {
     int cr3;
     int cr4; // 80486
 
-    int opcode;
+    int halted = 0;
+
+    Interrupt interrupt;
+
+    int opcode; // sort of fetch data register (FDR, aka MDR)
 
 /*
    Operand Size Mode
@@ -176,7 +180,13 @@ class x86Internal {
  */
     int ipr; // instruction prefix register
     int ipr_default; // reflects D flag (PM (1986), 16.1)
+                     // also belongs to the SSB (below)
+/*
+   Segments state block
 
+   Variables in the segment state block (SSB) reflect code and stack segment
+   sizes as well as address and operand size prefixes.
+ */
     int CS_base; // shortcut for segs[1].base
     int SS_base; // shortcut for segs[2].base
     int SS_mask; // 16 or 32 bit SS size
@@ -185,19 +195,17 @@ class x86Internal {
     bool x86_64_long_mode = false;
 
     // intermediate values
-    uint32_t mem8_loc; // linear byte address
-    int mem8;          // and value
-    int operation;     // bits 5, 4, and 3 of either opcode or modR/M byte
+    int operation; // bits 5..3 of opcode or modR/M byte
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
+
+    // linear byte address...
+    uint32_t mem8_loc;
+    int mem8; // ...and value
 
     int cycles_requested;
     int cycles_remaining;
     int cycles_processed;
-
-    int halted = 0;
-
-    Interrupt interrupt;
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -232,7 +240,10 @@ class x86Internal {
     ~x86Internal();
 
     void reset() {
-        regs[2] = (5 << 8) | (4 << 4) | 3; // family | model | stepping
+        // Intel IA-32 SDM (latest), Vol. 3A, 11.1.1
+        for (int i = 0 ; i < 8 ; i++) {
+            regs[i] = 0;
+        }
         eflags = 0x2;
         eip = 0xfff0;
         for (int i = 0 ; i < 7 ; i++) {
@@ -337,11 +348,8 @@ class x86Internal {
         return hex_rep(n, 4);
     }
 
-    void instruction(int cycles);
-    int init(int cycles);
-    int check_halted();
-    void check_interrupt();
-    void init_segment_local_vars();
+    void fetch_decode_execute(int cycles);
+    void update_SSB();
 
     int instruction_length(int opcode, int eip_linear);
 
@@ -465,7 +473,7 @@ class x86Internal {
     void abort_with_error_code(int intno, int error_code);
     void abort(int intno);
 
-    void change_permission_level(int sd);
+    void set_current_permission_level(int value);
 
     void push_word_to_stack(int x);
     void push_dword_to_stack(int x);
