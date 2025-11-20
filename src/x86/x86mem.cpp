@@ -246,14 +246,14 @@ void x86Internal::push_word_to_stack(int x) {
     wd = regs[4] - 2;
     mem8_loc = (wd & SS_mask) + SS_base;
     st16_mem8_write(x);
-    regs[4] = (regs[4] & ~SS_mask) | ((wd)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
 }
 void x86Internal::push_dword_to_stack(int x) {
     int wd;
     wd = regs[4] - 4;
     mem8_loc = (wd & SS_mask) + SS_base;
     st32_mem8_write(x);
-    regs[4] = (regs[4] & ~SS_mask) | ((wd)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
 }
 int x86Internal::pop_word_from_stack_read() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
