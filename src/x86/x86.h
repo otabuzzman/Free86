@@ -59,7 +59,7 @@ class x86Internal {
     uint32_t far_start; // first fetch address of current cycle
 
     // ES, CS, SS, DS, FS, GS, LDT, TR
-    SegmentDescriptor segs[7] = {
+    SegmentDescriptor segs[7];
     int df; // direction Flag
 
     int cpl;  // current privilege level
@@ -234,7 +234,7 @@ class x86Internal {
 
     void reset() {
         regs[2] = (5 << 8) | (4 << 4) | 3; // family | model | stepping
-        eflags = 0x0s;
+        eflags = 0x2;
         eip = 0xfff0;
         for (int i = 0 ; i < 7 ; i++) {
             segs[i] = {0, 0, 0, 0};

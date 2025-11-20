@@ -26,6 +26,7 @@ x86Internal::x86Internal(int mem_size) {
     for (int i = 0; i < tlb_size; i++) {
         tlb_clear(i);
     }
+    reset(); // chip
 }
 x86Internal::~x86Internal() {
     free(phys_mem8);
@@ -35,7 +36,6 @@ x86Internal::~x86Internal() {
     delete[] tlb_write_user;
 }
 int x86Internal::init(int cycles) {
-    reset(); // chip
     cycles_requested = cycles;
     cycles_remaining = cycles;
     ipr = ipr_default = 0;
