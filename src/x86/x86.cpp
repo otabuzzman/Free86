@@ -35,9 +35,10 @@ x86Internal::~x86Internal() {
     delete[] tlb_write_user;
 }
 int x86Internal::init(int cycles) {
+    reset(); // chip
     cycles_requested = cycles;
     cycles_remaining = cycles;
-    ipr = ipr_default;
+    ipr = ipr_default = 0;
     mem8_loc = 0;
     tlb_hash = 0;
     far = 0;

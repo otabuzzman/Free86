@@ -13,15 +13,15 @@
 #include "../ringbuffer.h"
 
 typedef struct SegmentDescriptor {
-    int selector = 0;
-    uint32_t base = 0;
-    uint32_t limit = 0;
-    int flags = 0;
+    int selector;
+    uint32_t base;
+    uint32_t limit;
+    int flags;
 } SegmentDescriptor;
 
 typedef struct Interrupt {
     int id = -1; // 0-31 termed `Exceptions'
-    int error_code = 0;
+    int error_code;
 } Interrupt;
 
 class x86Internal {
@@ -29,63 +29,54 @@ class x86Internal {
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
     int tlb_size = 0x100000; // 1M
-    int *tlb_read_kernel = nullptr;
-    int *tlb_write_kernel = nullptr;
-    int *tlb_read_user = nullptr;
-    int *tlb_write_user = nullptr;
-    int *tlb_read = nullptr; // current (user or kernel)
-    int *tlb_write = nullptr;
+    int *tlb_read_kernel;
+    int *tlb_write_kernel;
+    int *tlb_read_user;
+    int *tlb_write_user;
+    int *tlb_read; // current (user or kernel)
+    int *tlb_write;
     int tlb_hash;
 
-    int mem_size = 0;
+    int mem_size;
 
-    uint8_t *phys_mem8 = nullptr;
-    uint16_t *phys_mem16 = nullptr;
-    uint32_t *phys_mem32 = nullptr;
+    uint8_t *phys_mem8;
+    uint16_t *phys_mem16;
+    uint32_t *phys_mem32;
 
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-    int regs[8]{0};
-    int eflags = 0x2;
+    int regs[8];
+    int eflags;
 
-    uint32_t eip = 0xfff0;
-    uint32_t eip_linear = 0;
+    uint32_t eip;
+    uint32_t eip_linear;
 /*
    Fetch address register
    
    The fetch address register (FAR) stores the physical memory address
    of the next byte to be retrieved in the current fetch cycle.
  */
-    uint32_t far = 0;       // fetch address register
-    uint32_t far_start = 0; // first fetch address of current cycle
+    uint32_t far;       // fetch address register
+    uint32_t far_start; // first fetch address of current cycle
 
-    // clang-format off
     // ES, CS, SS, DS, FS, GS, LDT, TR
     SegmentDescriptor segs[7] = {
-        {0, 0, 0, 0}, 
-        {0, 0xffff0000, 0, 0}, // CS
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0}};
-    // clang-format on
-    int df = 1; // direction Flag
+    int df; // direction Flag
 
-    int cpl = 0;  // current privilege level
-    int dpl = 0;  // descriptor privilege level
-    int iopl = 0; // IO privilege level
+    int cpl;  // current privilege level
+    int dpl;  // descriptor privilege level
+    int iopl; // IO privilege level
 
     SegmentDescriptor gdt; // GDT register
     SegmentDescriptor ldt; // LDT register
     SegmentDescriptor tr;  // task register
-    SegmentDescriptor idt = {0, 0, 0x03ff, 0}; // IDT register
+    SegmentDescriptor idt; // IDT register
 
-    int cr0 = 0;
-    int cr2 = 0;
-    int cr3 = 0;
-    int cr4 = 0;
+    int cr0;
+    int cr2;
+    int cr3;
+    int cr4; // 80486
 
-    int opcode = 0;
+    int opcode;
 
 /*
    Operand Size Mode
@@ -148,9 +139,9 @@ class x86Internal {
    U : leaves flag undefined,
    - : does not affect flag.
  */
-    int osm = 0;
-    int osm_src = 0;
-    int osm_dst = 0;
+    int osm;
+    int osm_src;
+    int osm_dst;
 /*
    `osm_preserved'/ `osm_dst_preserved' preserve OMS/ destination of instruction
    before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
@@ -160,8 +151,8 @@ class x86Internal {
    since INC/ DEC do not store the implicit value 1 in `osm_src', which therefore
    remains valid.
  */
-    int ocm_preserved = 0;
-    int ocm_dst_preserved = 0;
+    int ocm_preserved;
+    int ocm_dst_preserved;
 
 /*
    Instruction prefix register
@@ -183,12 +174,12 @@ class x86Internal {
    0x0080 address-size override prefix  (0x67)
    0x0100 operand-size override prefix  (0x66)
  */
-    int ipr = 0; // instruction prefix register
-    int ipr_default = 0; // reflects D flag (PM (1986), 16.1)
+    int ipr; // instruction prefix register
+    int ipr_default; // reflects D flag (PM (1986), 16.1)
 
     int CS_base; // shortcut for segs[1].base
     int SS_base; // shortcut for segs[2].base
-    int SS_mask = -1; // 16 or 32 bit SS size
+    int SS_mask; // 16 or 32 bit SS size
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
@@ -197,13 +188,13 @@ class x86Internal {
     int mem8;          // and value
 
     // intermediate values
-    int operation = 0; // bits 5, 4, and 3 of either opcode or modR/M byte
+    int operation; // bits 5, 4, and 3 of either opcode or modR/M byte
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
 
-    int cycles_requested = 0;
-    int cycles_remaining = 0;
-    int cycles_processed = 0;
+    int cycles_requested;
+    int cycles_remaining;
+    int cycles_processed;
 
     int halted = 0;
 
@@ -240,6 +231,18 @@ class x86Internal {
 
     x86Internal(int mem_size);
     ~x86Internal();
+
+    void reset() {
+        regs[2] = (5 << 8) | (4 << 4) | 3; // family | model | stepping
+        eflags = 0x0s;
+        eip = 0xfff0;
+        for (int i = 0 ; i < 7 ; i++) {
+            segs[i] = {0, 0, 0, 0};
+        }
+        segs[1] = {0, 0xffff0000, 0, 0};
+        idt = {0, 0, 0x03ff, 0};
+        cr0 = (1 << 4); // 80387 present
+    }
 
     void st8_phys(int mem8_loc, std::string str) {
         auto s = str.c_str();
