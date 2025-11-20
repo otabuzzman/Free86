@@ -2799,7 +2799,7 @@ void x86Internal::do_interrupt_protected_mode(int intno, int ne, int error_code,
         ke = (ke & ~3) | dpl;
         set_segment_vars(2, ke, qe, calc_desp_limit(we, xe), xe);
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
     selector = (selector & ~3) | dpl;
     set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
     change_permission_level(dpl);
@@ -2835,7 +2835,7 @@ void x86Internal::do_interrupt_not_protected_mode(int intno, int ne, int error_c
     le = le - 2;
     mem8_loc = (le & SS_mask) + SS_base;
     st16_mem8_write(ye);
-    regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
     eip = ve, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
@@ -3098,7 +3098,7 @@ void x86Internal::op_CALLF_not_protected_mode(bool is_32_bit, int selector, int 
         mem8_loc = (le & SS_mask) + SS_base;
         st16_mem8_write(oe);
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
     eip = Le, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
@@ -3164,7 +3164,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         if (Le > limit) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
+        regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         set_segment_vars(1, (selector & 0xfffc) | cpl, calc_desp_base(desp_low4, desp_high4), limit, desp_high4);
         eip = Le, far = far_start = 0;
     } else {
@@ -3299,7 +3299,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         selector = (selector & ~3) | dpl;
         set_segment_vars(1, selector, calc_desp_base(desp_low4, desp_high4), calc_desp_limit(desp_low4, desp_high4), desp_high4);
         change_permission_level(dpl);
-        regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
+        regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         eip = ve, far = far_start = 0;
     }
 }
@@ -3415,7 +3415,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
                 init_segment_vars_with_selector(4, kf & 0xffff);
                 init_segment_vars_with_selector(5, lf & 0xffff);
                 eip = stack_eip & 0xffff, far = far_start = 0;
-                regs[4] = (regs[4] & ~SS_mask) | ((wd)&SS_mask);
+                regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
                 return;
             }
         }
@@ -3515,7 +3515,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
         Pe(5, rpl);
         esp = (esp + imm16) & -1;
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((esp)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         ef = 0x00000100 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
@@ -3887,7 +3887,7 @@ void x86Internal::op_16_PUSHA() {
         st16_mem8_write(x);
         mem8_loc = mem8_loc + 2;
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((y)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void x86Internal::op_PUSHA() {
     int x, y, reg_idx1;
@@ -3898,7 +3898,7 @@ void x86Internal::op_PUSHA() {
         st32_mem8_write(x);
         mem8_loc = mem8_loc + 4;
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((y)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void x86Internal::op_16_POPA() {
     int reg_idx1;
@@ -3967,7 +3967,7 @@ void x86Internal::op_16_ENTER() {
     mem8_loc = (le & SS_mask) + SS_base;
     ld_16bits_mem8_write();
     regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
-    regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
 void x86Internal::op_ENTER() {
     int cf, Qf, le, Rf, x, Sf;
@@ -3998,7 +3998,7 @@ void x86Internal::op_ENTER() {
     mem8_loc = (le & SS_mask) + SS_base;
     ld_32bits_mem8_write();
     regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
-    regs[4] = (regs[4] & ~SS_mask) | ((le)&SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
 void x86Internal::op_16_load_far_pointer32(int Sb) {
     int x, y, mem8;
