@@ -482,13 +482,13 @@ class x86Internal {
     int pop_dword_from_stack_read();
     void pop_dword_from_stack_incr_ptr();
 
-    int SS_mask_from_flags(int dte_upper_dword);
+    int compile_sizemask(int dte_upper_dword);
 
     void load_from_descriptor_table(int selector, int *descriptor_table_entry);
     void load_from_TR(int he, int *descriptor_table_entry);
-    int calc_dte_limit(int dte_lower_dword, int dte_upper_dword);
-    int calc_dte_base(int dte_lower_dword, int dte_upper_dword);
-    void set_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
+    int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
+    int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
+    void load_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
 
     void do_interrupt_protected_mode(int interrupt_id, int ne, int error_code, int oe, int pe);
     void do_interrupt_real__v86_mode(int interrupt_id, int ne, int error_code, int oe, int pe);

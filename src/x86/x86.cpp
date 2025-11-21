@@ -2482,7 +2482,7 @@ bool x86Internal::check_real__v86() {
 bool x86Internal::check_protected() {
     return cr0 & (1 << 0);
 }
-int x86Internal::SS_mask_from_flags(int dte_upper_dword) {
+int x86Internal::compile_sizemask(int dte_upper_dword) {
     if (dte_upper_dword & (1 << 22)) {
         return -1;
     } else {
@@ -2508,19 +2508,19 @@ void x86Internal::load_from_descriptor_table(int selector, int *descriptor_table
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-int x86Internal::calc_dte_limit(int dte_lower_dword, int dte_upper_dword) {
+int x86Internal::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
     int limit = (dte_lower_dword & 0xffff) | (dte_upper_dword & 0x000f0000);
     if (dte_upper_dword & (1 << 23)) {
         limit = (limit << 12) | 0xfff;
     }
     return limit;
 }
-int x86Internal::calc_dte_base(int dte_lower_dword, int dte_upper_dword) {
+int x86Internal::compile_dte_base(int dte_lower_dword, int dte_upper_dword) {
     return ((((dte_lower_dword >> 16) & 0xffff) | ((dte_upper_dword & 0xff) << 16) | (dte_upper_dword & 0xff000000))) & -1;
 }
-void x86Internal::set_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword) {
-    sd->base = calc_dte_base(dte_lower_dword, dte_upper_dword);
-    sd->limit = calc_dte_limit(dte_lower_dword, dte_upper_dword);
+void x86Internal::load_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword) {
+    sd->base = compile_dte_base(dte_lower_dword, dte_upper_dword);
+    sd->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
     sd->flags = dte_upper_dword;
 }
 void x86Internal::update_segment_register(int reg_idx, int selector, uint32_t base, uint32_t limit, int flags) {
@@ -2665,14 +2665,14 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
             abort_with_error_code(10, ke & 0xfffc);
         }
         ue = 1;
-        SS_mask = SS_mask_from_flags(xe);
-        qe = calc_dte_base(we, xe);
+        SS_mask = compile_sizemask(xe);
+        qe = compile_dte_base(we, xe);
     } else if ((dte_upper_dword & (1 << 10)) || dpl == cpl) {
         if (eflags & 0x00020000) {
             abort_with_error_code(13, selector & 0xfffc);
         }
         ue = 0;
-        SS_mask = SS_mask_from_flags(segs[2].flags);
+        SS_mask = compile_sizemask(segs[2].flags);
         qe = segs[2].base;
         le = regs[4];
         dpl = cpl;
@@ -2767,11 +2767,11 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
             update_segment_register(5, 0, 0, 0, 0);
         }
         ke = (ke & ~3) | dpl;
-        update_segment_register(2, ke, qe, calc_dte_limit(we, xe), xe);
+        update_segment_register(2, ke, qe, compile_dte_limit(we, xe), xe);
     }
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
     selector = (selector & ~3) | dpl;
-    update_segment_register(1, selector, calc_dte_base(dte_lower_dword, dte_upper_dword), calc_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+    update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     set_current_permission_level(dpl);
     eip = ve, far = far_start = 0;
     if ((descriptor_type & 1) == 0) {
@@ -2871,7 +2871,7 @@ void x86Internal::op_LDTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort_with_error_code(11, selector & 0xfffc);
         }
-        set_segment_descriptor(&ldt, dte_lower_dword, dte_upper_dword);
+        load_segment_descriptor(&ldt, dte_lower_dword, dte_upper_dword);
     }
     ldt.selector = selector;
 }
@@ -2904,7 +2904,7 @@ void x86Internal::op_LTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort_with_error_code(11, selector & 0xfffc);
         }
-        set_segment_descriptor(&tr, dte_lower_dword, dte_upper_dword);
+        load_segment_descriptor(&tr, dte_lower_dword, dte_upper_dword);
         dte_upper_dword |= (1 << 9);
         st32_mem8_kernel_write(dte_upper_dword);
     }
@@ -2965,7 +2965,7 @@ void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
             dte_upper_dword |= (1 << 8);
             st32_mem8_kernel_write(dte_upper_dword);
         }
-        update_segment_register(reg_idx, selector, calc_dte_base(dte_lower_dword, dte_upper_dword), calc_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        update_segment_register(reg_idx, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     }
 }
 void x86Internal::set_segment_register(int reg_idx, int selector) {
@@ -3016,11 +3016,11 @@ void x86Internal::do_JMPF(int selector, int Le) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort_with_error_code(11, selector & 0xfffc);
         }
-        limit = calc_dte_limit(dte_lower_dword, dte_upper_dword);
+        limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
         if (Le > limit) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        update_segment_register(1, (selector & 0xfffc) | cpl, calc_dte_base(dte_lower_dword, dte_upper_dword), limit,  dte_upper_dword);
+        update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit,  dte_upper_dword);
         eip = Le, far = far_start = 0;
     } else {
         throw "fatal: unsupported TSS or task gate in JMP";
@@ -3109,7 +3109,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             abort_with_error_code(11, selector & 0xfffc);
         }
         esp = We;
-        SS_mask = SS_mask_from_flags(segs[2].flags);
+        SS_mask = compile_sizemask(segs[2].flags);
         qe = segs[2].base;
         if (is_32_bit) {
             esp = (esp - 4) & -1;
@@ -3126,12 +3126,12 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             mem8_loc = (qe + (esp & SS_mask)) & -1;
             st16_mem8_kernel_write(oe);
         }
-        limit = calc_dte_limit(dte_lower_dword, dte_upper_dword);
+        limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
         if (Le > limit) {
             abort_with_error_code(13, selector & 0xfffc);
         }
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-        update_segment_register(1, (selector & 0xfffc) | cpl, calc_dte_base(dte_lower_dword, dte_upper_dword), limit, dte_upper_dword);
+        update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit, dte_upper_dword);
         eip = Le, far = far_start = 0;
     } else {
         descriptor_type = (dte_upper_dword >> 8) & 0x1f;
@@ -3205,10 +3205,10 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             if (!(xe & (1 << 15))) {
                 abort_with_error_code(10, ke & 0xfffc);
             }
-            Ue = SS_mask_from_flags(segs[2].flags);
+            Ue = compile_sizemask(segs[2].flags);
             Ve = segs[2].base;
-            SS_mask = SS_mask_from_flags(xe);
-            qe = calc_dte_base(we, xe);
+            SS_mask = compile_sizemask(xe);
+            qe = compile_dte_base(we, xe);
             if (is_32_bit) {
                 esp = (esp - 4) & -1;
                 mem8_loc = (qe + (esp & SS_mask)) & -1;
@@ -3239,7 +3239,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             ue = 1;
         } else {
             esp = We;
-            SS_mask = SS_mask_from_flags(segs[2].flags);
+            SS_mask = compile_sizemask(segs[2].flags);
             qe = segs[2].base;
             ue = 0;
         }
@@ -3260,10 +3260,10 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         }
         if (ue) {
             ke = (ke & ~3) | dpl;
-            update_segment_register(2, ke, qe, calc_dte_limit(we, xe), xe);
+            update_segment_register(2, ke, qe, compile_dte_limit(we, xe), xe);
         }
         selector = (selector & ~3) | dpl;
-        update_segment_register(1, selector, calc_dte_base(dte_lower_dword, dte_upper_dword), calc_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         set_current_permission_level(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         eip = ve, far = far_start = 0;
@@ -3331,7 +3331,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
     int _cpl = cpl, dpl, rpl, ef, iopl;
     int qe, esp, stack_eip, wd, SS_mask;
     int e[2];
-    SS_mask = SS_mask_from_flags(segs[2].flags);
+    SS_mask = compile_sizemask(segs[2].flags);
     esp = regs[4];
     qe = segs[2].base;
     stack_eflags = 0;
@@ -3429,7 +3429,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
     }
     esp = (esp + imm16) & -1;
     if (rpl == _cpl) {
-        update_segment_register(1, selector, calc_dte_base(dte_lower_dword, dte_upper_dword), calc_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
         if (is_32_bit == 1) {
             mem8_loc = (qe + (esp & SS_mask)) & -1;
@@ -3469,12 +3469,12 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
             if (!(xe & (1 << 15))) {
                 abort_with_error_code(11, gf & 0xfffc);
             }
-            update_segment_register(2, gf, calc_dte_base(we, xe), calc_dte_limit(we, xe), xe);
+            update_segment_register(2, gf, compile_dte_base(we, xe), compile_dte_limit(we, xe), xe);
         }
-        update_segment_register(1, selector, calc_dte_base(dte_lower_dword, dte_upper_dword), calc_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         set_current_permission_level(rpl);
         esp = wd;
-        SS_mask = SS_mask_from_flags(xe);
+        SS_mask = compile_sizemask(xe);
         Pe(0, rpl);
         Pe(3, rpl);
         Pe(4, rpl);
@@ -3568,7 +3568,7 @@ int x86Internal::of(int selector, bool is_lsl) {
         }
     }
     if (is_lsl) {
-        return calc_dte_limit(dte_lower_dword, dte_upper_dword);
+        return compile_dte_limit(dte_lower_dword, dte_upper_dword);
     } else {
         return dte_upper_dword & 0x00f0ff00;
     }
