@@ -2489,19 +2489,19 @@ int x86Internal::compile_sizemask(int dte_upper_dword) {
         return 0xffff;
     }
 }
-void x86Internal::load_from_descriptor_table(int selector, int *descriptor_table_entry) {
-    SegmentDescriptor descriptor_table;
+void x86Internal::load_xdt_descriptor(int *descriptor_table_entry, int selector) {
+    SegmentDescriptor xdt;
     int Rb, dte_lower_dword, dte_upper_dword;
     if (selector & 0x4) {
-        descriptor_table = ldt;
+        xdt = ldt;
     } else {
-        descriptor_table = gdt;
+        xdt = gdt;
     }
     Rb = selector & ~7;
-    if ((Rb + 7) > descriptor_table.limit) {
+    if ((Rb + 7) > xdt.limit) {
         return;
     }
-    mem8_loc = descriptor_table.base + Rb;
+    mem8_loc = xdt.base + Rb;
     dte_lower_dword = ld32_mem8_kernel_read();
     mem8_loc += 4;
     dte_upper_dword = ld32_mem8_kernel_read();
@@ -2518,7 +2518,7 @@ int x86Internal::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
 int x86Internal::compile_dte_base(int dte_lower_dword, int dte_upper_dword) {
     return ((((dte_lower_dword >> 16) & 0xffff) | ((dte_upper_dword & 0xff) << 16) | (dte_upper_dword & 0xff000000))) & -1;
 }
-void x86Internal::load_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword) {
+void x86Internal::compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword) {
     sd->base = compile_dte_base(dte_lower_dword, dte_upper_dword);
     sd->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
     sd->flags = dte_upper_dword;
@@ -2536,8 +2536,8 @@ void x86Internal::set_segment_register_real__v86(int reg_idx, int selector) {
         segs[reg_idx].limit = 0xffff;
     }
 }
-void x86Internal::load_from_TR(int he, int *descriptor_table_entry) {
-    int tr_type, Rb, is_32_bit, ke, le;
+void x86Internal::load_tss_descriptor(int *descriptor_table_entry, int dpl) {
+    int tr_type, Rb, is_32_bit, dte_lower_dword, dte_upper_dword;
     if (!(tr.flags & (1 << 15))) {
         abort_with_error_code(11, tr.selector & 0xfffc);
     }
@@ -2546,24 +2546,23 @@ void x86Internal::load_from_TR(int he, int *descriptor_table_entry) {
         abort_with_error_code(13, tr.selector & 0xfffc);
     }
     is_32_bit = tr_type >> 3;
-    Rb = (he * 4 + 2) << is_32_bit;
+    Rb = (dpl * 4 + 2) << is_32_bit;
     if (Rb + (4 << is_32_bit) - 1 > tr.limit) {
         abort_with_error_code(10, tr.selector & 0xfffc);
     }
     mem8_loc = (tr.base + Rb) & -1;
     if (is_32_bit == 0) {
-        le = ld16_mem8_kernel_read();
+        dte_upper_dword = ld16_mem8_kernel_read();
         mem8_loc += 2;
     } else {
-        le = ld32_mem8_kernel_read();
+        dte_upper_dword = ld32_mem8_kernel_read();
         mem8_loc += 4;
     }
-    ke = ld16_mem8_kernel_read();
-    descriptor_table_entry[0] = ke;
-    descriptor_table_entry[1] = le;
+    dte_lower_dword = ld16_mem8_kernel_read();
+    descriptor_table_entry[0] = dte_lower_dword;
+    descriptor_table_entry[1] = dte_upper_dword;
 }
 void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int error_code, int oe, int pe) {
-    SegmentDescriptor descriptor_table;
     int qe, descriptor_type, selector, re;
     int te, ue, is_32_bit;
     int dte_lower_dword, dte_upper_dword, ve, ke, le, we, xe;
@@ -2588,11 +2587,10 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
     } else {
         ye = eip;
     }
-    descriptor_table = idt;
-    if (interrupt_id * 8 + 7 > descriptor_table.limit) {
+    if (interrupt_id * 8 + 7 > idt.limit) {
         abort_with_error_code(13, interrupt_id * 8 + 2);
     }
-    mem8_loc = (descriptor_table.base + interrupt_id * 8) & -1;
+    mem8_loc = (idt.base + interrupt_id * 8) & -1;
     dte_lower_dword = ld32_mem8_kernel_read();
     mem8_loc += 4;
     dte_upper_dword = ld32_mem8_kernel_read();
@@ -2622,7 +2620,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
     if ((selector & 0xfffc) == 0) {
         abort_with_error_code(13, 0);
     }
-    load_from_descriptor_table(selector, e);
+    load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
         abort_with_error_code(13, selector & 0xfffc);
     }
@@ -2639,7 +2637,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         abort_with_error_code(11, selector & 0xfffc);
     }
     if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) {
-        load_from_TR(dpl, e);
+        load_tss_descriptor(e, dpl);
         ke = e[0];
         le = e[1];
         if ((ke & 0xfffc) == 0) {
@@ -2648,7 +2646,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         if ((ke & 3) != dpl) {
             abort_with_error_code(10, ke & 0xfffc);
         }
-        load_from_descriptor_table(ke, e);
+        load_xdt_descriptor(e, ke);
         if (e[0] == 0 && e[1] == 0) {
             abort_with_error_code(10, ke & 0xfffc);
         }
@@ -2780,13 +2778,11 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
 }
 void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int ne, int error_code, int oe, int pe) {
-    SegmentDescriptor descriptor_table;
     int selector, ve, le, ye;
-    descriptor_table = idt;
-    if (interrupt_id * 4 + 3 > descriptor_table.limit) {
+    if (interrupt_id * 4 + 3 > idt.limit) {
         abort_with_error_code(13, interrupt_id * 8 + 2);
     }
-    mem8_loc = descriptor_table.base + (interrupt_id << 2);
+    mem8_loc = idt.base + (interrupt_id << 2);
     ve = ld16_mem8_kernel_read();
     mem8_loc = mem8_loc + 2;
     selector = ld16_mem8_kernel_read();
@@ -2845,7 +2841,6 @@ void x86Internal::do_interrupt(int interrupt_id, int ne, int error_code, int oe,
     }
 }
 void x86Internal::op_LDTR(int selector) {
-    SegmentDescriptor descriptor_table;
     int dte_lower_dword, dte_upper_dword, Rb, De;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2855,13 +2850,12 @@ void x86Internal::op_LDTR(int selector) {
         if (selector & 0x4) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        descriptor_table = gdt;
         Rb = selector & ~7;
         De = 7;
-        if ((Rb + De) > descriptor_table.limit) {
+        if ((Rb + De) > gdt.limit) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        mem8_loc = (descriptor_table.base + Rb) & -1;
+        mem8_loc = (gdt.base + Rb) & -1;
         dte_lower_dword = ld32_mem8_kernel_read();
         mem8_loc += 4;
         dte_upper_dword = ld32_mem8_kernel_read();
@@ -2871,12 +2865,11 @@ void x86Internal::op_LDTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort_with_error_code(11, selector & 0xfffc);
         }
-        load_segment_descriptor(&ldt, dte_lower_dword, dte_upper_dword);
+        compile_segment_descriptor(&ldt, dte_lower_dword, dte_upper_dword);
     }
     ldt.selector = selector;
 }
 void x86Internal::op_LTR(int selector) {
-    SegmentDescriptor descriptor_table;
     int dte_lower_dword, dte_upper_dword, Rb, descriptor_type, De;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2887,13 +2880,12 @@ void x86Internal::op_LTR(int selector) {
         if (selector & 0x4) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        descriptor_table = gdt;
         Rb = selector & ~7;
         De = 7;
-        if ((Rb + De) > descriptor_table.limit) {
+        if ((Rb + De) > gdt.limit) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        mem8_loc = (descriptor_table.base + Rb) & -1;
+        mem8_loc = (gdt.base + Rb) & -1;
         dte_lower_dword = ld32_mem8_kernel_read();
         mem8_loc += 4;
         dte_upper_dword = ld32_mem8_kernel_read();
@@ -2904,14 +2896,14 @@ void x86Internal::op_LTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort_with_error_code(11, selector & 0xfffc);
         }
-        load_segment_descriptor(&tr, dte_lower_dword, dte_upper_dword);
+        compile_segment_descriptor(&tr, dte_lower_dword, dte_upper_dword);
         dte_upper_dword |= (1 << 9);
         st32_mem8_kernel_write(dte_upper_dword);
     }
     tr.selector = selector;
 }
 void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
-    SegmentDescriptor descriptor_table;
+    SegmentDescriptor xdt;
     int dte_lower_dword, dte_upper_dword, dpl, rpl, selector_index;
     if ((selector & 0xfffc) == 0) { // null selector
         if (reg_idx == 2) {
@@ -2920,15 +2912,15 @@ void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
         update_segment_register(reg_idx, selector, 0, 0, 0);
     } else {
         if (selector & 0x4) {
-            descriptor_table = ldt;
+            xdt = ldt;
         } else {
-            descriptor_table = gdt;
+            xdt = gdt;
         }
         selector_index = selector & ~7;
-        if ((selector_index + 7) > descriptor_table.limit) {
+        if ((selector_index + 7) > xdt.limit) {
             abort_with_error_code(13, selector & 0xfffc);
         }
-        mem8_loc = (descriptor_table.base + selector_index) & -1;
+        mem8_loc = (xdt.base + selector_index) & -1;
         dte_lower_dword = ld32_mem8_kernel_read();
         mem8_loc += 4;
         dte_upper_dword = ld32_mem8_kernel_read();
@@ -2989,7 +2981,7 @@ void x86Internal::do_JMPF(int selector, int Le) {
         abort_with_error_code(13, 0);
     }
     int e[2];
-    load_from_descriptor_table(selector, e);
+    load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
         abort_with_error_code(13, selector & 0xfffc);
     }
@@ -3080,7 +3072,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         abort_with_error_code(13, 0);
     }
     int e[2];
-    load_from_descriptor_table(selector, e);
+    load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
         abort_with_error_code(13, selector & 0xfffc);
     }
@@ -3163,7 +3155,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         if ((selector & 0xfffc) == 0) {
             abort_with_error_code(13, 0);
         }
-        load_from_descriptor_table(selector, e);
+        load_xdt_descriptor(e, selector);
         if (e[0] == 0 && e[1] == 0) {
             abort_with_error_code(13, selector & 0xfffc);
         }
@@ -3180,7 +3172,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             abort_with_error_code(11, selector & 0xfffc);
         }
         if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) {
-            load_from_TR(dpl, e);
+            load_tss_descriptor(e, dpl);
             ke = e[0];
             esp = e[1];
             if ((ke & 0xfffc) == 0) {
@@ -3189,7 +3181,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             if ((ke & 3) != dpl) {
                 abort_with_error_code(10, ke & 0xfffc);
             }
-            load_from_descriptor_table(ke, e);
+            load_xdt_descriptor(e, ke);
             if (e[0] == 0 && e[1] == 0) {
                 abort_with_error_code(10, ke & 0xfffc);
             }
@@ -3401,7 +3393,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
     if ((selector & 0xfffc) == 0) {
         abort_with_error_code(13, selector & 0xfffc);
     }
-    load_from_descriptor_table(selector, e);
+    load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
         abort_with_error_code(13, selector & 0xfffc);
     }
@@ -3453,7 +3445,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
             if ((gf & 3) != rpl) {
                 abort_with_error_code(13, gf & 0xfffc);
             }
-            load_from_descriptor_table(gf, e);
+            load_xdt_descriptor(e, gf);
             if (e[0] == 0 && e[1] == 0) {
                 abort_with_error_code(13, gf & 0xfffc);
             }
@@ -3529,7 +3521,7 @@ int x86Internal::of(int selector, bool is_lsl) {
     if ((selector & 0xfffc) == 0) {
         return -1;
     }
-    load_from_descriptor_table(selector, e);
+    load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
         return -1;
     }
@@ -3607,7 +3599,7 @@ int x86Internal::segment_isnt_accessible(int selector, bool is_verw) {
     if ((selector & 0xfffc) == 0) {
         return 0;
     }
-    load_from_descriptor_table(selector, e);
+    load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
         return 0;
     }
