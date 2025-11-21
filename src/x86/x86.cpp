@@ -2480,7 +2480,7 @@ bool x86Internal::check_real__v86() {
     return !check_protected();
 }
 bool x86Internal::check_protected() {
-    return check_protected();
+    return cr0 & (1 << 0);
 }
 int x86Internal::SS_mask_from_flags(int dte_upper_dword) {
     if (dte_upper_dword & (1 << 22)) {
@@ -2816,7 +2816,7 @@ void x86Internal::do_interrupt(int interrupt_id, int ne, int error_code, int oe,
         int eip_tmp = eip;
         int eip_linear;
         std::string str =
-            "do_interrupt: interrupt_id=" + _2_bytes_(interrupt_id) +
+            "do_interrupt: intno=" + _2_bytes_(interrupt_id) +
             " error_code=" + _4_bytes_(error_code) +
             " EIP=" + _4_bytes_(eip_tmp) + " ESP=" + _4_bytes_(regs[4]) +
             " EAX=" + _4_bytes_(regs[0]) + " EBX=" + _4_bytes_(regs[3]) +
