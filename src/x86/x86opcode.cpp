@@ -1931,7 +1931,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     regs[reg_idx1] = (((x) << 16) >> 16);
                     goto EXEC_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
-                    if (!(cr0 & (1 << 0)) || (eflags & 0x00020000)) {
+                    if (!check_protected() || (eflags & 0x00020000)) {
                         abort(6);
                     }
                     mem8 = phys_mem8[far++];

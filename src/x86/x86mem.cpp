@@ -13,7 +13,7 @@ int x86Internal::__ld_8bits_mem8_read() {
 }
 int x86Internal::ld_8bits_mem8_read() {
     int tlb_hash;
-    return (check_real_mode() ||
+    return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                 ? __ld_8bits_mem8_read()
                 : phys_mem8[mem8_loc ^ tlb_hash]);
@@ -27,7 +27,7 @@ int x86Internal::__ld_16bits_mem8_read() {
 }
 int x86Internal::ld_16bits_mem8_read() {
     int tlb_hash;
-    return (check_real_mode() ||
+    return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 1
                 ? __ld_16bits_mem8_read()
                 : phys_mem16[(mem8_loc ^ tlb_hash) >> 1]);
@@ -45,7 +45,7 @@ int x86Internal::__ld_32bits_mem8_read() {
 }
 int x86Internal::ld_32bits_mem8_read() {
     int tlb_hash;
-    return (check_real_mode() ||
+    return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 3
                 ? __ld_32bits_mem8_read()
                 : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
@@ -63,7 +63,7 @@ int x86Internal::__ld_8bits_mem8_write() {
 }
 int x86Internal::ld_8bits_mem8_write() {
     int tlb_lookup;
-    return (check_real_mode() ||
+    return (check_real__v86() ||
             (tlb_lookup = tlb_write[mem8_loc >> 12]) == -1)
                ? __ld_8bits_mem8_write()
                : phys_mem8[mem8_loc ^ tlb_lookup];
@@ -77,7 +77,7 @@ int x86Internal::__ld_16bits_mem8_write() {
 }
 int x86Internal::ld_16bits_mem8_write() {
     int tlb_lookup;
-    return (check_real_mode() ||
+    return (check_real__v86() ||
             (tlb_lookup = tlb_write[mem8_loc >> 12]) | mem8_loc) & 1
                ? __ld_16bits_mem8_write()
                : phys_mem16[(mem8_loc ^ tlb_lookup) >> 1];
@@ -95,7 +95,7 @@ int x86Internal::__ld_32bits_mem8_write() {
 }
 int x86Internal::ld_32bits_mem8_write() {
     int tlb_lookup;
-    return check_real_mode() ||
+    return check_real__v86() ||
                    ((tlb_lookup = tlb_write[mem8_loc >> 12]) | mem8_loc) & 3
                ? __ld_32bits_mem8_write()
                : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
@@ -157,7 +157,7 @@ void x86Internal::__st8_mem8_write(int x) {
 }
 void x86Internal::st8_mem8_write(int x) {
     int tlb_hash = tlb_write[mem8_loc >> 12];
-    if (check_real_mode() || tlb_hash == -1) {
+    if (check_real__v86() || tlb_hash == -1) {
         __st8_mem8_write(x);
     } else {
         phys_mem8[mem8_loc ^ tlb_hash] = x;
@@ -171,7 +171,7 @@ void x86Internal::__st16_mem8_write(int x) {
 }
 void x86Internal::st16_mem8_write(int x) {
     int tlb_hash = tlb_write[mem8_loc >> 12];
-    if (check_real_mode() || (tlb_hash | mem8_loc) & 1) {
+    if (check_real__v86() || (tlb_hash | mem8_loc) & 1) {
         __st16_mem8_write(x);
     } else {
         phys_mem16[(mem8_loc ^ tlb_hash) >> 1] = x;
@@ -189,7 +189,7 @@ void x86Internal::__st32_mem8_write(int x) {
 }
 void x86Internal::st32_mem8_write(int x) {
     int tlb_hash = tlb_write[mem8_loc >> 12];
-    if (check_real_mode() || (tlb_hash | mem8_loc) & 3) {
+    if (check_real__v86() || (tlb_hash | mem8_loc) & 3) {
         __st32_mem8_write(x);
     } else {
         int idx = (mem8_loc ^ tlb_hash) >> 2;

@@ -356,7 +356,7 @@ class x86Internal {
     void set_CR0(int Qd);
     void set_CR3(int new_pdb);
     void set_CR4(int newval);
-    bool check_real_mode();
+    bool check_real__v86();
     bool check_protected();
 
     void check_opcode();
@@ -411,10 +411,10 @@ class x86Internal {
 
     int segment_translation(int mem8);
     int segmented_mem8_loc_for_MOV(bool is_verw);
-    void set_segment_vars(int ee, int selector, uint32_t base, uint32_t limit, int flags);
-    void init_segment_vars_with_selector(int Sb, int selector);
-    void set_protected_mode_segment_register(int reg, int selector);
-    void set_segment_register(int reg, int selector);
+    void update_segment_register(int reg_idx, int selector, uint32_t base, uint32_t limit, int flags);
+    void set_segment_register(int reg_idx, int selector);
+    void set_segment_register_real__v86(int reg_idx, int selector);
+    void set_segment_register_protected(int reg_idx, int selector);
     int segment_isnt_accessible(int selector, bool is_verw);
 
     void set_word_in_register(int reg_idx1, int x);
@@ -470,8 +470,8 @@ class x86Internal {
     int get_FLAGS();
     void set_FLAGS(int flag_bits, int ld);
 
-    void abort_with_error_code(int intno, int error_code);
-    void abort(int intno);
+    void abort_with_error_code(int interrupt_id, int error_code);
+    void abort(int interrupt_id);
 
     void set_current_permission_level(int value);
 
@@ -482,29 +482,29 @@ class x86Internal {
     int pop_dword_from_stack_read();
     void pop_dword_from_stack_incr_ptr();
 
-    int SS_mask_from_flags(int desp_high4);
+    int SS_mask_from_flags(int dte_upper_dword);
 
-    void load_from_descriptor_table(int selector, int *desary);
-    void load_from_TR(int he, int *desary);
-    int calc_desp_limit(int desp_low4, int desp_high4);
-    int calc_desp_base(int desp_low4, int desp_high4);
-    void set_descriptor_register(SegmentDescriptor *descriptor_table, int desp_low4, int desp_high4);
+    void load_from_descriptor_table(int selector, int *descriptor_table_entry);
+    void load_from_TR(int he, int *descriptor_table_entry);
+    int calc_dte_limit(int dte_lower_dword, int dte_upper_dword);
+    int calc_dte_base(int dte_lower_dword, int dte_upper_dword);
+    void set_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
 
-    void do_interrupt_protected_mode(int intno, int ne, int error_code, int oe, int pe);
-    void do_interrupt_not_protected_mode(int intno, int ne, int error_code, int oe, int pe);
-    void do_interrupt(int intno, int ne, int error_code, int oe, int pe);
+    void do_interrupt_protected_mode(int interrupt_id, int ne, int error_code, int oe, int pe);
+    void do_interrupt_real__v86_mode(int interrupt_id, int ne, int error_code, int oe, int pe);
+    void do_interrupt(int interrupt_id, int ne, int error_code, int oe, int pe);
 
     void op_LDTR(int selector);
     void op_LTR(int selector);
     void do_JMPF_virtual_mode(int selector, int Le);
     void do_JMPF(int selector, int Le);
     void op_JMPF(int selector, int Le);
-    void op_CALLF_not_protected_mode(bool is_32_bit, int selector, int Le, int oe);
+    void op_CALLF_real__v86_mode(bool is_32_bit, int selector, int Le, int oe);
     void op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe);
     void op_CALLF(bool is_32_bit, int selector, int Le, int oe);
-    void do_return_not_protected_mode(bool is_32_bit, bool is_iret, int imm16);
+    void do_return_real__v86_mode(bool is_32_bit, bool is_iret, int imm16);
     void do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16);
-    void Pe(int reg, int cpl);
+    void Pe(int reg_idx, int cpl);
     void op_IRET(bool is_32_bit);
     void op_RETF(bool is_32_bit, int imm16);
     void op_LAR_LSL(bool is_32_bit, bool is_lsl);
