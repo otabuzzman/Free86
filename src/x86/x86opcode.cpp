@@ -20,7 +20,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
         do_interrupt(get_hard_intno(), 0, 0, 0, 1);
     }
     do {
-        check_opcode();
+        fetch_opcode();
         ipr = ipr_default;
         opcode |= ipr & 0x0100;
         while (true) {
@@ -216,13 +216,13 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 mem8_loc = mem8_loc + segs[reg_idx1].base;
                 x = ld_8bits_mem8_read();
-                set_lower_word_bytes(0, x);
+                set_lower_byte(0, x);
                 goto EXEC_LOOP;
             case 0xc6: // MOV
                 mem8 = phys_mem8[far++];
                 if ((mem8 >> 6) == 3) {
                     x = phys_mem8[far++];
-                    set_lower_word_bytes(mem8 & 7, x);
+                    set_lower_byte(mem8 & 7, x);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = phys_mem8[far++];
@@ -266,13 +266,13 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
-                    set_lower_word_bytes(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                    set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_8bits_mem8_write();
                     st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                 }
-                set_lower_word_bytes(reg_idx1, x);
+                set_lower_byte(reg_idx1, x);
                 goto EXEC_LOOP;
             case 0x87: // XCHG
                 mem8 = phys_mem8[far++];
@@ -340,7 +340,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_lower_word_bytes(reg_idx0, do_8bit_math(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, do_8bit_math(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     if (operation != 7) {
@@ -424,7 +424,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     mem8_loc = segment_translation(mem8);
                     y = ld_8bits_mem8_read();
                 }
-                set_lower_word_bytes(reg_idx1, do_8bit_math(operation, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
+                set_lower_byte(reg_idx1, do_8bit_math(operation, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
                 goto EXEC_LOOP;
             case 0x03: // ADD
                 mem8 = phys_mem8[far++];
@@ -480,7 +480,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             case 0x3c: // CMP
                 y = phys_mem8[far++];
                 operation = opcode >> 3;
-                set_lower_word_bytes(0, do_8bit_math(operation, regs[0] & 0xff, y));
+                set_lower_byte(0, do_8bit_math(operation, regs[0] & 0xff, y));
                 goto EXEC_LOOP;
             case 0x05: // ADD
                 y = phys_mem8[far] |
@@ -531,7 +531,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     y = phys_mem8[far++];
-                    set_lower_word_bytes(reg_idx0, do_8bit_math(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, do_8bit_math(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[far++];
@@ -732,7 +732,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 2:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_bytes(reg_idx0, ~(regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)));
+                        set_lower_byte(reg_idx0, ~(regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -743,7 +743,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 3:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_bytes(reg_idx0, do_8bit_math(5, 0, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
+                        set_lower_byte(reg_idx0, do_8bit_math(5, 0, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -886,7 +886,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     y = phys_mem8[far++];
                     reg_idx0 = mem8 & 7;
-                    set_lower_word_bytes(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[far++];
@@ -915,7 +915,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 operation = (mem8 >> 3) & 7;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_lower_word_bytes(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), 1));
+                    set_lower_byte(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), 1));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_8bits_mem8_write();
@@ -942,7 +942,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 y = regs[1] & 0xff;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_lower_word_bytes(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld_8bits_mem8_write();
@@ -1142,7 +1142,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_bytes(reg_idx0, increment_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
+                        set_lower_byte(reg_idx0, increment_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -1153,7 +1153,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 1:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word_bytes(reg_idx0, decrement_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
+                        set_lower_byte(reg_idx0, decrement_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
@@ -1605,7 +1605,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x9f: // LAHF
                 x = get_EFLAGS();
-                set_lower_word_bytes(4, x);
+                set_lower_byte(4, x);
                 goto EXEC_LOOP;
             case 0xf4: // HLT
                 if (cpl != 0) {
@@ -1696,7 +1696,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     abort(13);
                 }
                 x = phys_mem8[far++];
-                set_lower_word_bytes(0, ld8_port(x));
+                set_lower_byte(0, ld8_port(x));
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1739,7 +1739,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                set_lower_word_bytes(0, ld8_port(regs[2] & 0xffff));
+                set_lower_byte(0, ld8_port(regs[2] & 0xffff));
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1847,7 +1847,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     mem8 = phys_mem8[far++];
                     x = can_jump(opcode & 0xf);
                     if ((mem8 >> 6) == 3) {
-                        set_lower_word_bytes(mem8 & 7, x);
+                        set_lower_byte(mem8 & 7, x);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         st8_mem8_write(x);
@@ -2269,14 +2269,14 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         reg_idx0 = mem8 & 7;
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                         y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
-                        set_lower_word_bytes(reg_idx1, x);
-                        set_lower_word_bytes(reg_idx0, y);
+                        set_lower_byte(reg_idx1, x);
+                        set_lower_byte(reg_idx0, y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld_8bits_mem8_write();
                         y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         st8_mem8_write(y);
-                        set_lower_word_bytes(reg_idx1, x);
+                        set_lower_byte(reg_idx1, x);
                     }
                     goto EXEC_LOOP;
                 case 0xc1: // -
@@ -2304,9 +2304,9 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
                         y = do_8bit_math(5, regs[0], x);
                         if (y == 0) {
-                            set_lower_word_bytes(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                            set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
-                            set_lower_word_bytes(0, x);
+                            set_lower_byte(0, x);
                         }
                     } else {
                         mem8_loc = segment_translation(mem8);
@@ -2315,7 +2315,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         if (y == 0) {
                             st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
-                            set_lower_word_bytes(0, x);
+                            set_lower_byte(0, x);
                         }
                     }
                     goto EXEC_LOOP;

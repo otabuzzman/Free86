@@ -50,7 +50,7 @@ void x86Internal::update_SSB() {
     }
     x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
 }
-void x86Internal::check_opcode() {
+void x86Internal::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = check_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
     int64_t eip_tlb_hash = tlb_read[eip_linear >> 12];
@@ -442,7 +442,7 @@ int x86Internal::convert_offset_to_linear(bool writable) {
     }
     return mem8_loc;
 }
-void x86Internal::set_lower_word_bytes(int reg_idx, int x) {
+void x86Internal::set_lower_byte(int reg_idx, int x) {
     if (reg_idx & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
         regs[reg_idx & 3] = (regs[reg_idx & 3] & -65281) | ((x & 0xff) << 8);
     } else { // set AL, CL, DL, BL
@@ -1254,20 +1254,20 @@ int x86Internal::op_16_IMUL(int a, int opcode) {
     osm = 22;
     return flg;
 }
-int x86Internal::do_multiply32(int _a, int cc_opbyte) {
+int x86Internal::do_multiply32(int a, int opcode) {
     uint32_t Jc, Ic, Tc, Uc, m;
-    uint64_t a = _a;
-    uint32_t au = _a;
-    uint32_t opcode = cc_opbyte;
-    uint64_t r = a * opcode;
+    uint64_t _a = a;
+    uint32_t au = a;
+    uint32_t _opcode = opcode;
+    uint64_t r = _a * _opcode;
     if (r <= 0xffffffff) {
         v = 0;
         r &= -1;
     } else {
-        Jc = a & 0xffff;
+        Jc = _a & 0xffff;
         Ic = au >> 16;
-        Tc = opcode & 0xffff;
-        Uc = opcode >> 16;
+        Tc = _opcode & 0xffff;
+        Uc = _opcode >> 16;
         r = Jc * Tc;
         v = Ic * Uc;
         m = Jc * Uc;
@@ -3025,16 +3025,16 @@ void x86Internal::op_JMPF(int selector, int Le) {
         do_JMPF(selector, Le);
     }
 }
-void x86Internal::Pe(int reg_idx, int cpl) {
+void x86Internal::Pe(int segment, int cpl) {
     int dpl, dte_upper_dword;
-    if ((reg_idx == 4 || reg_idx == 5) && (segs[reg_idx].selector & 0xfffc) == 0) {
-        return;
+    if ((segment == 4 || segment == 5) && (segs[segment].selector & 0xfffc) == 0) {
+        return; // null selector in FS, GS
     }
-    dte_upper_dword = segs[reg_idx].flags;
+    dte_upper_dword = segs[segment].flags;
     dpl = (dte_upper_dword >> 13) & 3;
     if (!(dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 10))) {
         if (dpl < cpl) {
-            update_segment_register(reg_idx, 0, 0, 0, 0);
+            update_segment_register(segment, 0, 0, 0, 0);
         }
     }
 }

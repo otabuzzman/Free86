@@ -359,7 +359,7 @@ class x86Internal {
     bool check_real__v86();
     bool check_protected();
 
-    void check_opcode();
+    void fetch_opcode();
 
     virtual int get_hard_irq() = 0;
     virtual int get_hard_intno() = 0;
@@ -417,7 +417,7 @@ class x86Internal {
     void set_segment_register_protected(int reg_idx, int selector);
     int is_segment_accessible(int selector, bool writable);
 
-    void set_lower_word_bytes(int reg_idx, int x);
+    void set_lower_byte(int reg_idx, int x);
     void set_lower_word(int reg_idx, int x);
 
     int do_32bit_math(int operation, int Yb, int Zb);
@@ -452,7 +452,7 @@ class x86Internal {
     int op_IMUL(int a, int opcode);
     int op_16_MUL(int a, int opcode);
     int op_16_IMUL(int a, int opcode);
-    int do_multiply32(int _a, int cc_opbyte);
+    int do_multiply32(int _a, int opcode);
     int op_MUL32(int a, int opcode);
     int op_IMUL32(int a, int opcode);
 
