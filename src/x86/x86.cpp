@@ -394,7 +394,7 @@ int x86Internal::segment_translation(int modRM) {
     }
     return 0;
 }
-int x86Internal::convert_offset_to_linear(bool is_verw) {
+int x86Internal::convert_offset_to_linear(bool writable) {
     uint64_t mem8_loc;
     int Sb, Ls, Tc, Lc;
     if (ipr & 0x0080) {
@@ -419,9 +419,9 @@ int x86Internal::convert_offset_to_linear(bool is_verw) {
     }
     // type checking
     if (Sb == 1) { // CS
-        Tc = is_verw || !(segs[Sb].flags & (1 << 9));
+        Tc = writable || !(segs[Sb].flags & (1 << 9));
     } else { // data segment
-        Tc = is_verw && !(segs[Sb].flags & (1 << 9));
+        Tc = writable && !(segs[Sb].flags & (1 << 9));
     }
     if (Tc) {
         abort(13, 0);
