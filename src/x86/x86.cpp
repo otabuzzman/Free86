@@ -137,7 +137,7 @@ void x86Internal::do_tlb_set_page(int linear_address, int write, bool user) {
             error_code |= 0x04;
         }
         cr2 = linear_address;
-        abort_with_error_code(14, error_code);
+        abort(14, error_code);
     }
 }
 int x86Internal::segment_translation(int modRM) {
@@ -394,7 +394,7 @@ int x86Internal::segment_translation(int modRM) {
     }
     return 0;
 }
-int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
+int x86Internal::convert_offset_to_linear(bool is_verw) {
     uint64_t mem8_loc;
     int Sb, Ls, Tc, Lc;
     if (ipr & 0x0080) {
@@ -424,7 +424,7 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
         Tc = is_verw && !(segs[Sb].flags & (1 << 9));
     }
     if (Tc) {
-        abort_with_error_code(13, 0);
+        abort(13, 0);
     }
     mem8_loc = segs[Sb].base + mem8_loc;
     // limit checking
@@ -435,22 +435,22 @@ int x86Internal::segmented_mem8_loc_for_MOV(bool is_verw) {
     }
     if (Lc) {
         if (Sb == 2) {
-            abort_with_error_code(12, 0); // #SS(0)
+            abort(12, 0); // #SS(0)
         } else {
-            abort_with_error_code(13, 0); // #GP(0)
+            abort(13, 0); // #GP(0)
         }
     }
     return mem8_loc;
 }
-void x86Internal::set_word_in_register(int reg_idx1, int x) {
-    if (reg_idx1 & 4) {
-        regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & -65281) | ((x & 0xff) << 8);
-    } else {
-        regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & -256) | (x & 0xff);
+void x86Internal::set_lower_word_bytes(int reg_idx, int x) {
+    if (reg_idx & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
+        regs[reg_idx & 3] = (regs[reg_idx & 3] & -65281) | ((x & 0xff) << 8);
+    } else { // set AL, CL, DL, BL
+        regs[reg_idx & 3] = (regs[reg_idx & 3] & -256) | (x & 0xff);
     }
 }
-void x86Internal::set_lower_word_in_register(int reg_idx1, int x) {
-    regs[reg_idx1] = (regs[reg_idx1] & -65536) | (x & 0xffff);
+void x86Internal::set_lower_word(int reg_idx, int x) {
+    regs[reg_idx] = (regs[reg_idx] & -65536) | (x & 0xffff);
 }
 int x86Internal::do_32bit_math(int operation, int Yb, int Zb) {
     int ac;
@@ -467,14 +467,14 @@ int x86Internal::do_32bit_math(int operation, int Yb, int Zb) {
         osm = 14;
         break;
     case 2:
-        ac = check_carry();
+        ac = is_CF();
         osm_src = Zb;
         Yb = Yb + Zb + ac;
         osm_dst = Yb;
         osm = ac ? 5 : 2;
         break;
     case 3:
-        ac = check_carry();
+        ac = is_CF();
         osm_src = Zb;
         Yb = Yb - Zb - ac;
         osm_dst = Yb;
@@ -519,14 +519,14 @@ int x86Internal::do_16bit_math(int operation, int Yb, int Zb) {
         osm = 13;
         break;
     case 2:
-        ac = check_carry();
+        ac = is_CF();
         osm_src = Zb;
         Yb = (((Yb + Zb + ac) << 16) >> 16);
         osm_dst = Yb;
         osm = ac ? 4 : 1;
         break;
     case 3:
-        ac = check_carry();
+        ac = is_CF();
         osm_src = Zb;
         Yb = (((Yb - Zb - ac) << 16) >> 16);
         osm_dst = Yb;
@@ -571,14 +571,14 @@ int x86Internal::do_8bit_math(int operation, int Yb, int Zb) {
         osm = 12;
         break;
     case 2:
-        ac = check_carry();
+        ac = is_CF();
         osm_src = Zb;
         Yb = (((Yb + Zb + ac) << 24) >> 24);
         osm_dst = Yb;
         osm = ac ? 3 : 0;
         break;
     case 3:
-        ac = check_carry();
+        ac = is_CF();
         osm_src = Zb;
         Yb = (((Yb - Zb - ac) << 24) >> 24);
         osm_dst = Yb;
@@ -653,7 +653,7 @@ int x86Internal::shift8(int operation, int Yb, int Zb) {
             Yb &= 0xff;
             kc = Yb;
             Yb = (Yb << Zb) | (Yb >> (8 - Zb));
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= (Yb & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) << 4) & 0x0800);
@@ -668,7 +668,7 @@ int x86Internal::shift8(int operation, int Yb, int Zb) {
             Yb &= 0xff;
             kc = Yb;
             Yb = (Yb >> Zb) | (Yb << (8 - Zb));
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((Yb >> 7) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) << 4) & 0x0800);
@@ -682,12 +682,12 @@ int x86Internal::shift8(int operation, int Yb, int Zb) {
         if (Zb) {
             Yb &= 0xff;
             kc = Yb;
-            ac = check_carry();
+            ac = is_CF();
             Yb = (Yb << Zb) | (ac << (Zb - 1));
             if (Zb > 1) {
                 Yb |= kc >> (9 - Zb);
             }
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((kc >> (8 - Zb)) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) << 4) & 0x0800);
@@ -701,12 +701,12 @@ int x86Internal::shift8(int operation, int Yb, int Zb) {
         if (Zb) {
             Yb &= 0xff;
             kc = Yb;
-            ac = check_carry();
+            ac = is_CF();
             Yb = (Yb >> Zb) | (ac << (8 - Zb));
             if (Zb > 1) {
                 Yb |= kc << (9 - Zb);
             }
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((kc >> (Zb - 1)) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) << 4) & 0x0800);
@@ -754,7 +754,7 @@ int x86Internal::shift16(int operation, int Yb, int Zb) {
             Yb &= 0xffff;
             kc = Yb;
             Yb = (Yb << Zb) | (Yb >> (16 - Zb));
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= (Yb & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
@@ -769,7 +769,7 @@ int x86Internal::shift16(int operation, int Yb, int Zb) {
             Yb &= 0xffff;
             kc = Yb;
             Yb = (Yb >> Zb) | (Yb << (16 - Zb));
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((Yb >> 15) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
@@ -783,12 +783,12 @@ int x86Internal::shift16(int operation, int Yb, int Zb) {
         if (Zb) {
             Yb &= 0xffff;
             kc = Yb;
-            ac = check_carry();
+            ac = is_CF();
             Yb = (Yb << Zb) | (ac << (Zb - 1));
             if (Zb > 1) {
                 Yb |= kc >> (17 - Zb);
             }
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((kc >> (16 - Zb)) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
@@ -802,12 +802,12 @@ int x86Internal::shift16(int operation, int Yb, int Zb) {
         if (Zb) {
             Yb &= 0xffff;
             kc = Yb;
-            ac = check_carry();
+            ac = is_CF();
             Yb = (Yb >> Zb) | (ac << (16 - Zb));
             if (Zb > 1) {
                 Yb |= kc << (17 - Zb);
             }
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((kc >> (Zb - 1)) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
@@ -855,7 +855,7 @@ int x86Internal::shift32(int operation, uint32_t Yb, int Zb) {
         if (Zb) {
             kc = Yb;
             Yb = (Yb << Zb) | (Yb >> (32 - Zb));
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= (Yb & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
@@ -869,7 +869,7 @@ int x86Internal::shift32(int operation, uint32_t Yb, int Zb) {
         if (Zb) {
             kc = Yb;
             Yb = (Yb >> Zb) | (Yb << (32 - Zb));
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((Yb >> 31) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
@@ -882,12 +882,12 @@ int x86Internal::shift32(int operation, uint32_t Yb, int Zb) {
         Zb &= 0x1f;
         if (Zb) {
             kc = Yb;
-            ac = check_carry();
+            ac = is_CF();
             Yb = (Yb << Zb) | (ac << (Zb - 1));
             if (Zb > 1) {
                 Yb |= kc >> (33 - Zb);
             }
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((kc >> (32 - Zb)) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
@@ -900,12 +900,12 @@ int x86Internal::shift32(int operation, uint32_t Yb, int Zb) {
         Zb &= 0x1f;
         if (Zb) {
             kc = Yb;
-            ac = check_carry();
+            ac = is_CF();
             Yb = (Yb >> Zb) | (ac << (32 - Zb));
             if (Zb > 1) {
                 Yb |= kc << (33 - Zb);
             }
-            osm_src = conditional_flags_for_rot_shiftcc_ops();
+            osm_src = compile_flags(true);
             osm_src |= ((kc >> (Zb - 1)) & 0x0001);
             if (Zb == 1) {
                 osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
@@ -1112,7 +1112,7 @@ void x86Internal::op_DIV(int opcode) {
     }
     q = a / opcode;
     r = (a % opcode);
-    set_lower_word_in_register(0, (q & 0xff) | (r << 8));
+    set_lower_word(0, (q & 0xff) | (r << 8));
 }
 void x86Internal::op_IDIV(int opcode) {
     int a, q, r;
@@ -1126,7 +1126,7 @@ void x86Internal::op_IDIV(int opcode) {
         abort(0);
     }
     r = (a % opcode);
-    set_lower_word_in_register(0, (q & 0xff) | (r << 8));
+    set_lower_word(0, (q & 0xff) | (r << 8));
 }
 void x86Internal::op_16_DIV(int opcode) {
     int a, q, r;
@@ -1138,8 +1138,8 @@ void x86Internal::op_16_DIV(int opcode) {
     }
     q = au / opcode;
     r = (au % opcode);
-    set_lower_word_in_register(0, q);
-    set_lower_word_in_register(2, r);
+    set_lower_word(0, q);
+    set_lower_word(2, r);
 }
 void x86Internal::op_16_IDIV(int opcode) {
     int a, q, r;
@@ -1153,8 +1153,8 @@ void x86Internal::op_16_IDIV(int opcode) {
         abort(0);
     }
     r = (a % opcode);
-    set_lower_word_in_register(0, q);
-    set_lower_word_in_register(2, r);
+    set_lower_word(0, q);
+    set_lower_word(2, r);
 }
 int x86Internal::op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t opcode) {
     uint64_t a;
@@ -2539,16 +2539,16 @@ void x86Internal::set_segment_register_real__v86(int reg_idx, int selector) {
 void x86Internal::load_tss_descriptor(int *descriptor_table_entry, int dpl) {
     int tr_type, Rb, is_32_bit, dte_lower_dword, dte_upper_dword;
     if (!(tr.flags & (1 << 15))) {
-        abort_with_error_code(11, tr.selector & 0xfffc);
+        abort(11, tr.selector & 0xfffc);
     }
     tr_type = (tr.flags >> 8) & 0xf;
     if ((tr_type & 7) != 1) {
-        abort_with_error_code(13, tr.selector & 0xfffc);
+        abort(13, tr.selector & 0xfffc);
     }
     is_32_bit = tr_type >> 3;
     Rb = (dpl * 4 + 2) << is_32_bit;
     if (Rb + (4 << is_32_bit) - 1 > tr.limit) {
-        abort_with_error_code(10, tr.selector & 0xfffc);
+        abort(10, tr.selector & 0xfffc);
     }
     mem8_loc = (tr.base + Rb) & -1;
     if (is_32_bit == 0) {
@@ -2588,7 +2588,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         ye = eip;
     }
     if (interrupt_id * 8 + 7 > idt.limit) {
-        abort_with_error_code(13, interrupt_id * 8 + 2);
+        abort(13, interrupt_id * 8 + 2);
     }
     mem8_loc = (idt.base + interrupt_id * 8) & -1;
     dte_lower_dword = ld32_mem8_kernel_read();
@@ -2605,69 +2605,69 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         throw "fatal: unsupported gate type";
         break;
     default:
-        abort_with_error_code(13, interrupt_id * 8 + 2);
+        abort(13, interrupt_id * 8 + 2);
         break;
     }
     dpl = (dte_upper_dword >> 13) & 3;
     if (ne && dpl < cpl) {
-        abort_with_error_code(13, interrupt_id * 8 + 2);
+        abort(13, interrupt_id * 8 + 2);
     }
     if (!(dte_upper_dword & (1 << 15))) {
-        abort_with_error_code(11, interrupt_id * 8 + 2);
+        abort(11, interrupt_id * 8 + 2);
     }
     selector = dte_lower_dword >> 16;
     ve = (dte_upper_dword & -65536) | (dte_lower_dword & 0x0000ffff);
     if ((selector & 0xfffc) == 0) {
-        abort_with_error_code(13, 0);
+        abort(13, 0);
     }
     load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     dte_lower_dword = e[0];
     dte_upper_dword = e[1];
     if (!(dte_upper_dword & (1 << 12)) || !(dte_upper_dword & ((1 << 11)))) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     dpl = (dte_upper_dword >> 13) & 3;
     if (dpl > cpl) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     if (!(dte_upper_dword & (1 << 15))) {
-        abort_with_error_code(11, selector & 0xfffc);
+        abort(11, selector & 0xfffc);
     }
     if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) {
         load_tss_descriptor(e, dpl);
         ke = e[0];
         le = e[1];
         if ((ke & 0xfffc) == 0) {
-            abort_with_error_code(10, ke & 0xfffc);
+            abort(10, ke & 0xfffc);
         }
         if ((ke & 3) != dpl) {
-            abort_with_error_code(10, ke & 0xfffc);
+            abort(10, ke & 0xfffc);
         }
         load_xdt_descriptor(e, ke);
         if (e[0] == 0 && e[1] == 0) {
-            abort_with_error_code(10, ke & 0xfffc);
+            abort(10, ke & 0xfffc);
         }
         we = e[0];
         xe = e[1];
         re = (xe >> 13) & 3;
         if (re != dpl) {
-            abort_with_error_code(10, ke & 0xfffc);
+            abort(10, ke & 0xfffc);
         }
         if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9))) {
-            abort_with_error_code(10, ke & 0xfffc);
+            abort(10, ke & 0xfffc);
         }
         if (!(xe & (1 << 15))) {
-            abort_with_error_code(10, ke & 0xfffc);
+            abort(10, ke & 0xfffc);
         }
         ue = 1;
         SS_mask = compile_sizemask(xe);
         qe = compile_dte_base(we, xe);
     } else if ((dte_upper_dword & (1 << 10)) || dpl == cpl) {
         if (eflags & 0x00020000) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         ue = 0;
         SS_mask = compile_sizemask(segs[2].flags);
@@ -2675,7 +2675,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         le = regs[4];
         dpl = cpl;
     } else {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
         ue = 0;
         SS_mask = 0;
         qe = 0;
@@ -2707,7 +2707,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         }
         le = (le - 4) & -1;
         mem8_loc = (qe + (le & SS_mask)) & -1;
-        st32_mem8_kernel_write(get_FLAGS());
+        st32_mem8_kernel_write(get_EFLAGS());
         le = (le - 4) & -1;
         mem8_loc = (qe + (le & SS_mask)) & -1;
         st32_mem8_kernel_write(segs[1].selector);
@@ -2744,7 +2744,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         }
         le = (le - 2) & -1;
         mem8_loc = (qe + (le & SS_mask)) & -1;
-        st16_mem8_kernel_write(get_FLAGS());
+        st16_mem8_kernel_write(get_EFLAGS());
         le = (le - 2) & -1;
         mem8_loc = (qe + (le & SS_mask)) & -1;
         st16_mem8_kernel_write(segs[1].selector);
@@ -2780,7 +2780,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
 void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int ne, int error_code, int oe, int pe) {
     int selector, ve, le, ye;
     if (interrupt_id * 4 + 3 > idt.limit) {
-        abort_with_error_code(13, interrupt_id * 8 + 2);
+        abort(13, interrupt_id * 8 + 2);
     }
     mem8_loc = idt.base + (interrupt_id << 2);
     ve = ld16_mem8_kernel_read();
@@ -2794,7 +2794,7 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int ne, int erro
     }
     le = le - 2;
     mem8_loc = (le & SS_mask) + SS_base;
-    st16_mem8_write(get_FLAGS());
+    st16_mem8_write(get_EFLAGS());
     le = le - 2;
     mem8_loc = (le & SS_mask) + SS_base;
     st16_mem8_write(segs[1].selector);
@@ -2848,22 +2848,22 @@ void x86Internal::op_LDTR(int selector) {
         ldt.limit = 0;
     } else {
         if (selector & 0x4) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         Rb = selector & ~7;
         De = 7;
         if ((Rb + De) > gdt.limit) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         mem8_loc = (gdt.base + Rb) & -1;
         dte_lower_dword = ld32_mem8_kernel_read();
         mem8_loc += 4;
         dte_upper_dword = ld32_mem8_kernel_read();
         if ((dte_upper_dword & (1 << 12)) || ((dte_upper_dword >> 8) & 0xf) != 2) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         if (!(dte_upper_dword & (1 << 15))) {
-            abort_with_error_code(11, selector & 0xfffc);
+            abort(11, selector & 0xfffc);
         }
         compile_segment_descriptor(&ldt, dte_lower_dword, dte_upper_dword);
     }
@@ -2878,12 +2878,12 @@ void x86Internal::op_LTR(int selector) {
         tr.flags = 0;
     } else {
         if (selector & 0x4) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         Rb = selector & ~7;
         De = 7;
         if ((Rb + De) > gdt.limit) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         mem8_loc = (gdt.base + Rb) & -1;
         dte_lower_dword = ld32_mem8_kernel_read();
@@ -2891,10 +2891,10 @@ void x86Internal::op_LTR(int selector) {
         dte_upper_dword = ld32_mem8_kernel_read();
         descriptor_type = (dte_upper_dword >> 8) & 0xf;
         if ((dte_upper_dword & (1 << 12)) || (descriptor_type != 1 && descriptor_type != 9)) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         if (!(dte_upper_dword & (1 << 15))) {
-            abort_with_error_code(11, selector & 0xfffc);
+            abort(11, selector & 0xfffc);
         }
         compile_segment_descriptor(&tr, dte_lower_dword, dte_upper_dword);
         dte_upper_dword |= (1 << 9);
@@ -2907,7 +2907,7 @@ void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
     int dte_lower_dword, dte_upper_dword, dpl, rpl, selector_index;
     if ((selector & 0xfffc) == 0) { // null selector
         if (reg_idx == 2) {
-            abort_with_error_code(13, 0);
+            abort(13, 0);
         }
         update_segment_register(reg_idx, selector, 0, 0, 0);
     } else {
@@ -2918,39 +2918,39 @@ void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
         }
         selector_index = selector & ~7;
         if ((selector_index + 7) > xdt.limit) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         mem8_loc = (xdt.base + selector_index) & -1;
         dte_lower_dword = ld32_mem8_kernel_read();
         mem8_loc += 4;
         dte_upper_dword = ld32_mem8_kernel_read();
         if (!(dte_upper_dword & (1 << 12))) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         rpl = selector & 3;
         dpl = (dte_upper_dword >> 13) & 3;
         if (reg_idx == 2) {
             if ((dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 9))) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
             if (rpl != cpl || dpl != cpl) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
         } else {
             if ((dte_upper_dword & ((1 << 11) | (1 << 9))) == (1 << 11)) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
             if (!(dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
-                    abort_with_error_code(13, selector & 0xfffc);
+                    abort(13, selector & 0xfffc);
                 }
             }
         }
         if (!(dte_upper_dword & (1 << 15))) {
             if (reg_idx == 2) {
-                abort_with_error_code(12, selector & 0xfffc);
+                abort(12, selector & 0xfffc);
             } else {
-                abort_with_error_code(11, selector & 0xfffc);
+                abort(11, selector & 0xfffc);
             }
         }
         if (!(dte_upper_dword & (1 << 8))) {
@@ -2978,39 +2978,39 @@ void x86Internal::do_JMPF(int selector, int Le) {
     int dte_lower_dword, dte_upper_dword, dpl, rpl;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
-        abort_with_error_code(13, 0);
+        abort(13, 0);
     }
     int e[2];
     load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     dte_lower_dword = e[0];
     dte_upper_dword = e[1];
     if (dte_upper_dword & (1 << 12)) {
         if (!(dte_upper_dword & (1 << 11))) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         dpl = (dte_upper_dword >> 13) & 3;
         if (dte_upper_dword & (1 << 10)) {
             if (dpl > cpl) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
         } else {
             rpl = selector & 3;
             if (rpl > cpl) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
             if (dpl != cpl) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
         }
         if (!(dte_upper_dword & (1 << 15))) {
-            abort_with_error_code(11, selector & 0xfffc);
+            abort(11, selector & 0xfffc);
         }
         limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
         if (Le > limit) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit,  dte_upper_dword);
         eip = Le, far = far_start = 0;
@@ -3069,36 +3069,36 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
     int x = 0, limit, Ue;
     int qe, Ve, We;
     if ((selector & 0xfffc) == 0) {
-        abort_with_error_code(13, 0);
+        abort(13, 0);
     }
     int e[2];
     load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     dte_lower_dword = e[0];
     dte_upper_dword = e[1];
     We = regs[4];
     if (dte_upper_dword & (1 << 12)) {
         if (!(dte_upper_dword & (1 << 11))) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         dpl = (dte_upper_dword >> 13) & 3;
         if (dte_upper_dword & (1 << 10)) {
             if (dpl > cpl) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
         } else {
             rpl = selector & 3;
             if (rpl > cpl) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
             if (dpl != cpl) {
-                abort_with_error_code(13, selector & 0xfffc);
+                abort(13, selector & 0xfffc);
             }
         }
         if (!(dte_upper_dword & (1 << 15))) {
-            abort_with_error_code(11, selector & 0xfffc);
+            abort(11, selector & 0xfffc);
         }
         esp = We;
         SS_mask = compile_sizemask(segs[2].flags);
@@ -3120,7 +3120,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         }
         limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
         if (Le > limit) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit, dte_upper_dword);
@@ -3139,63 +3139,63 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             throw "fatal: unsupported TSS or task gate in CALL";
             break;
         default:
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
             break;
         }
         is_32_bit = descriptor_type >> 3;
         if (dpl < cpl || dpl < rpl) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         if (!(dte_upper_dword & (1 << 15))) {
-            abort_with_error_code(11, selector & 0xfffc);
+            abort(11, selector & 0xfffc);
         }
         selector = dte_lower_dword >> 16;
         ve = (dte_upper_dword & 0xffff0000) | (dte_lower_dword & 0x0000ffff);
         Se = dte_upper_dword & 0x1f;
         if ((selector & 0xfffc) == 0) {
-            abort_with_error_code(13, 0);
+            abort(13, 0);
         }
         load_xdt_descriptor(e, selector);
         if (e[0] == 0 && e[1] == 0) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         dte_lower_dword = e[0];
         dte_upper_dword = e[1];
         if (!(dte_upper_dword & (1 << 12)) || !(dte_upper_dword & ((1 << 11)))) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         dpl = (dte_upper_dword >> 13) & 3;
         if (dpl > cpl) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
         if (!(dte_upper_dword & (1 << 15))) {
-            abort_with_error_code(11, selector & 0xfffc);
+            abort(11, selector & 0xfffc);
         }
         if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) {
             load_tss_descriptor(e, dpl);
             ke = e[0];
             esp = e[1];
             if ((ke & 0xfffc) == 0) {
-                abort_with_error_code(10, ke & 0xfffc);
+                abort(10, ke & 0xfffc);
             }
             if ((ke & 3) != dpl) {
-                abort_with_error_code(10, ke & 0xfffc);
+                abort(10, ke & 0xfffc);
             }
             load_xdt_descriptor(e, ke);
             if (e[0] == 0 && e[1] == 0) {
-                abort_with_error_code(10, ke & 0xfffc);
+                abort(10, ke & 0xfffc);
             }
             we = e[0];
             xe = e[1];
             re = (xe >> 13) & 3;
             if (re != dpl) {
-                abort_with_error_code(10, ke & 0xfffc);
+                abort(10, ke & 0xfffc);
             }
             if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9))) {
-                abort_with_error_code(10, ke & 0xfffc);
+                abort(10, ke & 0xfffc);
             }
             if (!(xe & (1 << 15))) {
-                abort_with_error_code(10, ke & 0xfffc);
+                abort(10, ke & 0xfffc);
             }
             Ue = compile_sizemask(segs[2].flags);
             Ve = segs[2].base;
@@ -3312,7 +3312,7 @@ void x86Internal::do_return_real__v86_mode(bool is_32_bit, bool is_iret, int imm
         if (is_32_bit == 0) {
             ef &= 0xffff;
         }
-        set_FLAGS(stack_eflags, ef);
+        set_EFLAGS(stack_eflags, ef);
     }
     update_SSB();
 }
@@ -3360,7 +3360,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
                 lf = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 // clang-format off
-                set_FLAGS(stack_eflags, 0x00000100 | 0x00000200 |
+                set_EFLAGS(stack_eflags, 0x00000100 | 0x00000200 |
                                         0x00003000 | 0x00004000 |
                                         0x00020000 | 0x00040000 | 0x00080000 |
                                         0x00100000 | 0x00200000);
@@ -3391,33 +3391,33 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
         }
     }
     if ((selector & 0xfffc) == 0) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     dte_lower_dword = e[0];
     dte_upper_dword = e[1];
     if (!(dte_upper_dword & (1 << 12)) || !(dte_upper_dword & (1 << 11))) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     rpl = selector & 3;
     if (rpl < _cpl) {
-        abort_with_error_code(13, selector & 0xfffc);
+        abort(13, selector & 0xfffc);
     }
     dpl = (dte_upper_dword >> 13) & 3;
     if (dte_upper_dword & (1 << 10)) {
         if (dpl > rpl) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
     } else {
         if (dpl != rpl) {
-            abort_with_error_code(13, selector & 0xfffc);
+            abort(13, selector & 0xfffc);
         }
     }
     if (!(dte_upper_dword & (1 << 15))) {
-        abort_with_error_code(11, selector & 0xfffc);
+        abort(11, selector & 0xfffc);
     }
     esp = (esp + imm16) & -1;
     if (rpl == _cpl) {
@@ -3440,26 +3440,26 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
             esp = (esp + 2) & -1;
         }
         if ((gf & 0xfffc) == 0) {
-            abort_with_error_code(13, 0);
+            abort(13, 0);
         } else {
             if ((gf & 3) != rpl) {
-                abort_with_error_code(13, gf & 0xfffc);
+                abort(13, gf & 0xfffc);
             }
             load_xdt_descriptor(e, gf);
             if (e[0] == 0 && e[1] == 0) {
-                abort_with_error_code(13, gf & 0xfffc);
+                abort(13, gf & 0xfffc);
             }
             we = e[0];
             xe = e[1];
             if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9))) {
-                abort_with_error_code(13, gf & 0xfffc);
+                abort(13, gf & 0xfffc);
             }
             dpl = (xe >> 13) & 3;
             if (dpl != rpl) {
-                abort_with_error_code(13, gf & 0xfffc);
+                abort(13, gf & 0xfffc);
             }
             if (!(xe & (1 << 15))) {
-                abort_with_error_code(11, gf & 0xfffc);
+                abort(11, gf & 0xfffc);
             }
             update_segment_register(2, gf, compile_dte_base(we, xe), compile_dte_limit(we, xe), xe);
         }
@@ -3487,7 +3487,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
         if (is_32_bit == 0) {
             ef &= 0xffff;
         }
-        set_FLAGS(stack_eflags, ef);
+        set_EFLAGS(stack_eflags, ef);
     }
 }
 void x86Internal::op_IRET(bool is_32_bit) {
@@ -3579,7 +3579,7 @@ void x86Internal::op_LAR_LSL(bool is_32_bit, bool is_lsl) {
         selector = ld_16bits_mem8_read();
     }
     x = of(selector, is_lsl);
-    osm_src = get_conditional_flags();
+    osm_src = compile_flags();
     if (x == -1) {
         osm_src &= ~0x0040;
     } else {
@@ -3587,57 +3587,57 @@ void x86Internal::op_LAR_LSL(bool is_32_bit, bool is_lsl) {
         if (is_32_bit) {
             regs[reg_idx1] = x;
         } else {
-            set_lower_word_in_register(reg_idx1, x);
+            set_lower_word(reg_idx1, x);
         }
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-int x86Internal::segment_isnt_accessible(int selector, bool is_verw) {
+int x86Internal::is_segment_accessible(int selector, bool writable) {
     int dte_lower_dword, dte_upper_dword, rpl, dpl;
     int e[2];
     if ((selector & 0xfffc) == 0) {
-        return 0;
+        return 1;
     }
     load_xdt_descriptor(e, selector);
     if (e[0] == 0 && e[1] == 0) {
-        return 0;
+        return 1;
     }
     dte_lower_dword = e[0];
     dte_upper_dword = e[1];
     if (!(dte_upper_dword & (1 << 12))) {
-        return 0;
+        return 1;
     }
     rpl = selector & 3;
     dpl = (dte_upper_dword >> 13) & 3;
     if (dte_upper_dword & (1 << 11)) { // code == 1, data == 0
-        if (is_verw) {
-            return 0;
+        if (writable) {
+            return 1;
         } else {
             if (!(dte_upper_dword & (1 << 9))) {
-                return 1;
+                return 0;
             }
             if (!(dte_upper_dword & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
-                    return 0;
+                    return 1;
                 }
             }
         }
     } else {
         if (dpl < cpl || dpl < rpl) {
-            return 0;
+            return 1;
         }
-        if (is_verw && !(dte_upper_dword & (1 << 9))) {
-            return 0;
+        if (writable && !(dte_upper_dword & (1 << 9))) {
+            return 1;
         }
     }
-    return 1;
+    return 0;
 }
-void x86Internal::op_VERR_VERW(int selector, bool is_verw) {
-    int z;
-    z = segment_isnt_accessible(selector, is_verw);
-    osm_src = get_conditional_flags();
-    if (z) {
+void x86Internal::op_VERR_VERW(int selector, bool writable) {
+    int ok;
+    ok = is_segment_accessible(selector, writable);
+    osm_src = compile_flags();
+    if (!ok) {
         osm_src |= 0x0040;
     } else {
         osm_src &= ~0x0040;
@@ -3659,11 +3659,11 @@ void x86Internal::op_ARPL() {
         x = ld_16bits_mem8_write();
     }
     y = regs[(mem8 >> 3) & 7];
-    osm_src = get_conditional_flags();
+    osm_src = compile_flags();
     if ((x & 3) < (y & 3)) {
         x = (x & ~3) | (y & 3);
         if ((mem8 >> 6) == 3) {
-            set_lower_word_in_register(reg_idx0, x);
+            set_lower_word(reg_idx0, x);
         } else {
             st16_mem8_write(x);
         }
@@ -3716,7 +3716,7 @@ void x86Internal::op_AAD(int base) {
 }
 void x86Internal::op_AAA() {
     int Af, wf, xf, Bf, flag_bits;
-    flag_bits = get_conditional_flags();
+    flag_bits = compile_flags();
     Bf = flag_bits & 0x0010;
     wf = regs[0] & 0xff;
     xf = (regs[0] >> 8) & 0xff;
@@ -3736,7 +3736,7 @@ void x86Internal::op_AAA() {
 }
 void x86Internal::op_AAS() {
     int Af, wf, xf, Bf, flag_bits;
-    flag_bits = get_conditional_flags();
+    flag_bits = compile_flags();
     Bf = flag_bits & 0x0010;
     wf = regs[0] & 0xff;
     xf = (regs[0] >> 8) & 0xff;
@@ -3756,7 +3756,7 @@ void x86Internal::op_AAS() {
 }
 void x86Internal::op_DAA() {
     int wf, Bf, Ef, flag_bits;
-    flag_bits = get_conditional_flags();
+    flag_bits = compile_flags();
     Ef = flag_bits & 0x0001;
     Bf = flag_bits & 0x0010;
     wf = regs[0] & 0xff;
@@ -3779,7 +3779,7 @@ void x86Internal::op_DAA() {
 }
 void x86Internal::op_DAS() {
     int wf, Gf, Bf, Ef, flag_bits;
-    flag_bits = get_conditional_flags();
+    flag_bits = compile_flags();
     Ef = flag_bits & 0x0001;
     Bf = flag_bits & 0x0010;
     wf = regs[0] & 0xff;
@@ -3863,7 +3863,7 @@ void x86Internal::op_16_POPA() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
-            set_lower_word_in_register(reg_idx1, ld_16bits_mem8_read());
+            set_lower_word(reg_idx1, ld_16bits_mem8_read());
         }
         mem8_loc = mem8_loc + 2;
     }
@@ -3885,7 +3885,7 @@ void x86Internal::op_16_LEAVE() {
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld_16bits_mem8_read();
-    set_lower_word_in_register(5, x);
+    set_lower_word(5, x);
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
 void x86Internal::op_LEAVE() {
@@ -3982,7 +3982,7 @@ void x86Internal::op_16_load_far_pointer16(int Sb) {
     mem8_loc += 2;
     y = ld_16bits_mem8_read();
     set_segment_register(Sb, y);
-    set_lower_word_in_register((mem8 >> 3) & 7, x);
+    set_lower_word((mem8 >> 3) & 7, x);
 }
 void x86Internal::op_16_INS() {
     int Xf, Yf, Zf, ag, iopl, x;
@@ -4257,11 +4257,8 @@ void x86Internal::st16_port(int port_num, int x) {
 void x86Internal::st32_port(int port_num, int x) {
     ioport_write(port_num, x);
 }
-void x86Internal::abort_with_error_code(int interrupt_id, int error_code) {
+void x86Internal::abort(int interrupt_id, int error_code) {
     cycles_processed += (cycles_requested - cycles_remaining);
     interrupt = {interrupt_id, error_code};
     throw interrupt;
-}
-void x86Internal::abort(int interrupt_id) {
-    abort_with_error_code(interrupt_id, 0);
 }

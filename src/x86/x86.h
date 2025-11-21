@@ -410,15 +410,15 @@ class x86Internal {
     void st32_mem8_kernel_write(int x);
 
     int segment_translation(int mem8);
-    int segmented_mem8_loc_for_MOV(bool is_verw);
+    int convert_offset_to_linear(bool writable);
     void update_segment_register(int reg_idx, int selector, uint32_t base, uint32_t limit, int flags);
     void set_segment_register(int reg_idx, int selector);
     void set_segment_register_real__v86(int reg_idx, int selector);
     void set_segment_register_protected(int reg_idx, int selector);
-    int segment_isnt_accessible(int selector, bool is_verw);
+    int is_segment_accessible(int selector, bool writable);
 
-    void set_word_in_register(int reg_idx1, int x);
-    void set_lower_word_in_register(int reg_idx1, int x);
+    void set_lower_word_bytes(int reg_idx, int x);
+    void set_lower_word(int reg_idx, int x);
 
     int do_32bit_math(int operation, int Yb, int Zb);
     int do_16bit_math(int operation, int Yb, int Zb);
@@ -456,31 +456,29 @@ class x86Internal {
     int op_MUL32(int a, int opcode);
     int op_IMUL32(int a, int opcode);
 
-    bool check_carry();
-    bool check_overflow();
-    bool check_below_or_equal();
-    int check_parity();
-    int check_less_than();
-    int check_less_or_equal();
-    int check_adjust_flag();
-    int check_status_bits_for_jump(int gd);
-    int conditional_flags_for_rot_shiftcc_ops();
-    int get_conditional_flags();
+    bool is_CF();
+    bool is_OF();
+    bool is_BE();
+    int is_PF();
+    int is_LT();
+    int is_LE();
+    int is_AF();
+    int can_jump(int condition);
+    int compile_flags(bool shift = false);
 
-    int get_FLAGS();
-    void set_FLAGS(int flag_bits, int ld);
+    int get_EFLAGS();
+    void set_EFLAGS(int flag_bits, int ld);
 
-    void abort_with_error_code(int interrupt_id, int error_code);
-    void abort(int interrupt_id);
+    void abort(int interrupt_id, int error_code = 0);
 
     void set_current_permission_level(int value);
 
-    void push_word_to_stack(int x);
-    void push_dword_to_stack(int x);
-    int pop_word_from_stack_read();
-    void pop_word_from_stack_incr_ptr();
-    int pop_dword_from_stack_read();
-    void pop_dword_from_stack_incr_ptr();
+    void push_word(int x);
+    void push_dword(int x);
+    void pop_word();
+    void pop_dword();
+    int read_stack_word();
+    int read_stack_dword();
 
     int compile_sizemask(int dte_upper_dword);
 

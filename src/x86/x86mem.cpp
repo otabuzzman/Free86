@@ -241,31 +241,31 @@ void x86Internal::st32_mem8_kernel_write(int x) {
         phys_mem32[(mem8_loc ^ tlb_lookup) >> 2] = x;
     }
 }
-void x86Internal::push_word_to_stack(int x) {
+void x86Internal::push_word(int x) {
     int wd;
     wd = regs[4] - 2;
     mem8_loc = (wd & SS_mask) + SS_base;
     st16_mem8_write(x);
     regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
 }
-void x86Internal::push_dword_to_stack(int x) {
+void x86Internal::push_dword(int x) {
     int wd;
     wd = regs[4] - 4;
     mem8_loc = (wd & SS_mask) + SS_base;
     st32_mem8_write(x);
     regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
 }
-int x86Internal::pop_word_from_stack_read() {
+int x86Internal::read_stack_word() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     return ld_16bits_mem8_read();
 }
-void x86Internal::pop_word_from_stack_incr_ptr() {
+void x86Internal::pop_word() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
 }
-int x86Internal::pop_dword_from_stack_read() {
+int x86Internal::read_stack_dword() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     return ld_32bits_mem8_read();
 }
-void x86Internal::pop_dword_from_stack_incr_ptr() {
+void x86Internal::pop_dword() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4) & SS_mask);
 }

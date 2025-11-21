@@ -1,6 +1,6 @@
 #include "x86.h"
 
-bool x86Internal::check_carry() {
+bool x86Internal::is_CF() {
     bool rval;
     int currentcc_op;
     uint32_t reldst;
@@ -78,7 +78,7 @@ bool x86Internal::check_carry() {
     }
     return rval;
 }
-bool x86Internal::check_overflow() {
+bool x86Internal::is_OF() {
     bool rval;
     int Yb;
     switch (osm % 0x1f) {
@@ -176,7 +176,7 @@ bool x86Internal::check_overflow() {
     }
     return rval;
 }
-bool x86Internal::check_below_or_equal() { // `below' for signed comparison, PM p. 317
+bool x86Internal::is_BE() { // `below' for signed comparison, PM p. 317
     bool flg = false;
     switch (osm) {
     case 6:
@@ -193,19 +193,19 @@ bool x86Internal::check_below_or_equal() { // `below' for signed comparison, PM 
         flg = (osm_src & (0x0040 | 0x0001)) != 0;
         break;
     default:
-        flg = check_carry() | (osm_dst == 0);
+        flg = is_CF() | (osm_dst == 0);
         break;
     }
     return flg;
 }
-int x86Internal::check_parity() {
+int x86Internal::is_PF() {
     if (osm == 24) {
         return (osm_src >> 2) & 1;
     } else {
         return parity_LUT[osm_dst & 0xff];
     }
 }
-int x86Internal::check_less_than() {
+int x86Internal::is_LT() {
     bool flg;
     switch (osm) {
     case 6:
@@ -232,12 +232,12 @@ int x86Internal::check_less_than() {
         flg = ((osm_src >> 7) ^ (osm_src >> 11)) & 1;
         break;
     default:
-        flg = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) ^ check_overflow();
+        flg = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) ^ is_OF();
         break;
     }
     return flg;
 }
-int x86Internal::check_less_or_equal() { // `less' for unsigned comparison, PM p. 317
+int x86Internal::is_LE() { // `less' for unsigned comparison, PM p. 317
     bool flg;
     switch (osm) {
     case 6:
@@ -264,12 +264,12 @@ int x86Internal::check_less_or_equal() { // `less' for unsigned comparison, PM p
         flg = (((osm_src >> 7) ^ (osm_src >> 11)) | (osm_src >> 6)) & 1;
         break;
     default:
-        flg = ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) ^ check_overflow()) | (osm_dst == 0);
+        flg = ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) ^ is_OF()) | (osm_dst == 0);
         break;
     }
     return flg;
 }
-int x86Internal::check_adjust_flag() {
+int x86Internal::is_AF() {
     int Yb;
     int rval;
     switch (osm % 0x1f) {
@@ -329,66 +329,59 @@ int x86Internal::check_adjust_flag() {
     }
     return rval;
 }
-int x86Internal::check_status_bits_for_jump(int gd) {
+int x86Internal::can_jump(int condition) {
     bool flg;
-    switch ((gd >> 1) & 7) {
+    switch ((condition >> 1) & 7) {
     case 0:
-        flg = check_overflow();
+        flg = is_OF();
         break;
     case 1:
-        flg = check_carry();
+        flg = is_CF();
         break;
     case 2:
         flg = (osm_dst == 0);
         break;
     case 3:
-        flg = check_below_or_equal();
+        flg = is_BE();
         break;
     case 4:
         flg = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0));
         break;
     case 5:
-        flg = check_parity();
+        flg = is_PF();
         break;
     case 6:
-        flg = check_less_than();
+        flg = is_LT();
         break;
     case 7:
-        flg = check_less_or_equal();
+        flg = is_LE();
         break;
     }
-    return flg ^ (gd & 1);
+    return flg ^ (condition & 1);
 }
-int x86Internal::conditional_flags_for_rot_shiftcc_ops() {
-    // int c0  = (check_carry() << 0);
-    int c2 = (check_parity() << 2);
-    int c4 = check_adjust_flag();
+int x86Internal::compile_flags(bool shift) {
+    int c0 = 0, c11 = 0;
+    if (!shift) {
+        c0 = (is_CF() << 0);
+        c11 = (is_OF() << 11);
+    }
+    int c2 = (is_PF() << 2);
+    int c4 = is_AF();
     int c6 = ((osm_dst == 0) << 6);
     int c7 = ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7);
-    // int c11 = (check_overflow() << 11);
-    int val = c2 | c4 | c6 | c7;
-    return val;
-}
-int x86Internal::get_conditional_flags() {
-    int c0 = (check_carry() << 0);
-    int c2 = (check_parity() << 2);
-    int c4 = check_adjust_flag();
-    int c6 = ((osm_dst == 0) << 6);
-    int c7 = ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7);
-    int c11 = (check_overflow() << 11);
     int val = c0 | c2 | c4 | c6 | c7 | c11;
     return val;
 }
-int x86Internal::get_FLAGS() {
-    int flag_bits = get_conditional_flags();
-    flag_bits |= df & 0x00000400;
-    flag_bits |= eflags;
-    return flag_bits;
+int x86Internal::get_EFLAGS() {
+    int bits = compile_flags();
+    bits |= df & 0x00000400;
+    bits |= eflags;
+    return bits;
 }
-void x86Internal::set_FLAGS(int flag_bits, int ld) {
-    osm_src = flag_bits & (0x0800 | 0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001);
+void x86Internal::set_EFLAGS(int bits, int mask) {
+    osm_src = bits & (0x0800 | 0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001);
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
-    df = 1 - (2 * ((flag_bits >> 10) & 1));
-    eflags = (eflags & ~ld) | (flag_bits & ld);
+    df = 1 - (2 * ((bits >> 10) & 1));
+    eflags = (eflags & ~mask) | (bits & mask);
 }
