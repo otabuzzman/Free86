@@ -72,7 +72,7 @@ void x86Internal::fetch_opcode() {
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
                     mem8_loc = eip_linear + y;
                     phys_mem8[far + y] = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld_8bits_mem8_read()
+                             ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
                 far++;
@@ -1379,7 +1379,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld_8bits_mem8_read()
+                     ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x67: // address-size override prefix
@@ -1393,7 +1393,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld_8bits_mem8_read()
+                     ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x91: // XCHG C
@@ -1633,7 +1633,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld_8bits_mem8_read()
+                     ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -1657,7 +1657,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld_8bits_mem8_read()
+                             ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -1728,7 +1728,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld_8bits_mem8_read()
+                     ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -1752,7 +1752,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld_8bits_mem8_read()
+                             ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -1810,7 +1810,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                        ? __ld_8bits_mem8_read()
+                        ? __ld8_mem8_read()
                         : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -1834,7 +1834,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld_8bits_mem8_read()
+                             ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -1890,7 +1890,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld_8bits_mem8_read()
+                     ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -1914,7 +1914,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld_8bits_mem8_read()
+                             ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -1973,7 +1973,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld_8bits_mem8_read()
+                     ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -1997,7 +1997,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld_8bits_mem8_read()
+                             ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -2080,7 +2080,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                          ? __ld_8bits_mem8_read()
+                          ? __ld8_mem8_read()
                           : phys_mem8[mem8_loc ^ tlb_hash]);
             switch (opcode) {
             case 0x06: // CLTS
@@ -2184,7 +2184,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 }
                 mem8_loc = eip_linear + (n++);
                 mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                            ? __ld_8bits_mem8_read()
+                            ? __ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -2208,7 +2208,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                         }
                         mem8_loc = eip_linear + (n++);
                         mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                                 ? __ld_8bits_mem8_read()
+                                 ? __ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -2262,7 +2262,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                 }
                 mem8_loc = eip_linear + (n++);
                 mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                            ? __ld_8bits_mem8_read()
+                            ? __ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -2286,7 +2286,7 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
                         }
                         mem8_loc = eip_linear + (n++);
                         mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                                 ? __ld_8bits_mem8_read()
+                                 ? __ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -2829,7 +2829,7 @@ void x86Internal::do_interrupt(int interrupt_id, int ne, int error_code, int oe,
             n = std::min(n, 15);
             for (i = 0; i < n; i++) {
                 mem8_loc = (eip_linear + i) & -1;
-                str += " " + _2_bytes_(ld_8bits_mem8_read());
+                str += " " + _2_bytes_(ld8_mem8_read());
             }
             printf("%s\n", str.c_str());
         }
@@ -3576,7 +3576,7 @@ void x86Internal::op_LAR_LSL(bool is_32_bit, bool is_lsl) {
         selector = regs[mem8 & 7] & 0xffff;
     } else {
         mem8_loc = segment_translation(mem8);
-        selector = ld_16bits_mem8_read();
+        selector = ld16_mem8_read();
     }
     x = of(selector, is_lsl);
     osm_src = compile_flags();
@@ -3656,7 +3656,7 @@ void x86Internal::op_ARPL() {
         x = regs[reg_idx0] & 0xffff;
     } else {
         mem8_loc = segment_translation(mem8);
-        x = ld_16bits_mem8_write();
+        x = ld16_mem8_write();
     }
     y = regs[(mem8 >> 3) & 7];
     osm_src = compile_flags();
@@ -3811,9 +3811,9 @@ void x86Internal::checkOp_BOUND() {
         abort(6);
     }
     mem8_loc = segment_translation(mem8);
-    x = ld_32bits_mem8_read();
+    x = ld32_mem8_read();
     mem8_loc = (mem8_loc + 4) & -1;
-    y = ld_32bits_mem8_read();
+    y = ld32_mem8_read();
     reg_idx1 = (mem8 >> 3) & 7;
     z = regs[reg_idx1];
     if (z < x || z > y) {
@@ -3827,9 +3827,9 @@ void x86Internal::op_16_BOUND() {
         abort(6);
     }
     mem8_loc = segment_translation(mem8);
-    x = (ld_16bits_mem8_read() << 16) >> 16;
+    x = (ld16_mem8_read() << 16) >> 16;
     mem8_loc = (mem8_loc + 2) & -1;
-    y = (ld_16bits_mem8_read() << 16) >> 16;
+    y = (ld16_mem8_read() << 16) >> 16;
     reg_idx1 = (mem8 >> 3) & 7;
     z = (regs[reg_idx1] << 16) >> 16;
     if (z < x || z > y) {
@@ -3863,7 +3863,7 @@ void x86Internal::op_16_POPA() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
-            set_lower_word(reg_idx1, ld_16bits_mem8_read());
+            set_lower_word(reg_idx1, ld16_mem8_read());
         }
         mem8_loc = mem8_loc + 2;
     }
@@ -3874,7 +3874,7 @@ void x86Internal::op_POPA() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
-            regs[reg_idx1] = ld_32bits_mem8_read();
+            regs[reg_idx1] = ld32_mem8_read();
         }
         mem8_loc = mem8_loc + 4;
     }
@@ -3884,7 +3884,7 @@ void x86Internal::op_16_LEAVE() {
     int x, y;
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
-    x = ld_16bits_mem8_read();
+    x = ld16_mem8_read();
     set_lower_word(5, x);
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
@@ -3892,7 +3892,7 @@ void x86Internal::op_LEAVE() {
     int x, y;
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
-    x = ld_32bits_mem8_read();
+    x = ld32_mem8_read();
     regs[5] = x;
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
 }
@@ -3911,7 +3911,7 @@ void x86Internal::op_16_ENTER() {
         while (Qf > 1) {
             Rf = Rf - 2;
             mem8_loc = (Rf & SS_mask) + SS_base;
-            x = ld_16bits_mem8_read();
+            x = ld16_mem8_read();
             le = le - 2;
             mem8_loc = (le & SS_mask) + SS_base;
             st16_mem8_write(x);
@@ -3923,7 +3923,7 @@ void x86Internal::op_16_ENTER() {
     }
     le = le - cf;
     mem8_loc = (le & SS_mask) + SS_base;
-    ld_16bits_mem8_write();
+    ld16_mem8_write();
     regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
@@ -3942,7 +3942,7 @@ void x86Internal::op_ENTER() {
         while (Qf > 1) {
             Rf = Rf - 4;
             mem8_loc = (Rf & SS_mask) + SS_base;
-            x = ld_32bits_mem8_read();
+            x = ld32_mem8_read();
             le = le - 4;
             mem8_loc = (le & SS_mask) + SS_base;
             st32_mem8_write(x);
@@ -3954,7 +3954,7 @@ void x86Internal::op_ENTER() {
     }
     le = le - cf;
     mem8_loc = (le & SS_mask) + SS_base;
-    ld_32bits_mem8_write();
+    ld32_mem8_write();
     regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
@@ -3965,9 +3965,9 @@ void x86Internal::op_16_load_far_pointer32(int Sb) {
         ; // abort(6);
     }
     mem8_loc = segment_translation(mem8);
-    x = ld_32bits_mem8_read();
+    x = ld32_mem8_read();
     mem8_loc += 4;
-    y = ld_16bits_mem8_read();
+    y = ld16_mem8_read();
     set_segment_register(Sb, y);
     regs[(mem8 >> 3) & 7] = x;
 }
@@ -3978,9 +3978,9 @@ void x86Internal::op_16_load_far_pointer16(int Sb) {
         ; // abort(6);
     }
     mem8_loc = segment_translation(mem8);
-    x = ld_16bits_mem8_read();
+    x = ld16_mem8_read();
     mem8_loc += 2;
-    y = ld_16bits_mem8_read();
+    y = ld16_mem8_read();
     set_segment_register(Sb, y);
     set_lower_word((mem8 >> 3) & 7, x);
 }
@@ -4042,7 +4042,7 @@ void x86Internal::op_16_OUTS() {
             return;
         }
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         st16_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -4051,7 +4051,7 @@ void x86Internal::op_16_OUTS() {
         }
     } else {
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         st16_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
@@ -4078,7 +4078,7 @@ void x86Internal::op_16_MOVS() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
         st16_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
@@ -4088,7 +4088,7 @@ void x86Internal::op_16_MOVS() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
         st16_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
@@ -4142,9 +4142,9 @@ void x86Internal::op_16_CMPS() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
-        y = ld_16bits_mem8_read();
+        y = ld16_mem8_read();
         do_16bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
@@ -4162,9 +4162,9 @@ void x86Internal::op_16_CMPS() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
-        y = ld_16bits_mem8_read();
+        y = ld16_mem8_read();
         do_16bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
@@ -4190,7 +4190,7 @@ void x86Internal::op_16_LODS() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         regs[0] = (regs[0] & -65536) | x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -4198,7 +4198,7 @@ void x86Internal::op_16_LODS() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         regs[0] = (regs[0] & -65536) | x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
@@ -4217,7 +4217,7 @@ void x86Internal::op_16_SCAS() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         do_16bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -4234,7 +4234,7 @@ void x86Internal::op_16_SCAS() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         do_16bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }

@@ -58,7 +58,7 @@ void x86Internal::stringOp_OUTSB() {
             return;
         }
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         st8_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -67,7 +67,7 @@ void x86Internal::stringOp_OUTSB() {
         }
     } else {
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         st8_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
     }
@@ -94,7 +94,7 @@ void x86Internal::stringOp_MOVSB() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         mem8_loc = eg;
         st8_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
@@ -104,7 +104,7 @@ void x86Internal::stringOp_MOVSB() {
             far = far_start;
         }
     } else {
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         mem8_loc = eg;
         st8_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
@@ -158,9 +158,9 @@ void x86Internal::stringOp_CMPSB() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         mem8_loc = eg;
-        y = ld_8bits_mem8_read();
+        y = ld8_mem8_read();
         do_8bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
@@ -178,9 +178,9 @@ void x86Internal::stringOp_CMPSB() {
             far = far_start;
         }
     } else {
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         mem8_loc = eg;
-        y = ld_8bits_mem8_read();
+        y = ld8_mem8_read();
         do_8bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
@@ -206,7 +206,7 @@ void x86Internal::stringOp_LODSB() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         regs[0] = (regs[0] & -256) | x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -214,7 +214,7 @@ void x86Internal::stringOp_LODSB() {
             far = far_start;
         }
     } else {
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         regs[0] = (regs[0] & -256) | x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
     }
@@ -233,7 +233,7 @@ void x86Internal::stringOp_SCASB() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         do_8bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -250,7 +250,7 @@ void x86Internal::stringOp_SCASB() {
             far = far_start;
         }
     } else {
-        x = ld_8bits_mem8_read();
+        x = ld8_mem8_read();
         do_8bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
     }
@@ -313,7 +313,7 @@ void x86Internal::stringOp_OUTSW() {
             return;
         }
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -322,7 +322,7 @@ void x86Internal::stringOp_OUTSW() {
         }
     } else {
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
@@ -349,7 +349,7 @@ void x86Internal::stringOp_MOVSW() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
         st16_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
@@ -359,7 +359,7 @@ void x86Internal::stringOp_MOVSW() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
         st16_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
@@ -413,9 +413,9 @@ void x86Internal::stringOp_CMPSW() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
-        y = ld_16bits_mem8_read();
+        y = ld16_mem8_read();
         do_16bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
@@ -433,9 +433,9 @@ void x86Internal::stringOp_CMPSW() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         mem8_loc = eg;
-        y = ld_16bits_mem8_read();
+        y = ld16_mem8_read();
         do_16bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
@@ -461,7 +461,7 @@ void x86Internal::stringOp_LODSW() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         regs[0] = x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -469,7 +469,7 @@ void x86Internal::stringOp_LODSW() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         regs[0] = x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
@@ -488,7 +488,7 @@ void x86Internal::stringOp_SCASW() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         do_16bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -505,7 +505,7 @@ void x86Internal::stringOp_SCASW() {
             far = far_start;
         }
     } else {
-        x = ld_16bits_mem8_read();
+        x = ld16_mem8_read();
         do_16bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
@@ -568,7 +568,7 @@ void x86Internal::stringOp_OUTSD() {
             return;
         }
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -577,7 +577,7 @@ void x86Internal::stringOp_OUTSD() {
         }
     } else {
         mem8_loc = (cg & Xf) + segs[Sb].base;
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         st32_port(Zf, x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
     }
@@ -604,7 +604,7 @@ void x86Internal::stringOp_MOVSD() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         mem8_loc = eg;
         st32_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
@@ -614,7 +614,7 @@ void x86Internal::stringOp_MOVSD() {
             far = far_start;
         }
     } else {
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         mem8_loc = eg;
         st32_mem8_write(x);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
@@ -668,9 +668,9 @@ void x86Internal::stringOp_CMPSD() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         mem8_loc = eg;
-        y = ld_32bits_mem8_read();
+        y = ld32_mem8_read();
         do_32bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
@@ -688,9 +688,9 @@ void x86Internal::stringOp_CMPSD() {
             far = far_start;
         }
     } else {
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         mem8_loc = eg;
-        y = ld_32bits_mem8_read();
+        y = ld32_mem8_read();
         do_32bit_math(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
@@ -716,7 +716,7 @@ void x86Internal::stringOp_LODSD() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         regs[0] = x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -724,7 +724,7 @@ void x86Internal::stringOp_LODSD() {
             far = far_start;
         }
     } else {
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         regs[0] = x;
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
     }
@@ -743,7 +743,7 @@ void x86Internal::stringOp_SCASD() {
         if ((ag & Xf) == 0) {
             return;
         }
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         do_32bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -760,7 +760,7 @@ void x86Internal::stringOp_SCASD() {
             far = far_start;
         }
     } else {
-        x = ld_32bits_mem8_read();
+        x = ld32_mem8_read();
         do_32bit_math(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
     }

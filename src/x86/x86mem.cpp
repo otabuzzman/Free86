@@ -1,6 +1,6 @@
 #include "x86.h"
 
-int x86Internal::__ld_8bits_mem8_read() {
+int x86Internal::__ld8_mem8_read() {
     int mem8_val;
     if (check_protected()) {
         do_tlb_set_page(mem8_loc, 0, cpl == 3);
@@ -11,46 +11,46 @@ int x86Internal::__ld_8bits_mem8_read() {
     }
     return mem8_val;
 }
-int x86Internal::ld_8bits_mem8_read() {
+int x86Internal::ld8_mem8_read() {
     int tlb_hash;
     return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                ? __ld_8bits_mem8_read()
+                ? __ld8_mem8_read()
                 : phys_mem8[mem8_loc ^ tlb_hash]);
 }
-int x86Internal::__ld_16bits_mem8_read() {
-    int x = ld_8bits_mem8_read();
+int x86Internal::__ld16_mem8_read() {
+    int x = ld8_mem8_read();
     mem8_loc++;
-    x |= ld_8bits_mem8_read() << 8;
+    x |= ld8_mem8_read() << 8;
     mem8_loc--;
     return x;
 }
-int x86Internal::ld_16bits_mem8_read() {
+int x86Internal::ld16_mem8_read() {
     int tlb_hash;
     return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 1
-                ? __ld_16bits_mem8_read()
+                ? __ld16_mem8_read()
                 : phys_mem16[(mem8_loc ^ tlb_hash) >> 1]);
 }
-int x86Internal::__ld_32bits_mem8_read() {
-    int x = ld_8bits_mem8_read();
+int x86Internal::__ld32_mem8_read() {
+    int x = ld8_mem8_read();
     mem8_loc++;
-    x |= ld_8bits_mem8_read() << 8;
+    x |= ld8_mem8_read() << 8;
     mem8_loc++;
-    x |= ld_8bits_mem8_read() << 16;
+    x |= ld8_mem8_read() << 16;
     mem8_loc++;
-    x |= ld_8bits_mem8_read() << 24;
+    x |= ld8_mem8_read() << 24;
     mem8_loc -= 3;
     return x;
 }
-int x86Internal::ld_32bits_mem8_read() {
+int x86Internal::ld32_mem8_read() {
     int tlb_hash;
     return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 3
-                ? __ld_32bits_mem8_read()
+                ? __ld32_mem8_read()
                 : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
 }
-int x86Internal::__ld_8bits_mem8_write() {
+int x86Internal::__ld8_mem8_write() {
     int mem8_val;
     if (check_protected()) {
         do_tlb_set_page(mem8_loc, 1, cpl == 3);
@@ -61,43 +61,43 @@ int x86Internal::__ld_8bits_mem8_write() {
     }
     return mem8_val;
 }
-int x86Internal::ld_8bits_mem8_write() {
+int x86Internal::ld8_mem8_write() {
     int tlb_lookup;
     return (check_real__v86() ||
             (tlb_lookup = tlb_write[mem8_loc >> 12]) == -1)
-               ? __ld_8bits_mem8_write()
+               ? __ld8_mem8_write()
                : phys_mem8[mem8_loc ^ tlb_lookup];
 }
-int x86Internal::__ld_16bits_mem8_write() {
-    int x = ld_8bits_mem8_write();
+int x86Internal::__ld16_mem8_write() {
+    int x = ld8_mem8_write();
     mem8_loc++;
-    x |= ld_8bits_mem8_write() << 8;
+    x |= ld8_mem8_write() << 8;
     mem8_loc--;
     return x;
 }
-int x86Internal::ld_16bits_mem8_write() {
+int x86Internal::ld16_mem8_write() {
     int tlb_lookup;
     return (check_real__v86() ||
             (tlb_lookup = tlb_write[mem8_loc >> 12]) | mem8_loc) & 1
-               ? __ld_16bits_mem8_write()
+               ? __ld16_mem8_write()
                : phys_mem16[(mem8_loc ^ tlb_lookup) >> 1];
 }
-int x86Internal::__ld_32bits_mem8_write() {
-    int x = ld_8bits_mem8_write();
+int x86Internal::__ld32_mem8_write() {
+    int x = ld8_mem8_write();
     mem8_loc++;
-    x |= ld_8bits_mem8_write() << 8;
+    x |= ld8_mem8_write() << 8;
     mem8_loc++;
-    x |= ld_8bits_mem8_write() << 16;
+    x |= ld8_mem8_write() << 16;
     mem8_loc++;
-    x |= ld_8bits_mem8_write() << 24;
+    x |= ld8_mem8_write() << 24;
     mem8_loc -= 3;
     return x;
 }
-int x86Internal::ld_32bits_mem8_write() {
+int x86Internal::ld32_mem8_write() {
     int tlb_lookup;
     return check_real__v86() ||
                    ((tlb_lookup = tlb_write[mem8_loc >> 12]) | mem8_loc) & 3
-               ? __ld_32bits_mem8_write()
+               ? __ld32_mem8_write()
                : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
 }
 int x86Internal::__ld8_mem8_kernel_read() {
@@ -257,14 +257,14 @@ void x86Internal::push_dword(int x) {
 }
 int x86Internal::read_stack_word() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
-    return ld_16bits_mem8_read();
+    return ld16_mem8_read();
 }
 void x86Internal::pop_word() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
 }
 int x86Internal::read_stack_dword() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
-    return ld_32bits_mem8_read();
+    return ld32_mem8_read();
 }
 void x86Internal::pop_dword() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4) & SS_mask);
