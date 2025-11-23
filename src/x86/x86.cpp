@@ -452,7 +452,7 @@ void x86Internal::set_lower_byte(int reg_idx, int x) {
 void x86Internal::set_lower_word(int reg_idx, int x) {
     regs[reg_idx] = (regs[reg_idx] & -65536) | (x & 0xffff);
 }
-int x86Internal::do_32bit_math(int operation, int Yb, int Zb) {
+int x86Internal::do_arithmetic32(int operation, int Yb, int Zb) {
     int ac;
     switch (operation & 7) {
     case 0:
@@ -504,7 +504,7 @@ int x86Internal::do_32bit_math(int operation, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::do_16bit_math(int operation, int Yb, int Zb) {
+int x86Internal::do_arithmetic16(int operation, int Yb, int Zb) {
     int ac;
     switch (operation & 7) {
     case 0:
@@ -556,7 +556,7 @@ int x86Internal::do_16bit_math(int operation, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::do_8bit_math(int operation, int Yb, int Zb) {
+int x86Internal::do_arithmetic8(int operation, int Yb, int Zb) {
     int ac;
     switch (operation & 7) {
     case 0:
@@ -608,7 +608,7 @@ int x86Internal::do_8bit_math(int operation, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::increment_16bit(int x) {
+int x86Internal::op_INC16(int x) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -617,7 +617,7 @@ int x86Internal::increment_16bit(int x) {
     osm = 26;
     return osm_dst;
 }
-int x86Internal::decrement_16bit(int x) {
+int x86Internal::op_DEC16(int x) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -626,7 +626,7 @@ int x86Internal::decrement_16bit(int x) {
     osm = 29;
     return osm_dst;
 }
-int x86Internal::increment_8bit(int x) {
+int x86Internal::op_INC8(int x) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -635,7 +635,7 @@ int x86Internal::increment_8bit(int x) {
     osm = 25;
     return osm_dst;
 }
-int x86Internal::decrement_8bit(int x) {
+int x86Internal::op_DEC8(int x) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -644,7 +644,7 @@ int x86Internal::decrement_8bit(int x) {
     osm = 28;
     return osm_dst;
 }
-int x86Internal::shift8(int operation, int Yb, int Zb) {
+int x86Internal::do_shift8(int operation, int Yb, int Zb) {
     int kc, ac;
     switch (operation & 7) {
     case 0:
@@ -678,7 +678,7 @@ int x86Internal::shift8(int operation, int Yb, int Zb) {
         }
         break;
     case 2:
-        Zb = shift8_LUT[Zb & 0x1f];
+        Zb = do_shift8_LUT[Zb & 0x1f];
         if (Zb) {
             Yb &= 0xff;
             kc = Yb;
@@ -697,7 +697,7 @@ int x86Internal::shift8(int operation, int Yb, int Zb) {
         }
         break;
     case 3:
-        Zb = shift8_LUT[Zb & 0x1f];
+        Zb = do_shift8_LUT[Zb & 0x1f];
         if (Zb) {
             Yb &= 0xff;
             kc = Yb;
@@ -745,7 +745,7 @@ int x86Internal::shift8(int operation, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::shift16(int operation, int Yb, int Zb) {
+int x86Internal::do_shift16(int operation, int Yb, int Zb) {
     int kc, ac;
     switch (operation & 7) {
     case 0:
@@ -779,7 +779,7 @@ int x86Internal::shift16(int operation, int Yb, int Zb) {
         }
         break;
     case 2:
-        Zb = shift16_LUT[Zb & 0x1f];
+        Zb = do_shift16_LUT[Zb & 0x1f];
         if (Zb) {
             Yb &= 0xffff;
             kc = Yb;
@@ -798,7 +798,7 @@ int x86Internal::shift16(int operation, int Yb, int Zb) {
         }
         break;
     case 3:
-        Zb = shift16_LUT[Zb & 0x1f];
+        Zb = do_shift16_LUT[Zb & 0x1f];
         if (Zb) {
             Yb &= 0xffff;
             kc = Yb;
@@ -846,7 +846,7 @@ int x86Internal::shift16(int operation, int Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::shift32(int operation, uint32_t Yb, int Zb) {
+int x86Internal::do_shift32(int operation, uint32_t Yb, int Zb) {
     uint32_t kc;
     int ac;
     switch (operation & 7) {
@@ -943,7 +943,7 @@ int x86Internal::shift32(int operation, uint32_t Yb, int Zb) {
     }
     return Yb;
 }
-int x86Internal::op_16_SHRD_SHLD(int operation, int Yb, int Zb, int pc) {
+int x86Internal::op_SHRD_SHLD16(int operation, int Yb, int Zb, int pc) {
     int flg;
     pc &= 0x1f;
     if (pc) {
@@ -995,7 +995,7 @@ int x86Internal::op_SHRD(int Yb, int Zb, int pc) {
     }
     return Yb;
 }
-void x86Internal::op_16_BT(int Yb, int Zb) {
+void x86Internal::op_BT16(int Yb, int Zb) {
     Zb &= 0xf;
     osm_src = Yb >> Zb;
     osm = 19;
@@ -1005,7 +1005,7 @@ void x86Internal::op_BT(int Yb, int Zb) {
     osm_src = Yb >> Zb;
     osm = 20;
 }
-int x86Internal::op_16_BTS_BTR_BTC(int operation, int Yb, int Zb) {
+int x86Internal::op_BTS_BTR_BTC16(int operation, int Yb, int Zb) {
     int wc;
     Zb &= 0xf;
     osm_src = Yb >> Zb;
@@ -1045,7 +1045,7 @@ int x86Internal::op_BTS_BTR_BTC(int operation, int Yb, int Zb) {
     osm = 20;
     return Yb;
 }
-int x86Internal::op_16_BSF(int Yb, int Zb) {
+int x86Internal::op_BSF16(int Yb, int Zb) {
     Zb &= 0xffff;
     if (Zb) {
         Yb = 0;
@@ -1074,7 +1074,7 @@ int x86Internal::op_BSF(int Yb, int Zb) {
     osm = 14;
     return Yb;
 }
-int x86Internal::op_16_BSR(int Yb, int Zb) {
+int x86Internal::op_BSR16(int Yb, int Zb) {
     Zb &= 0xffff;
     if (Zb) {
         Yb = 15;
@@ -1128,7 +1128,7 @@ void x86Internal::op_IDIV(int opcode) {
     r = (a % opcode);
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_16_DIV(int opcode) {
+void x86Internal::op_DIV16(int opcode) {
     int a, q, r;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     opcode &= 0xffff;
@@ -1141,7 +1141,7 @@ void x86Internal::op_16_DIV(int opcode) {
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-void x86Internal::op_16_IDIV(int opcode) {
+void x86Internal::op_IDIV16(int opcode) {
     int a, q, r;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     opcode = (opcode << 16) >> 16;
@@ -1236,7 +1236,7 @@ int x86Internal::op_IMUL(int a, int opcode) {
     osm = 21;
     return flg;
 }
-int x86Internal::op_16_MUL(int a, int opcode) {
+int x86Internal::op_MUL16(int a, int opcode) {
     int flg;
     flg = (a & 0xffff) * (opcode & 0xffff);
     osm_src = flg >> 16;
@@ -1244,7 +1244,7 @@ int x86Internal::op_16_MUL(int a, int opcode) {
     osm = 22;
     return flg;
 }
-int x86Internal::op_16_IMUL(int a, int opcode) {
+int x86Internal::op_IMUL16(int a, int opcode) {
     int flg;
     a = (a << 16) >> 16;
     opcode = (opcode << 16) >> 16;
@@ -3804,7 +3804,7 @@ void x86Internal::op_DAS() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::checkOp_BOUND() {
+void x86Internal::op_BOUND() {
     int mem8, x, y, z;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
@@ -3820,7 +3820,7 @@ void x86Internal::checkOp_BOUND() {
         abort(5);
     }
 }
-void x86Internal::op_16_BOUND() {
+void x86Internal::op_BOUND16() {
     int mem8, x, y, z;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
@@ -3836,7 +3836,7 @@ void x86Internal::op_16_BOUND() {
         abort(5);
     }
 }
-void x86Internal::op_16_PUSHA() {
+void x86Internal::op_PUSHA16() {
     int x, y, reg_idx1;
     y = regs[4] - 16;
     mem8_loc = (y & SS_mask) + SS_base;
@@ -3858,7 +3858,7 @@ void x86Internal::op_PUSHA() {
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
-void x86Internal::op_16_POPA() {
+void x86Internal::op_POPA16() {
     int reg_idx1;
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3880,7 +3880,7 @@ void x86Internal::op_POPA() {
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
-void x86Internal::op_16_LEAVE() {
+void x86Internal::op_LEAVE16() {
     int x, y;
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
@@ -3896,7 +3896,7 @@ void x86Internal::op_LEAVE() {
     regs[5] = x;
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
 }
-void x86Internal::op_16_ENTER() {
+void x86Internal::op_ENTER16() {
     int cf, Qf, le, Rf, x, Sf;
     cf = ld16_mem8_direct();
     Qf = phys_mem8[far++];
@@ -3958,7 +3958,7 @@ void x86Internal::op_ENTER() {
     regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
-void x86Internal::op_16_load_far_pointer32(int Sb) {
+void x86Internal::op_load_far_pointer32(int Sb) {
     int x, y, mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
@@ -3971,7 +3971,7 @@ void x86Internal::op_16_load_far_pointer32(int Sb) {
     set_segment_register(Sb, y);
     regs[(mem8 >> 3) & 7] = x;
 }
-void x86Internal::op_16_load_far_pointer16(int Sb) {
+void x86Internal::op_load_far_pointer16(int Sb) {
     int x, y, mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
@@ -3984,7 +3984,7 @@ void x86Internal::op_16_load_far_pointer16(int Sb) {
     set_segment_register(Sb, y);
     set_lower_word((mem8 >> 3) & 7, x);
 }
-void x86Internal::op_16_INS() {
+void x86Internal::op_INS16() {
     int Xf, Yf, Zf, ag, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -4017,7 +4017,7 @@ void x86Internal::op_16_INS() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::op_16_OUTS() {
+void x86Internal::op_OUTS16() {
     int Xf, cg, Sb, ag, Zf, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -4056,7 +4056,7 @@ void x86Internal::op_16_OUTS() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
 }
-void x86Internal::op_16_MOVS() {
+void x86Internal::op_MOVS16() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -4095,7 +4095,7 @@ void x86Internal::op_16_MOVS() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::op_16_STOS() {
+void x86Internal::op_STOS16() {
     int Xf, Yf, ag;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -4120,7 +4120,7 @@ void x86Internal::op_16_STOS() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::op_16_CMPS() {
+void x86Internal::op_CMPS16() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -4145,7 +4145,7 @@ void x86Internal::op_16_CMPS() {
         x = ld16_mem8_read();
         mem8_loc = eg;
         y = ld16_mem8_read();
-        do_16bit_math(7, x, y);
+        do_arithmetic16(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -4165,12 +4165,12 @@ void x86Internal::op_16_CMPS() {
         x = ld16_mem8_read();
         mem8_loc = eg;
         y = ld16_mem8_read();
-        do_16bit_math(7, x, y);
+        do_arithmetic16(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::op_16_LODS() {
+void x86Internal::op_LODS16() {
     int Xf, cg, Sb, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -4203,7 +4203,7 @@ void x86Internal::op_16_LODS() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
 }
-void x86Internal::op_16_SCAS() {
+void x86Internal::op_SCAS16() {
     int Xf, Yf, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -4218,7 +4218,7 @@ void x86Internal::op_16_SCAS() {
             return;
         }
         x = ld16_mem8_read();
-        do_16bit_math(7, regs[0], x);
+        do_arithmetic16(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ipr & 0x0010) {
@@ -4235,7 +4235,7 @@ void x86Internal::op_16_SCAS() {
         }
     } else {
         x = ld16_mem8_read();
-        do_16bit_math(7, regs[0], x);
+        do_arithmetic16(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }

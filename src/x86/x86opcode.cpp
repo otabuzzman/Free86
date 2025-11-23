@@ -321,10 +321,10 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0xc4: // LES
-                op_16_load_far_pointer32(0);
+                op_load_far_pointer32(0);
                 goto EXEC_LOOP;
             case 0xc5: // LDS
-                op_16_load_far_pointer32(3);
+                op_load_far_pointer32(3);
                 goto EXEC_LOOP;
             case 0x00: // ADD
             case 0x08: // OR
@@ -340,16 +340,16 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_lower_byte(reg_idx0, do_8bit_math(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, do_arithmetic8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     if (operation != 7) {
                         x = ld8_mem8_write();
-                        x = do_8bit_math(operation, x, y);
+                        x = do_arithmetic8(operation, x, y);
                         st8_mem8_write(x);
                     } else {
                         x = ld8_mem8_read();
-                        do_8bit_math(7, x, y);
+                        do_arithmetic8(7, x, y);
                     }
                 }
                 goto EXEC_LOOP;
@@ -381,11 +381,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 y = regs[(mem8 >> 3) & 7];
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] = do_32bit_math(operation, regs[reg_idx0], y);
+                    regs[reg_idx0] = do_arithmetic32(operation, regs[reg_idx0], y);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld32_mem8_write();
-                    x = do_32bit_math(operation, x, y);
+                    x = do_arithmetic32(operation, x, y);
                     st32_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -424,7 +424,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     mem8_loc = segment_translation(mem8);
                     y = ld8_mem8_read();
                 }
-                set_lower_byte(reg_idx1, do_8bit_math(operation, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
+                set_lower_byte(reg_idx1, do_arithmetic8(operation, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
                 goto EXEC_LOOP;
             case 0x03: // ADD
                 mem8 = phys_mem8[far++];
@@ -454,7 +454,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     mem8_loc = segment_translation(mem8);
                     y = ld32_mem8_read();
                 }
-                regs[reg_idx1] = do_32bit_math(operation, regs[reg_idx1], y);
+                regs[reg_idx1] = do_arithmetic32(operation, regs[reg_idx1], y);
                 goto EXEC_LOOP;
             case 0x3b: // CMP
                 mem8 = phys_mem8[far++];
@@ -480,7 +480,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             case 0x3c: // CMP
                 y = phys_mem8[far++];
                 operation = opcode >> 3;
-                set_lower_byte(0, do_8bit_math(operation, regs[0] & 0xff, y));
+                set_lower_byte(0, do_arithmetic8(operation, regs[0] & 0xff, y));
                 goto EXEC_LOOP;
             case 0x05: // ADD
                 y = phys_mem8[far] |
@@ -503,7 +503,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     (phys_mem8[far + 3] << 24);
                 far += 4;
                 operation = opcode >> 3;
-                regs[0] = do_32bit_math(operation, regs[0], y);
+                regs[0] = do_arithmetic32(operation, regs[0], y);
                 goto EXEC_LOOP;
             case 0x35: // XOR
                 y = phys_mem8[far] |
@@ -531,17 +531,17 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     y = phys_mem8[far++];
-                    set_lower_byte(reg_idx0, do_8bit_math(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, do_arithmetic8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[far++];
                     if (operation != 7) {
                         x = ld8_mem8_write();
-                        x = do_8bit_math(operation, x, y);
+                        x = do_arithmetic8(operation, x, y);
                         st8_mem8_write(x);
                     } else {
                         x = ld8_mem8_read();
-                        do_8bit_math(7, x, y);
+                        do_arithmetic8(7, x, y);
                     }
                 }
                 goto EXEC_LOOP;
@@ -571,7 +571,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             (phys_mem8[far + 2] << 16) |
                             (phys_mem8[far + 3] << 24);
                         far += 4;
-                        regs[reg_idx0] = do_32bit_math(operation, regs[reg_idx0], y);
+                        regs[reg_idx0] = do_arithmetic32(operation, regs[reg_idx0], y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = phys_mem8[far] |
@@ -580,7 +580,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             (phys_mem8[far + 3] << 24);
                         far += 4;
                         x = ld32_mem8_write();
-                        x = do_32bit_math(operation, x, y);
+                        x = do_arithmetic32(operation, x, y);
                         st32_mem8_write(x);
                     }
                 }
@@ -603,12 +603,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         y = ((phys_mem8[far++] << 24) >> 24);
-                        regs[reg_idx0] = do_32bit_math(operation, regs[reg_idx0], y);
+                        regs[reg_idx0] = do_arithmetic32(operation, regs[reg_idx0], y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = ((phys_mem8[far++] << 24) >> 24);
                         x = ld32_mem8_write();
-                        x = do_32bit_math(operation, x, y);
+                        x = do_arithmetic32(operation, x, y);
                         st32_mem8_write(x);
                     }
                 }
@@ -743,11 +743,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 3:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_byte(reg_idx0, do_8bit_math(5, 0, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
+                        set_lower_byte(reg_idx0, do_arithmetic8(5, 0, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_write();
-                        x = do_8bit_math(5, 0, x);
+                        x = do_arithmetic8(5, 0, x);
                         st8_mem8_write(x);
                     }
                     break;
@@ -828,11 +828,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 3:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        regs[reg_idx0] = do_32bit_math(5, 0, regs[reg_idx0]);
+                        regs[reg_idx0] = do_arithmetic32(5, 0, regs[reg_idx0]);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld32_mem8_write();
-                        x = do_32bit_math(5, 0, x);
+                        x = do_arithmetic32(5, 0, x);
                         st32_mem8_write(x);
                     }
                     break;
@@ -886,12 +886,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     y = phys_mem8[far++];
                     reg_idx0 = mem8 & 7;
-                    set_lower_byte(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, do_shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[far++];
                     x = ld8_mem8_write();
-                    x = shift8(operation, x, y);
+                    x = do_shift8(operation, x, y);
                     st8_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -901,12 +901,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     y = phys_mem8[far++];
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] = shift32(operation, regs[reg_idx0], y);
+                    regs[reg_idx0] = do_shift32(operation, regs[reg_idx0], y);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     y = phys_mem8[far++];
                     x = ld32_mem8_write();
-                    x = shift32(operation, x, y);
+                    x = do_shift32(operation, x, y);
                     st32_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -915,11 +915,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 operation = (mem8 >> 3) & 7;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_lower_byte(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), 1));
+                    set_lower_byte(reg_idx0, do_shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), 1));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld8_mem8_write();
-                    x = shift8(operation, x, 1);
+                    x = do_shift8(operation, x, 1);
                     st8_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -928,11 +928,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 operation = (mem8 >> 3) & 7;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] = shift32(operation, regs[reg_idx0], 1);
+                    regs[reg_idx0] = do_shift32(operation, regs[reg_idx0], 1);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld32_mem8_write();
-                    x = shift32(operation, x, 1);
+                    x = do_shift32(operation, x, 1);
                     st32_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -942,11 +942,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 y = regs[1] & 0xff;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    set_lower_byte(reg_idx0, shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
+                    set_lower_byte(reg_idx0, do_shift8(operation, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld8_mem8_write();
-                    x = shift8(operation, x, y);
+                    x = do_shift8(operation, x, y);
                     st8_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -956,11 +956,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 y = regs[1] & 0xff;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    regs[reg_idx0] = shift32(operation, regs[reg_idx0], y);
+                    regs[reg_idx0] = do_shift32(operation, regs[reg_idx0], y);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     x = ld32_mem8_write();
-                    x = shift32(operation, x, y);
+                    x = do_shift32(operation, x, y);
                     st32_mem8_write(x);
                 }
                 goto EXEC_LOOP;
@@ -1142,22 +1142,22 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_byte(reg_idx0, increment_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
+                        set_lower_byte(reg_idx0, op_INC8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_write();
-                        x = increment_8bit(x);
+                        x = op_INC8(x);
                         st8_mem8_write(x);
                     }
                     break;
                 case 1:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_byte(reg_idx0, decrement_8bit((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
+                        set_lower_byte(reg_idx0, op_DEC8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_write();
-                        x = decrement_8bit(x);
+                        x = op_DEC8(x);
                         st8_mem8_write(x);
                     }
                     break;
@@ -1558,7 +1558,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x62: // BOUND
-                checkOp_BOUND();
+                op_BOUND();
                 goto EXEC_LOOP;
             case 0xf5: // CMC
                 osm_src = compile_flags() ^ 0x0001;
@@ -1614,55 +1614,55 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 halted = 1;
                 goto OUTER_LOOP;
             case 0xa4: // MOVSB
-                stringOp_MOVSB();
+                op_MOVSB();
                 goto EXEC_LOOP;
             case 0xa5: // MOVSW/D
-                ipr & 0x0100 ? stringOp_MOVSW() : stringOp_MOVSD();
+                ipr & 0x0100 ? op_MOVSW() : op_MOVSD();
                 goto EXEC_LOOP;
             case 0xaa: // STOSB
-                stringOp_STOSB();
+                op_STOSB();
                 goto EXEC_LOOP;
             case 0xab: // STOSW/D
-                ipr & 0x0100 ? stringOp_STOSW() : stringOp_STOSD();
+                ipr & 0x0100 ? op_STOSW() : op_STOSD();
                 goto EXEC_LOOP;
             case 0xa6: // CMPSB
-                stringOp_CMPSB();
+                op_CMPSB();
                 goto EXEC_LOOP;
             case 0xa7: // CMPSW/D
-                ipr & 0x0100 ? stringOp_CMPSW() : stringOp_CMPSD();
+                ipr & 0x0100 ? op_CMPSW() : op_CMPSD();
                 goto EXEC_LOOP;
             case 0xac: // LOSB
-                stringOp_LODSB();
+                op_LODSB();
                 goto EXEC_LOOP;
             case 0xad: // LOSW/D
-                ipr & 0x0100 ? stringOp_LODSW() : stringOp_LODSD();
+                ipr & 0x0100 ? op_LODSW() : op_LODSD();
                 goto EXEC_LOOP;
             case 0xae: // SCASB
-                stringOp_SCASB();
+                op_SCASB();
                 goto EXEC_LOOP;
             case 0xaf: // SCASW/D
-                ipr & 0x0100 ? stringOp_SCASW() : stringOp_SCASD();
+                ipr & 0x0100 ? op_SCASW() : op_SCASD();
                 goto EXEC_LOOP;
             case 0x6c: // INSB
-                stringOp_INSB();
+                op_INSB();
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6d: // INSW/D
-                ipr & 0x0100 ? stringOp_INSW() : stringOp_INSD();
+                ipr & 0x0100 ? op_INSW() : op_INSD();
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6e: // OUTSB
-                stringOp_OUTSB();
+                op_OUTSB();
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6f: // OUTSW/D
-                ipr & 0x0100 ? stringOp_OUTSW() : stringOp_OUTSD();
+                ipr & 0x0100 ? op_OUTSW() : op_OUTSD();
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -2101,7 +2101,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0xb2: // LSS
                 case 0xb4: // LFS
                 case 0xb5: // LGS
-                    op_16_load_far_pointer32(opcode & 7);
+                    op_load_far_pointer32(opcode & 7);
                     goto EXEC_LOOP;
                 case 0xa2: // -
                     op_CPUID();
@@ -2268,13 +2268,13 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
-                        y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                        y = do_arithmetic8(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         set_lower_byte(reg_idx1, x);
                         set_lower_byte(reg_idx0, y);
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_write();
-                        y = do_8bit_math(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                        y = do_arithmetic8(0, x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         st8_mem8_write(y);
                         set_lower_byte(reg_idx1, x);
                     }
@@ -2285,13 +2285,13 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         x = regs[reg_idx0];
-                        y = do_32bit_math(0, x, regs[reg_idx1]);
+                        y = do_arithmetic32(0, x, regs[reg_idx1]);
                         regs[reg_idx1] = x;
                         regs[reg_idx0] = y;
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld32_mem8_write();
-                        y = do_32bit_math(0, x, regs[reg_idx1]);
+                        y = do_arithmetic32(0, x, regs[reg_idx1]);
                         st32_mem8_write(y);
                         regs[reg_idx1] = x;
                     }
@@ -2302,7 +2302,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
-                        y = do_8bit_math(5, regs[0], x);
+                        y = do_arithmetic8(5, regs[0], x);
                         if (y == 0) {
                             set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
@@ -2311,7 +2311,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_write();
-                        y = do_8bit_math(5, regs[0], x);
+                        y = do_arithmetic8(5, regs[0], x);
                         if (y == 0) {
                             st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
@@ -2325,7 +2325,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         x = regs[reg_idx0];
-                        y = do_32bit_math(5, regs[0], x);
+                        y = do_arithmetic32(5, regs[0], x);
                         if (y == 0) {
                             regs[reg_idx0] = regs[reg_idx1];
                         } else {
@@ -2334,7 +2334,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld32_mem8_write();
-                        y = do_32bit_math(5, regs[0], x);
+                        y = do_arithmetic32(5, regs[0], x);
                         if (y == 0) {
                             st32_mem8_write(regs[reg_idx1]);
                         } else {
@@ -2611,10 +2611,10 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     set_lower_word(reg_idx1, x);
                     goto EXEC_LOOP;
                 case 0x1c4: // LES
-                    op_16_load_far_pointer16(0);
+                    op_load_far_pointer16(0);
                     goto EXEC_LOOP;
                 case 0x1c5: // LDS
-                    op_16_load_far_pointer16(3);
+                    op_load_far_pointer16(3);
                     goto EXEC_LOOP;
                 case 0x101: // ADD
                 case 0x109: // OR
@@ -2629,16 +2629,16 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     y = regs[(mem8 >> 3) & 7];
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word(reg_idx0, do_16bit_math(operation, regs[reg_idx0], y));
+                        set_lower_word(reg_idx0, do_arithmetic16(operation, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         if (operation != 7) {
                             x = ld16_mem8_write();
-                            x = do_16bit_math(operation, x, y);
+                            x = do_arithmetic16(operation, x, y);
                             st16_mem8_write(x);
                         } else {
                             x = ld16_mem8_read();
-                            do_16bit_math(7, x, y);
+                            do_arithmetic16(7, x, y);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2659,7 +2659,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         mem8_loc = segment_translation(mem8);
                         y = ld16_mem8_read();
                     }
-                    set_lower_word(reg_idx1, do_16bit_math(operation, regs[reg_idx1], y));
+                    set_lower_word(reg_idx1, do_arithmetic16(operation, regs[reg_idx1], y));
                     goto EXEC_LOOP;
                 case 0x105: // ADD
                 case 0x10d: // OR
@@ -2671,7 +2671,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0x13d: // CMP
                     y = ld16_mem8_direct();
                     operation = (opcode >> 3) & 7;
-                    set_lower_word(0, do_16bit_math(operation, regs[0], y));
+                    set_lower_word(0, do_arithmetic16(operation, regs[0], y));
                     goto EXEC_LOOP;
                 case 0x181: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                     mem8 = phys_mem8[far++];
@@ -2679,17 +2679,17 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         y = ld16_mem8_direct();
-                        set_lower_word(reg_idx0, do_16bit_math(operation, regs[reg_idx0], y));
+                        set_lower_word(reg_idx0, do_arithmetic16(operation, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = ld16_mem8_direct();
                         if (operation != 7) {
                             x = ld16_mem8_write();
-                            x = do_16bit_math(operation, x, y);
+                            x = do_arithmetic16(operation, x, y);
                             st16_mem8_write(x);
                         } else {
                             x = ld16_mem8_read();
-                            do_16bit_math(7, x, y);
+                            do_arithmetic16(7, x, y);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2699,17 +2699,17 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
                         y = ((phys_mem8[far++] << 24) >> 24);
-                        set_lower_word(reg_idx0, do_16bit_math(operation, regs[reg_idx0], y));
+                        set_lower_word(reg_idx0, do_arithmetic16(operation, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = ((phys_mem8[far++] << 24) >> 24);
                         if (operation != 7) {
                             x = ld16_mem8_write();
-                            x = do_16bit_math(operation, x, y);
+                            x = do_arithmetic16(operation, x, y);
                             st16_mem8_write(x);
                         } else {
                             x = ld16_mem8_read();
-                            do_16bit_math(7, x, y);
+                            do_arithmetic16(7, x, y);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2722,7 +2722,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0x146: // INC SI
                 case 0x147: // INC DI
                     reg_idx1 = opcode & 7;
-                    set_lower_word(reg_idx1, increment_16bit(regs[reg_idx1]));
+                    set_lower_word(reg_idx1, op_INC16(regs[reg_idx1]));
                     goto EXEC_LOOP;
                 case 0x148: // DEC A
                 case 0x149: // DEC C
@@ -2733,7 +2733,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0x14e: // DEC SI
                 case 0x14f: // DEC DI
                     reg_idx1 = opcode & 7;
-                    set_lower_word(reg_idx1, decrement_16bit(regs[reg_idx1]));
+                    set_lower_word(reg_idx1, op_DEC16(regs[reg_idx1]));
                     goto EXEC_LOOP;
                 case 0x16b: // IMUL
                     mem8 = phys_mem8[far++];
@@ -2745,7 +2745,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         y = ld16_mem8_read();
                     }
                     z = ((phys_mem8[far++] << 24) >> 24);
-                    set_lower_word(reg_idx1, op_16_IMUL(y, z));
+                    set_lower_word(reg_idx1, op_IMUL16(y, z));
                     goto EXEC_LOOP;
                 case 0x169: // IMUL
                     mem8 = phys_mem8[far++];
@@ -2757,7 +2757,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         y = ld16_mem8_read();
                     }
                     z = ld16_mem8_direct();
-                    set_lower_word(reg_idx1, op_16_IMUL(y, z));
+                    set_lower_word(reg_idx1, op_IMUL16(y, z));
                     goto EXEC_LOOP;
                 case 0x185: // TEST
                     mem8 = phys_mem8[far++];
@@ -2805,11 +2805,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     case 3:
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, do_16bit_math(5, 0, regs[reg_idx0]));
+                            set_lower_word(reg_idx0, do_arithmetic16(5, 0, regs[reg_idx0]));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_write();
-                            x = do_16bit_math(5, 0, x);
+                            x = do_arithmetic16(5, 0, x);
                             st16_mem8_write(x);
                         }
                         break;
@@ -2820,7 +2820,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_read();
                         }
-                        x = op_16_MUL(regs[0], x);
+                        x = op_MUL16(regs[0], x);
                         set_lower_word(0, x);
                         set_lower_word(2, x >> 16);
                         break;
@@ -2831,7 +2831,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_read();
                         }
-                        x = op_16_IMUL(regs[0], x);
+                        x = op_IMUL16(regs[0], x);
                         set_lower_word(0, x);
                         set_lower_word(2, x >> 16);
                         break;
@@ -2842,7 +2842,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_read();
                         }
-                        op_16_DIV(x);
+                        op_DIV16(x);
                         break;
                     case 7:
                         if ((mem8 >> 6) == 3) {
@@ -2851,7 +2851,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_read();
                         }
-                        op_16_IDIV(x);
+                        op_IDIV16(x);
                         break;
                     default:
                         abort(6);
@@ -2863,12 +2863,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((mem8 >> 6) == 3) {
                         y = phys_mem8[far++];
                         reg_idx0 = mem8 & 7;
-                        set_lower_word(reg_idx0, shift16(operation, regs[reg_idx0], y));
+                        set_lower_word(reg_idx0, do_shift16(operation, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         y = phys_mem8[far++];
                         x = ld16_mem8_write();
-                        x = shift16(operation, x, y);
+                        x = do_shift16(operation, x, y);
                         st16_mem8_write(x);
                     }
                     goto EXEC_LOOP;
@@ -2877,11 +2877,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     operation = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word(reg_idx0, shift16(operation, regs[reg_idx0], 1));
+                        set_lower_word(reg_idx0, do_shift16(operation, regs[reg_idx0], 1));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld16_mem8_write();
-                        x = shift16(operation, x, 1);
+                        x = do_shift16(operation, x, 1);
                         st16_mem8_write(x);
                     }
                     goto EXEC_LOOP;
@@ -2891,11 +2891,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     y = regs[1] & 0xff;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        set_lower_word(reg_idx0, shift16(operation, regs[reg_idx0], y));
+                        set_lower_word(reg_idx0, do_shift16(operation, regs[reg_idx0], y));
                     } else {
                         mem8_loc = segment_translation(mem8);
                         x = ld16_mem8_write();
-                        x = shift16(operation, x, y);
+                        x = do_shift16(operation, x, y);
                         st16_mem8_write(x);
                     }
                     goto EXEC_LOOP;
@@ -2930,10 +2930,10 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     set_lower_word(opcode & 7, x);
                     goto EXEC_LOOP;
                 case 0x160: // PUSHA
-                    op_16_PUSHA();
+                    op_PUSHA16();
                     goto EXEC_LOOP;
                 case 0x161: // POPA
-                    op_16_POPA();
+                    op_POPA16();
                     goto EXEC_LOOP;
                 case 0x18f: // POP
                     mem8 = phys_mem8[far++];
@@ -2961,10 +2961,10 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     push_word(x);
                     goto EXEC_LOOP;
                 case 0x1c8: // ENTER
-                    op_16_ENTER();
+                    op_ENTER16();
                     goto EXEC_LOOP;
                 case 0x1c9: // LEAVE
-                    op_16_LEAVE();
+                    op_LEAVE16();
                     goto EXEC_LOOP;
                 case 0x106: // PUSH
                 case 0x10e: // PUSH
@@ -2994,22 +2994,22 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     case 0:
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, increment_16bit(regs[reg_idx0]));
+                            set_lower_word(reg_idx0, op_INC16(regs[reg_idx0]));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_write();
-                            x = increment_16bit(x);
+                            x = op_INC16(x);
                             st16_mem8_write(x);
                         }
                         break;
                     case 1:
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, decrement_16bit(regs[reg_idx0]));
+                            set_lower_word(reg_idx0, op_DEC16(regs[reg_idx0]));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_write();
-                            x = decrement_16bit(x);
+                            x = op_DEC16(x);
                             st16_mem8_write(x);
                         }
                         break;
@@ -3107,31 +3107,31 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x162: // BOUND
-                    op_16_BOUND();
+                    op_BOUND16();
                     goto EXEC_LOOP;
                 case 0x1a5: // MOVSW/D
-                    op_16_MOVS();
+                    op_MOVS16();
                     goto EXEC_LOOP;
                 case 0x1a7: // CMPSW/D
-                    op_16_CMPS();
+                    op_CMPS16();
                     goto EXEC_LOOP;
                 case 0x1ad: // LOSW/D
-                    op_16_LODS();
+                    op_LODS16();
                     goto EXEC_LOOP;
                 case 0x1af: // SCASW/D
-                    op_16_SCAS();
+                    op_SCAS16();
                     goto EXEC_LOOP;
                 case 0x1ab: // STOSW/D
-                    op_16_STOS();
+                    op_STOS16();
                     goto EXEC_LOOP;
                 case 0x16d: // INSW/D
-                    op_16_INS();
+                    op_INS16();
                     if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
                 case 0x16f: // OUTSW/D
-                    op_16_OUTS();
+                    op_OUTS16();
                     if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
@@ -3379,7 +3379,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             y = ld16_mem8_read();
                         }
-                        set_lower_word(reg_idx1, op_16_IMUL(regs[reg_idx1], y));
+                        set_lower_word(reg_idx1, op_IMUL16(regs[reg_idx1], y));
                         goto EXEC_LOOP;
                     case 0x1c1: // -
                         mem8 = phys_mem8[far++];
@@ -3387,13 +3387,13 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
                             x = regs[reg_idx0];
-                            y = do_16bit_math(0, x, regs[reg_idx1]);
+                            y = do_arithmetic16(0, x, regs[reg_idx1]);
                             set_lower_word(reg_idx1, x);
                             set_lower_word(reg_idx0, y);
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_write();
-                            y = do_16bit_math(0, x, regs[reg_idx1]);
+                            y = do_arithmetic16(0, x, regs[reg_idx1]);
                             st16_mem8_write(y);
                             set_lower_word(reg_idx1, x);
                         }
@@ -3411,7 +3411,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     case 0x1b2: // LSS
                     case 0x1b4: // LFS
                     case 0x1b5: // LGS
-                        op_16_load_far_pointer16(opcode & 7);
+                        op_load_far_pointer16(opcode & 7);
                         goto EXEC_LOOP;
                     case 0x1a4: // SHLD
                     case 0x1ac: // SHRD
@@ -3421,12 +3421,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         if ((mem8 >> 6) == 3) {
                             z = phys_mem8[far++];
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, op_16_SHRD_SHLD(operation, regs[reg_idx0], y, z));
+                            set_lower_word(reg_idx0, op_SHRD_SHLD16(operation, regs[reg_idx0], y, z));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             z = phys_mem8[far++];
                             x = ld16_mem8_write();
-                            x = op_16_SHRD_SHLD(operation, x, y, z);
+                            x = op_SHRD_SHLD16(operation, x, y, z);
                             st16_mem8_write(x);
                         }
                         goto EXEC_LOOP;
@@ -3438,11 +3438,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         operation = (opcode >> 3) & 1;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, op_16_SHRD_SHLD(operation, regs[reg_idx0], y, z));
+                            set_lower_word(reg_idx0, op_SHRD_SHLD16(operation, regs[reg_idx0], y, z));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_write();
-                            x = op_16_SHRD_SHLD(operation, x, y, z);
+                            x = op_SHRD_SHLD16(operation, x, y, z);
                             st16_mem8_write(x);
                         }
                         goto EXEC_LOOP;
@@ -3459,7 +3459,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                                 y = phys_mem8[far++];
                                 x = ld16_mem8_read();
                             }
-                            op_16_BT(x, y);
+                            op_BT16(x, y);
                             break;
                         case 5:
                         case 6:
@@ -3467,12 +3467,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             if ((mem8 >> 6) == 3) {
                                 reg_idx0 = mem8 & 7;
                                 y = phys_mem8[far++];
-                                regs[reg_idx0] = op_16_BTS_BTR_BTC(operation & 3, regs[reg_idx0], y);
+                                regs[reg_idx0] = op_BTS_BTR_BTC16(operation & 3, regs[reg_idx0], y);
                             } else {
                                 mem8_loc = segment_translation(mem8);
                                 y = phys_mem8[far++];
                                 x = ld16_mem8_write();
-                                x = op_16_BTS_BTR_BTC(operation & 3, x, y);
+                                x = op_BTS_BTR_BTC16(operation & 3, x, y);
                                 st16_mem8_write(x);
                             }
                             break;
@@ -3490,7 +3490,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             mem8_loc = mem8_loc + (((y & 0xffff) >> 4) << 1);
                             x = ld16_mem8_read();
                         }
-                        op_16_BT(x, y);
+                        op_BT16(x, y);
                         goto EXEC_LOOP;
                     case 0x1ab: // BTS
                     case 0x1b3: // BTR
@@ -3500,12 +3500,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         operation = (opcode >> 3) & 3;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, op_16_BTS_BTR_BTC(operation, regs[reg_idx0], y));
+                            set_lower_word(reg_idx0, op_BTS_BTR_BTC16(operation, regs[reg_idx0], y));
                         } else {
                             mem8_loc = segment_translation(mem8);
                             mem8_loc = mem8_loc + (((y & 0xffff) >> 4) << 1);
                             x = ld16_mem8_write();
-                            x = op_16_BTS_BTR_BTC(operation, x, y);
+                            x = op_BTS_BTR_BTC16(operation, x, y);
                             st16_mem8_write(x);
                         }
                         goto EXEC_LOOP;
@@ -3521,9 +3521,9 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         }
                         x = regs[reg_idx1];
                         if (opcode & 1) {
-                            x = op_16_BSR(x, y);
+                            x = op_BSR16(x, y);
                         } else {
-                            x = op_16_BSF(x, y);
+                            x = op_BSF16(x, y);
                         }
                         set_lower_word(reg_idx1, x);
                         goto EXEC_LOOP;
@@ -3533,7 +3533,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
                             x = regs[reg_idx0];
-                            y = do_16bit_math(5, regs[0], x);
+                            y = do_arithmetic16(5, regs[0], x);
                             if (y == 0) {
                                 set_lower_word(reg_idx0, regs[reg_idx1]);
                             } else {
@@ -3542,7 +3542,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         } else {
                             mem8_loc = segment_translation(mem8);
                             x = ld16_mem8_write();
-                            y = do_16bit_math(5, regs[0], x);
+                            y = do_arithmetic16(5, regs[0], x);
                             if (y == 0) {
                                 st16_mem8_write(regs[reg_idx1]);
                             } else {

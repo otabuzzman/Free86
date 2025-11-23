@@ -226,11 +226,11 @@ class x86Internal {
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
     };
-    const std::vector<int> shift8_LUT  = {
+    const std::vector<int> do_shift8_LUT  = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6,
         7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4
     };
-    const std::vector<int> shift16_LUT = {
+    const std::vector<int> do_shift16_LUT = {
          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
         16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
     };
@@ -420,38 +420,38 @@ class x86Internal {
     void set_lower_byte(int reg_idx, int x);
     void set_lower_word(int reg_idx, int x);
 
-    int do_32bit_math(int operation, int Yb, int Zb);
-    int do_16bit_math(int operation, int Yb, int Zb);
-    int do_8bit_math(int operation, int Yb, int Zb);
-    int increment_16bit(int x);
-    int decrement_16bit(int x);
-    int increment_8bit(int x);
-    int decrement_8bit(int x);
-    int shift8(int operation, int Yb, int Zb);
-    int shift16(int operation, int Yb, int Zb);
-    int shift32(int operation, uint32_t Yb, int Zb);
+    int do_arithmetic8(int operation, int Yb, int Zb);
+    int do_arithmetic16(int operation, int Yb, int Zb);
+    int do_arithmetic32(int operation, int Yb, int Zb);
+    int op_INC8(int x);
+    int op_INC16(int x);
+    int op_DEC8(int x);
+    int op_DEC16(int x);
+    int do_shift8(int operation, int Yb, int Zb);
+    int do_shift16(int operation, int Yb, int Zb);
+    int do_shift32(int operation, uint32_t Yb, int Zb);
 
-    int op_16_SHRD_SHLD(int operation, int Yb, int Zb, int pc);
+    int op_SHRD_SHLD16(int operation, int Yb, int Zb, int pc);
     int op_SHLD(int Yb, int Zb, int pc);
     int op_SHRD(int Yb, int Zb, int pc);
-    void op_16_BT(int Yb, int Zb);
+    void op_BT16(int Yb, int Zb);
     void op_BT(int Yb, int Zb);
-    int op_16_BTS_BTR_BTC(int operation, int Yb, int Zb);
+    int op_BTS_BTR_BTC16(int operation, int Yb, int Zb);
     int op_BTS_BTR_BTC(int operation, int Yb, int Zb);
-    int op_16_BSF(int Yb, int Zb);
+    int op_BSF16(int Yb, int Zb);
     int op_BSF(int Yb, int Zb);
-    int op_16_BSR(int Yb, int Zb);
+    int op_BSR16(int Yb, int Zb);
     int op_BSR(int Yb, int Zb);
     void op_DIV(int opcode);
     void op_IDIV(int opcode);
-    void op_16_DIV(int opcode);
-    void op_16_IDIV(int opcode);
+    void op_DIV16(int opcode);
+    void op_IDIV16(int opcode);
     int op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t opcode);
     int op_IDIV32(int Ic, int Jc, int opcode);
     int op_MUL(int a, int opcode);
     int op_IMUL(int a, int opcode);
-    int op_16_MUL(int a, int opcode);
-    int op_16_IMUL(int a, int opcode);
+    int op_MUL16(int a, int opcode);
+    int op_IMUL16(int a, int opcode);
     int do_multiply32(int _a, int opcode);
     int op_MUL32(int a, int opcode);
     int op_IMUL32(int a, int opcode);
@@ -516,45 +516,45 @@ class x86Internal {
     void op_AAS();
     void op_DAA();
     void op_DAS();
-    void checkOp_BOUND();
-    void op_16_BOUND();
-    void op_16_PUSHA();
+    void op_BOUND16();
+    void op_BOUND();
+    void op_PUSHA16();
     void op_PUSHA();
-    void op_16_POPA();
+    void op_POPA16();
     void op_POPA();
-    void op_16_LEAVE();
+    void op_LEAVE16();
     void op_LEAVE();
-    void op_16_ENTER();
+    void op_ENTER16();
     void op_ENTER();
-    void op_16_load_far_pointer32(int Sb);
-    void op_16_load_far_pointer16(int Sb);
-    void stringOp_INSB();
-    void stringOp_OUTSB();
-    void stringOp_MOVSB();
-    void stringOp_STOSB();
-    void stringOp_CMPSB();
-    void stringOp_LODSB();
-    void stringOp_SCASB();
-    void op_16_INS();
-    void op_16_OUTS();
-    void op_16_MOVS();
-    void op_16_STOS();
-    void op_16_CMPS();
-    void op_16_LODS();
-    void op_16_SCAS();
-    void stringOp_INSW();
-    void stringOp_OUTSW();
-    void stringOp_MOVSW();
-    void stringOp_STOSW();
-    void stringOp_CMPSW();
-    void stringOp_LODSW();
-    void stringOp_SCASW();
-    void stringOp_INSD();
-    void stringOp_OUTSD();
-    void stringOp_MOVSD();
-    void stringOp_STOSD();
-    void stringOp_CMPSD();
-    void stringOp_LODSD();
-    void stringOp_SCASD();
+    void op_load_far_pointer32(int Sb);
+    void op_load_far_pointer16(int Sb);
+    void op_INSB();
+    void op_OUTSB();
+    void op_MOVSB();
+    void op_STOSB();
+    void op_CMPSB();
+    void op_LODSB();
+    void op_SCASB();
+    void op_INS16();
+    void op_OUTS16();
+    void op_MOVS16();
+    void op_STOS16();
+    void op_CMPS16();
+    void op_LODS16();
+    void op_SCAS16();
+    void op_INSW();
+    void op_OUTSW();
+    void op_MOVSW();
+    void op_STOSW();
+    void op_CMPSW();
+    void op_LODSW();
+    void op_SCASW();
+    void op_INSD();
+    void op_OUTSD();
+    void op_MOVSD();
+    void op_STOSD();
+    void op_CMPSD();
+    void op_LODSD();
+    void op_SCASD();
 };
 #endif // _X86_H

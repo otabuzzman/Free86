@@ -1,6 +1,6 @@
 #include "x86.h"
 
-void x86Internal::stringOp_INSB() {
+void x86Internal::op_INSB() {
     int Xf, Yf, Zf, ag, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -33,7 +33,7 @@ void x86Internal::stringOp_INSB() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
     }
 }
-void x86Internal::stringOp_OUTSB() {
+void x86Internal::op_OUTSB() {
     int Xf, cg, Sb, ag, Zf, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -72,7 +72,7 @@ void x86Internal::stringOp_OUTSB() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
     }
 }
-void x86Internal::stringOp_MOVSB() {
+void x86Internal::op_MOVSB() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -111,7 +111,7 @@ void x86Internal::stringOp_MOVSB() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
     }
 }
-void x86Internal::stringOp_STOSB() {
+void x86Internal::op_STOSB() {
     int Xf, Yf, ag;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -136,7 +136,7 @@ void x86Internal::stringOp_STOSB() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
     }
 }
-void x86Internal::stringOp_CMPSB() {
+void x86Internal::op_CMPSB() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -161,7 +161,7 @@ void x86Internal::stringOp_CMPSB() {
         x = ld8_mem8_read();
         mem8_loc = eg;
         y = ld8_mem8_read();
-        do_8bit_math(7, x, y);
+        do_arithmetic8(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -181,12 +181,12 @@ void x86Internal::stringOp_CMPSB() {
         x = ld8_mem8_read();
         mem8_loc = eg;
         y = ld8_mem8_read();
-        do_8bit_math(7, x, y);
+        do_arithmetic8(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
     }
 }
-void x86Internal::stringOp_LODSB() {
+void x86Internal::op_LODSB() {
     int Xf, cg, Sb, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -219,7 +219,7 @@ void x86Internal::stringOp_LODSB() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
     }
 }
-void x86Internal::stringOp_SCASB() {
+void x86Internal::op_SCASB() {
     int Xf, Yf, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -234,7 +234,7 @@ void x86Internal::stringOp_SCASB() {
             return;
         }
         x = ld8_mem8_read();
-        do_8bit_math(7, regs[0], x);
+        do_arithmetic8(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ipr & 0x0010) {
@@ -251,11 +251,11 @@ void x86Internal::stringOp_SCASB() {
         }
     } else {
         x = ld8_mem8_read();
-        do_8bit_math(7, regs[0], x);
+        do_arithmetic8(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
     }
 }
-void x86Internal::stringOp_INSW() {
+void x86Internal::op_INSW() {
     int Xf, Yf, Zf, ag, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -288,7 +288,7 @@ void x86Internal::stringOp_INSW() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::stringOp_OUTSW() {
+void x86Internal::op_OUTSW() {
     int Xf, cg, Sb, ag, Zf, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -327,7 +327,7 @@ void x86Internal::stringOp_OUTSW() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
 }
-void x86Internal::stringOp_MOVSW() {
+void x86Internal::op_MOVSW() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -366,7 +366,7 @@ void x86Internal::stringOp_MOVSW() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::stringOp_STOSW() {
+void x86Internal::op_STOSW() {
     int Xf, Yf, ag;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -391,7 +391,7 @@ void x86Internal::stringOp_STOSW() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::stringOp_CMPSW() {
+void x86Internal::op_CMPSW() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -416,7 +416,7 @@ void x86Internal::stringOp_CMPSW() {
         x = ld16_mem8_read();
         mem8_loc = eg;
         y = ld16_mem8_read();
-        do_16bit_math(7, x, y);
+        do_arithmetic16(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -436,12 +436,12 @@ void x86Internal::stringOp_CMPSW() {
         x = ld16_mem8_read();
         mem8_loc = eg;
         y = ld16_mem8_read();
-        do_16bit_math(7, x, y);
+        do_arithmetic16(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::stringOp_LODSW() {
+void x86Internal::op_LODSW() {
     int Xf, cg, Sb, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -474,7 +474,7 @@ void x86Internal::stringOp_LODSW() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
     }
 }
-void x86Internal::stringOp_SCASW() {
+void x86Internal::op_SCASW() {
     int Xf, Yf, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -489,7 +489,7 @@ void x86Internal::stringOp_SCASW() {
             return;
         }
         x = ld16_mem8_read();
-        do_16bit_math(7, regs[0], x);
+        do_arithmetic16(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ipr & 0x0010) {
@@ -506,11 +506,11 @@ void x86Internal::stringOp_SCASW() {
         }
     } else {
         x = ld16_mem8_read();
-        do_16bit_math(7, regs[0], x);
+        do_arithmetic16(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
     }
 }
-void x86Internal::stringOp_INSD() {
+void x86Internal::op_INSD() {
     int Xf, Yf, Zf, ag, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -543,7 +543,7 @@ void x86Internal::stringOp_INSD() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
     }
 }
-void x86Internal::stringOp_OUTSD() {
+void x86Internal::op_OUTSD() {
     int Xf, cg, Sb, ag, Zf, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -582,7 +582,7 @@ void x86Internal::stringOp_OUTSD() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
     }
 }
-void x86Internal::stringOp_MOVSD() {
+void x86Internal::op_MOVSD() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -621,7 +621,7 @@ void x86Internal::stringOp_MOVSD() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
     }
 }
-void x86Internal::stringOp_STOSD() {
+void x86Internal::op_STOSD() {
     int Xf, Yf, ag;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -646,7 +646,7 @@ void x86Internal::stringOp_STOSD() {
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
     }
 }
-void x86Internal::stringOp_CMPSD() {
+void x86Internal::op_CMPSD() {
     int Xf, Yf, cg, ag, Sb, eg;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -671,7 +671,7 @@ void x86Internal::stringOp_CMPSD() {
         x = ld32_mem8_read();
         mem8_loc = eg;
         y = ld32_mem8_read();
-        do_32bit_math(7, x, y);
+        do_arithmetic32(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
@@ -691,12 +691,12 @@ void x86Internal::stringOp_CMPSD() {
         x = ld32_mem8_read();
         mem8_loc = eg;
         y = ld32_mem8_read();
-        do_32bit_math(7, x, y);
+        do_arithmetic32(7, x, y);
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
     }
 }
-void x86Internal::stringOp_LODSD() {
+void x86Internal::op_LODSD() {
     int Xf, cg, Sb, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -729,7 +729,7 @@ void x86Internal::stringOp_LODSD() {
         regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
     }
 }
-void x86Internal::stringOp_SCASD() {
+void x86Internal::op_SCASD() {
     int Xf, Yf, ag, x;
     if (ipr & 0x0080) {
         Xf = 0xffff;
@@ -744,7 +744,7 @@ void x86Internal::stringOp_SCASD() {
             return;
         }
         x = ld32_mem8_read();
-        do_32bit_math(7, regs[0], x);
+        do_arithmetic32(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
         regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
         if (ipr & 0x0010) {
@@ -761,7 +761,7 @@ void x86Internal::stringOp_SCASD() {
         }
     } else {
         x = ld32_mem8_read();
-        do_32bit_math(7, regs[0], x);
+        do_arithmetic32(7, regs[0], x);
         regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
     }
 }
