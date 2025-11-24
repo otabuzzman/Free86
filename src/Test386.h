@@ -1,12 +1,14 @@
 #ifndef _H_TEST386
 #define _H_TEST386
 
-#include "PC.h"
+#include "x86.h"
+
+class PlainCPU;
 
 class Test386 {
     PlainCPU *cpu = nullptr;
 public:
-    Test386(x86Internal cpu, int mem_size {
+    Test386(int mem_size {
         cpu = new PlainCPU(mem_size);
     }
     ~Test386() {
