@@ -338,14 +338,14 @@ class x86Internal {
         }
         return s;
     }
-    std::string _4_bytes_(int n) {
+    std::string _4_bytes(int n) {
         return hex_rep(n, 8);
     }
-    std::string _2_bytes_(int n) {
-        return hex_rep(n, 2);
-    }
-    std::string _1_byte_(int n) {
+    std::string _2_bytes(int n) {
         return hex_rep(n, 4);
+    }
+    std::string _1_byte(int n) {
+        return hex_rep(n, 2);
     }
 
     void fetch_decode_execute(int cycles);

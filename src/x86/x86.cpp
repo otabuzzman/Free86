@@ -2809,30 +2809,23 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int e
 }
 void x86Internal::do_interrupt(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
     if (interrupt_id == 0x06) {
-        int eip_tmp = eip;
-        int eip_linear;
+        int n, eip_linear;
         std::string str =
-            "do_interrupt: intno=" + _2_bytes_(interrupt_id) +
-            " error_code=" + _4_bytes_(error_code) +
-            " EIP=" + _4_bytes_(eip_tmp) + " ESP=" + _4_bytes_(regs[4]) +
-            " EAX=" + _4_bytes_(regs[0]) + " EBX=" + _4_bytes_(regs[3]) +
-            " ECX=" + _4_bytes_(regs[1]);
-        if (interrupt_id == 0x0e) {
-            str += " CR2=" + _4_bytes_(cr2);
+            "interrupt_id=" + _1_byte(interrupt_id) +
+            " error_code=" + _4_bytes(error_code) +
+            " EIP=" + _4_bytes(eip) + " ESP=" + _4_bytes(regs[4]) +
+            " EAX=" + _4_bytes(regs[0]) + " EBX=" + _4_bytes(regs[3]) +
+            " ECX=" + _4_bytes(regs[1]);
+        printf("%s\n", str.c_str());
+        eip_linear = eip + CS_base;
+        n = 4096 - (eip_linear & 0xfff);
+        n = std::min(n, 15);
+        str = "[EIP..EIP+" + n + "]:";
+        for (int i = 0; i < n; i++) {
+            mem8_loc = (eip_linear + i) & -1;
+            str += " " + _2_bytes(ld8_mem8_read());
         }
         printf("%s\n", str.c_str());
-        if (interrupt_id == 0x06) {
-            int i, n;
-            str = "Code:";
-            eip_linear = eip_tmp + CS_base;
-            n = 4096 - (eip_linear & 0xfff);
-            n = std::min(n, 15);
-            for (i = 0; i < n; i++) {
-                mem8_loc = (eip_linear + i) & -1;
-                str += " " + _2_bytes_(ld8_mem8_read());
-            }
-            printf("%s\n", str.c_str());
-        }
     }
     if (check_protected()) {
         do_interrupt_protected_mode(interrupt_id, is_sw, error_code, return_address, is_hw);
