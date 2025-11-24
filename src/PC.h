@@ -12,9 +12,11 @@
 
 #include "x86/x86.h"
 
+class WiredCPU;
+
 class PC {
   public:
-    PC(x86Internal cpu, int mem_size);
+    PC(int mem_size);
     ~PC();
 
     int load(std::string path, int offset = 0);
