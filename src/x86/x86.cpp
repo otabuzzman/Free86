@@ -132,7 +132,7 @@ void x86Internal::do_tlb_set_page(int linear_address, int writable, bool user) {
                 }
             }
         }
-        error_code |= write << 1;
+        error_code |= writable << 1;
         if (user) {
             error_code |= 0x04;
         }
