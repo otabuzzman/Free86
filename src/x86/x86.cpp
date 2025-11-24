@@ -1103,7 +1103,7 @@ int x86Internal::op_BSR(int Yb, int Zb) {
     osm = 14;
     return Yb;
 }
-void x86Internal::op_DIV(int opcode) {
+void x86Internal::op_DIV8(int opcode) {
     int a, q, r;
     a = regs[0] & 0xffff;
     opcode &= 0xff;
@@ -1114,7 +1114,7 @@ void x86Internal::op_DIV(int opcode) {
     r = (a % opcode);
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_IDIV(int opcode) {
+void x86Internal::op_IDIV8(int opcode) {
     int a, q, r;
     a = (regs[0] << 16) >> 16;
     opcode = (opcode << 24) >> 24;
@@ -1216,7 +1216,7 @@ int x86Internal::op_IDIV32(int Ic, int Jc, int opcode) {
     }
     return q;
 }
-int x86Internal::op_MUL(int a, int opcode) {
+int x86Internal::op_MUL8(int a, int opcode) {
     int flg;
     a &= 0xff;
     opcode &= 0xff;
@@ -1226,7 +1226,7 @@ int x86Internal::op_MUL(int a, int opcode) {
     osm = 21;
     return flg;
 }
-int x86Internal::op_IMUL(int a, int opcode) {
+int x86Internal::op_IMUL8(int a, int opcode) {
     int flg;
     a = (((a) << 24) >> 24);
     opcode = (((opcode) << 24) >> 24);
@@ -3025,7 +3025,7 @@ void x86Internal::op_JMPF(int selector, int Le) {
         do_JMPF(selector, Le);
     }
 }
-void x86Internal::Pe(int segment, int cpl) {
+void x86Internal::clear_segment_register(int segment, int cpl) {
     int dpl, dte_upper_dword;
     if ((segment == 4 || segment == 5) && (segs[segment].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
@@ -3467,10 +3467,10 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
         set_current_permission_level(rpl);
         esp = wd;
         SS_mask = compile_sizemask(xe);
-        Pe(0, rpl);
-        Pe(3, rpl);
-        Pe(4, rpl);
-        Pe(5, rpl);
+        clear_segment_register(0, rpl);
+        clear_segment_register(3, rpl);
+        clear_segment_register(4, rpl);
+        clear_segment_register(5, rpl);
         esp = (esp + imm16) & -1;
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -3515,7 +3515,7 @@ void x86Internal::op_RETF(bool is_32_bit, int imm16) {
         do_return_protected_mode(is_32_bit, 0, imm16);
     }
 }
-int x86Internal::of(int selector, bool is_lsl) {
+int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
     int dte_lower_dword, dte_upper_dword, rpl, dpl, descriptor_type;
     int e[2];
     if ((selector & 0xfffc) == 0) {
@@ -3578,7 +3578,7 @@ void x86Internal::op_LAR_LSL(bool is_32_bit, bool is_lsl) {
         mem8_loc = segment_translation(mem8);
         selector = ld16_mem8_read();
     }
-    x = of(selector, is_lsl);
+    x = ld_descriptor_field(selector, is_lsl);
     osm_src = compile_flags();
     if (x == -1) {
         osm_src &= ~0x0040;
@@ -3958,7 +3958,7 @@ void x86Internal::op_ENTER() {
     regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
-void x86Internal::op_load_far_pointer32(int Sb) {
+void x86Internal::ld_full_pointer32(int Sb) {
     int x, y, mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
@@ -3971,7 +3971,7 @@ void x86Internal::op_load_far_pointer32(int Sb) {
     set_segment_register(Sb, y);
     regs[(mem8 >> 3) & 7] = x;
 }
-void x86Internal::op_load_far_pointer16(int Sb) {
+void x86Internal::ld_full_pointer16(int Sb) {
     int x, y, mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {

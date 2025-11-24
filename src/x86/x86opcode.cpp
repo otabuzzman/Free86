@@ -321,10 +321,10 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0xc4: // LES
-                op_load_far_pointer32(0);
+                ld_full_pointer32(0);
                 goto EXEC_LOOP;
             case 0xc5: // LDS
-                op_load_far_pointer32(3);
+                ld_full_pointer32(3);
                 goto EXEC_LOOP;
             case 0x00: // ADD
             case 0x08: // OR
@@ -759,7 +759,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_read();
                     }
-                    set_lower_word(0, op_MUL(regs[0], x));
+                    set_lower_word(0, op_MUL8(regs[0], x));
                     break;
                 case 5:
                     if ((mem8 >> 6) == 3) {
@@ -769,7 +769,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_read();
                     }
-                    set_lower_word(0, op_IMUL(regs[0], x));
+                    set_lower_word(0, op_IMUL8(regs[0], x));
                     break;
                 case 6:
                     if ((mem8 >> 6) == 3) {
@@ -2101,7 +2101,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0xb2: // LSS
                 case 0xb4: // LFS
                 case 0xb5: // LGS
-                    op_load_far_pointer32(opcode & 7);
+                    ld_full_pointer32(opcode & 7);
                     goto EXEC_LOOP;
                 case 0xa2: // -
                     op_CPUID();
@@ -2611,10 +2611,10 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     set_lower_word(reg_idx1, x);
                     goto EXEC_LOOP;
                 case 0x1c4: // LES
-                    op_load_far_pointer16(0);
+                    ld_full_pointer16(0);
                     goto EXEC_LOOP;
                 case 0x1c5: // LDS
-                    op_load_far_pointer16(3);
+                    ld_full_pointer16(3);
                     goto EXEC_LOOP;
                 case 0x101: // ADD
                 case 0x109: // OR
@@ -3411,7 +3411,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     case 0x1b2: // LSS
                     case 0x1b4: // LFS
                     case 0x1b5: // LGS
-                        op_load_far_pointer16(opcode & 7);
+                        ld_full_pointer16(opcode & 7);
                         goto EXEC_LOOP;
                     case 0x1a4: // SHLD
                     case 0x1ac: // SHRD
