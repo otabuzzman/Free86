@@ -12,9 +12,9 @@
 
 #include "PC.h"
 
-PC::PC(int mem_size)
+PC::PC(x86Internal cpu, int mem_size)
 {
-    cpu = new CPU(mem_size);
+    this->cpu = cpu;
 #ifndef NO_SDL
     TTF_Init();
     font = TTF_OpenFont("bin/cp437.ttf", 14);
@@ -27,7 +27,6 @@ PC::PC(int mem_size)
 
 PC::~PC()
 {
-    delete cpu;
 }
 
 int PC::load(std::string path, int offset)
@@ -82,9 +81,7 @@ void PC::cycle()
     int cycles_requested = cpu->cycles_processed + 100000;
 
     while (cpu->cycles_processed < cycles_requested) {
-#ifndef TEST386
         cpu->pit->update_irq();
-#endif
 
         try {
             cpu->fetch_decode_execute(cycles_requested - cpu->cycles_processed);
@@ -154,17 +151,14 @@ void PC::input()
     cpu->serial->input_fifo_push(chr);
 }
 #endif // NO_SDL
-int CPU::get_hard_irq() {
+int WiredCPU::get_hard_irq() {
     return pic->irq;
 }
-int CPU::get_hard_intno() {
+int WiredCPU::get_hard_intno() {
     return pic->get_hard_intno();
 }
-int CPU::ioport_read(int mem8_loc) {
+int WiredCPU::ioport_read(int mem8_loc) {
     int port = mem8_loc & (1024 - 1);
-#ifdef TEST386
-    printf("*** ioport_read 0x%04x\n", port);
-#endif
     switch (port) {
     case 0x70:
     case 0x71:
@@ -197,15 +191,8 @@ int CPU::ioport_read(int mem8_loc) {
         return 0xff;
     }
 }
-void CPU::ioport_write(int mem8_loc, int data) {
+void WiredCPU::ioport_write(int mem8_loc, int data) {
     int port = mem8_loc & (1024 - 1);
-#ifdef TEST386
-    if (port == 0x0190) { // default POST_PORT in test386
-        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
-    } else { // any other value considered OUT_PORT
-        printf("%c", data);
-    }
-#endif
     switch (port) {
     case 0x80: // POST
         break;
