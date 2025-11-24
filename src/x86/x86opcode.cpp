@@ -128,7 +128,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     tlb_hash = (reg_idx0 & 4) << 1;
-                    regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << tlb_hash)) | (((x & 0xff) << tlb_hash);
+                    regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     tlb_hash = tlb_write[mem8_loc >> 12];
