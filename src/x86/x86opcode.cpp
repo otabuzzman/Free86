@@ -1853,22 +1853,22 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         st8_mem8_write(x);
                     }
                     goto EXEC_LOOP;
-                case 0x40: // -
-                case 0x41: // -
-                case 0x42: // -
-                case 0x43: // -
-                case 0x44: // -
-                case 0x45: // -
-                case 0x46: // -
-                case 0x47: // -
-                case 0x48: // -
-                case 0x49: // -
-                case 0x4a: // -
-                case 0x4b: // -
-                case 0x4c: // -
-                case 0x4d: // -
-                case 0x4e: // -
-                case 0x4f: // -
+                case 0x40: // CMOVx conditional move (80486) - overflow (OF == 1)
+                case 0x41: // CMOVx   - not overflow (OF == 0)
+                case 0x42: // CMOVx   - below/not above or equal/carry (CF == 1)
+                case 0x43: // CMOVx   - not below/above or equal/not carry (CF == 0)
+                case 0x44: // CMOVx   - zero/equal (ZF == 1)
+                case 0x45: // CMOVx   - not zero/not equal (ZF == 0)
+                case 0x46: // CMOVx   - below or equal/not above (CF == 1 OR ZF == 1)
+                case 0x47: // CMOVx   - not below or equal/above (CF == 0 AND ZF == 0)
+                case 0x48: // CMOVx   - sign (SF == 1)
+                case 0x49: // CMOVx   - not sign (SF == 0)
+                case 0x4a: // CMOVx   - parity/parity even (PF == 1)
+                case 0x4b: // CMOVx   - not parity/parity odd (PF == 0)
+                case 0x4c: // CMOVx   - less/not greater (SF != OF)
+                case 0x4d: // CMOVx   - not less/greater or equal (SF == OF)
+                case 0x4e: // CMOVx   - less or equal/not greater ((ZF == 1) OR (SF != OF))
+                case 0x4f: // CMOVx   - not less nor equal/greater ((ZF == 0) AND (SF == OF))
                     mem8 = phys_mem8[far++];
                     if ((mem8 >> 6) == 3) {
                         x = regs[mem8 & 7];
@@ -2103,7 +2103,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0xb5: // LGS
                     ld_full_pointer32(opcode & 7);
                     goto EXEC_LOOP;
-                case 0xa2: // -
+                case 0xa2: // CPUID (80486)
                     op_CPUID();
                     goto EXEC_LOOP;
                 case 0xa4: // SHLD
@@ -2254,7 +2254,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     }
                     regs[reg_idx1] = op_IMUL32(regs[reg_idx1], y);
                     goto EXEC_LOOP;
-                case 0x31: // -
+                case 0x31: // RDTSC (80486)
                     if ((cr4 & (1 << 2)) && cpl != 0) {
                         abort(13);
                     }
@@ -2262,7 +2262,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     regs[0] = x;
                     regs[2] = x / 0x100000000;
                     goto EXEC_LOOP;
-                case 0xc0: // -
+                case 0xc0: // XADD (80486)
                     mem8 = phys_mem8[far++];
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
@@ -2279,7 +2279,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         set_lower_byte(reg_idx1, x);
                     }
                     goto EXEC_LOOP;
-                case 0xc1: // -
+                case 0xc1: // XADD (80486)
                     mem8 = phys_mem8[far++];
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
@@ -2296,7 +2296,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         regs[reg_idx1] = x;
                     }
                     goto EXEC_LOOP;
-                case 0xb0: // -
+                case 0xb0: // CMPXCHG (80486)
                     mem8 = phys_mem8[far++];
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
@@ -2319,7 +2319,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         }
                     }
                     goto EXEC_LOOP;
-                case 0xb1: // -
+                case 0xb1: // CMPXCHG (80486)
                     mem8 = phys_mem8[far++];
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
@@ -3319,22 +3319,22 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                         }
                         goto EXEC_LOOP;
-                    case 0x140: // -
-                    case 0x141: // -
-                    case 0x142: // -
-                    case 0x143: // -
-                    case 0x144: // -
-                    case 0x145: // -
-                    case 0x146: // -
-                    case 0x147: // -
-                    case 0x148: // -
-                    case 0x149: // -
-                    case 0x14a: // -
-                    case 0x14b: // -
-                    case 0x14c: // -
-                    case 0x14d: // -
-                    case 0x14e: // -
-                    case 0x14f: // -
+                    case 0x140: // CMOVx (80486)
+                    case 0x141: // CMOVx (80486)
+                    case 0x142: // CMOVx (80486)
+                    case 0x143: // CMOVx (80486)
+                    case 0x144: // CMOVx (80486)
+                    case 0x145: // CMOVx (80486)
+                    case 0x146: // CMOVx (80486)
+                    case 0x147: // CMOVx (80486)
+                    case 0x148: // CMOVx (80486)
+                    case 0x149: // CMOVx (80486)
+                    case 0x14a: // CMOVx (80486)
+                    case 0x14b: // CMOVx (80486)
+                    case 0x14c: // CMOVx (80486)
+                    case 0x14d: // CMOVx (80486)
+                    case 0x14e: // CMOVx (80486)
+                    case 0x14f: // CMOVx (80486)
                         mem8 = phys_mem8[far++];
                         if ((mem8 >> 6) == 3) {
                             x = regs[mem8 & 7];
@@ -3381,7 +3381,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         }
                         set_lower_word(reg_idx1, op_IMUL16(regs[reg_idx1], y));
                         goto EXEC_LOOP;
-                    case 0x1c1: // -
+                    case 0x1c1: // XADD (80486)
                         mem8 = phys_mem8[far++];
                         reg_idx1 = (mem8 >> 3) & 7;
                         if ((mem8 >> 6) == 3) {
@@ -3527,7 +3527,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         }
                         set_lower_word(reg_idx1, x);
                         goto EXEC_LOOP;
-                    case 0x1b1: // -
+                    case 0x1b1: // CMPXCHG (40486)
                         mem8 = phys_mem8[far++];
                         reg_idx1 = (mem8 >> 3) & 7;
                         if ((mem8 >> 6) == 3) {
@@ -3576,7 +3576,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     case 0x19d: // SETNL
                     case 0x19e: // SETLE
                     case 0x19f: // SETNLE
-                    case 0x1b0: // -
+                    case 0x1b0: // CMPXCHG (80486)
                         opcode = 0x0f;
                         far--;
                         break;

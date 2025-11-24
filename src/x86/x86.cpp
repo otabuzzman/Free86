@@ -2175,10 +2175,10 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             case 0xbc: // BSF
             case 0xbd: // BSR
             case 0xaf: // IMUL
-            case 0xc0: // -
-            case 0xc1: // -
-            case 0xb0: // -
-            case 0xb1: // -
+            case 0xc0: // XADD (80486)
+            case 0xc1: // XADD (80486)
+            case 0xb0: // CMPXCHG (80486)
+            case 0xb1: // CMPXCHG (80486)
                 if ((n + 1) > 15) {
                     abort(13);
                 }
