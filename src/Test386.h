@@ -57,8 +57,6 @@ public:
             } catch (Interrupt) {}
         }
     }
-    void print() {}
-	void input() {}
 };
 
 int PlainCPU::ioport_read(int mem8_loc) {

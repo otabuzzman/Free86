@@ -35,26 +35,20 @@ void on_signal(int sigdef)
     std::cerr << std::flush;
     exit(0);
 }
-#ifdef TEST386
-void print_loop(Test386 *pc)
-#else
+#ifndef TEST386
 void print_loop(PC *pc)
-#endif
 {
     while (Running) {
         pc->print();
     }
 }
-#ifdef TEST386
-void input_loop(Test386 *pc)
-#else
 void input_loop(PC *pc)
-#endif
 {
     while (Running) {
         pc->input();
     }
 }
+#endif // TEST386
 #endif // NO_SDL
 int main(int ArgCount, char **Args)
 {
@@ -79,9 +73,11 @@ int main(int ArgCount, char **Args)
 
     std::thread th(render_loop, pc, render, width, height);
 #else
+#ifndef TEST386
     std::thread print(print_loop, pc);
     std::thread input(input_loop, pc);
-#endif
+#endif // TEST386
+#endif // NO_SDL
 
     while (Running) {
         pc->cycle();
@@ -96,11 +92,13 @@ int main(int ArgCount, char **Args)
 #ifndef NO_SDL
             SDL_Delay(1000 / speed);
 #else
+#ifndef TEST386
             std::this_thread::sleep_for(std::chrono::milliseconds(1000 / speed));
-#endif
+#endif // TEST386
+#endif // NO_SDL
     }
 
-#ifndef NO_SDL
+#if !defined(NO_SDL) && !defined(TEST386)
     th.join();
 #endif
     return 0;
