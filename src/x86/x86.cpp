@@ -2820,10 +2820,10 @@ void x86Internal::do_interrupt(int interrupt_id, int is_sw, int error_code, int 
         eip_linear = eip + CS_base;
         n = 4096 - (eip_linear & 0xfff);
         n = std::min(n, 15);
-        str = "[EIP..EIP+" + n + "]:";
+        str = "[EIP..EIP+" + _1_byte(n) + "]:";
         for (int i = 0; i < n; i++) {
             mem8_loc = (eip_linear + i) & -1;
-            str += " " + _2_bytes(ld8_mem8_read());
+            str += " " + _1_byte(ld8_mem8_read());
         }
         printf("%s\n", str.c_str());
     }
