@@ -283,14 +283,14 @@ class x86Internal {
             tlb_pages[tlb_pages_count++] = lat20;
         }
         tlb_read_kernel[lat20] = tlb_hash;
-        if (tlb_set_write) {
+        if (writable) {
             tlb_write_kernel[lat20] = tlb_hash;
         } else {
             tlb_write_kernel[lat20] = -1;
         }
-        if (tlb_set_user) {
+        if (user) {
             tlb_read_user[lat20] = tlb_hash;
-            if (tlb_set_write) {
+            if (writable) {
                 tlb_write_user[lat20] = tlb_hash;
             } else {
                 tlb_write_user[lat20] = -1;

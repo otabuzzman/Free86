@@ -84,7 +84,7 @@ void x86Internal::fetch_opcode() {
     }
 }
 void x86Internal::do_tlb_set_page(int linear_address, int writable, bool user) {
-    int pde_address, pde, pte_address, pte, pxe, s = 0, tlb_set_user = 1, clean, error_code;
+    int pde_address, pde, pte_address, pte, pxe, tlb_set_write = 0, tlb_set_user = 1, clean, error_code;
     if (!(cr0 & (1 << 31))) {
         tlb_set_write = 1;
         tlb_set_user = 0;
