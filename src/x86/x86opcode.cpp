@@ -104,7 +104,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 x = phys_mem8[far++];
                 opcode &= 7;
                 tlb_hash = (opcode & 4) << 1;
-                regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << tlb_hash)) | (((x) & 0xff) << tlb_hash);
+                regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
                 goto EXEC_LOOP;
             case 0xb8: // MOV A
             case 0xb9: // MOV C
@@ -128,7 +128,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     tlb_hash = (reg_idx0 & 4) << 1;
-                    regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << tlb_hash)) | (((x) & 0xff) << tlb_hash);
+                    regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << tlb_hash)) | (((x & 0xff) << tlb_hash);
                 } else {
                     mem8_loc = segment_translation(mem8);
                     tlb_hash = tlb_write[mem8_loc >> 12];
@@ -167,7 +167,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
                 tlb_hash = (reg_idx1 & 4) << 1;
-                regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & ~(0xff << tlb_hash)) | (((x) & 0xff) << tlb_hash);
+                regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
                 goto EXEC_LOOP;
             case 0x8b: // MOV
                 mem8 = phys_mem8[far++];
@@ -1917,7 +1917,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                                  ? __ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
-                    regs[reg_idx1] = (((x) << 24) >> 24);
+                    regs[reg_idx1] = ((x << 24) >> 24);
                     goto EXEC_LOOP;
                 case 0xbf: // MOVSX
                     mem8 = phys_mem8[far++];
@@ -1928,7 +1928,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         mem8_loc = segment_translation(mem8);
                         x = ld16_mem8_read();
                     }
-                    regs[reg_idx1] = (((x) << 16) >> 16);
+                    regs[reg_idx1] = ((x << 16) >> 16);
                     goto EXEC_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     if (!check_protected() || (eflags & 0x00020000)) {
@@ -3368,7 +3368,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             mem8_loc = segment_translation(mem8);
                             x = ld8_mem8_read();
                         }
-                        set_lower_word(reg_idx1, (((x) << 24) >> 24));
+                        set_lower_word(reg_idx1, ((x << 24) >> 24));
                         goto EXEC_LOOP;
                     case 0x1af: // IMUL
                         mem8 = phys_mem8[far++];

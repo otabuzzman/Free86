@@ -964,7 +964,7 @@ int x86Internal::op_SHRD_SHLD16(int operation, int Yb, int Zb, int pc) {
             if (pc > 16) {
                 flg |= Zb << (32 - pc);
             }
-            Yb = osm_dst = (((flg) << 16) >> 16);
+            Yb = osm_dst = ((flg << 16) >> 16);
             osm = 19;
         }
     }
@@ -1222,16 +1222,16 @@ int x86Internal::op_MUL8(int a, int opcode) {
     opcode &= 0xff;
     flg = (regs[0] & 0xff) * (opcode & 0xff);
     osm_src = flg >> 8;
-    osm_dst = (((flg) << 24) >> 24);
+    osm_dst = ((flg << 24) >> 24);
     osm = 21;
     return flg;
 }
 int x86Internal::op_IMUL8(int a, int opcode) {
     int flg;
-    a = (((a) << 24) >> 24);
-    opcode = (((opcode) << 24) >> 24);
+    a = ((a << 24) >> 24);
+    opcode = ((opcode << 24) >> 24);
     flg = a * opcode;
-    osm_dst = (((flg) << 24) >> 24);
+    osm_dst = ((flg << 24) >> 24);
     osm_src = flg != osm_dst;
     osm = 21;
     return flg;
@@ -1240,7 +1240,7 @@ int x86Internal::op_MUL16(int a, int opcode) {
     int flg;
     flg = (a & 0xffff) * (opcode & 0xffff);
     osm_src = flg >> 16;
-    osm_dst = (((flg) << 16) >> 16);
+    osm_dst = ((flg << 16) >> 16);
     osm = 22;
     return flg;
 }
@@ -1249,7 +1249,7 @@ int x86Internal::op_IMUL16(int a, int opcode) {
     a = (a << 16) >> 16;
     opcode = (opcode << 16) >> 16;
     flg = a * opcode;
-    osm_dst = (((flg) << 16) >> 16);
+    osm_dst = ((flg << 16) >> 16);
     osm_src = flg != osm_dst;
     osm = 22;
     return flg;
@@ -3702,7 +3702,7 @@ void x86Internal::op_AAM(int base) {
     xf = (wf / base) & -1;
     wf = (wf % base);
     regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
-    osm_dst = (((wf) << 24) >> 24);
+    osm_dst = ((wf << 24) >> 24);
     osm = 12;
 }
 void x86Internal::op_AAD(int base) {
@@ -3711,7 +3711,7 @@ void x86Internal::op_AAD(int base) {
     xf = (regs[0] >> 8) & 0xff;
     wf = (xf * base + wf) & 0xff;
     regs[0] = (regs[0] & ~0xffff) | wf;
-    osm_dst = (((wf) << 24) >> 24);
+    osm_dst = ((wf << 24) >> 24);
     osm = 12;
 }
 void x86Internal::op_AAA() {
