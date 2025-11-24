@@ -2460,21 +2460,21 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
 EXEC_LOOP:;
     return n;
 }
-void x86Internal::set_CR0(int Qd) {
+void x86Internal::set_CR0(int x) {
     // if changing flags 31, 16, or 0, must flush tlb
-    if ((Qd & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
+    if ((x & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
         tlb_flush_all();
     }
-    cr0 = Qd | (1 << 4); // keep bit 4 set to 1 (80387 present)
+    cr0 = x | (1 << 4); // keep bit 4 set to 1 (80387 present)
 }
-void x86Internal::set_CR3(int new_pdb) {
-    cr3 = new_pdb;
+void x86Internal::set_CR3(int x) {
+    cr3 = x;
     if (cr0 & (1 << 31)) { // if in paging mode must reset tables
         tlb_flush_all();
     }
 }
-void x86Internal::set_CR4(int newval) {
-    cr4 = newval;
+void x86Internal::set_CR4(int x) {
+    cr4 = x;
 }
 bool x86Internal::check_real__v86() {
     return !check_protected();

@@ -353,9 +353,9 @@ class x86Internal {
 
     int instruction_length(int opcode, int eip_linear);
 
-    void set_CR0(int Qd);
-    void set_CR3(int new_pdb);
-    void set_CR4(int newval);
+    void set_CR0(int x);
+    void set_CR3(int x);
+    void set_CR4(int x);
     bool check_real__v86();
     bool check_protected();
 
