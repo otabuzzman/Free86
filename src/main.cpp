@@ -88,11 +88,12 @@ int main(int ArgCount, char **Args)
                 Running = 0;
         }
 #endif
-        if (speed != 100)
 #ifndef NO_SDL
+        if (speed != 100)
             SDL_Delay(1000 / speed);
 #else
 #ifndef TEST386
+        if (speed != 100)
             std::this_thread::sleep_for(std::chrono::milliseconds(1000 / speed));
 #endif // TEST386
 #endif // NO_SDL
