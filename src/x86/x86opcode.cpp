@@ -779,7 +779,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_read();
                     }
-                    op_DIV(x);
+                    op_DIV8(x);
                     break;
                 case 7:
                     if ((mem8 >> 6) == 3) {
@@ -789,7 +789,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         mem8_loc = segment_translation(mem8);
                         x = ld8_mem8_read();
                     }
-                    op_IDIV(x);
+                    op_IDIV8(x);
                     break;
                 default:
                     abort(6);
