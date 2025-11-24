@@ -12,9 +12,9 @@
 
 #include "PC.h"
 
-PC::PC(x86Internal cpu, int mem_size)
+PC::PC(int mem_size)
 {
-    this->cpu = cpu;
+    this->cpu = new WiredCPU(mem_size);
 #ifndef NO_SDL
     TTF_Init();
     font = TTF_OpenFont("bin/cp437.ttf", 14);
@@ -27,6 +27,7 @@ PC::PC(x86Internal cpu, int mem_size)
 
 PC::~PC()
 {
+    delete cpu;
 }
 
 int PC::load(std::string path, int offset)

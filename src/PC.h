@@ -29,7 +29,7 @@ class PC {
 #endif
 
   private:
-    x86Internal *cpu  = nullptr;
+    WiredCPU *cpu  = nullptr;
 #ifndef NO_SDL
     TTF_Font    *font = nullptr;
 #endif

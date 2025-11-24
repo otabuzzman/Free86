@@ -3,10 +3,31 @@
 
 #include "PC.h"
 
-class Test386 : public PC {
+class Test386 {
+    PlainCPU *cpu = nullptr;
 public:
-    Test386(x86Internal cpu, int mem_size) : PC(x86Internal cpu, int mem_size) {}
-    ~Test386() {}
+    Test386(x86Internal cpu, int mem_size {
+        cpu = new PlainCPU(mem_size);
+    }
+    ~Test386() {
+        delete cpu;
+    }
+    int load(std::string path, int offset) {
+        FILE *f = fopen(path.c_str(), "rb");
+        fseek(f, 0, SEEK_END);
+        const int size = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        auto buffer = new uint8_t[size];
+        auto __     = fread(buffer, size, 1, f);
+    
+        printf("load %d bytes at 0x%x\n", size, offset);
+        for (int i = 0; i < size; i++) {
+            cpu->st8_phys(offset + i, buffer[i]);
+        }
+        fclose(f);
+    
+        return size;
+    }
     void setup() {
         load("../test386.asm/test386.bin", 0x000f0000);
 

@@ -53,11 +53,9 @@ int main(int ArgCount, char **Args)
     static const int width = 840, height = 350;
     static const int mem_size = 0x01000000; // 16 MB
 #ifdef TEST386
-    x86Internal cpu = new WiredCPU(mem_size);
-    Test386 *pc = new Test386(cpu, mem_size);
+    Test386 *pc = new Test386(mem_size);
 #else
-    x86Internal cpu = new PlainCPU(mem_size);
-    PC *pc = new PC(cpu, mem_size);
+    PC *pc = new PC(mem_size);
 #endif
     signal(SIGINT, on_signal);
 
@@ -97,6 +95,5 @@ int main(int ArgCount, char **Args)
 #ifndef NO_SDL
     th.join();
 #endif
-    delete cpu;
     return 0;
 }
