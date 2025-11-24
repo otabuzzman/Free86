@@ -16,7 +16,7 @@ class PlainCPU : public x86Internal {
 class Test386 {
     PlainCPU *cpu = nullptr;
 public:
-    Test386(int mem_size {
+    Test386(int mem_size) {
         cpu = new PlainCPU(mem_size);
     }
     ~Test386() {

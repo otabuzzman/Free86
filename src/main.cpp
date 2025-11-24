@@ -35,13 +35,21 @@ void on_signal(int sigdef)
     std::cerr << std::flush;
     exit(0);
 }
+#ifdef TEST386
+void print_loop(Test386 *pc)
+#else
 void print_loop(PC *pc)
+#endif
 {
     while (Running) {
         pc->print();
     }
 }
+#ifdef TEST386
+void input_loop(Test386 *pc)
+#else
 void input_loop(PC *pc)
+#endif
 {
     while (Running) {
         pc->input();
