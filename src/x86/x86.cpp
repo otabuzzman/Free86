@@ -83,8 +83,8 @@ void x86Internal::fetch_opcode() {
         opcode = phys_mem8[far++];
     }
 }
-void x86Internal::do_tlb_set_page(int linear_address, int write, bool user) {
-    int pde_address, pde, pte_address, pte, pxe, tlb_set_write = 0, tlb_set_user = 1, clean, error_code;
+void x86Internal::do_tlb_set_page(int linear_address, int writable, bool user) {
+    int pde_address, pde, pte_address, pte, pxe, s = 0, tlb_set_user = 1, clean, error_code;
     if (!(cr0 & (1 << 31))) {
         tlb_set_write = 1;
         tlb_set_user = 0;
@@ -104,14 +104,14 @@ void x86Internal::do_tlb_set_page(int linear_address, int write, bool user) {
                 if (user && !(pxe & 0x00000004)) { // user request and page supervisor
                     error_code = 0x01;
                 // user request or RF set and WR request and RO page
-                } else if ((user || (cr0 & (1 << 16))) && write && !(pxe & 0x00000002)) {
+                } else if ((user || (cr0 & (1 << 16))) && writable && !(pxe & 0x00000002)) {
                     error_code = 0x01;
                 } else {
                     if (!(pde & 0x00000020)) { // page not accessed
                         pde |= 0x00000020;
                         st32_phys(pde_address, pde);
                     }
-                    clean = (write && !(pte & 0x00000040)); // WR request and page not dirty
+                    clean = (writable && !(pte & 0x00000040)); // WR request and page not dirty
                     if (!(pte & 0x00000020) || clean) {  // page not accessed or previous
                         pte |= 0x00000020;     // set page accessed
                         if (clean) {
@@ -1319,8 +1319,8 @@ int x86Internal::op_IMUL32(int a, int opcode) {
     osm = 23;
     return r;
 }
-void x86Internal::set_current_permission_level(int value) {
-    cpl = value;
+void x86Internal::set_current_permission_level(int x) {
+    cpl = x;
     if (cpl == 3) {
         tlb_read = tlb_read_user;
         tlb_write = tlb_write_user;
@@ -1329,16 +1329,16 @@ void x86Internal::set_current_permission_level(int value) {
         tlb_write = tlb_write_kernel;
     }
 }
-int x86Internal::do_tlb_lookup(int mem8_loc, int ud) {
+int x86Internal::do_tlb_lookup(int mem8_loc, int writable) {
     int tlb_lookup;
-    if (ud) {
+    if (writable) {
         tlb_lookup = tlb_write[mem8_loc >> 12];
     } else {
         tlb_lookup = tlb_read[mem8_loc >> 12];
     }
     if (tlb_lookup == -1) {
-        do_tlb_set_page(mem8_loc, ud, cpl == 3);
-        if (ud) {
+        do_tlb_set_page(mem8_loc, writable, cpl == 3);
+        if (writable) {
             tlb_lookup = tlb_write[mem8_loc >> 12];
         } else {
             tlb_lookup = tlb_read[mem8_loc >> 12];
@@ -2562,28 +2562,28 @@ void x86Internal::load_tss_descriptor(int *descriptor_table_entry, int dpl) {
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int error_code, int oe, int pe) {
+void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
     int qe, descriptor_type, selector, re;
-    int te, ue, is_32_bit;
+    int st_error_code, ue, is_32_bit;
     int dte_lower_dword, dte_upper_dword, ve, ke, le, we, xe;
     int ye, SS_mask;
     int e[2];
-    te = 0;
-    if (!ne && !pe) {
-        switch (interrupt_id) {
-        case 8:
-        case 10:
-        case 11:
-        case 12:
-        case 13:
-        case 14:
-        case 17:
-            te = 1;
+    st_error_code = 0;
+    if (!is_sw && !is_hw) {
+        switch (interrupt_id) { // with error codes, Intel IA-32 SDM (latest), Vol. 3A, 7.3
+        case 8:  // double exception
+        case 10: // invalid task state segment
+        case 11: // segment not present
+        case 12: // stack fault
+        case 13: // general protection
+        case 14: // page fault
+        case 17: // alignment check (80486)
+            st_error_code = 1;
             break;
         }
     }
-    if (ne) {
-        ye = oe;
+    if (is_sw) {
+        ye = return_address;
     } else {
         ye = eip;
     }
@@ -2609,7 +2609,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         break;
     }
     dpl = (dte_upper_dword >> 13) & 3;
-    if (ne && dpl < cpl) {
+    if (is_sw && dpl < cpl) {
         abort(13, interrupt_id * 8 + 2);
     }
     if (!(dte_upper_dword & (1 << 15))) {
@@ -2714,7 +2714,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         le = (le - 4) & -1;
         mem8_loc = (qe + (le & SS_mask)) & -1;
         st32_mem8_kernel_write(ye);
-        if (te) {
+        if (st_error_code) {
             le = (le - 4) & -1;
             mem8_loc = (qe + (le & SS_mask)) & -1;
             st32_mem8_kernel_write(error_code);
@@ -2751,7 +2751,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
         le = (le - 2) & -1;
         mem8_loc = (qe + (le & SS_mask)) & -1;
         st16_mem8_kernel_write(ye);
-        if (te) {
+        if (st_error_code) {
             le = (le - 2) & -1;
             mem8_loc = (qe + (le & SS_mask)) & -1;
             st16_mem8_kernel_write(error_code);
@@ -2777,7 +2777,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int ne, int erro
     }
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
 }
-void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int ne, int error_code, int oe, int pe) {
+void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
     int selector, ve, le, ye;
     if (interrupt_id * 4 + 3 > idt.limit) {
         abort(13, interrupt_id * 8 + 2);
@@ -2787,8 +2787,8 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int ne, int erro
     mem8_loc = mem8_loc + 2;
     selector = ld16_mem8_kernel_read();
     le = regs[4];
-    if (ne) {
-        ye = oe;
+    if (is_sw) {
+        ye = return_address;
     } else {
         ye = eip;
     }
@@ -2807,7 +2807,7 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int ne, int erro
     segs[1].base = (selector << 4);
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void x86Internal::do_interrupt(int interrupt_id, int ne, int error_code, int oe, int pe) {
+void x86Internal::do_interrupt(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
     if (interrupt_id == 0x06) {
         int eip_tmp = eip;
         int eip_linear;
@@ -2835,9 +2835,9 @@ void x86Internal::do_interrupt(int interrupt_id, int ne, int error_code, int oe,
         }
     }
     if (check_protected()) {
-        do_interrupt_protected_mode(interrupt_id, ne, error_code, oe, pe);
+        do_interrupt_protected_mode(interrupt_id, is_sw, error_code, return_address, is_hw);
     } else {
-        do_interrupt_real__v86_mode(interrupt_id, ne, error_code, oe, pe);
+        do_interrupt_real__v86_mode(interrupt_id, is_sw, error_code, return_address, is_hw);
     }
 }
 void x86Internal::op_LDTR(int selector) {
@@ -2968,13 +2968,13 @@ void x86Internal::set_segment_register(int reg_idx, int selector) {
         set_segment_register_real__v86(reg_idx, selector);
     }
 }
-void x86Internal::do_JMPF_virtual_mode(int selector, int Le) {
-    eip = Le, far = far_start = 0;
+void x86Internal::do_JMPF_virtual_mode(int selector, int address) {
+    eip = address, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     update_SSB();
 }
-void x86Internal::do_JMPF(int selector, int Le) {
+void x86Internal::do_JMPF(int selector, int address) {
     int dte_lower_dword, dte_upper_dword, dpl, rpl;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
@@ -3009,20 +3009,20 @@ void x86Internal::do_JMPF(int selector, int Le) {
             abort(11, selector & 0xfffc);
         }
         limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
-        if (Le > limit) {
+        if (address > limit) {
             abort(13, selector & 0xfffc);
         }
         update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit,  dte_upper_dword);
-        eip = Le, far = far_start = 0;
+        eip = address, far = far_start = 0;
     } else {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
-void x86Internal::op_JMPF(int selector, int Le) {
+void x86Internal::op_JMPF(int selector, int address) {
     if (!check_protected() || (eflags & 0x00020000)) {
-        do_JMPF_virtual_mode(selector, Le);
+        do_JMPF_virtual_mode(selector, address);
     } else {
-        do_JMPF(selector, Le);
+        do_JMPF(selector, address);
     }
 }
 void x86Internal::clear_segment_register(int segment, int cpl) {
@@ -3038,7 +3038,7 @@ void x86Internal::clear_segment_register(int segment, int cpl) {
         }
     }
 }
-void x86Internal::op_CALLF_real__v86_mode(bool is_32_bit, int selector, int Le, int oe) {
+void x86Internal::op_CALLF_real__v86_mode(bool is_32_bit, int selector, int address, int return_address) {
     int le;
     le = regs[4];
     if (is_32_bit) {
@@ -3047,22 +3047,22 @@ void x86Internal::op_CALLF_real__v86_mode(bool is_32_bit, int selector, int Le, 
         st32_mem8_write(segs[1].selector);
         le = le - 4;
         mem8_loc = (le & SS_mask) + SS_base;
-        st32_mem8_write(oe);
+        st32_mem8_write(return_address);
     } else {
         le = le - 2;
         mem8_loc = (le & SS_mask) + SS_base;
         st16_mem8_write(segs[1].selector);
         le = le - 2;
         mem8_loc = (le & SS_mask) + SS_base;
-        st16_mem8_write(oe);
+        st16_mem8_write(return_address);
     }
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
-    eip = Le, far = far_start = 0;
+    eip = address, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     update_SSB();
 }
-void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe) {
+void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int address, int return_address) {
     int ue, i;
     int dte_lower_dword, dte_upper_dword, dpl, rpl, ve, Se;
     int ke, we, xe, esp, descriptor_type, re, SS_mask;
@@ -3109,22 +3109,22 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             st32_mem8_kernel_write(segs[1].selector);
             esp = (esp - 4) & -1;
             mem8_loc = (qe + (esp & SS_mask)) & -1;
-            st32_mem8_kernel_write(oe);
+            st32_mem8_kernel_write(return_address);
         } else {
             esp = (esp - 2) & -1;
             mem8_loc = (qe + (esp & SS_mask)) & -1;
             st16_mem8_kernel_write(segs[1].selector);
             esp = (esp - 2) & -1;
             mem8_loc = (qe + (esp & SS_mask)) & -1;
-            st16_mem8_kernel_write(oe);
+            st16_mem8_kernel_write(return_address);
         }
         limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
-        if (Le > limit) {
+        if (address > limit) {
             abort(13, selector & 0xfffc);
         }
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit, dte_upper_dword);
-        eip = Le, far = far_start = 0;
+        eip = address, far = far_start = 0;
     } else {
         descriptor_type = (dte_upper_dword >> 8) & 0x1f;
         dpl = (dte_upper_dword >> 13) & 3;
@@ -3241,14 +3241,14 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
             st32_mem8_kernel_write(segs[1].selector);
             esp = (esp - 4) & -1;
             mem8_loc = (qe + (esp & SS_mask)) & -1;
-            st32_mem8_kernel_write(oe);
+            st32_mem8_kernel_write(return_address);
         } else {
             esp = (esp - 2) & -1;
             mem8_loc = (qe + (esp & SS_mask)) & -1;
             st16_mem8_kernel_write(segs[1].selector);
             esp = (esp - 2) & -1;
             mem8_loc = (qe + (esp & SS_mask)) & -1;
-            st16_mem8_kernel_write(oe);
+            st16_mem8_kernel_write(return_address);
         }
         if (ue) {
             ke = (ke & ~3) | dpl;
@@ -3261,14 +3261,14 @@ void x86Internal::op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, 
         eip = ve, far = far_start = 0;
     }
 }
-void x86Internal::op_CALLF(bool is_32_bit, int selector, int Le, int oe) {
+void x86Internal::op_CALLF(bool is_32_bit, int selector, int address, int return_address) {
     if (!check_protected() || (eflags & 0x00020000)) {
-        op_CALLF_real__v86_mode(is_32_bit, selector, Le, oe);
+        op_CALLF_real__v86_mode(is_32_bit, selector, address, return_address);
     } else {
-        op_CALLF_protected_mode(is_32_bit, selector, Le, oe);
+        op_CALLF_protected_mode(is_32_bit, selector, address, return_address);
     }
 }
-void x86Internal::do_return_real__v86_mode(bool is_32_bit, bool is_iret, int imm16) {
+void x86Internal::do_return_real__v86_mode(bool is_32_bit, bool is_iret, int return_offset) {
     int esp, selector, stack_eip, stack_eflags, SS_mask, qe, ef;
     SS_mask = 0xffff;
     esp = regs[4];
@@ -3299,7 +3299,7 @@ void x86Internal::do_return_real__v86_mode(bool is_32_bit, bool is_iret, int imm
             esp = (esp + 2) & -1;
         }
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((esp + imm16) & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | ((esp + return_offset) & SS_mask);
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     eip = stack_eip, far = far_start = 0;
@@ -3316,7 +3316,7 @@ void x86Internal::do_return_real__v86_mode(bool is_32_bit, bool is_iret, int imm
     }
     update_SSB();
 }
-void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16) {
+void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int return_offset) {
     int selector, stack_eflags, gf;
     int hf, jf, kf, lf;
     int dte_lower_dword, dte_upper_dword, we, xe;
@@ -3419,7 +3419,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
     if (!(dte_upper_dword & (1 << 15))) {
         abort(11, selector & 0xfffc);
     }
-    esp = (esp + imm16) & -1;
+    esp = (esp + return_offset) & -1;
     if (rpl == _cpl) {
         update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
@@ -3471,7 +3471,7 @@ void x86Internal::do_return_protected_mode(bool is_32_bit, bool is_iret, int imm
         clear_segment_register(3, rpl);
         clear_segment_register(4, rpl);
         clear_segment_register(5, rpl);
-        esp = (esp + imm16) & -1;
+        esp = (esp + return_offset) & -1;
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = stack_eip, far = far_start = 0;
@@ -3508,11 +3508,11 @@ void x86Internal::op_IRET(bool is_32_bit) {
         }
     }
 }
-void x86Internal::op_RETF(bool is_32_bit, int imm16) {
+void x86Internal::op_RETF(bool is_32_bit, int return_offset) {
     if (!check_protected() || (eflags & 0x00020000)) {
-        do_return_real__v86_mode(is_32_bit, 0, imm16);
+        do_return_real__v86_mode(is_32_bit, 0, return_offset);
     } else {
-        do_return_protected_mode(is_32_bit, 0, imm16);
+        do_return_protected_mode(is_32_bit, 0, return_offset);
     }
 }
 int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {

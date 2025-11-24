@@ -254,6 +254,12 @@ class x86Internal {
         cr0 = (1 << 4); // 80387 present
     }
 
+    uint8_t ld8_phys(int mem8_loc) {
+        return phys_mem8[mem8_loc];
+    }
+    void st8_phys(int mem8_loc, uint8_t x) {
+        phys_mem8[mem8_loc] = x;
+    }
     void st8_phys(int mem8_loc, std::string str) {
         auto s = str.c_str();
         for (int i = 0; i < str.length(); i++) {
@@ -261,19 +267,13 @@ class x86Internal {
         }
         st8_phys(mem8_loc, 0);
     }
-    uint8_t ld8_phys(int mem8_loc) {
-        return phys_mem8[mem8_loc];
-    }
-    void st8_phys(int mem8_loc, uint8_t x) {
-        phys_mem8[mem8_loc] = x;
-    }
     int ld32_phys(int mem8_loc) {
         return phys_mem32[mem8_loc >> 2];
     }
     void st32_phys(int mem8_loc, int x) {
         phys_mem32[mem8_loc >> 2] = x;
     }
-    void tlb_set_page(uint32_t linear_address, int pte, int tlb_set_write, int tlb_set_user) {
+    void tlb_set_page(uint32_t linear_address, int pte, int writable, int user) {
         int tlb_hash = linear_address ^ pte; // poor man's XOR hash
         uint32_t lat20 = linear_address >> 12;
         if (tlb_read_kernel[lat20] == -1) {
@@ -374,8 +374,8 @@ class x86Internal {
     void st16_port(int port_num, int x);
     void st32_port(int port_num, int x);
 
-    void do_tlb_set_page(int Gd, int Hd, bool ja);
-    int do_tlb_lookup(int mem8_loc, int ud);
+    void do_tlb_set_page(int linear_address, int writable, bool user);
+    int do_tlb_lookup(int mem8_loc, int writable);
 
     int __ld8_mem8_kernel_read();
     int ld8_mem8_kernel_read();
@@ -467,11 +467,11 @@ class x86Internal {
     int compile_flags(bool shift = false);
 
     int get_EFLAGS();
-    void set_EFLAGS(int flag_bits, int ld);
+    void set_EFLAGS(int bits, int mask);
 
     void abort(int interrupt_id, int error_code = 0);
 
-    void set_current_permission_level(int value);
+    void set_current_permission_level(int x);
 
     void push_word(int x);
     void push_dword(int x);
@@ -488,23 +488,23 @@ class x86Internal {
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     void compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
 
-    void do_interrupt_protected_mode(int interrupt_id, int ne, int error_code, int oe, int pe);
-    void do_interrupt_real__v86_mode(int interrupt_id, int ne, int error_code, int oe, int pe);
-    void do_interrupt(int interrupt_id, int ne, int error_code, int oe, int pe);
+    void do_interrupt_protected_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
+    void do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
+    void do_interrupt(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
 
     void op_LDTR(int selector);
     void op_LTR(int selector);
-    void do_JMPF_virtual_mode(int selector, int Le);
-    void do_JMPF(int selector, int Le);
-    void op_JMPF(int selector, int Le);
-    void op_CALLF_real__v86_mode(bool is_32_bit, int selector, int Le, int oe);
-    void op_CALLF_protected_mode(bool is_32_bit, int selector, int Le, int oe);
-    void op_CALLF(bool is_32_bit, int selector, int Le, int oe);
-    void do_return_real__v86_mode(bool is_32_bit, bool is_iret, int imm16);
-    void do_return_protected_mode(bool is_32_bit, bool is_iret, int imm16);
+    void do_JMPF_virtual_mode(int selector, int address);
+    void do_JMPF(int selector, int address);
+    void op_JMPF(int selector, int address);
+    void op_CALLF_real__v86_mode(bool is_32_bit, int selector, int address, int return_address);
+    void op_CALLF_protected_mode(bool is_32_bit, int selector, int address, int return_address);
+    void op_CALLF(bool is_32_bit, int selector, int address, int return_address);
+    void do_return_real__v86_mode(bool is_32_bit, bool is_iret, int return_offset);
+    void do_return_protected_mode(bool is_32_bit, bool is_iret, int return_offset);
     void clear_segment_register(int reg_idx, int cpl);
     void op_IRET(bool is_32_bit);
-    void op_RETF(bool is_32_bit, int imm16);
+    void op_RETF(bool is_32_bit, int return_offset);
     void op_LAR_LSL(bool is_32_bit, bool is_lsl);
     int ld_descriptor_field(int selector, bool is_lsl);
     void op_VERR_VERW(int selector, bool is_verw);
