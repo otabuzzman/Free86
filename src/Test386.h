@@ -1,9 +1,17 @@
 #ifndef _H_TEST386
 #define _H_TEST386
 
-#include "x86.h"
+#include "x86/x86.h"
 
-class PlainCPU;
+class PlainCPU : public x86Internal {
+  public:
+    PlainCPU(int mem_size) : x86Internal(mem_size) {}
+    ~PlainCPU() {}
+    int get_hard_irq() { return 0; }
+    int get_hard_intno() { return 0; }
+    int ioport_read(int mem8_loc);
+    void ioport_write(int mem8_loc, int data);
+};
 
 class Test386 {
     PlainCPU *cpu = nullptr;
@@ -49,17 +57,10 @@ public:
             } catch (Interrupt) {}
         }
     }
+    void print() {}
+	void input() {}
 };
 
-class PlainCPU : public x86Internal {
-  public:
-    PlainCPU(int mem_size) : x86Internal(mem_size) {}
-    ~PlainCPU() {}
-    int get_hard_irq() { return 0; }
-    int get_hard_intno() { return 0; }
-    int ioport_read(int mem8_loc);
-    void ioport_write(int mem8_loc, int data);
-};
 int PlainCPU::ioport_read(int mem8_loc) {
     int port = mem8_loc & (1024 - 1);
     printf("*** ioport_read 0x%04x\n", port);
