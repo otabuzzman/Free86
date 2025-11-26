@@ -456,13 +456,13 @@ class x86Internal {
     int op_MUL32(int a, int opcode);
     int op_IMUL32(int a, int opcode);
 
-    bool is_CF();
-    bool is_OF();
-    bool is_BE();
-    int is_PF();
-    int is_LT();
-    int is_LE();
-    int is_AF();
+    bool is_CF(); // carry (bit 0)
+    int is_PF(); // parity (bit 2)
+    int is_AF(); // adjust (bit 4)
+    bool is_OF(); // overflow (bit 11)
+    bool is_BE(); // below or equal, signed comparison
+    int is_LE(); // less or equal, unsigned comparison
+    int is_LT(); // less than
     int can_jump(int condition);
     int compile_flags(bool shift = false);
 
