@@ -26,7 +26,7 @@ x86Internal::x86Internal(int mem_size) {
         tlb_clear(i);
     }
     reset(); // chip
-    set_current_permission_level(0); // PM (1986), 10.3
+    set_current_privilege_level(0); // PM (1986), 10.3
 }
 x86Internal::~x86Internal() {
     free(phys_mem8);
@@ -442,15 +442,15 @@ int x86Internal::convert_offset_to_linear(bool writable) {
     }
     return mem8_loc;
 }
-void x86Internal::set_lower_byte(int reg_idx, int x) {
-    if (reg_idx & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
-        regs[reg_idx & 3] = (regs[reg_idx & 3] & -65281) | ((x & 0xff) << 8);
+void x86Internal::set_lower_byte(int reg, int x) {
+    if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
+        regs[reg & 3] = (regs[reg & 3] & -65281) | ((x & 0xff) << 8);
     } else { // set AL, CL, DL, BL
-        regs[reg_idx & 3] = (regs[reg_idx & 3] & -256) | (x & 0xff);
+        regs[reg & 3] = (regs[reg & 3] & -256) | (x & 0xff);
     }
 }
-void x86Internal::set_lower_word(int reg_idx, int x) {
-    regs[reg_idx] = (regs[reg_idx] & -65536) | (x & 0xffff);
+void x86Internal::set_lower_word(int reg, int x) {
+    regs[reg] = (regs[reg] & -65536) | (x & 0xffff);
 }
 int x86Internal::do_arithmetic32(int operation, int Yb, int Zb) {
     int ac;
@@ -1319,7 +1319,7 @@ int x86Internal::op_IMUL32(int a, int opcode) {
     osm = 23;
     return r;
 }
-void x86Internal::set_current_permission_level(int x) {
+void x86Internal::set_current_privilege_level(int x) {
     cpl = x;
     if (cpl == 3) {
         tlb_read = tlb_read_user;
@@ -2523,20 +2523,20 @@ void x86Internal::compile_segment_descriptor(SegmentDescriptor *sd, int dte_lowe
     sd->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
     sd->flags = dte_upper_dword;
 }
-void x86Internal::update_segment_register(int reg_idx, int selector, uint32_t base, uint32_t limit, int flags) {
-    segs[reg_idx] = {.selector = selector, .base = base, .limit = limit, .flags = flags};
+void x86Internal::update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
+    segs[sreg] = {.selector = selector, .base = base, .limit = limit, .flags = flags};
     update_SSB();
 }
-void x86Internal::set_segment_register_real__v86(int reg_idx, int selector) {
+void x86Internal::set_segment_register_real__v86(int sreg, int selector) {
     if (eflags & 0x00020000) { // v86 mode
-        update_segment_register(reg_idx, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
+        update_segment_register(sreg, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
     } else { // real mode
-        segs[reg_idx].selector = selector;
-        segs[reg_idx].base = selector << 4;
-        segs[reg_idx].limit = 0xffff;
+        segs[sreg].selector = selector;
+        segs[sreg].base = selector << 4;
+        segs[sreg].limit = 0xffff;
     }
 }
-void x86Internal::load_tss_descriptor(int *descriptor_table_entry, int dpl) {
+void x86Internal::load_tss_descriptor(int *descriptor_table_entry, int privilege_level) {
     int tr_type, Rb, is_operand_size32, dte_lower_dword, dte_upper_dword;
     if (!(tr.flags & (1 << 15))) {
         abort(11, tr.selector & 0xfffc);
@@ -2546,7 +2546,7 @@ void x86Internal::load_tss_descriptor(int *descriptor_table_entry, int dpl) {
         abort(13, tr.selector & 0xfffc);
     }
     is_operand_size32 = tr_type >> 3;
-    Rb = (dpl * 4 + 2) << is_operand_size32;
+    Rb = (privilege_level * 4 + 2) << is_operand_size32;
     if (Rb + (4 << is_operand_size32) - 1 > tr.limit) {
         abort(10, tr.selector & 0xfffc);
     }
@@ -2770,7 +2770,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int e
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
     selector = (selector & ~3) | dpl;
     update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-    set_current_permission_level(dpl);
+    set_current_privilege_level(dpl);
     eip = ve, far = far_start = 0;
     if ((descriptor_type & 1) == 0) {
         eflags &= ~0x00000200;
@@ -2895,14 +2895,14 @@ void x86Internal::op_LTR(int selector) {
     }
     tr.selector = selector;
 }
-void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
+void x86Internal::set_segment_register_protected(int sreg, int selector) {
     SegmentDescriptor xdt;
     int dte_lower_dword, dte_upper_dword, dpl, rpl, selector_index;
     if ((selector & 0xfffc) == 0) { // null selector
-        if (reg_idx == 2) {
+        if (sreg == 2) {
             abort(13, 0);
         }
-        update_segment_register(reg_idx, selector, 0, 0, 0);
+        update_segment_register(sreg, selector, 0, 0, 0);
     } else {
         if (selector & 0x4) {
             xdt = ldt;
@@ -2922,7 +2922,7 @@ void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
         }
         rpl = selector & 3;
         dpl = (dte_upper_dword >> 13) & 3;
-        if (reg_idx == 2) {
+        if (sreg == 2) {
             if ((dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 9))) {
                 abort(13, selector & 0xfffc);
             }
@@ -2940,7 +2940,7 @@ void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
             }
         }
         if (!(dte_upper_dword & (1 << 15))) {
-            if (reg_idx == 2) {
+            if (sreg == 2) {
                 abort(12, selector & 0xfffc);
             } else {
                 abort(11, selector & 0xfffc);
@@ -2950,15 +2950,15 @@ void x86Internal::set_segment_register_protected(int reg_idx, int selector) {
             dte_upper_dword |= (1 << 8);
             st32_mem8_kernel_write(dte_upper_dword);
         }
-        update_segment_register(reg_idx, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        update_segment_register(sreg, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     }
 }
-void x86Internal::set_segment_register(int reg_idx, int selector) {
+void x86Internal::set_segment_register(int sreg, int selector) {
     selector &= 0xffff;
     if (check_protected()) {
-        set_segment_register_protected(reg_idx, selector);
+        set_segment_register_protected(sreg, selector);
     } else { // real or v86 mode
-        set_segment_register_real__v86(reg_idx, selector);
+        set_segment_register_real__v86(sreg, selector);
     }
 }
 void x86Internal::do_JMPF_virtual_mode(int selector, int address) {
@@ -3018,16 +3018,16 @@ void x86Internal::op_JMPF(int selector, int address) {
         do_JMPF(selector, address);
     }
 }
-void x86Internal::clear_segment_register(int segment, int cpl) {
+void x86Internal::clear_segment_register(int sreg, int privilege_level) {
     int dpl, dte_upper_dword;
-    if ((segment == 4 || segment == 5) && (segs[segment].selector & 0xfffc) == 0) {
+    if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
     }
-    dte_upper_dword = segs[segment].flags;
+    dte_upper_dword = segs[sreg].flags;
     dpl = (dte_upper_dword >> 13) & 3;
     if (!(dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 10))) {
-        if (dpl < cpl) {
-            update_segment_register(segment, 0, 0, 0, 0);
+        if (dpl < privilege_level) {
+            update_segment_register(sreg, 0, 0, 0, 0);
         }
     }
 }
@@ -3249,7 +3249,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
         }
         selector = (selector & ~3) | dpl;
         update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-        set_current_permission_level(dpl);
+        set_current_privilege_level(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         eip = ve, far = far_start = 0;
     }
@@ -3359,7 +3359,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
                                         0x00100000 | 0x00200000);
                 // clang-format on
                 set_segment_register_real__v86(1, selector & 0xffff);
-                set_current_permission_level(3);
+                set_current_privilege_level(3);
                 set_segment_register_real__v86(0, hf & 0xffff);
                 set_segment_register_real__v86(2, gf & 0xffff);
                 set_segment_register_real__v86(3, jf & 0xffff);
@@ -3457,7 +3457,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
             update_segment_register(2, gf, compile_dte_base(we, xe), compile_dte_limit(we, xe), xe);
         }
         update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-        set_current_permission_level(rpl);
+        set_current_privilege_level(rpl);
         esp = wd;
         SS_mask = compile_sizemask(xe);
         clear_segment_register(0, rpl);

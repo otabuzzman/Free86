@@ -424,14 +424,14 @@ class x86Internal {
 
     int segment_translation(int mem8);
     int convert_offset_to_linear(bool writable);
-    void update_segment_register(int reg_idx, int selector, uint32_t base, uint32_t limit, int flags);
-    void set_segment_register(int reg_idx, int selector);
-    void set_segment_register_real__v86(int reg_idx, int selector);
-    void set_segment_register_protected(int reg_idx, int selector);
+    void update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
+    void set_segment_register(int sreg, int selector);
+    void set_segment_register_real__v86(int sreg, int selector);
+    void set_segment_register_protected(int sreg, int selector);
     int is_segment_accessible(int selector, bool writable);
 
-    void set_lower_byte(int reg_idx, int x);
-    void set_lower_word(int reg_idx, int x);
+    void set_lower_byte(int reg, int x);
+    void set_lower_word(int reg, int x);
 
     int do_arithmetic8(int operation, int Yb, int Zb);
     int do_arithmetic16(int operation, int Yb, int Zb);
@@ -484,12 +484,12 @@ class x86Internal {
 
     void abort(int interrupt_id, int error_code = 0);
 
-    void set_current_permission_level(int x);
+    void set_current_privilege_level(int x);
 
     int compile_sizemask(int dte_upper_dword);
 
     void load_xdt_descriptor(int *descriptor_table_entry, int selector);
-    void load_tss_descriptor(int *descriptor_table_entry, int dpl);
+    void load_tss_descriptor(int *descriptor_table_entry, int privilege_level);
     int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     void compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
@@ -508,7 +508,7 @@ class x86Internal {
     void op_CALLF(bool is_operand_size32, int selector, int address, int return_address);
     void do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
     void do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
-    void clear_segment_register(int reg_idx, int cpl);
+    void clear_segment_register(int sreg, int privilege_level);
     void op_IRET(bool is_operand_size32);
     void op_RETF(bool is_operand_size32, int return_offset);
     void op_LAR_LSL(bool is_operand_size32, bool is_lsl);
