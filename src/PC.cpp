@@ -60,15 +60,15 @@ void PC::setup()
     cpu->st8_phys(cmdline_addr, cmdline);
     printf("%s\n", cmdline.c_str());
 
-    cpu->eip = 0x10000;
-    cpu->segs[1].flags = (1 << 22); // CS, Bit 22 = 1 for 32bit segment
-    cpu->segs[2].flags = (1 << 22); // SS, Bit 22 = 1 for 32bit segment
-    cpu->segs[3].flags = (1 << 9);  // DS, Bit 9 = writable
-    cpu->cr0 = (1 << 0);  // PE-mode ON
-
     cpu->regs[0] = 16 * 1024 * 1024;
     cpu->regs[1] = cmdline_addr;
     cpu->regs[3] = initrd_size;
+
+    cpu->segs[1].flags = (1 << 22); // CS, Bit 22 = 1 for 32bit segment
+    cpu->segs[2].flags = (1 << 22); // SS, Bit 22 = 1 for 32bit segment
+    cpu->segs[3].flags = (1 << 9);  // DS, Bit 9 = writable
+    cpu->cr0 = (1 << 0); // PE-mode ON
+    cpu->eip = 0x10000;  // start here
 
     printf("\n\n************************\n");
     printf("************************\n");

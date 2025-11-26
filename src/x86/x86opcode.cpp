@@ -1262,9 +1262,9 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     mem8_loc = mem8_loc + 4;
                     y = ld16_mem8_read();
                     if (operation == 3) {
-                        op_CALLF(1, y, x, (eip + far - far_start));
+                        do_CALLF(1, y, x, (eip + far - far_start));
                     } else {
-                        op_JMPF(y, x);
+                        do_JMPF(y, x);
                     }
                     break;
                 default:
@@ -1296,7 +1296,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     x = ld16_mem8_direct();
                 }
                 y = ld16_mem8_direct();
-                op_JMPF(y, x);
+                do_JMPF(y, x);
                 goto EXEC_LOOP;
             case 0x70: // JO
                 if (is_OF()) {
@@ -1513,7 +1513,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     x = ld16_mem8_direct();
                 }
                 y = ld16_mem8_direct();
-                op_CALLF(z, y, x, (eip + far - far_start));
+                do_CALLF(z, y, x, (eip + far - far_start));
                 if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -3051,9 +3051,9 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         mem8_loc = mem8_loc + 2;
                         y = ld16_mem8_read();
                         if (operation == 3) {
-                            op_CALLF(0, y, x, (eip + far - far_start));
+                            do_CALLF(0, y, x, (eip + far - far_start));
                         } else {
-                            op_JMPF(y, x);
+                            do_JMPF(y, x);
                         }
                         break;
                     default:

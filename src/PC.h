@@ -10,6 +10,9 @@
 #include <SDL2/SDL_ttf.h>
 #endif
 
+#include "CMOS.h"
+#include "KBD.h"
+#include "ringbuffer.h"
 #include "x86/x86.h"
 
 class WiredCPU;

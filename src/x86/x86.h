@@ -1,16 +1,8 @@
 #ifndef _X86_H
 #define _X86_H
 
-#include <cmath>
-#include <cstddef>
-#include <cstdio>
 #include <fstream>
-#include <string>
 #include <vector>
-
-#include "../CMOS.h"
-#include "../KBD.h"
-#include "../ringbuffer.h"
 
 typedef struct SegmentDescriptor {
     int selector;
@@ -254,25 +246,7 @@ class x86Internal {
         cr0 = (1 << 4); // 80387 present
     }
 
-    uint8_t ld8_phys(int mem8_loc) {
-        return phys_mem8[mem8_loc];
-    }
-    void st8_phys(int mem8_loc, uint8_t x) {
-        phys_mem8[mem8_loc] = x;
-    }
-    void st8_phys(int mem8_loc, std::string str) {
-        auto s = str.c_str();
-        for (int i = 0; i < str.length(); i++) {
-            st8_phys(mem8_loc++, s[i] & 0xff);
-        }
-        st8_phys(mem8_loc, 0);
-    }
-    int ld32_phys(int mem8_loc) {
-        return phys_mem32[mem8_loc >> 2];
-    }
-    void st32_phys(int mem8_loc, int x) {
-        phys_mem32[mem8_loc >> 2] = x;
-    }
+    void abort(int interrupt_id, int error_code = 0);
 
     void tlb_set_page(uint32_t linear_address, int pte, int writable, int user) {
         int tlb_hash = linear_address ^ pte; // poor man's XOR hash
@@ -331,25 +305,12 @@ class x86Internal {
         tlb_write_user[lat20] = -1;
     }
 
-    std::string hex_rep(int x, int n) {
-        std::string s;
-        char h[] = "0123456789ABCDEF";
-        for (int i = n - 1; i >= 0; i--) {
-            s = s + h[(x >> (i * 4)) & 15];
-        }
-        return s;
-    }
-    std::string _4_bytes(int n) {
-        return hex_rep(n, 8);
-    }
-    std::string _2_bytes(int n) {
-        return hex_rep(n, 4);
-    }
-    std::string _1_byte(int n) {
-        return hex_rep(n, 2);
-    }
+    void do_tlb_set_page(int linear_address, int writable, bool user);
+    int do_tlb_lookup(int mem8_loc, int writable);
 
     void fetch_decode_execute(int cycles);
+
+    void fetch_opcode();
     void update_SSB();
 
     int instruction_length(int opcode, int eip_linear);
@@ -359,8 +320,7 @@ class x86Internal {
     void set_CR4(int x);
     bool check_real__v86();
     bool check_protected();
-
-    void fetch_opcode();
+    void set_current_privilege_level(int x);
 
     virtual int get_hard_irq() = 0;
     virtual int get_hard_intno() = 0;
@@ -375,8 +335,25 @@ class x86Internal {
     void st16_port(int port_num, int x);
     void st32_port(int port_num, int x);
 
-    void do_tlb_set_page(int linear_address, int writable, bool user);
-    int do_tlb_lookup(int mem8_loc, int writable);
+    uint8_t ld8_phys(int mem8_loc) {
+        return phys_mem8[mem8_loc];
+    }
+    void st8_phys(int mem8_loc, uint8_t x) {
+        phys_mem8[mem8_loc] = x;
+    }
+    void st8_phys(int mem8_loc, std::string str) {
+        auto s = str.c_str();
+        for (int i = 0; i < str.length(); i++) {
+            st8_phys(mem8_loc++, s[i] & 0xff);
+        }
+        st8_phys(mem8_loc, 0);
+    }
+    int ld32_phys(int mem8_loc) {
+        return phys_mem32[mem8_loc >> 2];
+    }
+    void st32_phys(int mem8_loc, int x) {
+        phys_mem32[mem8_loc >> 2] = x;
+    }
 
     int __ld8_mem8_kernel_read();
     int ld8_mem8_kernel_read(); // from kernel RO memory: load (return) byte
@@ -422,28 +399,29 @@ class x86Internal {
     int read_stack_word();
     int read_stack_dword();
 
+    void set_lower_byte(int reg, int x);
+    void set_lower_word(int reg, int x);
+
     int segment_translation(int mem8);
     int convert_offset_to_linear(bool writable);
+
     void update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
     void set_segment_register(int sreg, int selector);
     void set_segment_register_real__v86(int sreg, int selector);
     void set_segment_register_protected(int sreg, int selector);
     int is_segment_accessible(int selector, bool writable);
 
-    void set_lower_byte(int reg, int x);
-    void set_lower_word(int reg, int x);
+    void load_xdt_descriptor(int *descriptor_table_entry, int selector);
+    void load_tss_descriptor(int *descriptor_table_entry, int privilege_level);
+    int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
+    int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
+    void compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
+    int compile_sizemask(int dte_upper_dword);
 
-    int do_arithmetic8(int operation, int dst, int src);
-    int do_arithmetic16(int operation, int dst, int src);
-    int do_arithmetic32(int operation, int dst, int src);
     int op_INC8(int x);
     int op_INC16(int x);
     int op_DEC8(int x);
     int op_DEC16(int x);
-    int do_shift8(int operation, int src, int count);
-    int do_shift16(int operation, int src, int count);
-    int do_shift32(int operation, uint32_t src, int count);
-
     int op_SHRD_SHLD16(int operation, int dst, int src, int count);
     int op_SHRD(int dst, int src, int count);
     int op_SHLD(int dst, int src, int count);
@@ -465,47 +443,27 @@ class x86Internal {
     int op_IMUL8(int multiplicand, int multiplier);
     int op_MUL16(int multiplicand, int multiplier);
     int op_IMUL16(int multiplicand, int multiplier);
-    int do_multiply32(int multiplicand, int multiplier);
     int op_MUL32(int multiplicand, int multiplier);
     int op_IMUL32(int multiplicand, int multiplier);
 
-    bool is_CF(); // carry (bit 0)
-    int is_PF(); // parity (bit 2)
-    int is_AF(); // adjust (bit 4)
-    bool is_OF(); // overflow (bit 11)
-    bool is_BE(); // below or equal, signed comparison
-    int is_LE(); // less or equal, unsigned comparison
-    int is_LT(); // less than
-    int can_jump(int condition);
-    int compile_flags(bool shift = false);
+    int do_multiply32(int multiplicand, int multiplier);
 
-    int get_EFLAGS();
-    void set_EFLAGS(int bits, int mask);
+    int do_arithmetic8(int operation, int dst, int src);
+    int do_arithmetic16(int operation, int dst, int src);
+    int do_arithmetic32(int operation, int dst, int src);
 
-    void abort(int interrupt_id, int error_code = 0);
-
-    void set_current_privilege_level(int x);
-
-    int compile_sizemask(int dte_upper_dword);
-
-    void load_xdt_descriptor(int *descriptor_table_entry, int selector);
-    void load_tss_descriptor(int *descriptor_table_entry, int privilege_level);
-    int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
-    int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
-    void compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
-
-    void do_interrupt_protected_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
-    void do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
-    void do_interrupt(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
+    int do_shift8(int operation, int src, int count);
+    int do_shift16(int operation, int src, int count);
+    int do_shift32(int operation, uint32_t src, int count);
 
     void op_LDTR(int selector);
     void op_LTR(int selector);
-    void do_JMPF_virtual_mode(int selector, int address);
     void do_JMPF(int selector, int address);
+    void op_JMPF_virtual_mode(int selector, int address);
     void op_JMPF(int selector, int address);
+    void do_CALLF(bool is_operand_size32, int selector, int address, int return_address);
     void op_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address);
     void op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address);
-    void op_CALLF(bool is_operand_size32, int selector, int address, int return_address);
     void do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
     void do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
     void clear_segment_register(int sreg, int privilege_level);
@@ -513,6 +471,11 @@ class x86Internal {
     void op_RETF(bool is_operand_size32, int return_offset);
     void op_LAR_LSL(bool is_operand_size32, bool is_lsl);
     int ld_descriptor_field(int selector, bool is_lsl);
+
+    void do_interrupt(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
+    void do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
+    void do_interrupt_protected_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
+
     void op_VERR_VERW(int selector, bool is_verw);
     void op_ARPL();
     void op_CPUID();
@@ -535,13 +498,6 @@ class x86Internal {
     void ld_full_pointer16(int sreg);
     void ld_full_pointer32(int sreg);
 
-    void op_INSB();
-    void op_OUTSB();
-    void op_MOVSB();
-    void op_STOSB();
-    void op_CMPSB();
-    void op_LODSB();
-    void op_SCASB();
     void op_INS16();
     void op_OUTS16();
     void op_MOVS16();
@@ -549,6 +505,14 @@ class x86Internal {
     void op_CMPS16();
     void op_LODS16();
     void op_SCAS16();
+
+    void op_INSB();
+    void op_OUTSB();
+    void op_MOVSB();
+    void op_STOSB();
+    void op_CMPSB();
+    void op_LODSB();
+    void op_SCASB();
     void op_INSW();
     void op_OUTSW();
     void op_MOVSW();
@@ -563,5 +527,36 @@ class x86Internal {
     void op_CMPSD();
     void op_LODSD();
     void op_SCASD();
+
+    bool is_CF(); // carry (bit 0)
+    int is_PF(); // parity (bit 2)
+    int is_AF(); // adjust (bit 4)
+    bool is_OF(); // overflow (bit 11)
+    bool is_BE(); // below or equal, signed comparison
+    int is_LE(); // less or equal, unsigned comparison
+    int is_LT(); // less than
+    int can_jump(int condition);
+    int compile_flags(bool shift = false);
+
+    int get_EFLAGS();
+    void set_EFLAGS(int bits, int mask);
+
+    std::string hex_rep(int x, int n) {
+        std::string s;
+        char h[] = "0123456789ABCDEF";
+        for (int i = n - 1; i >= 0; i--) {
+            s = s + h[(x >> (i * 4)) & 15];
+        }
+        return s;
+    }
+    std::string _4_bytes(int n) {
+        return hex_rep(n, 8);
+    }
+    std::string _2_bytes(int n) {
+        return hex_rep(n, 4);
+    }
+    std::string _1_byte(int n) {
+        return hex_rep(n, 2);
+    }
 };
 #endif // _X86_H
