@@ -452,161 +452,161 @@ void x86Internal::set_lower_byte(int reg, int x) {
 void x86Internal::set_lower_word(int reg, int x) {
     regs[reg] = (regs[reg] & -65536) | (x & 0xffff);
 }
-int x86Internal::do_arithmetic32(int operation, int Yb, int Zb) {
+int x86Internal::do_arithmetic32(int operation, int dst, int src) {
     int ac;
     switch (operation & 7) {
     case 0:
-        osm_src = Zb;
-        Yb = Yb + Zb;
-        osm_dst = Yb;
+        osm_src = src;
+        dst = dst + src;
+        osm_dst = dst;
         osm = 2;
         break;
     case 1:
-        Yb = Yb | Zb;
-        osm_dst = Yb;
+        dst = dst | src;
+        osm_dst = dst;
         osm = 14;
         break;
     case 2:
         ac = is_CF();
-        osm_src = Zb;
-        Yb = Yb + Zb + ac;
-        osm_dst = Yb;
+        osm_src = src;
+        dst = dst + src + ac;
+        osm_dst = dst;
         osm = ac ? 5 : 2;
         break;
     case 3:
         ac = is_CF();
-        osm_src = Zb;
-        Yb = Yb - Zb - ac;
-        osm_dst = Yb;
+        osm_src = src;
+        dst = dst - src - ac;
+        osm_dst = dst;
         osm = ac ? 11 : 8;
         break;
     case 4:
-        Yb = Yb & Zb;
-        osm_dst = Yb;
+        dst = dst & src;
+        osm_dst = dst;
         osm = 14;
         break;
     case 5:
-        osm_src = Zb;
-        Yb = Yb - Zb;
-        osm_dst = Yb;
+        osm_src = src;
+        dst = dst - src;
+        osm_dst = dst;
         osm = 8;
         break;
     case 6:
-        Yb = Yb ^ Zb;
-        osm_dst = Yb;
+        dst = dst ^ src;
+        osm_dst = dst;
         osm = 14;
         break;
     case 7:
-        osm_src = Zb;
-        osm_dst = Yb - Zb;
+        osm_src = src;
+        osm_dst = dst - src;
         osm = 8;
         break;
     }
-    return Yb;
+    return dst;
 }
-int x86Internal::do_arithmetic16(int operation, int Yb, int Zb) {
+int x86Internal::do_arithmetic16(int operation, int dst, int src) {
     int ac;
     switch (operation & 7) {
     case 0:
-        osm_src = Zb;
-        Yb = (((Yb + Zb) << 16) >> 16);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst + src) << 16) >> 16);
+        osm_dst = dst;
         osm = 1;
         break;
     case 1:
-        Yb = (((Yb | Zb) << 16) >> 16);
-        osm_dst = Yb;
+        dst = (((dst | src) << 16) >> 16);
+        osm_dst = dst;
         osm = 13;
         break;
     case 2:
         ac = is_CF();
-        osm_src = Zb;
-        Yb = (((Yb + Zb + ac) << 16) >> 16);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst + src + ac) << 16) >> 16);
+        osm_dst = dst;
         osm = ac ? 4 : 1;
         break;
     case 3:
         ac = is_CF();
-        osm_src = Zb;
-        Yb = (((Yb - Zb - ac) << 16) >> 16);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst - src - ac) << 16) >> 16);
+        osm_dst = dst;
         osm = ac ? 10 : 7;
         break;
     case 4:
-        Yb = (((Yb & Zb) << 16) >> 16);
-        osm_dst = Yb;
+        dst = (((dst & src) << 16) >> 16);
+        osm_dst = dst;
         osm = 13;
         break;
     case 5:
-        osm_src = Zb;
-        Yb = (((Yb - Zb) << 16) >> 16);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst - src) << 16) >> 16);
+        osm_dst = dst;
         osm = 7;
         break;
     case 6:
-        Yb = (((Yb ^ Zb) << 16) >> 16);
-        osm_dst = Yb;
+        dst = (((dst ^ src) << 16) >> 16);
+        osm_dst = dst;
         osm = 13;
         break;
     case 7:
-        osm_src = Zb;
-        osm_dst = (((Yb - Zb) << 16) >> 16);
+        osm_src = src;
+        osm_dst = (((dst - src) << 16) >> 16);
         osm = 7;
         break;
     }
-    return Yb;
+    return dst;
 }
-int x86Internal::do_arithmetic8(int operation, int Yb, int Zb) {
+int x86Internal::do_arithmetic8(int operation, int dst, int src) {
     int ac;
     switch (operation & 7) {
     case 0:
-        osm_src = Zb;
-        Yb = (((Yb + Zb) << 24) >> 24);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst + src) << 24) >> 24);
+        osm_dst = dst;
         osm = 0;
         break;
     case 1:
-        Yb = (((Yb | Zb) << 24) >> 24);
-        osm_dst = Yb;
+        dst = (((dst | src) << 24) >> 24);
+        osm_dst = dst;
         osm = 12;
         break;
     case 2:
         ac = is_CF();
-        osm_src = Zb;
-        Yb = (((Yb + Zb + ac) << 24) >> 24);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst + src + ac) << 24) >> 24);
+        osm_dst = dst;
         osm = ac ? 3 : 0;
         break;
     case 3:
         ac = is_CF();
-        osm_src = Zb;
-        Yb = (((Yb - Zb - ac) << 24) >> 24);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst - src - ac) << 24) >> 24);
+        osm_dst = dst;
         osm = ac ? 9 : 6;
         break;
     case 4:
-        Yb = (((Yb & Zb) << 24) >> 24);
-        osm_dst = Yb;
+        dst = (((dst & src) << 24) >> 24);
+        osm_dst = dst;
         osm = 12;
         break;
     case 5:
-        osm_src = Zb;
-        Yb = (((Yb - Zb) << 24) >> 24);
-        osm_dst = Yb;
+        osm_src = src;
+        dst = (((dst - src) << 24) >> 24);
+        osm_dst = dst;
         osm = 6;
         break;
     case 6:
-        Yb = (((Yb ^ Zb) << 24) >> 24);
-        osm_dst = Yb;
+        dst = (((dst ^ src) << 24) >> 24);
+        osm_dst = dst;
         osm = 12;
         break;
     case 7:
-        osm_src = Zb;
-        osm_dst = (((Yb - Zb) << 24) >> 24);
+        osm_src = src;
+        osm_dst = (((dst - src) << 24) >> 24);
         osm = 6;
         break;
     }
-    return Yb;
+    return dst;
 }
 int x86Internal::op_INC16(int x) {
     if (osm < 25) {
@@ -644,72 +644,72 @@ int x86Internal::op_DEC8(int x) {
     osm = 28;
     return osm_dst;
 }
-int x86Internal::do_shift8(int operation, int Yb, int Zb) {
+int x86Internal::do_shift8(int operation, int src, int count) {
     int kc, ac;
     switch (operation & 7) {
     case 0:
-        if (Zb & 0x1f) {
-            Zb &= 0x7;
-            Yb &= 0xff;
-            kc = Yb;
-            Yb = (Yb << Zb) | (Yb >> (8 - Zb));
+        if (count & 0x1f) {
+            count &= 0x7;
+            src &= 0xff;
+            kc = src;
+            src = (src << count) | (src >> (8 - count));
             osm_src = compile_flags(true);
-            osm_src |= (Yb & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
+            osm_src |= (src & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 1:
-        if (Zb & 0x1f) {
-            Zb &= 0x7;
-            Yb &= 0xff;
-            kc = Yb;
-            Yb = (Yb >> Zb) | (Yb << (8 - Zb));
+        if (count & 0x1f) {
+            count &= 0x7;
+            src &= 0xff;
+            kc = src;
+            src = (src >> count) | (src << (8 - count));
             osm_src = compile_flags(true);
-            osm_src |= ((Yb >> 7) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
+            osm_src |= ((src >> 7) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 2:
-        Zb = do_shift8_LUT[Zb & 0x1f];
-        if (Zb) {
-            Yb &= 0xff;
-            kc = Yb;
+        count = do_shift8_LUT[count & 0x1f];
+        if (count) {
+            src &= 0xff;
+            kc = src;
             ac = is_CF();
-            Yb = (Yb << Zb) | (ac << (Zb - 1));
-            if (Zb > 1) {
-                Yb |= kc >> (9 - Zb);
+            src = (src << count) | (ac << (count - 1));
+            if (count > 1) {
+                src |= kc >> (9 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (8 - Zb)) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
+            osm_src |= ((kc >> (8 - count)) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 3:
-        Zb = do_shift8_LUT[Zb & 0x1f];
-        if (Zb) {
-            Yb &= 0xff;
-            kc = Yb;
+        count = do_shift8_LUT[count & 0x1f];
+        if (count) {
+            src &= 0xff;
+            kc = src;
             ac = is_CF();
-            Yb = (Yb >> Zb) | (ac << (8 - Zb));
-            if (Zb > 1) {
-                Yb |= kc << (9 - Zb);
+            src = (src >> count) | (ac << (8 - count));
+            if (count > 1) {
+                src |= kc << (9 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (Zb - 1)) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) << 4) & 0x0800);
+            osm_src |= ((kc >> (count - 1)) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -717,100 +717,100 @@ int x86Internal::do_shift8(int operation, int Yb, int Zb) {
         break;
     case 4:
     case 6:
-        Zb &= 0x1f;
-        if (Zb) {
-            osm_src = Yb << (Zb - 1);
-            osm_dst = Yb = (((Yb << Zb) << 24) >> 24);
+        count &= 0x1f;
+        if (count) {
+            osm_src = src << (count - 1);
+            osm_dst = src = (((src << count) << 24) >> 24);
             osm = 15;
         }
         break;
     case 5:
-        Zb &= 0x1f;
-        if (Zb) {
-            Yb &= 0xff;
-            osm_src = Yb >> (Zb - 1);
-            osm_dst = Yb = (((Yb >> Zb) << 24) >> 24);
+        count &= 0x1f;
+        if (count) {
+            src &= 0xff;
+            osm_src = src >> (count - 1);
+            osm_dst = src = (((src >> count) << 24) >> 24);
             osm = 18;
         }
         break;
     case 7:
-        Zb &= 0x1f;
-        if (Zb) {
-            Yb = (Yb << 24) >> 24;
-            osm_src = Yb >> (Zb - 1);
-            osm_dst = Yb = (((Yb >> Zb) << 24) >> 24);
+        count &= 0x1f;
+        if (count) {
+            src = (src << 24) >> 24;
+            osm_src = src >> (count - 1);
+            osm_dst = src = (((src >> count) << 24) >> 24);
             osm = 18;
         }
         break;
     }
-    return Yb;
+    return src;
 }
-int x86Internal::do_shift16(int operation, int Yb, int Zb) {
+int x86Internal::do_shift16(int operation, int src, int count) {
     int kc, ac;
     switch (operation & 7) {
     case 0:
-        if (Zb & 0x1f) {
-            Zb &= 0xf;
-            Yb &= 0xffff;
-            kc = Yb;
-            Yb = (Yb << Zb) | (Yb >> (16 - Zb));
+        if (count & 0x1f) {
+            count &= 0xf;
+            src &= 0xffff;
+            kc = src;
+            src = (src << count) | (src >> (16 - count));
             osm_src = compile_flags(true);
-            osm_src |= (Yb & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
+            osm_src |= (src & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 1:
-        if (Zb & 0x1f) {
-            Zb &= 0xf;
-            Yb &= 0xffff;
-            kc = Yb;
-            Yb = (Yb >> Zb) | (Yb << (16 - Zb));
+        if (count & 0x1f) {
+            count &= 0xf;
+            src &= 0xffff;
+            kc = src;
+            src = (src >> count) | (src << (16 - count));
             osm_src = compile_flags(true);
-            osm_src |= ((Yb >> 15) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
+            osm_src |= ((src >> 15) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 2:
-        Zb = do_shift16_LUT[Zb & 0x1f];
-        if (Zb) {
-            Yb &= 0xffff;
-            kc = Yb;
+        count = do_shift16_LUT[count & 0x1f];
+        if (count) {
+            src &= 0xffff;
+            kc = src;
             ac = is_CF();
-            Yb = (Yb << Zb) | (ac << (Zb - 1));
-            if (Zb > 1) {
-                Yb |= kc >> (17 - Zb);
+            src = (src << count) | (ac << (count - 1));
+            if (count > 1) {
+                src |= kc >> (17 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (16 - Zb)) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
+            osm_src |= ((kc >> (16 - count)) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 3:
-        Zb = do_shift16_LUT[Zb & 0x1f];
-        if (Zb) {
-            Yb &= 0xffff;
-            kc = Yb;
+        count = do_shift16_LUT[count & 0x1f];
+        if (count) {
+            src &= 0xffff;
+            kc = src;
             ac = is_CF();
-            Yb = (Yb >> Zb) | (ac << (16 - Zb));
-            if (Zb > 1) {
-                Yb |= kc << (17 - Zb);
+            src = (src >> count) | (ac << (16 - count));
+            if (count > 1) {
+                src |= kc << (17 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (Zb - 1)) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 4) & 0x0800);
+            osm_src |= ((kc >> (count - 1)) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -818,97 +818,97 @@ int x86Internal::do_shift16(int operation, int Yb, int Zb) {
         break;
     case 4:
     case 6:
-        Zb &= 0x1f;
-        if (Zb) {
-            osm_src = Yb << (Zb - 1);
-            osm_dst = Yb = (((Yb << Zb) << 16) >> 16);
+        count &= 0x1f;
+        if (count) {
+            osm_src = src << (count - 1);
+            osm_dst = src = (((src << count) << 16) >> 16);
             osm = 16;
         }
         break;
     case 5:
-        Zb &= 0x1f;
-        if (Zb) {
-            Yb &= 0xffff;
-            osm_src = Yb >> (Zb - 1);
-            osm_dst = Yb = (((Yb >> Zb) << 16) >> 16);
+        count &= 0x1f;
+        if (count) {
+            src &= 0xffff;
+            osm_src = src >> (count - 1);
+            osm_dst = src = (((src >> count) << 16) >> 16);
             osm = 19;
         }
         break;
     case 7:
-        Zb &= 0x1f;
-        if (Zb) {
-            Yb = (Yb << 16) >> 16;
-            osm_src = Yb >> (Zb - 1);
-            osm_dst = Yb = (((Yb >> Zb) << 16) >> 16);
+        count &= 0x1f;
+        if (count) {
+            src = (src << 16) >> 16;
+            osm_src = src >> (count - 1);
+            osm_dst = src = (((src >> count) << 16) >> 16);
             osm = 19;
         }
         break;
     }
-    return Yb;
+    return src;
 }
-int x86Internal::do_shift32(int operation, uint32_t Yb, int Zb) {
+int x86Internal::do_shift32(int operation, uint32_t src, int count) {
     uint32_t kc;
     int ac;
     switch (operation & 7) {
     case 0:
-        Zb &= 0x1f;
-        if (Zb) {
-            kc = Yb;
-            Yb = (Yb << Zb) | (Yb >> (32 - Zb));
+        count &= 0x1f;
+        if (count) {
+            kc = src;
+            src = (src << count) | (src >> (32 - count));
             osm_src = compile_flags(true);
-            osm_src |= (Yb & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
+            osm_src |= (src & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 1:
-        Zb &= 0x1f;
-        if (Zb) {
-            kc = Yb;
-            Yb = (Yb >> Zb) | (Yb << (32 - Zb));
+        count &= 0x1f;
+        if (count) {
+            kc = src;
+            src = (src >> count) | (src << (32 - count));
             osm_src = compile_flags(true);
-            osm_src |= ((Yb >> 31) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
+            osm_src |= ((src >> 31) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 2:
-        Zb &= 0x1f;
-        if (Zb) {
-            kc = Yb;
+        count &= 0x1f;
+        if (count) {
+            kc = src;
             ac = is_CF();
-            Yb = (Yb << Zb) | (ac << (Zb - 1));
-            if (Zb > 1) {
-                Yb |= kc >> (33 - Zb);
+            src = (src << count) | (ac << (count - 1));
+            if (count > 1) {
+                src |= kc >> (33 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (32 - Zb)) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
+            osm_src |= ((kc >> (32 - count)) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
         }
         break;
     case 3:
-        Zb &= 0x1f;
-        if (Zb) {
-            kc = Yb;
+        count &= 0x1f;
+        if (count) {
+            kc = src;
             ac = is_CF();
-            Yb = (Yb >> Zb) | (ac << (32 - Zb));
-            if (Zb > 1) {
-                Yb |= kc << (33 - Zb);
+            src = (src >> count) | (ac << (32 - count));
+            if (count > 1) {
+                src |= kc << (33 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (Zb - 1)) & 0x0001);
-            if (Zb == 1) {
-                osm_src |= (((kc ^ Yb) >> 20) & 0x0800);
+            osm_src |= ((kc >> (count - 1)) & 0x0001);
+            if (count == 1) {
+                osm_src |= (((kc ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -916,134 +916,134 @@ int x86Internal::do_shift32(int operation, uint32_t Yb, int Zb) {
         break;
     case 4:
     case 6:
-        Zb &= 0x1f;
-        if (Zb) {
-            osm_src = Yb << (Zb - 1);
-            osm_dst = Yb = Yb << Zb;
+        count &= 0x1f;
+        if (count) {
+            osm_src = src << (count - 1);
+            osm_dst = src = src << count;
             osm = 17;
         }
         break;
     case 5:
-        Zb &= 0x1f;
-        if (Zb) {
-            osm_src = Yb >> (Zb - 1);
-            osm_dst = Yb = Yb >> Zb;
+        count &= 0x1f;
+        if (count) {
+            osm_src = src >> (count - 1);
+            osm_dst = src = src >> count;
             osm = 20;
         }
         break;
     case 7:
-        Zb &= 0x1f;
-        if (Zb) {
-            int Ybi = Yb;
-            osm_src = Ybi >> (Zb - 1);
-            osm_dst = Yb = Ybi >> Zb;
+        count &= 0x1f;
+        if (count) {
+            int Ybi = src;
+            osm_src = Ybi >> (count - 1);
+            osm_dst = src = Ybi >> count;
             osm = 20;
         }
         break;
     }
-    return Yb;
+    return src;
 }
-int x86Internal::op_SHRD_SHLD16(int operation, int Yb, int Zb, int pc) {
+int x86Internal::op_SHRD_SHLD16(int operation, int dst, int src, int count) {
     int flg;
-    pc &= 0x1f;
-    if (pc) {
+    count &= 0x1f;
+    if (count) {
         if (operation == 0) { // SHLD
-            Zb &= 0xffff;
-            flg = Zb | (Yb << 16);
-            osm_src = flg >> (32 - pc);
-            flg = flg << pc;
-            if (pc > 16) {
-                flg |= Zb << (pc - 16);
+            src &= 0xffff;
+            flg = src | (dst << 16);
+            osm_src = flg >> (32 - count);
+            flg = flg << count;
+            if (count > 16) {
+                flg |= src << (count - 16);
             }
-            Yb = osm_dst = flg >> 16;
+            dst = osm_dst = flg >> 16;
             osm = 19;
         } else { // SHRD
-            flg = (Yb & 0xffff) | (Zb << 16);
-            osm_src = flg >> (pc - 1);
-            flg = flg >> pc;
-            if (pc > 16) {
-                flg |= Zb << (32 - pc);
+            flg = (dst & 0xffff) | (src << 16);
+            osm_src = flg >> (count - 1);
+            flg = flg >> count;
+            if (count > 16) {
+                flg |= src << (32 - count);
             }
-            Yb = osm_dst = ((flg << 16) >> 16);
+            dst = osm_dst = ((flg << 16) >> 16);
             osm = 19;
         }
     }
-    return Yb;
+    return dst;
 }
-int x86Internal::op_SHLD(int Yb, int Zb, int pc) {
-    pc &= 0x1f;
-    if (pc) {
-        osm_src = Yb << (pc - 1);
-        uint32_t Zbu = Zb;
-        uint32_t lval = (Yb << pc);
-        uint32_t rval = (Zbu >> (32 - pc));
-        osm_dst = Yb = lval | rval;
+int x86Internal::op_SHLD(int dst, int src, int count) {
+    count &= 0x1f;
+    if (count) {
+        osm_src = dst << (count - 1);
+        uint32_t Zbu = src;
+        uint32_t lval = (dst << count);
+        uint32_t rval = (Zbu >> (32 - count));
+        osm_dst = dst = lval | rval;
         osm = 17;
     }
-    return Yb;
+    return dst;
 }
-int x86Internal::op_SHRD(int Yb, int Zb, int pc) {
-    pc &= 0x1f;
-    if (pc) {
-        osm_src = Yb >> (pc - 1);
-        uint32_t Zbu = Zb;
-        uint32_t Ybu = Yb;
-        uint32_t lval = (Ybu >> pc);
-        uint32_t rval = (Zbu << (32 - pc));
-        osm_dst = Yb = lval | rval;
+int x86Internal::op_SHRD(int dst, int src, int count) {
+    count &= 0x1f;
+    if (count) {
+        osm_src = dst >> (count - 1);
+        uint32_t Zbu = src;
+        uint32_t Ybu = dst;
+        uint32_t lval = (Ybu >> count);
+        uint32_t rval = (Zbu << (32 - count));
+        osm_dst = dst = lval | rval;
         osm = 20;
     }
-    return Yb;
+    return dst;
 }
-void x86Internal::op_BT16(int Yb, int Zb) {
-    Zb &= 0xf;
-    osm_src = Yb >> Zb;
+void x86Internal::op_BT16(int bit_base, int bit_offset) {
+    bit_offset &= 0xf;
+    osm_src = bit_base >> bit_offset;
     osm = 19;
 }
-void x86Internal::op_BT(int Yb, int Zb) {
-    Zb &= 0x1f;
-    osm_src = Yb >> Zb;
+void x86Internal::op_BT(int bit_base, int bit_offset) {
+    bit_offset &= 0x1f;
+    osm_src = bit_base >> bit_offset;
     osm = 20;
 }
-int x86Internal::op_BTS_BTR_BTC16(int operation, int Yb, int Zb) {
+int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
     int wc;
-    Zb &= 0xf;
-    osm_src = Yb >> Zb;
-    wc = 1 << Zb;
+    bit_offset &= 0xf;
+    osm_src = bit_base >> bit_offset;
+    wc = 1 << bit_offset;
     switch (operation) {
     case 1: // BTS
-        Yb |= wc;
+        bit_base |= wc;
         break;
     case 2: // BTR
-        Yb &= ~wc;
+        bit_base &= ~wc;
         break;
     case 3: // BTC
     default:
-        Yb ^= wc;
+        bit_base ^= wc;
         break;
     }
     osm = 19;
-    return Yb;
+    return bit_base;
 }
-int x86Internal::op_BTS_BTR_BTC(int operation, int Yb, int Zb) {
+int x86Internal::op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset) {
     int wc;
-    Zb &= 0x1f;
-    osm_src = Yb >> Zb;
-    wc = 1 << Zb;
+    bit_offset &= 0x1f;
+    osm_src = bit_base >> bit_offset;
+    wc = 1 << bit_offset;
     switch (operation) {
     case 1: // BTS
-        Yb |= wc;
+        bit_base |= wc;
         break;
     case 2: // BTR
-        Yb &= ~wc;
+        bit_base &= ~wc;
         break;
     case 3: // BTC
     default:
-        Yb ^= wc;
+        bit_base ^= wc;
         break;
     }
     osm = 20;
-    return Yb;
+    return bit_base;
 }
 int x86Internal::op_BSF16(int Yb, int Zb) {
     Zb &= 0xffff;
@@ -1060,48 +1060,48 @@ int x86Internal::op_BSF16(int Yb, int Zb) {
     osm = 14;
     return Yb;
 }
-int x86Internal::op_BSF(int Yb, int Zb) {
-    if (Zb) {
-        Yb = 0;
-        while ((Zb & 1) == 0) {
-            Yb++;
-            Zb >>= 1;
+int x86Internal::op_BSF(int dst, int src) {
+    if (src) {
+        dst = 0;
+        while ((src & 1) == 0) {
+            dst++;
+            src >>= 1;
         }
         osm_dst = 1;
     } else {
         osm_dst = 0;
     }
     osm = 14;
-    return Yb;
+    return dst;
 }
-int x86Internal::op_BSR16(int Yb, int Zb) {
-    Zb &= 0xffff;
-    if (Zb) {
-        Yb = 15;
-        while ((Zb & 0x8000) == 0) {
-            Yb--;
-            Zb <<= 1;
+int x86Internal::op_BSR16(int dst, int src) {
+    src &= 0xffff;
+    if (src) {
+        dst = 15;
+        while ((src & 0x8000) == 0) {
+            dst--;
+            src <<= 1;
         }
         osm_dst = 1;
     } else {
         osm_dst = 0;
     }
     osm = 14;
-    return Yb;
+    return dst;
 }
-int x86Internal::op_BSR(int Yb, int Zb) {
-    if (Zb) {
-        Yb = 31;
-        while (Zb >= 0) {
-            Yb--;
-            Zb <<= 1;
+int x86Internal::op_BSR(int dst, int src) {
+    if (src) {
+        dst = 31;
+        while (src >= 0) {
+            dst--;
+            src <<= 1;
         }
         osm_dst = 1;
     } else {
         osm_dst = 0;
     }
     osm = 14;
-    return Yb;
+    return dst;
 }
 void x86Internal::op_DIV8(int opcode) {
     int a, q, r;
@@ -3686,23 +3686,23 @@ void x86Internal::op_CPUID() {
         break;
     }
 }
-void x86Internal::op_AAM(int base) {
+void x86Internal::op_AAM(int radix) {
     int wf, xf;
-    if (base == 0) {
+    if (radix == 0) {
         abort(0);
     }
     wf = regs[0] & 0xff;
-    xf = (wf / base) & -1;
-    wf = (wf % base);
+    xf = (wf / radix) & -1;
+    wf = (wf % radix);
     regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
     osm_dst = ((wf << 24) >> 24);
     osm = 12;
 }
-void x86Internal::op_AAD(int base) {
+void x86Internal::op_AAD(int radix) {
     int wf, xf;
     wf = regs[0] & 0xff;
     xf = (regs[0] >> 8) & 0xff;
-    wf = (xf * base + wf) & 0xff;
+    wf = (xf * radix + wf) & 0xff;
     regs[0] = (regs[0] & ~0xffff) | wf;
     osm_dst = ((wf << 24) >> 24);
     osm = 12;
