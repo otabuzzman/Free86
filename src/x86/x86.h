@@ -378,36 +378,48 @@ class x86Internal {
     int do_tlb_lookup(int mem8_loc, int writable);
 
     int __ld8_mem8_kernel_read();
-    int ld8_mem8_kernel_read();
+    int ld8_mem8_kernel_read(); // from kernel RO memory: load (return) byte
     int __ld16_mem8_kernel_read();
-    int ld16_mem8_kernel_read();
+    int ld16_mem8_kernel_read();  // ...word
     int __ld32_mem8_kernel_read();
-    int ld32_mem8_kernel_read();
-    int ld16_mem8_direct();
+    int ld32_mem8_kernel_read();  // ...dword
+
+    int ld16_mem8_direct(); // read word at FAR from memory, bypass TLB
+
     int __ld8_mem8_read();
-    int ld8_mem8_read();
+    int ld8_mem8_read(); // from user RO memory: load (return) byte
     int __ld16_mem8_read();
-    int ld16_mem8_read();
+    int ld16_mem8_read(); // ...word
     int __ld32_mem8_read();
-    int ld32_mem8_read();
+    int ld32_mem8_read(); // ...dword
+
     int __ld8_mem8_write();
-    int ld8_mem8_write();
+    int ld8_mem8_write(); // from user WR memory: load (return) byte
     int __ld16_mem8_write();
-    int ld16_mem8_write();
+    int ld16_mem8_write(); // ...word
     int __ld32_mem8_write();
-    int ld32_mem8_write();
-    void __st8_mem8_write(int x);
-    void st8_mem8_write(int x);
-    void __st16_mem8_write(int x);
-    void st16_mem8_write(int x);
-    void __st32_mem8_write(int x);
-    void st32_mem8_write(int x);
+    int ld32_mem8_write(); // ...dword
+
     void __st8_mem8_kernel_write(int x);
-    void st8_mem8_kernel_write(int x);
+    void st8_mem8_kernel_write(int x); // in kernel WR memory: store byte
     void __st16_mem8_kernel_write(int x);
-    void st16_mem8_kernel_write(int x);
+    void st16_mem8_kernel_write(int x); // ...word
     void __st32_mem8_kernel_write(int x);
-    void st32_mem8_kernel_write(int x);
+    void st32_mem8_kernel_write(int x); // ...dword
+
+    void __st8_mem8_write(int x);
+    void st8_mem8_write(int x); // in user WR memory: store byte
+    void __st16_mem8_write(int x);
+    void st16_mem8_write(int x); // ...word
+    void __st32_mem8_write(int x);
+    void st32_mem8_write(int x); // ...dword
+
+    void push_word(int x);
+    void push_dword(int x);
+    void pop_word();
+    void pop_dword();
+    int read_stack_word();
+    int read_stack_dword();
 
     int segment_translation(int mem8);
     int convert_offset_to_linear(bool writable);
@@ -472,13 +484,6 @@ class x86Internal {
     void abort(int interrupt_id, int error_code = 0);
 
     void set_current_permission_level(int x);
-
-    void push_word(int x);
-    void push_dword(int x);
-    void pop_word();
-    void pop_dword();
-    int read_stack_word();
-    int read_stack_dword();
 
     int compile_sizemask(int dte_upper_dword);
 
