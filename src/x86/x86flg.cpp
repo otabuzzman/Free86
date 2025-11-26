@@ -292,7 +292,7 @@ int x86Internal::is_LE() { // `less' for unsigned comparison, PM p. 317
         rval = (((osm_src >> 7) ^ (osm_src >> 11)) | (osm_src >> 6)) & 1;
         break;
     default:
-        rval = ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) ^ is_OF()) | (osm_dst == 0);
+        rval = (((osm_dst < 0)) ^ is_OF()) | (osm_dst == 0);
         break;
     }
     return rval;
@@ -324,7 +324,7 @@ int x86Internal::is_LT() {
         rval = ((osm_src >> 7) ^ (osm_src >> 11)) & 1;
         break;
     default:
-        rval = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) ^ is_OF();
+        rval = ((osm_dst < 0)) ^ is_OF();
         break;
     }
     return rval;
