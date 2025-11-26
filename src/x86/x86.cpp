@@ -1103,103 +1103,103 @@ int x86Internal::op_BSR(int dst, int src) {
     osm = 14;
     return dst;
 }
-void x86Internal::op_DIV8(int opcode) {
+void x86Internal::op_DIV8(int divisor) {
     int a, q, r;
     a = regs[0] & 0xffff;
-    opcode &= 0xff;
-    if ((a >> 8) >= opcode) {
+    divisor &= 0xff;
+    if ((a >> 8) >= divisor) {
         abort(0);
     }
-    q = a / opcode;
-    r = (a % opcode);
+    q = a / divisor;
+    r = (a % divisor);
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_IDIV8(int opcode) {
+void x86Internal::op_IDIV8(int divisor) {
     int a, q, r;
     a = (regs[0] << 16) >> 16;
-    opcode = (opcode << 24) >> 24;
-    if (opcode == 0) {
+    divisor = (divisor << 24) >> 24;
+    if (divisor == 0) {
         abort(0);
     }
-    q = a / opcode;
+    q = a / divisor;
     if (((q << 24) >> 24) != q) {
         abort(0);
     }
-    r = (a % opcode);
+    r = (a % divisor);
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_DIV16(int opcode) {
+void x86Internal::op_DIV16(int divisor) {
     int a, q, r;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
-    opcode &= 0xffff;
+    divisor &= 0xffff;
     uint32_t au = a;
-    if ((au >> 16) >= opcode) {
+    if ((au >> 16) >= divisor) {
         abort(0);
     }
-    q = au / opcode;
-    r = (au % opcode);
+    q = au / divisor;
+    r = (au % divisor);
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-void x86Internal::op_IDIV16(int opcode) {
+void x86Internal::op_IDIV16(int divisor) {
     int a, q, r;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
-    opcode = (opcode << 16) >> 16;
-    if (opcode == 0) {
+    divisor = (divisor << 16) >> 16;
+    if (divisor == 0) {
         abort(0);
     }
-    q = a / opcode;
+    q = a / divisor;
     if (((q << 16) >> 16) != q) {
         abort(0);
     }
-    r = (a % opcode);
+    r = (a % divisor);
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-int x86Internal::op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t opcode) {
+int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
     uint32_t i, Kc;
-    if (Ic >= opcode) {
+    if (dividend_upper >= divisor) {
         abort(0);
     }
-    if (Ic >= 0 && Ic <= 0x200000) {
-        a = Ic * 4294967296 + Jc;
-        v = a % opcode;
-        return a / opcode;
+    if (dividend_upper >= 0 && dividend_upper <= 0x200000) {
+        a = dividend_upper * 4294967296 + dividend_lower;
+        v = a % divisor;
+        return a / divisor;
     } else {
         for (i = 0; i < 32; i++) {
-            Kc = Ic >> 31;
-            Ic = (Ic << 1) | (Jc >> 31);
-            if (Kc || Ic >= opcode) {
-                Ic = Ic - opcode;
-                Jc = (Jc << 1) | 1;
+            Kc = dividend_upper >> 31;
+            dividend_upper = (dividend_upper << 1) | (dividend_lower >> 31);
+            if (Kc || dividend_upper >= divisor) {
+                dividend_upper = dividend_upper - divisor;
+                dividend_lower = (dividend_lower << 1) | 1;
             } else {
-                Jc = Jc << 1;
+                dividend_lower = dividend_lower << 1;
             }
         }
-        v = Ic;
-        return Jc;
+        v = dividend_upper;
+        return dividend_lower;
     }
 }
-int x86Internal::op_IDIV32(int Ic, int Jc, int opcode) {
+int x86Internal::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
     int Mc, Nc, q;
-    if (Ic < 0) {
+    if (dividend_upper < 0) {
         Mc = 1;
-        Ic = ~Ic;
-        Jc = -Jc;
-        if (Jc == 0) {
-            Ic = Ic + 1;
+        dividend_upper = ~dividend_upper;
+        dividend_lower = -dividend_lower;
+        if (dividend_lower == 0) {
+            dividend_upper = dividend_upper + 1;
         }
     } else {
         Mc = 0;
     }
-    if (opcode < 0) {
-        opcode = -opcode;
+    if (divisor < 0) {
+        divisor = -divisor;
         Nc = 1;
     } else {
         Nc = 0;
     }
-    q = op_DIV32(Ic, Jc, opcode);
+    q = op_DIV32(dividend_upper, dividend_lower, divisor);
     Nc ^= Mc;
     if (Nc) {
         if (q > 0x80000000) {
@@ -1216,49 +1216,49 @@ int x86Internal::op_IDIV32(int Ic, int Jc, int opcode) {
     }
     return q;
 }
-int x86Internal::op_MUL8(int a, int opcode) {
+int x86Internal::op_MUL8(int multiplicand, int multiplier) {
     int flg;
-    a &= 0xff;
-    opcode &= 0xff;
-    flg = (regs[0] & 0xff) * (opcode & 0xff);
+    multiplicand &= 0xff;
+    multiplier &= 0xff;
+    flg = (regs[0] & 0xff) * (multiplier & 0xff);
     osm_src = flg >> 8;
     osm_dst = ((flg << 24) >> 24);
     osm = 21;
     return flg;
 }
-int x86Internal::op_IMUL8(int a, int opcode) {
+int x86Internal::op_IMUL8(int multiplicand, int multiplier) {
     int flg;
-    a = ((a << 24) >> 24);
-    opcode = ((opcode << 24) >> 24);
-    flg = a * opcode;
+    multiplicand = ((multiplicand << 24) >> 24);
+    multiplier = ((multiplier << 24) >> 24);
+    flg = multiplicand * multiplier;
     osm_dst = ((flg << 24) >> 24);
     osm_src = flg != osm_dst;
     osm = 21;
     return flg;
 }
-int x86Internal::op_MUL16(int a, int opcode) {
+int x86Internal::op_MUL16(int multiplicand, int multiplier) {
     int flg;
-    flg = (a & 0xffff) * (opcode & 0xffff);
+    flg = (multiplicand & 0xffff) * (multiplier & 0xffff);
     osm_src = flg >> 16;
     osm_dst = ((flg << 16) >> 16);
     osm = 22;
     return flg;
 }
-int x86Internal::op_IMUL16(int a, int opcode) {
+int x86Internal::op_IMUL16(int multiplicand, int multiplier) {
     int flg;
-    a = (a << 16) >> 16;
-    opcode = (opcode << 16) >> 16;
-    flg = a * opcode;
+    multiplicand = (multiplicand << 16) >> 16;
+    multiplier = (multiplier << 16) >> 16;
+    flg = multiplicand * multiplier;
     osm_dst = ((flg << 16) >> 16);
     osm_src = flg != osm_dst;
     osm = 22;
     return flg;
 }
-int x86Internal::do_multiply32(int a, int opcode) {
+int x86Internal::do_multiply32(int multiplicand, int multiplier) {
     uint32_t Jc, Ic, Tc, Uc, m;
-    uint64_t _a = a;
-    uint32_t au = a;
-    uint32_t _opcode = opcode;
+    uint64_t _a = multiplicand;
+    uint32_t au = multiplicand;
+    uint32_t _opcode = multiplier;
     uint64_t r = _a * _opcode;
     if (r <= 0xffffffff) {
         v = 0;
@@ -1289,24 +1289,24 @@ int x86Internal::do_multiply32(int a, int opcode) {
     }
     return r;
 }
-int x86Internal::op_MUL32(int a, int opcode) {
-    osm_dst = do_multiply32(a, opcode);
+int x86Internal::op_MUL32(int multiplicand, int multiplier) {
+    osm_dst = do_multiply32(multiplicand, multiplier);
     osm_src = v;
     osm = 23;
     return osm_dst;
 }
-int x86Internal::op_IMUL32(int a, int opcode) {
+int x86Internal::op_IMUL32(int multiplicand, int multiplier) {
     int s, r;
     s = 0;
-    if (a < 0) {
-        a = -a;
+    if (multiplicand < 0) {
+        multiplicand = -multiplicand;
         s = 1;
     }
-    if (opcode < 0) {
-        opcode = -opcode;
+    if (multiplier < 0) {
+        multiplier = -multiplier;
         s ^= 1;
     }
-    r = do_multiply32(a, opcode);
+    r = do_multiply32(multiplicand, multiplier);
     if (s) {
         v = ~v;
         r = -r;

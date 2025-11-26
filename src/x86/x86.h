@@ -455,19 +455,19 @@ class x86Internal {
     int op_BSF(int dst, int src);
     int op_BSR16(int dst, int src);
     int op_BSR(int dst, int src);
-    void op_DIV8(int opcode);
-    void op_IDIV8(int opcode);
-    void op_DIV16(int opcode);
-    void op_IDIV16(int opcode);
-    int op_DIV32(uint32_t Ic, uint32_t Jc, uint32_t opcode);
-    int op_IDIV32(int Ic, int Jc, int opcode);
-    int op_MUL8(int a, int opcode);
-    int op_IMUL8(int a, int opcode);
-    int op_MUL16(int a, int opcode);
-    int op_IMUL16(int a, int opcode);
-    int do_multiply32(int _a, int opcode);
-    int op_MUL32(int a, int opcode);
-    int op_IMUL32(int a, int opcode);
+    void op_DIV8(int divisor);
+    void op_IDIV8(int divisor);
+    void op_DIV16(int divisor);
+    void op_IDIV16(int divisor);
+    int op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    int op_IDIV32(int dividend_upper, int dividend_lower, int divisor);
+    int op_MUL8(int multiplicand, int multiplier);
+    int op_IMUL8(int multiplicand, int multiplier);
+    int op_MUL16(int multiplicand, int multiplier);
+    int op_IMUL16(int multiplicand, int multiplier);
+    int do_multiply32(int multiplicand, int multiplier);
+    int op_MUL32(int multiplicand, int multiplier);
+    int op_IMUL32(int multiplicand, int multiplier);
 
     bool is_CF(); // carry (bit 0)
     int is_PF(); // parity (bit 2)
