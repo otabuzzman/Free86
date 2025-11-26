@@ -273,6 +273,7 @@ class x86Internal {
     void st32_phys(int mem8_loc, int x) {
         phys_mem32[mem8_loc >> 2] = x;
     }
+
     void tlb_set_page(uint32_t linear_address, int pte, int writable, int user) {
         int tlb_hash = linear_address ^ pte; // poor man's XOR hash
         uint32_t lat20 = linear_address >> 12;
@@ -502,15 +503,15 @@ class x86Internal {
     void do_JMPF_virtual_mode(int selector, int address);
     void do_JMPF(int selector, int address);
     void op_JMPF(int selector, int address);
-    void op_CALLF_real__v86_mode(bool is_32_bit, int selector, int address, int return_address);
-    void op_CALLF_protected_mode(bool is_32_bit, int selector, int address, int return_address);
-    void op_CALLF(bool is_32_bit, int selector, int address, int return_address);
-    void do_return_real__v86_mode(bool is_32_bit, bool is_iret, int return_offset);
-    void do_return_protected_mode(bool is_32_bit, bool is_iret, int return_offset);
+    void op_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address);
+    void op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address);
+    void op_CALLF(bool is_operand_size32, int selector, int address, int return_address);
+    void do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
+    void do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
     void clear_segment_register(int reg_idx, int cpl);
-    void op_IRET(bool is_32_bit);
-    void op_RETF(bool is_32_bit, int return_offset);
-    void op_LAR_LSL(bool is_32_bit, bool is_lsl);
+    void op_IRET(bool is_operand_size32);
+    void op_RETF(bool is_operand_size32, int return_offset);
+    void op_LAR_LSL(bool is_operand_size32, bool is_lsl);
     int ld_descriptor_field(int selector, bool is_lsl);
     void op_VERR_VERW(int selector, bool is_verw);
     void op_ARPL();
@@ -531,8 +532,9 @@ class x86Internal {
     void op_LEAVE();
     void op_ENTER16();
     void op_ENTER();
-    void ld_full_pointer32(int Sb);
-    void ld_full_pointer16(int Sb);
+    void ld_full_pointer16(int sreg);
+    void ld_full_pointer32(int sreg);
+
     void op_INSB();
     void op_OUTSB();
     void op_MOVSB();
