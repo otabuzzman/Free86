@@ -1475,7 +1475,7 @@ int x86Internal::segment_translation(int modRM) {
         } else {
             sreg--;
         }
-        mem8_loc = mem8_loc + segs[sreg].sib_base;
+        mem8_loc = mem8_loc + segs[sreg].base;
         return mem8_loc;
     } else {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -2067,6 +2067,7 @@ void x86Internal::op_IDIV16(int divisor) {
 int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
     uint32_t i;
+    int negative_dividend; 
     if (dividend_upper >= divisor) {
         abort(0);
     }
@@ -2076,8 +2077,9 @@ int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint
         return a / divisor;
     } else {
         for (i = 0; i < 32; i++) {
+            negative_dividend = dividend_upper >> 31;
             dividend_upper = (dividend_upper << 1) | (dividend_lower >> 31);
-            if ((dividend_upper >> 31) || (dividend_upper >= divisor)) {
+            if (negative_dividend || (dividend_upper >= divisor)) {
                 dividend_upper = dividend_upper - divisor;
                 dividend_lower = (dividend_lower << 1) | 1;
             } else {
