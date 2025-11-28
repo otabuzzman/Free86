@@ -3030,18 +3030,18 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
     }
 }
 void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
-    int esp, selector, stack_eip, stack_eflags, SS_mask, SS_base;
-    SS_mask = 0xffff;
+    int cs, esp, stack_eip, stack_eflags, SS_base, SS_mask;
     esp = regs[4];
     SS_base = segs[2].base;
+    SS_mask = 0xffff;
     if (is_operand_size32 == 1) {
         mem8_loc = (SS_base + (esp & SS_mask)) & -1;
         stack_eip = ld32_mem8_kernel_read();
         esp = (esp + 4) & -1;
         mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-        selector = ld32_mem8_kernel_read();
+        cs = ld32_mem8_kernel_read();
         esp = (esp + 4) & -1;
-        selector &= 0xffff;
+        cs &= 0xffff;
         if (is_iret) {
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
             stack_eflags = ld32_mem8_kernel_read();
@@ -3052,7 +3052,7 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
         stack_eip = ld16_mem8_kernel_read();
         esp = (esp + 2) & -1;
         mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-        selector = ld16_mem8_kernel_read();
+        cs = ld16_mem8_kernel_read();
         esp = (esp + 2) & -1;
         if (is_iret) {
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
@@ -3061,8 +3061,8 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
         }
     }
     regs[4] = (regs[4] & ~SS_mask) | ((esp + return_offset) & SS_mask);
-    segs[1].selector = selector;
-    segs[1].base = (selector << 4);
+    segs[1].selector = cs;
+    segs[1].base = (cs << 4);
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         int mask;
@@ -3090,7 +3090,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
         stack_eip = ld32_mem8_kernel_read();
         esp = (esp + 4) & -1;
         mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-        cs = ld32_mem8_kernel_read(); // CS
+        cs = ld32_mem8_kernel_read();
         esp = (esp + 4) & -1;
         cs &= 0xffff;
         if (is_iret) {
