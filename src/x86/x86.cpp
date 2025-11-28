@@ -3387,31 +3387,31 @@ void x86Internal::do_interrupt(int interrupt_id, int is_sw, int error_code, int 
     }
 }
 void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
-    int selector, ve, le, ye;
+    int selector, offset, esp, _return_address;
     if (interrupt_id * 4 + 3 > idt.limit) {
         abort(13, interrupt_id * 8 + 2);
     }
     mem8_loc = idt.base + (interrupt_id << 2);
-    ve = ld16_mem8_kernel_read();
+    offset = ld16_mem8_kernel_read();
     mem8_loc = mem8_loc + 2;
     selector = ld16_mem8_kernel_read();
-    le = regs[4];
+    esp = regs[4];
     if (is_sw) {
-        ye = return_address;
+        _return_address = return_address;
     } else {
-        ye = eip;
+        _return_address = eip;
     }
-    le = le - 2;
-    mem8_loc = (le & SS_mask) + SS_base;
+    esp = esp - 2;
+    mem8_loc = (esp & SS_mask) + SS_base;
     st16_mem8_write(get_EFLAGS());
-    le = le - 2;
-    mem8_loc = (le & SS_mask) + SS_base;
+    esp = esp - 2;
+    mem8_loc = (esp & SS_mask) + SS_base;
     st16_mem8_write(segs[1].selector);
-    le = le - 2;
-    mem8_loc = (le & SS_mask) + SS_base;
-    st16_mem8_write(ye);
-    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
-    eip = ve, far = far_start = 0;
+    esp = esp - 2;
+    mem8_loc = (esp & SS_mask) + SS_base;
+    st16_mem8_write(_return_address);
+    regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
+    eip = offset, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
