@@ -3079,46 +3079,43 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
     update_SSB();
 }
 void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
-    int selector, stack_eflags, gf;
-    int hf, jf, kf, lf;
+    int SS_base, SS_mask, esp, _esp, stack_eip, _esp, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
-    int _cpl = cpl, dpl, rpl, iopl;
-    int SS_base, SS_mask, esp, stack_eip, wd;
+    int _cpl = cpl, dpl, rpl, iopl, es, cs, ss, ds, fs, gs;
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = compile_sizemask(segs[2].flags);
-    stack_eflags = 0;
     if (is_operand_size32 == 1) {
         mem8_loc = (SS_base + (esp & SS_mask)) & -1;
         stack_eip = ld32_mem8_kernel_read();
         esp = (esp + 4) & -1;
         mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-        selector = ld32_mem8_kernel_read(); // CS
+        cs = ld32_mem8_kernel_read(); // CS
         esp = (esp + 4) & -1;
-        selector &= 0xffff;
+        cs &= 0xffff;
         if (is_iret) {
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
             stack_eflags = ld32_mem8_kernel_read();
             esp = (esp + 4) & -1;
             if (stack_eflags & 0x00020000) {
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                wd = ld32_mem8_kernel_read();
+                _esp = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 // pop segment selectors from stack
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                gf = ld32_mem8_kernel_read();
+                ss = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                hf = ld32_mem8_kernel_read();
+                es = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                jf = ld32_mem8_kernel_read();
+                ds = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                kf = ld32_mem8_kernel_read();
+                fs = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                lf = ld32_mem8_kernel_read();
+                gs = ld32_mem8_kernel_read();
                 esp = (esp + 4) & -1;
                 // clang-format off
                 set_EFLAGS(stack_eflags, 0x00000100 | 0x00000200 |
@@ -3126,15 +3123,15 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
                                          0x00020000 | 0x00040000 | 0x00080000 |
                                          0x00100000 | 0x00200000);
                 // clang-format on
-                set_segment_register_real__v86(1, selector & 0xffff);
+                set_segment_register_real__v86(1, cs & 0xffff);
                 set_current_privilege_level(3);
-                set_segment_register_real__v86(0, hf & 0xffff);
-                set_segment_register_real__v86(2, gf & 0xffff);
-                set_segment_register_real__v86(3, jf & 0xffff);
-                set_segment_register_real__v86(4, kf & 0xffff);
-                set_segment_register_real__v86(5, lf & 0xffff);
+                set_segment_register_real__v86(0, es & 0xffff);
+                set_segment_register_real__v86(2, ss & 0xffff);
+                set_segment_register_real__v86(3, ds & 0xffff);
+                set_segment_register_real__v86(4, fs & 0xffff);
+                set_segment_register_real__v86(5, gs & 0xffff);
                 eip = stack_eip & 0xffff, far = far_start = 0;
-                regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
+                regs[4] = (regs[4] & ~SS_mask) | (_esp & SS_mask);
                 return;
             }
         }
@@ -3143,7 +3140,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
         stack_eip = ld16_mem8_kernel_read();
         esp = (esp + 2) & -1;
         mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-        selector = ld16_mem8_kernel_read();
+        cs = ld16_mem8_kernel_read();
         esp = (esp + 2) & -1;
         if (is_iret) {
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
@@ -3151,83 +3148,83 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
             esp = (esp + 2) & -1;
         }
     }
-    if ((selector & 0xfffc) == 0) {
-        abort(13, selector & 0xfffc);
+    if ((cs & 0xfffc) == 0) {
+        abort(13, cs & 0xfffc);
     }
-    load_xdt_descriptor(descriptor_table_entry, selector);
+    load_xdt_descriptor(descriptor_table_entry, cs);
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
-        abort(13, selector & 0xfffc);
+        abort(13, cs & 0xfffc);
     }
     if (!(dte_upper_dword & (1 << 12)) || !(dte_upper_dword & (1 << 11))) {
-        abort(13, selector & 0xfffc);
+        abort(13, cs & 0xfffc);
     }
-    rpl = selector & 3;
+    rpl = cs & 3;
     if (rpl < _cpl) {
-        abort(13, selector & 0xfffc);
+        abort(13, cs & 0xfffc);
     }
     dpl = (dte_upper_dword >> 13) & 3;
     if (dte_upper_dword & (1 << 10)) {
         if (dpl > rpl) {
-            abort(13, selector & 0xfffc);
+            abort(13, cs & 0xfffc);
         }
     } else {
         if (dpl != rpl) {
-            abort(13, selector & 0xfffc);
+            abort(13, cs & 0xfffc);
         }
     }
     if (!(dte_upper_dword & (1 << 15))) {
-        abort(11, selector & 0xfffc);
+        abort(11, cs & 0xfffc);
     }
     esp = (esp + return_offset) & -1;
     if (rpl == _cpl) {
-        update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
         if (is_operand_size32 == 1) {
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-            wd = ld32_mem8_kernel_read();
+            _esp = ld32_mem8_kernel_read();
             esp = (esp + 4) & -1;
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-            gf = ld32_mem8_kernel_read();
+            ss = ld32_mem8_kernel_read();
             esp = (esp + 4) & -1;
-            gf &= 0xffff;
+            ss &= 0xffff;
         } else {
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-            wd = ld16_mem8_kernel_read();
+            _esp = ld16_mem8_kernel_read();
             esp = (esp + 2) & -1;
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-            gf = ld16_mem8_kernel_read();
+            ss = ld16_mem8_kernel_read();
             esp = (esp + 2) & -1;
         }
-        if ((gf & 0xfffc) == 0) {
+        if ((ss & 0xfffc) == 0) {
             abort(13, 0);
         } else {
             int dte_lower_dword, dte_upper_dword;
-            if ((gf & 3) != rpl) {
-                abort(13, gf & 0xfffc);
+            if ((ss & 3) != rpl) {
+                abort(13, ss & 0xfffc);
             }
-            load_xdt_descriptor(descriptor_table_entry, gf);
+            load_xdt_descriptor(descriptor_table_entry, ss);
             dte_lower_dword = descriptor_table_entry[0];
             dte_upper_dword = descriptor_table_entry[1];
             if (dte_lower_dword == 0 && dte_upper_dword == 0) {
-                abort(13, gf & 0xfffc);
+                abort(13, ss & 0xfffc);
             }
             if (!(dte_upper_dword & (1 << 12)) || (dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 9))) {
-                abort(13, gf & 0xfffc);
+                abort(13, ss & 0xfffc);
             }
             dpl = (dte_upper_dword >> 13) & 3;
             if (dpl != rpl) {
-                abort(13, gf & 0xfffc);
+                abort(13, ss & 0xfffc);
             }
             if (!(dte_upper_dword & (1 << 15))) {
-                abort(11, gf & 0xfffc);
+                abort(11, ss & 0xfffc);
             }
-            update_segment_register(2, gf, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+            update_segment_register(2, ss, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         }
-        update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         set_current_privilege_level(rpl);
-        esp = wd;
+        esp = _esp;
         SS_mask = compile_sizemask(dte_upper_dword);
         clear_segment_register(0, rpl);
         clear_segment_register(3, rpl);
