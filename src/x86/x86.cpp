@@ -3081,10 +3081,9 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
 void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int selector, stack_eflags, gf;
     int hf, jf, kf, lf;
-    int dte_lower_dword, dte_upper_dword, we, xe;
+    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     int _cpl = cpl, dpl, rpl, iopl;
     int SS_base, SS_mask, esp, stack_eip, wd;
-    int descriptor_table_entry[2];
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = compile_sizemask(segs[2].flags);
@@ -3204,31 +3203,32 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
         if ((gf & 0xfffc) == 0) {
             abort(13, 0);
         } else {
+            int dte_lower_dword, dte_upper_dword;
             if ((gf & 3) != rpl) {
                 abort(13, gf & 0xfffc);
             }
             load_xdt_descriptor(descriptor_table_entry, gf);
-            we = descriptor_table_entry[0];
-            xe = descriptor_table_entry[1];
-            if (we == 0 && xe == 0) {
+            dte_lower_dword = descriptor_table_entry[0];
+            dte_upper_dword = descriptor_table_entry[1];
+            if (dte_lower_dword == 0 && dte_upper_dword == 0) {
                 abort(13, gf & 0xfffc);
             }
-            if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9))) {
+            if (!(dte_upper_dword & (1 << 12)) || (dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 9))) {
                 abort(13, gf & 0xfffc);
             }
-            dpl = (xe >> 13) & 3;
+            dpl = (dte_upper_dword >> 13) & 3;
             if (dpl != rpl) {
                 abort(13, gf & 0xfffc);
             }
-            if (!(xe & (1 << 15))) {
+            if (!(dte_upper_dword & (1 << 15))) {
                 abort(11, gf & 0xfffc);
             }
-            update_segment_register(2, gf, compile_dte_base(we, xe), compile_dte_limit(we, xe), xe);
+            update_segment_register(2, gf, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         }
         update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         set_current_privilege_level(rpl);
         esp = wd;
-        SS_mask = compile_sizemask(xe);
+        SS_mask = compile_sizemask(dte_upper_dword);
         clear_segment_register(0, rpl);
         clear_segment_register(3, rpl);
         clear_segment_register(4, rpl);
