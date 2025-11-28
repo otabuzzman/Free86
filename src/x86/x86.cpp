@@ -3156,11 +3156,11 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
         abort(13, selector & 0xfffc);
     }
     load_xdt_descriptor(descriptor_table_entry, selector);
-    if (descriptor_table_entry[0] == 0 && descriptor_table_entry[1] == 0) {
-        abort(13, selector & 0xfffc);
-    }
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
+    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
+        abort(13, selector & 0xfffc);
+    }
     if (!(dte_upper_dword & (1 << 12)) || !(dte_upper_dword & (1 << 11))) {
         abort(13, selector & 0xfffc);
     }
@@ -3208,11 +3208,11 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
                 abort(13, gf & 0xfffc);
             }
             load_xdt_descriptor(descriptor_table_entry, gf);
-            if (descriptor_table_entry[0] == 0 && descriptor_table_entry[1] == 0) {
-                abort(13, gf & 0xfffc);
-            }
             we = descriptor_table_entry[0];
             xe = descriptor_table_entry[1];
+            if (we == 0 && xe == 0) {
+                abort(13, gf & 0xfffc);
+            }
             if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9))) {
                 abort(13, gf & 0xfffc);
             }
