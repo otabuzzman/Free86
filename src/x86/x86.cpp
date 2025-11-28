@@ -3222,15 +3222,14 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
             }
             update_segment_register(2, ss, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         }
-        update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-        set_current_privilege_level(rpl);
-        esp = stack_esp;
-        SS_mask = compile_sizemask(dte_upper_dword);
         clear_segment_register(0, rpl);
+        update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        esp = (stack_esp + return_offset) & -1;
+        SS_mask = compile_sizemask(dte_upper_dword);
         clear_segment_register(3, rpl);
         clear_segment_register(4, rpl);
         clear_segment_register(5, rpl);
-        esp = (esp + return_offset) & -1;
+        set_current_privilege_level(rpl);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = stack_eip, far = far_start = 0;
