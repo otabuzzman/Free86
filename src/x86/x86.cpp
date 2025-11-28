@@ -1767,29 +1767,29 @@ void x86Internal::load_xdt_descriptor(int *descriptor_table_entry, int selector)
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-void x86Internal::load_tss_descriptor(int *descriptor_table_entry, int privilege_level) {
-    int tr_type, Rb, is_operand_size32, dte_lower_dword, dte_upper_dword;
-    if (!(tr.flags & (1 << 15))) {
+void x86Internal::load_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
+    int type, offset, is_386, dte_lower_dword, dte_upper_dword;
+    if (!(tr.flags & (1 << 15))) { // present (P bit)
         abort(11, tr.selector & 0xfffc);
     }
-    tr_type = (tr.flags >> 8) & 0xf;
-    if ((tr_type & 7) != 1) {
+    type = (tr.flags >> 8) & 0xf;
+    if ((type & 7) != 1) { // 0000_10B1 (B bit)
         abort(13, tr.selector & 0xfffc);
     }
-    is_operand_size32 = tr_type >> 3;
-    Rb = (privilege_level * 4 + 2) << is_operand_size32;
-    if (Rb + (4 << is_operand_size32) - 1 > tr.limit) {
+    is_386 = type >> 3; // type 1/ 9 == 286/ 386 TSS (Inroduction to the 80386, p. 50)
+    offset = (privilege_level * 4 + 2) << is_386; // offset of privileged SP in TSS
+    if (offset + (4 << is_386) - 1 > tr.limit) {
         abort(10, tr.selector & 0xfffc);
     }
-    mem8_loc = (tr.base + Rb) & -1;
-    if (is_operand_size32 == 0) {
-        dte_upper_dword = ld16_mem8_kernel_read();
+    mem8_loc = (tr.base + offset) & -1;
+    if (is_386 == 0) {
+        dte_upper_dword = ld16_mem8_kernel_read(); // privileged SP
         mem8_loc += 2;
     } else {
-        dte_upper_dword = ld32_mem8_kernel_read();
+        dte_upper_dword = ld32_mem8_kernel_read(); // privileged ESP
         mem8_loc += 4;
     }
-    dte_lower_dword = ld16_mem8_kernel_read();
+    dte_lower_dword = ld16_mem8_kernel_read(); // privileged SS
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
@@ -2831,22 +2831,22 @@ void x86Internal::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, 
     update_SSB();
 }
 void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
-    int ue, i;
-    int dte_lower_dword, dte_upper_dword, dpl, rpl, ve, Se;
-    int ke, we, xe, esp, descriptor_type, re, SS_mask;
-    int x = 0, limit, Ue;
-    int SS_base, Ve, We;
+    int is_386;
+    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, dpl, rpl, offset, count;
+    int ss, we, xe, esp, descriptor_type, spl, SS_mask;
+    int x = 0, limit;
+    int SS_base, start_esp;
+    // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    int e[2];
-    load_xdt_descriptor(e, selector);
-    if (e[0] == 0 && e[1] == 0) {
+    load_xdt_descriptor(descriptor_table_entry, selector);
+    dte_lower_dword = descriptor_table_entry[0];
+    dte_upper_dword = descriptor_table_entry[1];
+    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         abort(13, selector & 0xfffc);
     }
-    dte_lower_dword = e[0];
-    dte_upper_dword = e[1];
-    We = regs[4];
+    start_esp = regs[4];
     if (dte_upper_dword & (1 << 12)) {
         if (!(dte_upper_dword & (1 << 11))) {
             abort(13, selector & 0xfffc);
@@ -2868,7 +2868,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
         if (!(dte_upper_dword & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        esp = We;
+        esp = start_esp;
         SS_mask = compile_sizemask(segs[2].flags);
         SS_base = segs[2].base;
         if (is_operand_size32) {
@@ -2918,17 +2918,17 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
             abort(11, selector & 0xfffc);
         }
         selector = dte_lower_dword >> 16;
-        ve = (dte_upper_dword & 0xffff0000) | (dte_lower_dword & 0x0000ffff);
-        Se = dte_upper_dword & 0x1f;
+        offset = (dte_upper_dword & 0xffff0000) | (dte_lower_dword & 0x0000ffff);
+        count = dte_upper_dword & 0x1f;
         if ((selector & 0xfffc) == 0) {
             abort(13, 0);
         }
-        load_xdt_descriptor(e, selector);
-        if (e[0] == 0 && e[1] == 0) {
+        load_xdt_descriptor(descriptor_table_entry, selector);
+        dte_lower_dword = descriptor_table_entry[0];
+        dte_upper_dword = descriptor_table_entry[1];
+        if (dte_lower_dword == 0 && dte_upper_dword == 0) {
             abort(13, selector & 0xfffc);
         }
-        dte_lower_dword = e[0];
-        dte_upper_dword = e[1];
         if (!(dte_upper_dword & (1 << 12)) || !(dte_upper_dword & ((1 << 11)))) {
             abort(13, selector & 0xfffc);
         }
@@ -2939,34 +2939,33 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
         if (!(dte_upper_dword & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) {
-            load_tss_descriptor(e, dpl);
-            ke = e[0];
-            esp = e[1];
-            if ((ke & 0xfffc) == 0) {
-                abort(10, ke & 0xfffc);
+        if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 11 == 1, 386 call gate
+            load_tss_interlevel(descriptor_table_entry, dpl);
+            ss = descriptor_table_entry[0];
+            if ((ss & 0xfffc) == 0) {
+                abort(10, ss & 0xfffc);
             }
-            if ((ke & 3) != dpl) {
-                abort(10, ke & 0xfffc);
+            if ((ss & 3) != dpl) {
+                abort(10, ss & 0xfffc);
             }
-            load_xdt_descriptor(e, ke);
-            if (e[0] == 0 && e[1] == 0) {
-                abort(10, ke & 0xfffc);
+            load_xdt_descriptor(descriptor_table_entry, ss);
+            we = descriptor_table_entry[0];
+            xe = descriptor_table_entry[1];
+            if (we == 0 && xe == 0) {
+                abort(10, ss & 0xfffc);
             }
-            we = e[0];
-            xe = e[1];
-            re = (xe >> 13) & 3;
-            if (re != dpl) {
-                abort(10, ke & 0xfffc);
+            spl = (xe >> 13) & 3;
+            if (spl != dpl) {
+                abort(10, ss & 0xfffc);
             }
             if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9))) {
-                abort(10, ke & 0xfffc);
+                abort(10, ss & 0xfffc);
             }
             if (!(xe & (1 << 15))) {
-                abort(10, ke & 0xfffc);
+                abort(10, ss & 0xfffc);
             }
-            Ue = compile_sizemask(segs[2].flags);
-            Ve = segs[2].base;
+            // Ue = compile_sizemask(segs[2].flags);
+            // Ve = segs[2].base;
             SS_mask = compile_sizemask(xe);
             SS_base = compile_dte_base(we, xe);
             if (is_operand_size32) {
@@ -2975,9 +2974,9 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
                 st32_mem8_kernel_write(segs[2].selector);
                 esp = (esp - 4) & -1;
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                st32_mem8_kernel_write(We);
-                for (i = Se - 1; i >= 0; i--) {
-                    // x = Xe(Ve + ((We + i * 4) & Ue));
+                st32_mem8_kernel_write(start_esp);
+                for (int i = count - 1; i >= 0; i--) {
+                    // x = Xe(Ve + ((start_esp + i * 4) & Ue));
                     esp = (esp - 4) & -1;
                     mem8_loc = (SS_base + (esp & SS_mask)) & -1;
                     st32_mem8_kernel_write(x);
@@ -2988,20 +2987,20 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
                 st16_mem8_kernel_write(segs[2].selector);
                 esp = (esp - 2) & -1;
                 mem8_loc = (SS_base + (esp & SS_mask)) & -1;
-                st16_mem8_kernel_write(We);
-                for (i = Se - 1; i >= 0; i--) {
-                    // x = Ye(Ve + ((We + i * 2) & Ue));
+                st16_mem8_kernel_write(start_esp);
+                for (int i = count - 1; i >= 0; i--) {
+                    // x = Ye(Ve + ((start_esp + i * 2) & Ue));
                     esp = (esp - 2) & -1;
                     mem8_loc = (SS_base + (esp & SS_mask)) & -1;
                     st16_mem8_kernel_write(x);
                 }
             }
-            ue = 1;
+            is_386 = 1;
         } else {
-            esp = We;
+            esp = start_esp;
             SS_mask = compile_sizemask(segs[2].flags);
             SS_base = segs[2].base;
-            ue = 0;
+            is_386 = 0;
         }
         if (is_operand_size32) {
             esp = (esp - 4) & -1;
@@ -3018,15 +3017,15 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
             mem8_loc = (SS_base + (esp & SS_mask)) & -1;
             st16_mem8_kernel_write(return_address);
         }
-        if (ue) {
-            ke = (ke & ~3) | dpl;
-            update_segment_register(2, ke, SS_base, compile_dte_limit(we, xe), xe);
+        if (is_386) {
+            ss = (ss & ~3) | dpl;
+            update_segment_register(2, ss, SS_base, compile_dte_limit(we, xe), xe);
         }
         selector = (selector & ~3) | dpl;
         update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         set_current_privilege_level(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-        eip = ve, far = far_start = 0;
+        eip = offset, far = far_start = 0;
     }
 }
 void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
@@ -3495,7 +3494,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int e
         abort(11, selector & 0xfffc);
     }
     if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) {
-        load_tss_descriptor(e, dpl);
+        load_tss_interlevel(e, dpl);
         ke = e[0];
         le = e[1];
         if ((ke & 0xfffc) == 0) {

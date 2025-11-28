@@ -412,7 +412,7 @@ class x86Internal {
     int is_segment_accessible(int selector, bool writable);
 
     void load_xdt_descriptor(int *descriptor_table_entry, int selector);
-    void load_tss_descriptor(int *descriptor_table_entry, int privilege_level);
+    void load_tss_interlevel(int *descriptor_table_entry, int privilege_level);
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
     void compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
