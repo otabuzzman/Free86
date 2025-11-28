@@ -2067,7 +2067,7 @@ void x86Internal::op_IDIV16(int divisor) {
 int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
     uint32_t i;
-    int negative_dividend; 
+    int negative_dividend;
     if (dividend_upper >= divisor) {
         abort(0);
     }
@@ -3084,7 +3084,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
     int dte_lower_dword, dte_upper_dword, we, xe;
     int _cpl = cpl, dpl, rpl, iopl;
     int SS_base, SS_mask, esp, stack_eip, wd;
-    int e[2];
+    int descriptor_table_entry[2];
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = compile_sizemask(segs[2].flags);
@@ -3155,12 +3155,12 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
     if ((selector & 0xfffc) == 0) {
         abort(13, selector & 0xfffc);
     }
-    load_xdt_descriptor(e, selector);
-    if (e[0] == 0 && e[1] == 0) {
+    load_xdt_descriptor(descriptor_table_entry, selector);
+    if (descriptor_table_entry[0] == 0 && descriptor_table_entry[1] == 0) {
         abort(13, selector & 0xfffc);
     }
-    dte_lower_dword = e[0];
-    dte_upper_dword = e[1];
+    dte_lower_dword = descriptor_table_entry[0];
+    dte_upper_dword = descriptor_table_entry[1];
     if (!(dte_upper_dword & (1 << 12)) || !(dte_upper_dword & (1 << 11))) {
         abort(13, selector & 0xfffc);
     }
@@ -3207,12 +3207,12 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
             if ((gf & 3) != rpl) {
                 abort(13, gf & 0xfffc);
             }
-            load_xdt_descriptor(e, gf);
-            if (e[0] == 0 && e[1] == 0) {
+            load_xdt_descriptor(descriptor_table_entry, gf);
+            if (descriptor_table_entry[0] == 0 && descriptor_table_entry[1] == 0) {
                 abort(13, gf & 0xfffc);
             }
-            we = e[0];
-            xe = e[1];
+            we = descriptor_table_entry[0];
+            xe = descriptor_table_entry[1];
             if (!(xe & (1 << 12)) || (xe & (1 << 11)) || !(xe & (1 << 9))) {
                 abort(13, gf & 0xfffc);
             }
