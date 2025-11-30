@@ -2195,7 +2195,7 @@ int x86Internal::op_IMUL32(int multiplicand, int multiplier) {
 }
 int x86Internal::do_multiply32(int multiplicand, int multiplier) {
     uint32_t Jc, Ic, Tc, Uc, m;
-    uint64_t r = (uint64_t) multiplicand * multiplier;
+    uint64_t r = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (r <= 0xffffffff) {
         v = 0;
         r &= -1;
