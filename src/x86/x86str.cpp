@@ -1,170 +1,170 @@
 #include "x86.h"
 
 void x86Internal::op_INSB() {
-    int Xf, Yf, Zf, ag, iopl, x;
+    int address_size_mask, edi, edx, ecx, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
     }
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    Zf = regs[2] & 0xffff;
+    edi = regs[7];
+    edx = regs[2] & 0xffff;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld8_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
+        x = ld8_port(edx);
+        mem8_loc = (edi & address_size_mask) + segs[0].base;
         st8_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        x = ld8_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
+        x = ld8_port(edx);
+        mem8_loc = (edi & address_size_mask) + segs[0].base;
         st8_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
 void x86Internal::op_OUTSB() {
-    int Xf, cg, Sb, ag, Zf, iopl, x;
+    int address_size_mask, esi, sreg, ecx, edx, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
     }
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Zf = regs[2] & 0xffff;
+    esi = regs[6];
+    edx = regs[2] & 0xffff;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
-        mem8_loc = (cg & Xf) + segs[Sb].base;
+        mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld8_mem8_read();
-        st8_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        st8_port(edx, x);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        mem8_loc = (cg & Xf) + segs[Sb].base;
+        mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld8_mem8_read();
-        st8_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
+        st8_port(edx, x);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
     }
 }
 void x86Internal::op_MOVSB() {
-    int Xf, Yf, cg, ag, Sb, eg;
+    int address_size_mask, edi, esi, ecx, sreg, la;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
-    eg = (Yf & Xf) + segs[0].base;
+    esi = regs[6];
+    edi = regs[7];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
+    la = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld8_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         st8_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld8_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         st8_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
 void x86Internal::op_STOSB() {
-    int Xf, Yf, ag;
+    int address_size_mask, edi, ecx;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
+    edi = regs[7];
+    mem8_loc = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         st8_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         st8_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
 void x86Internal::op_CMPSB() {
-    int Xf, Yf, cg, ag, Sb, eg;
+    int address_size_mask, edi, esi, ecx, sreg, la;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
-    eg = (Yf & Xf) + segs[0].base;
+    esi = regs[6];
+    edi = regs[7];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
+    la = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld8_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         y = ld8_mem8_read();
         do_arithmetic8(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
                 return;
@@ -174,69 +174,69 @@ void x86Internal::op_CMPSB() {
                 return;
             }
         }
-        if (ag & Xf) {
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld8_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         y = ld8_mem8_read();
         do_arithmetic8(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
 void x86Internal::op_LODSB() {
-    int Xf, cg, Sb, ag, x;
+    int address_size_mask, esi, sreg, ecx, x;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
+    esi = regs[6];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld8_mem8_read();
         regs[0] = (regs[0] & -256) | x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld8_mem8_read();
         regs[0] = (regs[0] & -256) | x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 0)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
     }
 }
 void x86Internal::op_SCASB() {
-    int Xf, Yf, ag, x;
+    int address_size_mask, edi, ecx, x;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
+    edi = regs[7];
+    mem8_loc = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld8_mem8_read();
         do_arithmetic8(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
                 return;
@@ -246,180 +246,180 @@ void x86Internal::op_SCASB() {
                 return;
             }
         }
-        if (ag & Xf) {
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld8_mem8_read();
         do_arithmetic8(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 0)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
 void x86Internal::op_INSW() {
-    int Xf, Yf, Zf, ag, iopl, x;
+    int address_size_mask, edi, edx, ecx, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
     }
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    Zf = regs[2] & 0xffff;
+    edi = regs[7];
+    edx = regs[2] & 0xffff;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
+        x = ld16_port(edx);
+        mem8_loc = (edi & address_size_mask) + segs[0].base;
         st16_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        x = ld16_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
+        x = ld16_port(edx);
+        mem8_loc = (edi & address_size_mask) + segs[0].base;
         st16_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
 void x86Internal::op_OUTSW() {
-    int Xf, cg, Sb, ag, Zf, iopl, x;
+    int address_size_mask, esi, sreg, ecx, edx, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
     }
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Zf = regs[2] & 0xffff;
+    esi = regs[6];
+    edx = regs[2] & 0xffff;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
-        mem8_loc = (cg & Xf) + segs[Sb].base;
+        mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld16_mem8_read();
-        st32_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        st32_port(edx, x);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        mem8_loc = (cg & Xf) + segs[Sb].base;
+        mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld16_mem8_read();
-        st32_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
+        st32_port(edx, x);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
 void x86Internal::op_MOVSW() {
-    int Xf, Yf, cg, ag, Sb, eg;
+    int address_size_mask, edi, esi, ecx, sreg, la;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
-    eg = (Yf & Xf) + segs[0].base;
+    esi = regs[6];
+    edi = regs[7];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
+    la = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld16_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         st16_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld16_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         st16_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
 void x86Internal::op_STOSW() {
-    int Xf, Yf, ag;
+    int address_size_mask, edi, ecx;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
+    edi = regs[7];
+    mem8_loc = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         st16_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         st16_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
 void x86Internal::op_CMPSW() {
-    int Xf, Yf, cg, ag, Sb, eg;
+    int address_size_mask, edi, esi, ecx, sreg, la;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
-    eg = (Yf & Xf) + segs[0].base;
+    esi = regs[6];
+    edi = regs[7];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
+    la = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld16_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         y = ld16_mem8_read();
         do_arithmetic16(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
                 return;
@@ -429,69 +429,69 @@ void x86Internal::op_CMPSW() {
                 return;
             }
         }
-        if (ag & Xf) {
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld16_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         y = ld16_mem8_read();
         do_arithmetic16(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
 void x86Internal::op_LODSW() {
-    int Xf, cg, Sb, ag, x;
+    int address_size_mask, esi, sreg, ecx, x;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
+    esi = regs[6];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld16_mem8_read();
         regs[0] = x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld16_mem8_read();
         regs[0] = x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
 void x86Internal::op_SCASW() {
-    int Xf, Yf, ag, x;
+    int address_size_mask, edi, ecx, x;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
+    edi = regs[7];
+    mem8_loc = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld16_mem8_read();
         do_arithmetic16(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
                 return;
@@ -501,180 +501,180 @@ void x86Internal::op_SCASW() {
                 return;
             }
         }
-        if (ag & Xf) {
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld16_mem8_read();
         do_arithmetic16(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
 void x86Internal::op_INSD() {
-    int Xf, Yf, Zf, ag, iopl, x;
+    int address_size_mask, edi, edx, ecx, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
     }
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    Zf = regs[2] & 0xffff;
+    edi = regs[7];
+    edx = regs[2] & 0xffff;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld32_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
+        x = ld32_port(edx);
+        mem8_loc = (edi & address_size_mask) + segs[0].base;
         st32_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        x = ld32_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
+        x = ld32_port(edx);
+        mem8_loc = (edi & address_size_mask) + segs[0].base;
         st32_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
 void x86Internal::op_OUTSD() {
-    int Xf, cg, Sb, ag, Zf, iopl, x;
+    int address_size_mask, esi, sreg, ecx, edx, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
     }
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Zf = regs[2] & 0xffff;
+    esi = regs[6];
+    edx = regs[2] & 0xffff;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
-        mem8_loc = (cg & Xf) + segs[Sb].base;
+        mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld32_mem8_read();
-        st32_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        st32_port(edx, x);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        mem8_loc = (cg & Xf) + segs[Sb].base;
+        mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld32_mem8_read();
-        st32_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
+        st32_port(edx, x);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
     }
 }
 void x86Internal::op_MOVSD() {
-    int Xf, Yf, cg, ag, Sb, eg;
+    int address_size_mask, edi, esi, ecx, sreg, la;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
-    eg = (Yf & Xf) + segs[0].base;
+    esi = regs[6];
+    edi = regs[7];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
+    la = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld32_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         st32_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld32_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         st32_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
 void x86Internal::op_STOSD() {
-    int Xf, Yf, ag;
+    int address_size_mask, edi, ecx;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
+    edi = regs[7];
+    mem8_loc = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         st32_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         st32_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
 void x86Internal::op_CMPSD() {
-    int Xf, Yf, cg, ag, Sb, eg;
+    int address_size_mask, edi, esi, ecx, sreg, la;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
-    eg = (Yf & Xf) + segs[0].base;
+    esi = regs[6];
+    edi = regs[7];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
+    la = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld32_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         y = ld32_mem8_read();
         do_arithmetic32(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
                 return;
@@ -684,69 +684,69 @@ void x86Internal::op_CMPSD() {
                 return;
             }
         }
-        if (ag & Xf) {
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld32_mem8_read();
-        mem8_loc = eg;
+        mem8_loc = la;
         y = ld32_mem8_read();
         do_arithmetic32(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
 void x86Internal::op_LODSD() {
-    int Xf, cg, Sb, ag, x;
+    int address_size_mask, esi, sreg, ecx, x;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Sb = ipr & 0x000f;
-    if (Sb == 0) {
-        Sb = 3;
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
+        sreg = 3;
     } else {
-        Sb--;
+        sreg--;
     }
-    cg = regs[6];
-    mem8_loc = (cg & Xf) + segs[Sb].base;
+    esi = regs[6];
+    mem8_loc = (esi & address_size_mask) + segs[sreg].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld32_mem8_read();
         regs[0] = x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld32_mem8_read();
         regs[0] = x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 2)) & Xf);
+        regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
     }
 }
 void x86Internal::op_SCASD() {
-    int Xf, Yf, ag, x;
+    int address_size_mask, edi, ecx, x;
     if (ipr & 0x0080) {
-        Xf = 0xffff;
+        address_size_mask = 0xffff;
     } else {
-        Xf = -1;
+        address_size_mask = -1;
     }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
+    edi = regs[7];
+    mem8_loc = (edi & address_size_mask) + segs[0].base;
     if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
+        ecx = regs[1];
+        if ((ecx & address_size_mask) == 0) {
             return;
         }
         x = ld32_mem8_read();
         do_arithmetic32(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
+        regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
                 return;
@@ -756,12 +756,12 @@ void x86Internal::op_SCASD() {
                 return;
             }
         }
-        if (ag & Xf) {
+        if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
         x = ld32_mem8_read();
         do_arithmetic32(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 2)) & Xf);
+        regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }

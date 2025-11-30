@@ -1583,20 +1583,20 @@ int x86Internal::segment_translation(int modRM) {
 }
 int x86Internal::convert_offset_to_linear(bool writable) {
     uint64_t mem8_loc;
-    int sreg, Ls, Tc, Lc;
+    int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
         mem8_loc = ld16_mem8_direct() & 0xffff;
-        Ls = 1; // 16 bit mode
+        stride = 2; // 16 bit mode
     } else {
         mem8_loc = phys_mem8[far] |
                    (phys_mem8[far + 1] << 8) |
                    (phys_mem8[far + 2] << 16) |
                    (phys_mem8[far + 3] << 24) & 0xffffffff;
         far += 4;
-        Ls = 3; // 32 bit mode
+        stride = 4; // 32 bit mode
     }
     if (!(opcode & 0x01)) {
-        Ls = 0; // byte mode, opcodes A0, A2
+        stride = 1; // byte mode, opcodes A0, A2
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -1606,21 +1606,21 @@ int x86Internal::convert_offset_to_linear(bool writable) {
     }
     // type checking
     if (sreg == 1) { // CS
-        Tc = writable || !(segs[sreg].flags & (1 << 9));
+        type_notok = writable || !(segs[sreg].flags & (1 << 9));
     } else { // data segment
-        Tc = writable && !(segs[sreg].flags & (1 << 9));
+        type_notok = writable && !(segs[sreg].flags & (1 << 9));
     }
-    if (Tc) {
+    if (type_notok) {
         abort(13, 0);
     }
     mem8_loc = segs[sreg].base + mem8_loc;
     // limit checking
     if (segs[sreg].flags & (1 << 10)) { // expand-down segment
-        Lc = mem8_loc < (uint64_t)segs[sreg].base + segs[sreg].limit + 1;
+        limit_notok = mem8_loc < (uint64_t)segs[sreg].base + segs[sreg].limit + 1;
     } else {
-        Lc = mem8_loc > (uint64_t)segs[sreg].base + segs[sreg].limit - Ls;
+        limit_notok = mem8_loc > (uint64_t)segs[sreg].base + segs[sreg].limit - (stride - 1);
     }
-    if (Lc) {
+    if (limit_notok) {
         if (sreg == 2) {
             abort(12, 0); // #SS(0)
         } else {
@@ -2195,18 +2195,15 @@ int x86Internal::op_IMUL32(int multiplicand, int multiplier) {
 }
 int x86Internal::do_multiply32(int multiplicand, int multiplier) {
     uint32_t Jc, Ic, Tc, Uc, m;
-    uint64_t _a = multiplicand;
-    uint32_t au = multiplicand;
-    uint32_t _opcode = multiplier;
-    uint64_t r = _a * _opcode;
+    uint64_t r = (uint64_t) multiplicand * multiplier;
     if (r <= 0xffffffff) {
         v = 0;
         r &= -1;
     } else {
-        Jc = _a & 0xffff;
-        Ic = au >> 16;
-        Tc = _opcode & 0xffff;
-        Uc = _opcode >> 16;
+        Jc = multiplicand & 0xffff;
+        Ic = (uint32_t) multiplicand >> 16;
+        Tc = multiplier & 0xffff;
+        Uc = (uint32_t) multiplier >> 16;
         r = Jc * Tc;
         v = Ic * Uc;
         m = Jc * Uc;
