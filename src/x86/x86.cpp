@@ -2407,13 +2407,12 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 0:
         if (count & 0x1f) {
             c = count & 0x7;
-            s1 = src & 0xff;
-            s2 = src;
-            src = (src << c) | (src >> (8 - c));
+            s1 = s2 = src & 0xff;
+            s1 = (s1 << c) | (s1 >> (8 - c));
             osm_src = compile_flags(true);
-            osm_src |= (src & 0x0001);
+            osm_src |= (s1 & 0x0001);
             if (c == 1) {
-                osm_src |= (((s2 ^ src) << 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2422,13 +2421,12 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 1:
         if (count & 0x1f) {
             c = count & 0x7;
-            s1 = src & 0xff;
-            s2 = src;
-            src = (src >> c) | (src << (8 - c));
+            s1 = s2 = src & 0xff;
+            s1 = (s1 >> c) | (s1 << (8 - c));
             osm_src = compile_flags(true);
-            osm_src |= ((src >> 7) & 0x0001);
+            osm_src |= ((s1 >> 7) & 0x0001);
             if (c == 1) {
-                osm_src |= (((s2 ^ src) << 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2437,17 +2435,16 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 2:
         c = do_shift8_LUT[count & 0x1f];
         if (c) {
-            s1 = src & 0xff;
-            s2 = src;
+            s1 = s2 = src & 0xff;
             cf = is_CF();
-            src = (src << c) | (cf << (c - 1));
+            s1 = (s1 << c) | (cf << (c - 1));
             if (c > 1) {
-                src |= s2 >> (9 - c);
+                s1 |= s2 >> (9 - c);
             }
             osm_src = compile_flags(true);
             osm_src |= ((s2 >> (8 - c)) & 0x0001);
             if (c == 1) {
-                osm_src |= (((s2 ^ src) << 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2456,17 +2453,16 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 3:
         c = do_shift8_LUT[count & 0x1f];
         if (c) {
-            s1 = src & 0xff;
-            s2 = src;
+            s1 = s2 = src & 0xff;
             cf = is_CF();
-            src = (src >> c) | (cf << (8 - c));
+            s1 = (s1 >> c) | (cf << (8 - c));
             if (c > 1) {
-                src |= s2 << (9 - c);
+                s1 |= s2 << (9 - c);
             }
             osm_src = compile_flags(true);
             osm_src |= ((s2 >> (c - 1)) & 0x0001);
             if (c == 1) {
-                osm_src |= (((s2 ^ src) << 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2476,45 +2472,45 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 6:
         c = count & 0x1f;
         if (c) {
-            osm_src = src << (c - 1);
-            osm_dst = src = (((src << c) << 24) >> 24);
+            osm_src = s1 << (c - 1);
+            osm_dst = s1 = (((s1 << c) << 24) >> 24);
             osm = 15;
         }
         break;
     case 5:
         c = count & 0x1f;
         if (c) {
-            src &= 0xff;
-            osm_src = src >> (c - 1);
-            osm_dst = src = (((src >> c) << 24) >> 24);
+            s1 = src & 0xff;
+            osm_src = s1 >> (c - 1);
+            osm_dst = s1 = (((s1 >> c) << 24) >> 24);
             osm = 18;
         }
         break;
     case 7:
         c = count & 0x1f;
         if (c) {
-            src = (src << 24) >> 24;
-            osm_src = src >> (c - 1);
-            osm_dst = src = (((src >> c) << 24) >> 24);
+            s1 = (src << 24) >> 24;
+            osm_src = s1 >> (c - 1);
+            osm_dst = s1 = (((s1 >> c) << 24) >> 24);
             osm = 18;
         }
         break;
     }
-    return src;
+    return s1;
 }
 int x86Internal::do_shift16(int operation, int src, int count) {
-    int kc, cf;
+    int s2, cf;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
             count &= 0xf;
             src &= 0xffff;
-            kc = src;
+            s2 = src;
             src = (src << count) | (src >> (16 - count));
             osm_src = compile_flags(true);
             osm_src |= (src & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2524,12 +2520,12 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         if (count & 0x1f) {
             count &= 0xf;
             src &= 0xffff;
-            kc = src;
+            s2 = src;
             src = (src >> count) | (src << (16 - count));
             osm_src = compile_flags(true);
             osm_src |= ((src >> 15) & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2539,16 +2535,16 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         count = do_shift16_LUT[count & 0x1f];
         if (count) {
             src &= 0xffff;
-            kc = src;
+            s2 = src;
             cf = is_CF();
             src = (src << count) | (cf << (count - 1));
             if (count > 1) {
-                src |= kc >> (17 - count);
+                src |= s2 >> (17 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (16 - count)) & 0x0001);
+            osm_src |= ((s2 >> (16 - count)) & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2558,16 +2554,16 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         count = do_shift16_LUT[count & 0x1f];
         if (count) {
             src &= 0xffff;
-            kc = src;
+            s2 = src;
             cf = is_CF();
             src = (src >> count) | (cf << (16 - count));
             if (count > 1) {
-                src |= kc << (17 - count);
+                src |= s2 << (17 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (count - 1)) & 0x0001);
+            osm_src |= ((s2 >> (count - 1)) & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2604,18 +2600,18 @@ int x86Internal::do_shift16(int operation, int src, int count) {
     return src;
 }
 int x86Internal::do_shift32(int operation, uint32_t src, int count) {
-    uint32_t kc;
+    uint32_t s2;
     int cf;
     switch (operation & 7) {
     case 0:
         count &= 0x1f;
         if (count) {
-            kc = src;
+            s2 = src;
             src = (src << count) | (src >> (32 - count));
             osm_src = compile_flags(true);
             osm_src |= (src & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 20) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2624,12 +2620,12 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
     case 1:
         count &= 0x1f;
         if (count) {
-            kc = src;
+            s2 = src;
             src = (src >> count) | (src << (32 - count));
             osm_src = compile_flags(true);
             osm_src |= ((src >> 31) & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 20) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2638,16 +2634,16 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
     case 2:
         count &= 0x1f;
         if (count) {
-            kc = src;
+            s2 = src;
             cf = is_CF();
             src = (src << count) | (cf << (count - 1));
             if (count > 1) {
-                src |= kc >> (33 - count);
+                src |= s2 >> (33 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (32 - count)) & 0x0001);
+            osm_src |= ((s2 >> (32 - count)) & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 20) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2656,16 +2652,16 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
     case 3:
         count &= 0x1f;
         if (count) {
-            kc = src;
+            s2 = src;
             cf = is_CF();
             src = (src >> count) | (cf << (32 - count));
             if (count > 1) {
-                src |= kc << (33 - count);
+                src |= s2 << (33 - count);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((kc >> (count - 1)) & 0x0001);
+            osm_src |= ((s2 >> (count - 1)) & 0x0001);
             if (count == 1) {
-                osm_src |= (((kc ^ src) >> 20) & 0x0800);
+                osm_src |= (((s2 ^ src) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
