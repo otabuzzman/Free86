@@ -1955,62 +1955,72 @@ int x86Internal::op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset) {
     return r;
 }
 int x86Internal::op_BSF16(int dst, int src) {
-    src &= 0xffff;
-    if (src) {
-        dst = 0;
-        while ((src & 1) == 0) {
-            dst++;
-            src >>= 1;
+    int d, s;
+    d = dst;
+    s = src & 0xffff;
+    if (s) {
+        d = 0;
+        while ((s & 1) == 0) {
+            d++;
+            s >>= 1;
         }
         osm_dst = 1;
     } else {
         osm_dst = 0;
     }
     osm = 14;
-    return dst;
+    return d;
 }
 int x86Internal::op_BSF(int dst, int src) {
-    if (src) {
-        dst = 0;
-        while ((src & 1) == 0) {
-            dst++;
-            src >>= 1;
+    int d, s;
+    d = dst;
+    s = src;
+    if (s) {
+        d = 0;
+        while ((s & 1) == 0) {
+            d++;
+            s >>= 1;
         }
         osm_dst = 1;
     } else {
         osm_dst = 0;
     }
     osm = 14;
-    return dst;
+    return d;
 }
 int x86Internal::op_BSR16(int dst, int src) {
-    src &= 0xffff;
-    if (src) {
-        dst = 15;
-        while ((src & 0x8000) == 0) {
-            dst--;
-            src <<= 1;
+    int d, s;
+    d = dst;
+    s = src & 0xffff;
+    if (s) {
+        d = 15;
+        while ((s & 0x8000) == 0) {
+            d--;
+            s <<= 1;
         }
         osm_dst = 1;
     } else {
         osm_dst = 0;
     }
     osm = 14;
-    return dst;
+    return d;
 }
 int x86Internal::op_BSR(int dst, int src) {
-    if (src) {
-        dst = 31;
-        while (src >= 0) {
-            dst--;
-            src <<= 1;
+    int d, s;
+    d = dst;
+    s = src;
+    if (s) {
+        d = 31;
+        while (s >= 0) {
+            d--;
+            s <<= 1;
         }
         osm_dst = 1;
     } else {
         osm_dst = 0;
     }
     osm = 14;
-    return dst;
+    return d;
 }
 void x86Internal::op_DIV8(int divisor) {
     int a, q, r;
