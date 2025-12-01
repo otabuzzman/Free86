@@ -1634,11 +1634,12 @@ void x86Internal::update_segment_register(int sreg, int selector, uint32_t base,
     update_SSB();
 }
 void x86Internal::set_segment_register(int sreg, int selector) {
-    selector &= 0xffff;
+    int s;
+    s = selector & 0xffff;
     if (check_protected()) {
-        set_segment_register_protected(sreg, selector);
+        set_segment_register_protected(sreg, s);
     } else { // real or v86 mode
-        set_segment_register_real__v86(sreg, selector);
+        set_segment_register_real__v86(sreg, s);
     }
 }
 void x86Internal::set_segment_register_real__v86(int sreg, int selector) {

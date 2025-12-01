@@ -1,7 +1,7 @@
 #include "x86.h"
 
 void x86Internal::op_INSB() {
-    int address_size_mask, edi, edx, ecx, iopl, x;
+    int address_size_mask, ecx, edx, edi, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -34,7 +34,7 @@ void x86Internal::op_INSB() {
     }
 }
 void x86Internal::op_OUTSB() {
-    int address_size_mask, esi, sreg, ecx, edx, iopl, x;
+    int address_size_mask, ecx, edx, esi, sreg, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -73,7 +73,7 @@ void x86Internal::op_OUTSB() {
     }
 }
 void x86Internal::op_MOVSB() {
-    int address_size_mask, edi, esi, ecx, sreg, la;
+    int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -112,7 +112,7 @@ void x86Internal::op_MOVSB() {
     }
 }
 void x86Internal::op_STOSB() {
-    int address_size_mask, edi, ecx;
+    int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -137,7 +137,7 @@ void x86Internal::op_STOSB() {
     }
 }
 void x86Internal::op_CMPSB() {
-    int address_size_mask, edi, esi, ecx, sreg, la;
+    int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -187,7 +187,7 @@ void x86Internal::op_CMPSB() {
     }
 }
 void x86Internal::op_LODSB() {
-    int address_size_mask, esi, sreg, ecx, x;
+    int address_size_mask, ecx, esi, sreg, x;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -220,7 +220,7 @@ void x86Internal::op_LODSB() {
     }
 }
 void x86Internal::op_SCASB() {
-    int address_size_mask, edi, ecx, x;
+    int address_size_mask, ecx, edi, x;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -256,7 +256,7 @@ void x86Internal::op_SCASB() {
     }
 }
 void x86Internal::op_INSW() {
-    int address_size_mask, edi, edx, ecx, iopl, x;
+    int address_size_mask, ecx, edx, edi, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -289,7 +289,7 @@ void x86Internal::op_INSW() {
     }
 }
 void x86Internal::op_OUTSW() {
-    int address_size_mask, esi, sreg, ecx, edx, iopl, x;
+    int address_size_mask, ecx, edx, esi, sreg, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -328,7 +328,7 @@ void x86Internal::op_OUTSW() {
     }
 }
 void x86Internal::op_MOVSW() {
-    int address_size_mask, edi, esi, ecx, sreg, la;
+    int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -367,7 +367,7 @@ void x86Internal::op_MOVSW() {
     }
 }
 void x86Internal::op_STOSW() {
-    int address_size_mask, edi, ecx;
+    int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -392,7 +392,7 @@ void x86Internal::op_STOSW() {
     }
 }
 void x86Internal::op_CMPSW() {
-    int address_size_mask, edi, esi, ecx, sreg, la;
+    int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -442,7 +442,7 @@ void x86Internal::op_CMPSW() {
     }
 }
 void x86Internal::op_LODSW() {
-    int address_size_mask, esi, sreg, ecx, x;
+    int address_size_mask, ecx, esi, sreg, x;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -475,7 +475,7 @@ void x86Internal::op_LODSW() {
     }
 }
 void x86Internal::op_SCASW() {
-    int address_size_mask, edi, ecx, x;
+    int address_size_mask, ecx, edi, x;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -511,7 +511,7 @@ void x86Internal::op_SCASW() {
     }
 }
 void x86Internal::op_INSD() {
-    int address_size_mask, edi, edx, ecx, iopl, x;
+    int address_size_mask, ecx, edx, edi, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -544,7 +544,7 @@ void x86Internal::op_INSD() {
     }
 }
 void x86Internal::op_OUTSD() {
-    int address_size_mask, esi, sreg, ecx, edx, iopl, x;
+    int address_size_mask, ecx, edx, esi, sreg, iopl, x;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -583,7 +583,7 @@ void x86Internal::op_OUTSD() {
     }
 }
 void x86Internal::op_MOVSD() {
-    int address_size_mask, edi, esi, ecx, sreg, la;
+    int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -622,7 +622,7 @@ void x86Internal::op_MOVSD() {
     }
 }
 void x86Internal::op_STOSD() {
-    int address_size_mask, edi, ecx;
+    int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -647,7 +647,7 @@ void x86Internal::op_STOSD() {
     }
 }
 void x86Internal::op_CMPSD() {
-    int address_size_mask, edi, esi, ecx, sreg, la;
+    int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -697,7 +697,7 @@ void x86Internal::op_CMPSD() {
     }
 }
 void x86Internal::op_LODSD() {
-    int address_size_mask, esi, sreg, ecx, x;
+    int address_size_mask, ecx, esi, sreg, x;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -730,7 +730,7 @@ void x86Internal::op_LODSD() {
     }
 }
 void x86Internal::op_SCASD() {
-    int address_size_mask, edi, ecx, x;
+    int address_size_mask, ecx, edi, x;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
