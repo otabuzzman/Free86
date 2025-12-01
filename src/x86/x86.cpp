@@ -2023,105 +2023,109 @@ int x86Internal::op_BSR(int dst, int src) {
     return d;
 }
 void x86Internal::op_DIV8(int divisor) {
-    int a, q, r;
+    int d, a, q, r;
+    d = divisor & 0xff;
     a = regs[0] & 0xffff;
-    divisor &= 0xff;
-    if ((a >> 8) >= divisor) {
+    if ((a >> 8) >= d) {
         abort(0);
     }
-    q = a / divisor;
-    r = (a % divisor);
+    q = a / d;
+    r = (a % d);
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
 void x86Internal::op_IDIV8(int divisor) {
-    int a, q, r;
+    int d, a, q, r;
+    d = (divisor << 24) >> 24;
     a = (regs[0] << 16) >> 16;
-    divisor = (divisor << 24) >> 24;
-    if (divisor == 0) {
+    if (d == 0) {
         abort(0);
     }
-    q = a / divisor;
+    q = a / d;
     if (((q << 24) >> 24) != q) {
         abort(0);
     }
-    r = (a % divisor);
+    r = (a % d);
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
 void x86Internal::op_DIV16(int divisor) {
-    int a, q, r;
+    int d, a, q, r;
+    d = divisor & 0xffff;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
-    divisor &= 0xffff;
     uint32_t au = a;
-    if ((au >> 16) >= divisor) {
+    if ((au >> 16) >= d) {
         abort(0);
     }
-    q = au / divisor;
-    r = (au % divisor);
+    q = au / d;
+    r = (au % d);
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
 void x86Internal::op_IDIV16(int divisor) {
-    int a, q, r;
+    int d, a, q, r;
+    d = (divisor << 16) >> 16;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
-    divisor = (divisor << 16) >> 16;
-    if (divisor == 0) {
+    if (d == 0) {
         abort(0);
     }
-    q = a / divisor;
+    q = a / d;
     if (((q << 16) >> 16) != q) {
         abort(0);
     }
-    r = (a % divisor);
+    r = (a % d);
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
 int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
-    uint32_t i;
-    int negative_dividend;
-    if (dividend_upper >= divisor) {
+    uint32_t du, dl;
+    int nd;
+    du = dividend_upper;
+    dl = dividend_lower;
+    if (du >= divisor) {
         abort(0);
     }
-    if (dividend_upper >= 0 && dividend_upper <= 0x200000) {
-        a = dividend_upper * 4294967296 + dividend_lower;
+    if (du >= 0 && du <= 0x200000) {
+        a = du * 4294967296 + dl;
         v = a % divisor;
         return a / divisor;
     } else {
-        for (i = 0; i < 32; i++) {
-            negative_dividend = dividend_upper >> 31;
-            dividend_upper = (dividend_upper << 1) | (dividend_lower >> 31);
-            if (negative_dividend || (dividend_upper >= divisor)) {
-                dividend_upper = dividend_upper - divisor;
-                dividend_lower = (dividend_lower << 1) | 1;
+        for (int i = 0; i < 32; i++) {
+            nd = du >> 31;
+            du = (du << 1) | (dl >> 31);
+            if (nd || (du >= divisor)) {
+                du = du - divisor;
+                dl = (dl << 1) | 1;
             } else {
-                dividend_lower = dividend_lower << 1;
+                dl = dl << 1;
             }
         }
-        v = dividend_upper;
-        return dividend_lower;
+        v = du;
+        return dl;
     }
 }
 int x86Internal::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
-    int negative_dividend, negative_divisor, q;
-    if (dividend_upper < 0) {
-        negative_dividend = 1;
-        dividend_upper = ~dividend_upper;
-        dividend_lower = -dividend_lower;
-        if (dividend_lower == 0) {
-            dividend_upper = dividend_upper + 1;
+    int du, dl, ndd, ndr, q;
+    du = dividend_upper;
+    dl = dividend_lower;
+    if (du < 0) {
+        ndd = 1;
+        du = ~du;
+        dl = -dl;
+        if (dl == 0) {
+            du = du + 1;
         }
     } else {
-        negative_dividend = 0;
+        ndd = 0;
     }
     if (divisor < 0) {
         divisor = -divisor;
-        negative_divisor = 1;
+        ndr = 1;
     } else {
-        negative_divisor = 0;
+        ndr = 0;
     }
-    q = op_DIV32(dividend_upper, dividend_lower, divisor);
-    negative_divisor ^= negative_dividend;
-    if (negative_divisor) {
+    q = op_DIV32(du, dl, divisor);
+    ndr ^= ndd;
+    if (ndr) {
         if (q > 0x80000000) {
             abort(0);
         }
@@ -2131,7 +2135,7 @@ int x86Internal::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) 
             abort(0);
         }
     }
-    if (negative_dividend) {
+    if (ndd) {
         v = -v;
     }
     return q;
