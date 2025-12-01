@@ -2187,7 +2187,7 @@ int x86Internal::op_MUL32(int multiplicand, int multiplier) {
 int x86Internal::op_IMUL32(int multiplicand, int multiplier) {
     int md, mr, s, r;
     md = multiplicand;
-    mr = mr;
+    mr = multiplier;
     s = 0;
     if (md < 0) {
         md = -md;
