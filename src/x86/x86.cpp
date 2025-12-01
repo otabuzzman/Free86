@@ -1853,58 +1853,58 @@ int x86Internal::op_DEC16(int x) {
     return osm_dst;
 }
 int x86Internal::op_SHRD_SHLD16(int operation, int dst, int src, int count) {
-    int s, c, x;
+    int d, s, c, x;
+    d = dst;
     c = count & 0x1f;
     if (c) {
         if (operation == 0) { // SHLD
             s = src & 0xffff;
-            x = s | (dst << 16);
+            x = s | (d << 16);
             osm_src = x >> (32 - c);
             x = x << c;
             if (c > 16) {
                 x |= s << (c - 16);
             }
-            osm_dst = x >> 16;
+            osm_dst = d = x >> 16;
             osm = 19;
         } else { // SHRD
-            x = (dst & 0xffff) | (src << 16);
+            x = (d & 0xffff) | (src << 16);
             osm_src = x >> (c - 1);
             x = x >> c;
             if (c > 16) {
                 x |= src << (32 - c);
             }
-            osm_dst = ((x << 16) >> 16);
+            osm_dst = d = ((x << 16) >> 16);
             osm = 19;
         }
     }
-    return osm_dst;
+    return d;
 }
 int x86Internal::op_SHRD(int dst, int src, int count) {
-    int c;
+    int d, c;
+    d = dst;
     c = count & 0x1f;
     if (c) {
-        osm_src = dst >> (c - 1);
-        uint32_t s = src;
-        uint32_t d = dst;
-        uint32_t lval = (d >> c);
-        uint32_t rval = (s << (32 - c));
-        osm_dst = lval | rval;
+        osm_src = d >> (c - 1);
+        uint32_t lval = ((uint32_t) d >> c);
+        uint32_t rval = ((uint32_t) src << (32 - c));
+        osm_dst = d = lval | rval;
         osm = 20;
     }
-    return osm_dst;
+    return d;
 }
 int x86Internal::op_SHLD(int dst, int src, int count) {
-    int c;
+    int d, c;
+    d = dst;
     c = count & 0x1f;
     if (c) {
-        osm_src = dst << (c - 1);
-        uint32_t s = src;
-        uint32_t lval = (dst << c);
-        uint32_t rval = (s >> (32 - c));
-        osm_dst = lval | rval;
+        osm_src = d << (c - 1);
+        uint32_t lval = (d << c);
+        uint32_t rval = ((uint32_t) src >> (32 - c));
+        osm_dst = d = lval | rval;
         osm = 17;
     }
-    return osm_dst;
+    return d;
 }
 void x86Internal::op_BT16(int bit_base, int bit_offset) {
     bit_offset &= 0xf;
