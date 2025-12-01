@@ -1853,56 +1853,58 @@ int x86Internal::op_DEC16(int x) {
     return osm_dst;
 }
 int x86Internal::op_SHRD_SHLD16(int operation, int dst, int src, int count) {
-    int x;
-    count &= 0x1f;
-    if (count) {
+    int s, c, x;
+    c = count & 0x1f;
+    if (c) {
         if (operation == 0) { // SHLD
-            src &= 0xffff;
-            x = src | (dst << 16);
-            osm_src = x >> (32 - count);
-            x = x << count;
-            if (count > 16) {
-                x |= src << (count - 16);
+            s = src & 0xffff;
+            x = s | (dst << 16);
+            osm_src = x >> (32 - c);
+            x = x << c;
+            if (c > 16) {
+                x |= s << (c - 16);
             }
-            dst = osm_dst = x >> 16;
+            osm_dst = x >> 16;
             osm = 19;
         } else { // SHRD
             x = (dst & 0xffff) | (src << 16);
-            osm_src = x >> (count - 1);
-            x = x >> count;
-            if (count > 16) {
-                x |= src << (32 - count);
+            osm_src = x >> (c - 1);
+            x = x >> c;
+            if (c > 16) {
+                x |= src << (32 - c);
             }
-            dst = osm_dst = ((x << 16) >> 16);
+            osm_dst = ((x << 16) >> 16);
             osm = 19;
         }
     }
-    return dst;
+    return osm_dst;
 }
 int x86Internal::op_SHRD(int dst, int src, int count) {
-    count &= 0x1f;
-    if (count) {
-        osm_src = dst >> (count - 1);
-        uint32_t Zbu = src;
-        uint32_t Ybu = dst;
-        uint32_t lval = (Ybu >> count);
-        uint32_t rval = (Zbu << (32 - count));
-        osm_dst = dst = lval | rval;
+    int c;
+    c = count & 0x1f;
+    if (c) {
+        osm_src = dst >> (c - 1);
+        uint32_t s = src;
+        uint32_t d = dst;
+        uint32_t lval = (d >> c);
+        uint32_t rval = (s << (32 - c));
+        osm_dst = lval | rval;
         osm = 20;
     }
-    return dst;
+    return osm_dst;
 }
 int x86Internal::op_SHLD(int dst, int src, int count) {
-    count &= 0x1f;
-    if (count) {
-        osm_src = dst << (count - 1);
-        uint32_t Zbu = src;
-        uint32_t lval = (dst << count);
-        uint32_t rval = (Zbu >> (32 - count));
-        osm_dst = dst = lval | rval;
+    int c;
+    c = count & 0x1f;
+    if (c) {
+        osm_src = dst << (c - 1);
+        uint32_t s = src;
+        uint32_t lval = (dst << c);
+        uint32_t rval = (s >> (32 - c));
+        osm_dst = lval | rval;
         osm = 17;
     }
-    return dst;
+    return osm_dst;
 }
 void x86Internal::op_BT16(int bit_base, int bit_offset) {
     bit_offset &= 0xf;
