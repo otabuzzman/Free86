@@ -2499,18 +2499,18 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     return s1;
 }
 int x86Internal::do_shift16(int operation, int src, int count) {
-    int s2, cf;
+    int s1, s2, cf;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
             count &= 0xf;
-            src &= 0xffff;
-            s2 = src;
-            src = (src << count) | (src >> (16 - count));
+            s1 = src & 0xffff;
+            s2 = s1;
+            s1 = (s1 << count) | (s1 >> (16 - count));
             osm_src = compile_flags(true);
-            osm_src |= (src & 0x0001);
+            osm_src |= (s1 & 0x0001);
             if (count == 1) {
-                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2519,13 +2519,13 @@ int x86Internal::do_shift16(int operation, int src, int count) {
     case 1:
         if (count & 0x1f) {
             count &= 0xf;
-            src &= 0xffff;
-            s2 = src;
-            src = (src >> count) | (src << (16 - count));
+            s1 = src & 0xffff;
+            s2 = s1;
+            s1 = (s1 >> count) | (s1 << (16 - count));
             osm_src = compile_flags(true);
-            osm_src |= ((src >> 15) & 0x0001);
+            osm_src |= ((s1 >> 15) & 0x0001);
             if (count == 1) {
-                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2534,17 +2534,17 @@ int x86Internal::do_shift16(int operation, int src, int count) {
     case 2:
         count = do_shift16_LUT[count & 0x1f];
         if (count) {
-            src &= 0xffff;
-            s2 = src;
+            s1 = src & 0xffff;
+            s2 = s1;
             cf = is_CF();
-            src = (src << count) | (cf << (count - 1));
+            s1 = (s1 << count) | (cf << (count - 1));
             if (count > 1) {
-                src |= s2 >> (17 - count);
+                s1 |= s2 >> (17 - count);
             }
             osm_src = compile_flags(true);
             osm_src |= ((s2 >> (16 - count)) & 0x0001);
             if (count == 1) {
-                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2553,17 +2553,17 @@ int x86Internal::do_shift16(int operation, int src, int count) {
     case 3:
         count = do_shift16_LUT[count & 0x1f];
         if (count) {
-            src &= 0xffff;
-            s2 = src;
+            s1 = src & 0xffff;
+            s2 = s1;
             cf = is_CF();
-            src = (src >> count) | (cf << (16 - count));
+            s1 = (s1 >> count) | (cf << (16 - count));
             if (count > 1) {
-                src |= s2 << (17 - count);
+                s1 |= s2 << (17 - count);
             }
             osm_src = compile_flags(true);
             osm_src |= ((s2 >> (count - 1)) & 0x0001);
             if (count == 1) {
-                osm_src |= (((s2 ^ src) >> 4) & 0x0800);
+                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2574,30 +2574,30 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         count &= 0x1f;
         if (count) {
             osm_src = src << (count - 1);
-            osm_dst = src = (((src << count) << 16) >> 16);
+            osm_dst = s1 = (((src << count) << 16) >> 16);
             osm = 16;
         }
         break;
     case 5:
         count &= 0x1f;
         if (count) {
-            src &= 0xffff;
-            osm_src = src >> (count - 1);
-            osm_dst = src = (((src >> count) << 16) >> 16);
+            s1 = src & 0xffff;
+            osm_src = s1 >> (count - 1);
+            osm_dst = s1 = (((s1 >> count) << 16) >> 16);
             osm = 19;
         }
         break;
     case 7:
         count &= 0x1f;
         if (count) {
-            src = (src << 16) >> 16;
-            osm_src = src >> (count - 1);
-            osm_dst = src = (((src >> count) << 16) >> 16);
+            s1 = (src << 16) >> 16;
+            osm_src = s1 >> (count - 1);
+            osm_dst = s1 = (((s1 >> count) << 16) >> 16);
             osm = 19;
         }
         break;
     }
-    return src;
+    return s1;
 }
 int x86Internal::do_shift32(int operation, uint32_t src, int count) {
     uint32_t s2;
