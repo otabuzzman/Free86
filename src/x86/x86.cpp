@@ -2243,40 +2243,48 @@ int x86Internal::do_multiply32(int multiplicand, int multiplier) {
     return r;
 }
 int x86Internal::do_arithmetic8(int operation, int dst, int src) {
-    int cf;
+    int d, cf;
+    d = dst;
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        osm_dst = (((dst + src) << 24) >> 24);
+        d = (((d + src) << 24) >> 24);
+        osm_dst = d;
         osm = 0;
         break;
     case 1:
-        osm_dst = (((dst | src) << 24) >> 24);
+        d = (((d | src) << 24) >> 24);
+        osm_dst = d;
         osm = 12;
         break;
     case 2:
         cf = is_CF();
         osm_src = src;
-        osm_dst = (((dst + src + cf) << 24) >> 24);
+        d = (((d + src + cf) << 24) >> 24);
+        osm_dst = d;
         osm = cf ? 3 : 0;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        osm_dst = (((dst - src - cf) << 24) >> 24);
+        d = (((d - src - cf) << 24) >> 24);
+        osm_dst = d;
         osm = cf ? 9 : 6;
         break;
     case 4:
-        osm_dst = (((dst & src) << 24) >> 24);
+        d = (((d & src) << 24) >> 24);
+        osm_dst = d;
         osm = 12;
         break;
     case 5:
         osm_src = src;
-        osm_dst = (((dst - src) << 24) >> 24);
+        d = (((d - src) << 24) >> 24);
+        osm_dst = d;
         osm = 6;
         break;
     case 6:
-        osm_dst = (((dst ^ src) << 24) >> 24);
+        d = (((d ^ src) << 24) >> 24);
+        osm_dst = d;
         osm = 12;
         break;
     case 7:
@@ -2285,97 +2293,113 @@ int x86Internal::do_arithmetic8(int operation, int dst, int src) {
         osm = 6;
         break;
     }
-    return osm_dst;
+    return d;
 }
 int x86Internal::do_arithmetic16(int operation, int dst, int src) {
-    int cf;
+    int d, cf;
+    d = dst;
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        osm_dst = (((dst + src) << 16) >> 16);
+        d = (((d + src) << 16) >> 16);
+        osm_dst = d;
         osm = 1;
         break;
     case 1:
-        osm_dst = (((dst | src) << 16) >> 16);
+        d = (((d | src) << 16) >> 16);
+        osm_dst = d;
         osm = 13;
         break;
     case 2:
         cf = is_CF();
         osm_src = src;
-        osm_dst = (((dst + src + cf) << 16) >> 16);
+        d = (((d + src + cf) << 16) >> 16);
+        osm_dst = d;
         osm = cf ? 4 : 1;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        osm_dst = (((dst - src - cf) << 16) >> 16);
+        d = (((d - src - cf) << 16) >> 16);
+        osm_dst = d;
         osm = cf ? 10 : 7;
         break;
     case 4:
-        osm_dst = (((dst & src) << 16) >> 16);
+        d = (((d & src) << 16) >> 16);
+        osm_dst = d;
         osm = 13;
         break;
     case 5:
         osm_src = src;
-        osm_dst = (((dst - src) << 16) >> 16);
+        d = (((d - src) << 16) >> 16);
+        osm_dst = d;
         osm = 7;
         break;
     case 6:
-        osm_dst = (((dst ^ src) << 16) >> 16);
+        d = (((d ^ src) << 16) >> 16);
+        osm_dst = d;
         osm = 13;
         break;
     case 7:
         osm_src = src;
-        osm_dst = (((dst - src) << 16) >> 16);
+        osm_dst = (((d - src) << 16) >> 16);
         osm = 7;
         break;
     }
-    return osm_dst;
+    return d;
 }
 int x86Internal::do_arithmetic32(int operation, int dst, int src) {
-    int cf;
+    int d, cf;
+    d = dst;
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        osm_dst = dst + src;
+        d = d + src;
+        osm_dst = d;
         osm = 2;
         break;
     case 1:
-        osm_dst = dst | src;
+        d = d | src;
+        osm_dst = d;
         osm = 14;
         break;
     case 2:
         cf = is_CF();
         osm_src = src;
-        osm_dst = dst + src + cf;
+        d = d + src + cf;
+        osm_dst = d;
         osm = cf ? 5 : 2;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        osm_dst = dst - src - cf;
+        d = d - src - cf;
+        osm_dst = d;
         osm = cf ? 11 : 8;
         break;
     case 4:
-        osm_dst = dst & src;
+        d = d & src;
+        osm_dst = d;
         osm = 14;
         break;
     case 5:
         osm_src = src;
-        osm_dst = dst - src;
+        d = d - src;
+        osm_dst = d;
         osm = 8;
         break;
     case 6:
-        osm_dst = dst ^ src;
+        d = d ^ src;
+        osm_dst = d;
         osm = 14;
         break;
     case 7:
         osm_src = src;
-        osm_dst = dst - src;
+        osm_dst = d - src;
         osm = 8;
         break;
     }
-    return osm_dst;
+    return d;
 }
 int x86Internal::do_shift8(int operation, int src, int count) {
     int kc, cf;
