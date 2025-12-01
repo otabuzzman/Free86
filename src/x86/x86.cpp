@@ -1916,7 +1916,7 @@ void x86Internal::op_BT(int bit_base, int bit_offset) {
 }
 int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
     int o, x, r;
-    o = bit_offset = 0xf;
+    o = bit_offset & 0xf;
     osm_src = bit_base >> o;
     x = 1 << o;
     switch (operation) {
@@ -1936,7 +1936,7 @@ int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
 }
 int x86Internal::op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset) {
     int o, x, r;
-    o = bit_offset = 0x1f;
+    o = bit_offset & 0x1f;
     osm_src = bit_base >> o;
     x = 1 << o;
     switch (operation) {
@@ -1951,7 +1951,7 @@ int x86Internal::op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset) {
         r = bit_base ^ x;
         break;
     }
-    osm = 19;
+    osm = 20;
     return r;
 }
 int x86Internal::op_BSF16(int dst, int src) {
