@@ -2593,12 +2593,12 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
     s1 = s2 = src;
     switch (operation & 7) {
     case 0:
-        count &= 0x1f;
-        if (count) {
-            s1 = (s1 << count) | (s1 >> (32 - count));
+        c = count & 0x1f;
+        if (c) {
+            s1 = (s1 << c) | (s1 >> (32 - c));
             osm_src = compile_flags(true);
             osm_src |= (s1 & 0x0001);
-            if (count == 1) {
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2606,12 +2606,12 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
         }
         break;
     case 1:
-        count &= 0x1f;
-        if (count) {
-            s1 = (s1 >> count) | (s1 << (32 - count));
+        c = count & 0x1f;
+        if (c) {
+            s1 = (s1 >> c) | (s1 << (32 - c));
             osm_src = compile_flags(true);
             osm_src |= ((s1 >> 31) & 0x0001);
-            if (count == 1) {
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2619,16 +2619,16 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
         }
         break;
     case 2:
-        count &= 0x1f;
-        if (count) {
+        c = count & 0x1f;
+        if (c) {
             cf = is_CF();
-            s1 = (s1 << count) | (cf << (count - 1));
-            if (count > 1) {
-                s1 |= s2 >> (33 - count);
+            s1 = (s1 << c) | (cf << (c - 1));
+            if (c > 1) {
+                s1 |= s2 >> (33 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (32 - count)) & 0x0001);
-            if (count == 1) {
+            osm_src |= ((s2 >> (32 - c)) & 0x0001);
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2636,16 +2636,16 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
         }
         break;
     case 3:
-        count &= 0x1f;
-        if (count) {
+        c = count & 0x1f;
+        if (c) {
             cf = is_CF();
-            s1 = (s1 >> count) | (cf << (32 - count));
-            if (count > 1) {
-                s1 |= s2 << (33 - count);
+            s1 = (s1 >> c) | (cf << (32 - c));
+            if (c > 1) {
+                s1 |= s2 << (33 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (count - 1)) & 0x0001);
-            if (count == 1) {
+            osm_src |= ((s2 >> (c - 1)) & 0x0001);
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2654,26 +2654,26 @@ int x86Internal::do_shift32(int operation, uint32_t src, int count) {
         break;
     case 4:
     case 6:
-        count &= 0x1f;
-        if (count) {
-            osm_src = s1 << (count - 1);
-            osm_dst = s1 = s1 << count;
+        c = count & 0x1f;
+        if (c) {
+            osm_src = s1 << (c - 1);
+            osm_dst = s1 = s1 << c;
             osm = 17;
         }
         break;
     case 5:
-        count &= 0x1f;
-        if (count) {
-            osm_src = s1 >> (count - 1);
-            osm_dst = s1 = s1 >> count;
+        c = count & 0x1f;
+        if (c) {
+            osm_src = s1 >> (c - 1);
+            osm_dst = s1 = s1 >> c;
             osm = 20;
         }
         break;
     case 7:
-        count &= 0x1f;
-        if (count) {
-            osm_src = (int) s1 >> (count - 1);
-            osm_dst = s1 = (int) s1 >> count;
+        c = count & 0x1f;
+        if (c) {
+            osm_src = (int) s1 >> (c - 1);
+            osm_dst = s1 = (int) s1 >> c;
             osm = 20;
         }
         break;
@@ -3683,112 +3683,112 @@ void x86Internal::op_CPUID() {
     }
 }
 void x86Internal::op_AAM(int radix) {
-    int wf, xf;
+    int al, ah;
     if (radix == 0) {
         abort(0);
     }
-    wf = regs[0] & 0xff;
-    xf = (wf / radix) & -1;
-    wf = (wf % radix);
-    regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
-    osm_dst = ((wf << 24) >> 24);
+    al = regs[0] & 0xff;
+    ah = (al / radix) & -1;
+    al = al % radix;
+    regs[0] = (regs[0] & ~0xffff) | al | (ah << 8);
+    osm_dst = ((al << 24) >> 24);
     osm = 12;
 }
 void x86Internal::op_AAD(int radix) {
-    int wf, xf;
-    wf = regs[0] & 0xff;
-    xf = (regs[0] >> 8) & 0xff;
-    wf = (xf * radix + wf) & 0xff;
-    regs[0] = (regs[0] & ~0xffff) | wf;
-    osm_dst = ((wf << 24) >> 24);
+    int al, ah;
+    al = regs[0] & 0xff;
+    ah = (regs[0] >> 8) & 0xff;
+    al = (ah * radix + al) & 0xff;
+    regs[0] = (regs[0] & ~0xffff) | al;
+    osm_dst = ((al << 24) >> 24);
     osm = 12;
 }
 void x86Internal::op_AAA() {
-    int Af, wf, xf, Bf, flag_bits;
+    int Af, al, ah, f4, flag_bits;
     flag_bits = compile_flags();
-    Bf = flag_bits & 0x0010;
-    wf = regs[0] & 0xff;
-    xf = (regs[0] >> 8) & 0xff;
-    Af = (wf > 0xf9);
-    if (((wf & 0x0f) > 9) || Bf) {
-        wf = (wf + 6) & 0x0f;
-        xf = (xf + 1 + Af) & 0xff;
+    f4 = flag_bits & 0x0010;
+    al = regs[0] & 0xff;
+    ah = (regs[0] >> 8) & 0xff;
+    Af = al > 0xf9;
+    if (((al & 0x0f) > 9) || f4) {
+        al = (al + 6) & 0x0f;
+        ah = (ah + 1 + Af) & 0xff;
         flag_bits |= 0x0001 | 0x0010;
     } else {
         flag_bits &= ~(0x0001 | 0x0010);
-        wf &= 0x0f;
+        al &= 0x0f;
     }
-    regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
+    regs[0] = (regs[0] & ~0xffff) | al | (ah << 8);
     osm_src = flag_bits;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
 void x86Internal::op_AAS() {
-    int Af, wf, xf, Bf, flag_bits;
+    int Af, al, ah, f4, flag_bits;
     flag_bits = compile_flags();
-    Bf = flag_bits & 0x0010;
-    wf = regs[0] & 0xff;
-    xf = (regs[0] >> 8) & 0xff;
-    Af = (wf < 6);
-    if (((wf & 0x0f) > 9) || Bf) {
-        wf = (wf - 6) & 0x0f;
-        xf = (xf - 1 - Af) & 0xff;
+    f4 = flag_bits & 0x0010; // AF
+    al = regs[0] & 0xff;
+    ah = (regs[0] >> 8) & 0xff;
+    Af = al < 6;
+    if (((al & 0x0f) > 9) || f4) {
+        al = (al - 6) & 0x0f;
+        ah = (ah - 1 - Af) & 0xff;
         flag_bits |= 0x0001 | 0x0010;
     } else {
         flag_bits &= ~(0x0001 | 0x0010);
-        wf &= 0x0f;
+        al &= 0x0f;
     }
-    regs[0] = (regs[0] & ~0xffff) | wf | (xf << 8);
+    regs[0] = (regs[0] & ~0xffff) | al | (ah << 8);
     osm_src = flag_bits;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
 void x86Internal::op_DAA() {
-    int wf, Bf, Ef, flag_bits;
+    int al, f0, f4, flag_bits;
     flag_bits = compile_flags();
-    Ef = flag_bits & 0x0001;
-    Bf = flag_bits & 0x0010;
-    wf = regs[0] & 0xff;
+    f0 = flag_bits & 0x0001;
+    f4 = flag_bits & 0x0010;
+    al = regs[0] & 0xff;
     flag_bits = 0;
-    if (((wf & 0x0f) > 9) || Bf) {
-        wf = (wf + 6) & 0xff;
+    if (((al & 0x0f) > 9) || f4) {
+        al = (al + 6) & 0xff;
         flag_bits |= 0x0010;
     }
-    if ((wf > 0x9f) || Ef) {
-        wf = (wf + 0x60) & 0xff;
+    if ((al > 0x9f) || f0) {
+        al = (al + 0x60) & 0xff;
         flag_bits |= 0x0001;
     }
-    regs[0] = (regs[0] & ~0xff) | wf;
-    flag_bits |= (wf == 0) << 6;
-    flag_bits |= parity_LUT[wf] << 2;
-    flag_bits |= (wf & 0x80);
+    regs[0] = (regs[0] & ~0xff) | al;
+    flag_bits |= (al == 0) << 6;
+    flag_bits |= parity_LUT[al] << 2;
+    flag_bits |= (al & 0x80);
     osm_src = flag_bits;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
 void x86Internal::op_DAS() {
-    int wf, Gf, Bf, Ef, flag_bits;
+    int al, Gf, f0, f4, flag_bits;
     flag_bits = compile_flags();
-    Ef = flag_bits & 0x0001;
-    Bf = flag_bits & 0x0010;
-    wf = regs[0] & 0xff;
+    f0 = flag_bits & 0x0001;
+    f4 = flag_bits & 0x0010;
+    al = regs[0] & 0xff;
     flag_bits = 0;
-    Gf = wf;
-    if (((wf & 0x0f) > 9) || Bf) {
+    Gf = al;
+    if (((al & 0x0f) > 9) || f4) {
         flag_bits |= 0x0010;
-        if (wf < 6 || Ef) {
+        if (al < 6 || f0) {
             flag_bits |= 0x0001;
         }
-        wf = (wf - 6) & 0xff;
+        al = (al - 6) & 0xff;
     }
-    if ((Gf > 0x99) || Ef) {
-        wf = (wf - 0x60) & 0xff;
+    if ((Gf > 0x99) || f0) {
+        al = (al - 0x60) & 0xff;
         flag_bits |= 0x0001;
     }
-    regs[0] = (regs[0] & ~0xff) | wf;
-    flag_bits |= (wf == 0) << 6;
-    flag_bits |= parity_LUT[wf] << 2;
-    flag_bits |= (wf & 0x80);
+    regs[0] = (regs[0] & ~0xff) | al;
+    flag_bits |= (al == 0) << 6;
+    flag_bits |= parity_LUT[al] << 2;
+    flag_bits |= (al & 0x80);
     osm_src = flag_bits;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
@@ -3972,259 +3972,4 @@ void x86Internal::ld_full_pointer32(int sreg) {
     y = ld16_mem8_read();
     set_segment_register(sreg, y);
     regs[(mem8 >> 3) & 7] = x;
-}
-void x86Internal::op_INS16() {
-    int Xf, Yf, Zf, ag, iopl, x;
-    iopl = (eflags >> 12) & 3;
-    if (cpl > iopl) {
-        abort(13);
-    }
-    if (ipr & 0x0080) {
-        Xf = 0xffff;
-    } else {
-        Xf = -1;
-    }
-    Yf = regs[7];
-    Zf = regs[2] & 0xffff;
-    if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
-            return;
-        }
-        x = ld16_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
-        st16_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
-            far = far_start;
-        }
-    } else {
-        x = ld16_port(Zf);
-        mem8_loc = (Yf & Xf) + segs[0].base;
-        st16_mem8_write(x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-    }
-}
-void x86Internal::op_OUTS16() {
-    int Xf, cg, sreg, ag, Zf, iopl, x;
-    iopl = (eflags >> 12) & 3;
-    if (cpl > iopl) {
-        abort(13);
-    }
-    if (ipr & 0x0080) {
-        Xf = 0xffff;
-    } else {
-        Xf = -1;
-    }
-    sreg = ipr & 0x000f;
-    if (sreg == 0) {
-        sreg = 3;
-    } else {
-        sreg--;
-    }
-    cg = regs[6];
-    Zf = regs[2] & 0xffff;
-    if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
-            return;
-        }
-        mem8_loc = (cg & Xf) + segs[sreg].base;
-        x = ld16_mem8_read();
-        st16_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
-            far = far_start;
-        }
-    } else {
-        mem8_loc = (cg & Xf) + segs[sreg].base;
-        x = ld16_mem8_read();
-        st16_port(Zf, x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-    }
-}
-void x86Internal::op_MOVS16() {
-    int Xf, Yf, cg, ag, sreg, eg;
-    if (ipr & 0x0080) {
-        Xf = 0xffff;
-    } else {
-        Xf = -1;
-    }
-    sreg = ipr & 0x000f;
-    if (sreg == 0) {
-        sreg = 3;
-    } else {
-        sreg--;
-    }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[sreg].base;
-    eg = (Yf & Xf) + segs[0].base;
-    if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
-            return;
-        }
-        x = ld16_mem8_read();
-        mem8_loc = eg;
-        st16_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
-            far = far_start;
-        }
-    } else {
-        x = ld16_mem8_read();
-        mem8_loc = eg;
-        st16_mem8_write(x);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-    }
-}
-void x86Internal::op_STOS16() {
-    int Xf, Yf, ag;
-    if (ipr & 0x0080) {
-        Xf = 0xffff;
-    } else {
-        Xf = -1;
-    }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
-    if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
-            return;
-        }
-        st16_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
-            far = far_start;
-        }
-    } else {
-        st16_mem8_write(regs[0]);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-    }
-}
-void x86Internal::op_CMPS16() {
-    int Xf, Yf, cg, ag, sreg, eg;
-    if (ipr & 0x0080) {
-        Xf = 0xffff;
-    } else {
-        Xf = -1;
-    }
-    sreg = ipr & 0x000f;
-    if (sreg == 0) {
-        sreg = 3;
-    } else {
-        sreg--;
-    }
-    cg = regs[6];
-    Yf = regs[7];
-    mem8_loc = (cg & Xf) + segs[sreg].base;
-    eg = (Yf & Xf) + segs[0].base;
-    if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
-            return;
-        }
-        x = ld16_mem8_read();
-        mem8_loc = eg;
-        y = ld16_mem8_read();
-        do_arithmetic16(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ipr & 0x0010) {
-            if (!(osm_dst == 0)) {
-                return;
-            }
-        } else {
-            if (osm_dst == 0) {
-                return;
-            }
-        }
-        if (ag & Xf) {
-            far = far_start;
-        }
-    } else {
-        x = ld16_mem8_read();
-        mem8_loc = eg;
-        y = ld16_mem8_read();
-        do_arithmetic16(7, x, y);
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-    }
-}
-void x86Internal::op_LODS16() {
-    int Xf, cg, sreg, ag, x;
-    if (ipr & 0x0080) {
-        Xf = 0xffff;
-    } else {
-        Xf = -1;
-    }
-    sreg = ipr & 0x000f;
-    if (sreg == 0) {
-        sreg = 3;
-    } else {
-        sreg--;
-    }
-    cg = regs[6];
-    mem8_loc = (cg & Xf) + segs[sreg].base;
-    if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
-            return;
-        }
-        x = ld16_mem8_read();
-        regs[0] = (regs[0] & -65536) | x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ag & Xf) {
-            far = far_start;
-        }
-    } else {
-        x = ld16_mem8_read();
-        regs[0] = (regs[0] & -65536) | x;
-        regs[6] = (cg & ~Xf) | ((cg + (df << 1)) & Xf);
-    }
-}
-void x86Internal::op_SCAS16() {
-    int Xf, Yf, ag, x;
-    if (ipr & 0x0080) {
-        Xf = 0xffff;
-    } else {
-        Xf = -1;
-    }
-    Yf = regs[7];
-    mem8_loc = (Yf & Xf) + segs[0].base;
-    if (ipr & (0x0010 | 0x0020)) {
-        ag = regs[1];
-        if ((ag & Xf) == 0) {
-            return;
-        }
-        x = ld16_mem8_read();
-        do_arithmetic16(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-        regs[1] = ag = (ag & ~Xf) | ((ag - 1) & Xf);
-        if (ipr & 0x0010) {
-            if (!(osm_dst == 0)) {
-                return;
-            }
-        } else {
-            if (osm_dst == 0) {
-                return;
-            }
-        }
-        if (ag & Xf) {
-            far = far_start;
-        }
-    } else {
-        x = ld16_mem8_read();
-        do_arithmetic16(7, regs[0], x);
-        regs[7] = (Yf & ~Xf) | ((Yf + (df << 1)) & Xf);
-    }
 }
