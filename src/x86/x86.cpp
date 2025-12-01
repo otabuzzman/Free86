@@ -2141,20 +2141,20 @@ int x86Internal::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) 
     return q;
 }
 int x86Internal::op_MUL8(int multiplicand, int multiplier) {
-    int x;
-    multiplicand &= 0xff;
-    multiplier &= 0xff;
-    x = (regs[0] & 0xff) * (multiplier & 0xff);
+    int md, mr, x;
+    md = multiplicand & 0xff;
+    mr = multiplier & 0xff;
+    x = (md & 0xff) * (mr & 0xff);
     osm_src = x >> 8;
     osm_dst = ((x << 24) >> 24);
     osm = 21;
     return x;
 }
 int x86Internal::op_IMUL8(int multiplicand, int multiplier) {
-    int x;
-    multiplicand = ((multiplicand << 24) >> 24);
-    multiplier = ((multiplier << 24) >> 24);
-    x = multiplicand * multiplier;
+    int md, mr, x;
+    md = ((multiplicand << 24) >> 24);
+    mr = ((multiplier << 24) >> 24);
+    x = md * mr;
     osm_dst = ((x << 24) >> 24);
     osm_src = x != osm_dst;
     osm = 21;
@@ -2169,10 +2169,10 @@ int x86Internal::op_MUL16(int multiplicand, int multiplier) {
     return x;
 }
 int x86Internal::op_IMUL16(int multiplicand, int multiplier) {
-    int x;
-    multiplicand = (multiplicand << 16) >> 16;
-    multiplier = (multiplier << 16) >> 16;
-    x = multiplicand * multiplier;
+    int md, mr, x;
+    md = (multiplicand << 16) >> 16;
+    mr = (multiplier << 16) >> 16;
+    x = md * mr;
     osm_dst = ((x << 16) >> 16);
     osm_src = x != osm_dst;
     osm = 22;
@@ -2185,17 +2185,19 @@ int x86Internal::op_MUL32(int multiplicand, int multiplier) {
     return osm_dst;
 }
 int x86Internal::op_IMUL32(int multiplicand, int multiplier) {
-    int s, r;
+    int md, mr, s, r;
+    md = multiplicand;
+    mr = mr;
     s = 0;
-    if (multiplicand < 0) {
-        multiplicand = -multiplicand;
+    if (md < 0) {
+        md = -md;
         s = 1;
     }
-    if (multiplier < 0) {
-        multiplier = -multiplier;
+    if (mr < 0) {
+        mr = -mr;
         s ^= 1;
     }
-    r = do_multiply32(multiplicand, multiplier);
+    r = do_multiply32(md, mr);
     if (s) {
         v = ~v;
         r = -r;
