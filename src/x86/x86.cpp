@@ -2472,8 +2472,8 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 6:
         c = count & 0x1f;
         if (c) {
-            osm_src = s1 << (c - 1);
-            osm_dst = s1 = (((s1 << c) << 24) >> 24);
+            osm_src = src << (c - 1);
+            osm_dst = s1 = (((src << c) << 24) >> 24);
             osm = 15;
         }
         break;
