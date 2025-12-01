@@ -1907,54 +1907,52 @@ int x86Internal::op_SHLD(int dst, int src, int count) {
     return d;
 }
 void x86Internal::op_BT16(int bit_base, int bit_offset) {
-    bit_offset &= 0xf;
-    osm_src = bit_base >> bit_offset;
+    osm_src = bit_base >> (bit_offset & 0xf);
     osm = 19;
 }
 void x86Internal::op_BT(int bit_base, int bit_offset) {
-    bit_offset &= 0x1f;
-    osm_src = bit_base >> bit_offset;
+    osm_src = bit_base >> (bit_offset & 0x1f);
     osm = 20;
 }
 int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
-    int wc;
-    bit_offset &= 0xf;
-    osm_src = bit_base >> bit_offset;
-    wc = 1 << bit_offset;
+    int o, x, r;
+    o = bit_offset = 0xf;
+    osm_src = bit_base >> o;
+    x = 1 << o;
     switch (operation) {
     case 1: // BTS
-        bit_base |= wc;
+        r = bit_base | x;
         break;
     case 2: // BTR
-        bit_base &= ~wc;
+        r = bit_base & ~x;
         break;
     case 3: // BTC
     default:
-        bit_base ^= wc;
+        r = bit_base ^ x;
         break;
     }
     osm = 19;
-    return bit_base;
+    return r;
 }
 int x86Internal::op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset) {
-    int wc;
-    bit_offset &= 0x1f;
-    osm_src = bit_base >> bit_offset;
-    wc = 1 << bit_offset;
+    int o, x, r;
+    o = bit_offset = 0x1f;
+    osm_src = bit_base >> o;
+    x = 1 << o;
     switch (operation) {
     case 1: // BTS
-        bit_base |= wc;
+        r = bit_base | x;
         break;
     case 2: // BTR
-        bit_base &= ~wc;
+        r = bit_base & ~x;
         break;
     case 3: // BTC
     default:
-        bit_base ^= wc;
+        r = bit_base ^ x;
         break;
     }
-    osm = 20;
-    return bit_base;
+    osm = 19;
+    return r;
 }
 int x86Internal::op_BSF16(int dst, int src) {
     src &= 0xffff;
