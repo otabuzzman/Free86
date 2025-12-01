@@ -2403,11 +2403,11 @@ int x86Internal::do_arithmetic32(int operation, int dst, int src) {
 }
 int x86Internal::do_shift8(int operation, int src, int count) {
     int s1, s2, c, cf;
+    s1 = s2 = src & 0xff;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
             c = count & 0x7;
-            s1 = s2 = src & 0xff;
             s1 = (s1 << c) | (s1 >> (8 - c));
             osm_src = compile_flags(true);
             osm_src |= (s1 & 0x0001);
@@ -2421,7 +2421,6 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 1:
         if (count & 0x1f) {
             c = count & 0x7;
-            s1 = s2 = src & 0xff;
             s1 = (s1 >> c) | (s1 << (8 - c));
             osm_src = compile_flags(true);
             osm_src |= ((s1 >> 7) & 0x0001);
@@ -2435,7 +2434,6 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 2:
         c = do_shift8_LUT[count & 0x1f];
         if (c) {
-            s1 = s2 = src & 0xff;
             cf = is_CF();
             s1 = (s1 << c) | (cf << (c - 1));
             if (c > 1) {
@@ -2453,7 +2451,6 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 3:
         c = do_shift8_LUT[count & 0x1f];
         if (c) {
-            s1 = s2 = src & 0xff;
             cf = is_CF();
             s1 = (s1 >> c) | (cf << (8 - c));
             if (c > 1) {
@@ -2480,7 +2477,6 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     case 5:
         c = count & 0x1f;
         if (c) {
-            s1 = src & 0xff;
             osm_src = s1 >> (c - 1);
             osm_dst = s1 = (((s1 >> c) << 24) >> 24);
             osm = 18;
@@ -2499,17 +2495,16 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     return s1;
 }
 int x86Internal::do_shift16(int operation, int src, int count) {
-    int s1, s2, cf;
+    int s1, s2, c, cf;
+    s1 = s2 = src & 0xffff;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
-            count &= 0xf;
-            s1 = src & 0xffff;
-            s2 = s1;
-            s1 = (s1 << count) | (s1 >> (16 - count));
+            c = count & 0xf;
+            s1 = (s1 << c) | (s1 >> (16 - c));
             osm_src = compile_flags(true);
             osm_src |= (s1 & 0x0001);
-            if (count == 1) {
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2518,13 +2513,11 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         break;
     case 1:
         if (count & 0x1f) {
-            count &= 0xf;
-            s1 = src & 0xffff;
-            s2 = s1;
-            s1 = (s1 >> count) | (s1 << (16 - count));
+            c = count & 0xf;
+            s1 = (s1 >> c) | (s1 << (16 - c));
             osm_src = compile_flags(true);
             osm_src |= ((s1 >> 15) & 0x0001);
-            if (count == 1) {
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2532,18 +2525,16 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         }
         break;
     case 2:
-        count = do_shift16_LUT[count & 0x1f];
-        if (count) {
-            s1 = src & 0xffff;
-            s2 = s1;
+        c = do_shift16_LUT[count & 0x1f];
+        if (c) {
             cf = is_CF();
-            s1 = (s1 << count) | (cf << (count - 1));
-            if (count > 1) {
-                s1 |= s2 >> (17 - count);
+            s1 = (s1 << c) | (cf << (c - 1));
+            if (c > 1) {
+                s1 |= s2 >> (17 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (16 - count)) & 0x0001);
-            if (count == 1) {
+            osm_src |= ((s2 >> (16 - c)) & 0x0001);
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2551,18 +2542,16 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         }
         break;
     case 3:
-        count = do_shift16_LUT[count & 0x1f];
-        if (count) {
-            s1 = src & 0xffff;
-            s2 = s1;
+        c = do_shift16_LUT[count & 0x1f];
+        if (c) {
             cf = is_CF();
-            s1 = (s1 >> count) | (cf << (16 - count));
-            if (count > 1) {
-                s1 |= s2 << (17 - count);
+            s1 = (s1 >> c) | (cf << (16 - c));
+            if (c > 1) {
+                s1 |= s2 << (17 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (count - 1)) & 0x0001);
-            if (count == 1) {
+            osm_src |= ((s2 >> (c - 1)) & 0x0001);
+            if (c == 1) {
                 osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -2571,28 +2560,27 @@ int x86Internal::do_shift16(int operation, int src, int count) {
         break;
     case 4:
     case 6:
-        count &= 0x1f;
-        if (count) {
-            osm_src = src << (count - 1);
-            osm_dst = s1 = (((src << count) << 16) >> 16);
+        c = count & 0x1f;
+        if (c) {
+            osm_src = src << (c - 1);
+            osm_dst = s1 = (((src << c) << 16) >> 16);
             osm = 16;
         }
         break;
     case 5:
-        count &= 0x1f;
-        if (count) {
-            s1 = src & 0xffff;
-            osm_src = s1 >> (count - 1);
-            osm_dst = s1 = (((s1 >> count) << 16) >> 16);
+        c = count & 0x1f;
+        if (c) {
+            osm_src = s1 >> (c - 1);
+            osm_dst = s1 = (((s1 >> c) << 16) >> 16);
             osm = 19;
         }
         break;
     case 7:
-        count &= 0x1f;
-        if (count) {
+        c = count & 0x1f;
+        if (c) {
             s1 = (src << 16) >> 16;
-            osm_src = s1 >> (count - 1);
-            osm_dst = s1 = (((s1 >> count) << 16) >> 16);
+            osm_src = s1 >> (c - 1);
+            osm_dst = s1 = (((s1 >> c) << 16) >> 16);
             osm = 19;
         }
         break;
