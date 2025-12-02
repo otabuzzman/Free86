@@ -8,7 +8,7 @@ file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 
 add_compile_options(
   -Weverything
-  -Wno-c++98-compat
+  -Wno-c++98-compat # probably not harmful...
   -Wno-comma
   -Wno-conditional-uninitialized
   -Wno-format
