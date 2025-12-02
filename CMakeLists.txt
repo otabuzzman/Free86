@@ -9,15 +9,22 @@ file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 add_compile_options(
   -Weverything
   -Wno-c++98-compat
+  -Wno-comma
   -Wno-conditional-uninitialized
+  -Wno-format
   -Wno-missing-noreturn
   -Wno-missing-prototypes
   -Wno-missing-variable-declarations
+  -Wno-old-style-cast
   -Wno-padded
   -Wno-poison-system-directories
   -Wno-reserved-identifier
   -Wno-reserved-macro-identifier
+  -Wno-shadow-field-in-constructor
+  -Wno-switch-default
+  -Wno-unused-parameter
   -Wno-unused-private-field
+  -Wno-unused-variable
 )
 add_compile_definitions(
   _CRT_SECURE_NO_WARNINGS
