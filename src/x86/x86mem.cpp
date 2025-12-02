@@ -141,8 +141,8 @@ int x86Internal::__ld32_mem8_write() {
 }
 int x86Internal::ld32_mem8_write() {
     int tlb_lookup;
-    return check_real__v86() ||
-                   ((tlb_lookup = tlb_write[mem8_loc >> 12]) | mem8_loc) & 3
+    return (check_real__v86() ||
+                    (tlb_lookup = tlb_write[mem8_loc >> 12]) | mem8_loc) & 3
                ? __ld32_mem8_write()
                : phys_mem32[(mem8_loc ^ tlb_lookup) >> 2];
 }

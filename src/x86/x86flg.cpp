@@ -1,7 +1,7 @@
 #include "x86.h"
 
 bool x86Internal::is_CF() {
-    bool rval;
+    bool rval = false;
     int _ocm;
     uint32_t _ocm_dst;
     if (osm >= 25) {
@@ -86,7 +86,7 @@ int x86Internal::is_PF() {
     }
 }
 int x86Internal::is_AF() {
-    int rval;
+    int rval = 0;
     int x;
     switch (osm % 0x1f) {
     case 0:
@@ -146,7 +146,7 @@ int x86Internal::is_AF() {
     return rval;
 }
 bool x86Internal::is_OF() {
-    bool rval;
+    bool rval = false;
     int x;
     switch (osm % 0x1f) {
     case 0:
@@ -330,7 +330,7 @@ int x86Internal::is_LT() {
     return rval;
 }
 int x86Internal::can_jump(int condition) {
-    bool rval;
+    bool rval = false;
     switch ((condition >> 1) & 7) {
     case 0:
         rval = is_OF();

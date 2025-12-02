@@ -9,6 +9,7 @@ file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 add_compile_options(
   -Weverything
   -Wno-c++98-compat
+  -Wno-conditional-uninitialized
   -Wno-missing-noreturn
   -Wno-missing-prototypes
   -Wno-missing-variable-declarations
