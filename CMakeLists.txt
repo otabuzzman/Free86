@@ -6,14 +6,24 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 
+add_compile_options(
+  -Weverything
+  -Wno-c++98-compat
+  -Wno-padded
+  -Wno-poison-system-directories
+  -Wno-reserved-identifier
+  -Wno-reserved-macro-identifier
+)
+add_compile_definitions(
+  _CRT_SECURE_NO_WARNINGS
+)
+
 add_executable(${PROJECT_NAME} ${sourcefiles})
 
 set_property(TARGET cpp_app PROPERTY CXX_STANDARD 20)
 
 option(NO_SDL "Disable SDL support" OFF)
 option(TEST386 "Run test386 suite" OFF)
-
-add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 
 if(NO_SDL)
     add_compile_definitions(NO_SDL)
