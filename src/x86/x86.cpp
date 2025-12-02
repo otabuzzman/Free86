@@ -1588,10 +1588,10 @@ int x86Internal::convert_offset_to_linear(bool writable) {
         mem8_loc = ld16_mem8_direct() & 0xffff;
         stride = 2; // 16 bit mode
     } else {
-        mem8_loc = phys_mem8[far] |
+        mem8_loc = (phys_mem8[far] |
                    (phys_mem8[far + 1] << 8) |
                    (phys_mem8[far + 2] << 16) |
-                   (phys_mem8[far + 3] << 24) & 0xffffffff;
+                   (phys_mem8[far + 3] << 24)) & 0xffffffff;
         far += 4;
         stride = 4; // 32 bit mode
     }
@@ -1719,7 +1719,7 @@ int x86Internal::is_segment_accessible(int selector, bool writable) {
     if (e[0] == 0 && e[1] == 0) {
         return 1;
     }
-    dte_lower_dword = e[0];
+    // dte_lower_dword = e[0];
     dte_upper_dword = e[1];
     if (!(dte_upper_dword & (1 << 12))) {
         return 1;
@@ -2084,7 +2084,7 @@ int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint
     if (du >= divisor) {
         abort(0);
     }
-    if (du >= 0 && du <= 0x200000) {
+    if (du <= 0x200000) {
         a = du * 4294967296 + dl;
         v = a % divisor;
         return a / divisor;
