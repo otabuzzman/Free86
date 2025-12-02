@@ -2531,7 +2531,6 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 default:
                     abort(6);
                 }
-                break;
             default:
                 switch (opcode) {
                 case 0x189: // MOV

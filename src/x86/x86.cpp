@@ -25,7 +25,7 @@ x86Internal::~x86Internal() {
     delete[] tlb_read_user;
     delete[] tlb_write_user;
 }
-void x86Internal::abort(int interrupt_id, int error_code) {
+[[noreturn]] void x86Internal::abort(int interrupt_id, int error_code) {
     cycles_processed += (cycles_requested - cycles_remaining);
     interrupt = {interrupt_id, error_code};
     throw interrupt;
@@ -1260,7 +1260,6 @@ int x86Internal::instruction_length(int opcode, int eip_linear) {
             default:
                 abort(6);
             }
-            break;
         }
     }
 EXEC_LOOP:;
@@ -1477,8 +1476,8 @@ int x86Internal::segment_translation(int modRM) {
         }
         mem8_loc = mem8_loc + segs[sreg].base;
         return mem8_loc;
-    } else {
-        switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
+    }
+    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
             sib = phys_mem8[far++];
             sib_base = sib & 7;
@@ -1566,20 +1565,18 @@ int x86Internal::segment_translation(int modRM) {
             mem8_loc = mem8_loc + regs[sib_base];
             break;
         }
-        sreg = ipr & 0x000f;
-        if (sreg == 0) {
+    sreg = ipr & 0x000f;
+    if (sreg == 0) {
             if (sib_base == 4 || sib_base == 5) {
                 sreg = 2;
             } else {
                 sreg = 3;
             }
-        } else {
+    } else {
             sreg--;
         }
-        mem8_loc = mem8_loc + segs[sreg].base;
-        return mem8_loc;
-    }
-    return 0;
+    mem8_loc = mem8_loc + segs[sreg].base;
+    return mem8_loc;
 }
 int x86Internal::convert_offset_to_linear(bool writable) {
     uint64_t mem8_loc;
@@ -1630,7 +1627,7 @@ int x86Internal::convert_offset_to_linear(bool writable) {
     return mem8_loc;
 }
 void x86Internal::update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
-    segs[sreg] = {.selector = selector, .base = base, .limit = limit, .flags = flags};
+    segs[sreg] = {selector, base, limit, flags};
     update_SSB();
 }
 void x86Internal::set_segment_register(int sreg, int selector) {
@@ -2900,10 +2897,8 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
         case 9: // 32 bit task state segment
         case 5: // task gate
             throw "fatal: unsupported TSS or task gate in CALL";
-            break;
         default:
             abort(13, selector & 0xfffc);
-            break;
         }
         is_operand_size32 = descriptor_type >> 3;
         if (dpl < cpl || dpl < rpl) {
@@ -3452,10 +3447,8 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int e
     case 6: // 16 bit interrupt gate
     case 7: // 16 bit trap gate
         throw "fatal: unsupported gate type";
-        break;
     default:
         abort(13, interrupt_id * 8 + 2);
-        break;
     }
     dpl = (dte_upper_dword >> 13) & 3;
     if (is_sw && dpl < cpl) {

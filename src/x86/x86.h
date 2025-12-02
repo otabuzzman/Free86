@@ -229,7 +229,7 @@ class x86Internal {
     // clang-format on
 
     x86Internal(int mem_size);
-    ~x86Internal();
+    virtual ~x86Internal();
 
     void reset() {
         // Intel IA-32 SDM (latest), Vol. 3A, 11.1.1
@@ -246,7 +246,7 @@ class x86Internal {
         cr0 = (1 << 4); // 80387 present
     }
 
-    void abort(int interrupt_id, int error_code = 0);
+    [[noreturn]] void abort(int interrupt_id, int error_code = 0) ;
 
     void tlb_set_page(uint32_t linear_address, int pte, int writable, int user) {
         int tlb_hash = linear_address ^ pte; // poor man's XOR hash

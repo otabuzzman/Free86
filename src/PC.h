@@ -703,17 +703,17 @@ class WiredCPU : public x86Internal {
         serial = new Serial(pic, 0, 0);
         pit = new PIT(this, pic);
     }
-    ~WiredCPU() {
+    ~WiredCPU() override {
         delete cmos;
         delete kbd;
         delete pic;
         delete pit;
         delete serial;
     }
-    int get_hard_irq();
-    int get_hard_intno();
-    int ioport_read(int mem8_loc);
-    void ioport_write(int mem8_loc, int data);
+    int get_hard_irq() override;
+    int get_hard_intno() override;
+    int ioport_read(int mem8_loc) override;
+    void ioport_write(int mem8_loc, int data) override;
 };
 
 #endif // _H_PC

@@ -6,11 +6,11 @@
 class PlainCPU : public x86Internal {
   public:
     PlainCPU(int mem_size) : x86Internal(mem_size) {}
-    ~PlainCPU() {}
-    int get_hard_irq() { return 0; }
-    int get_hard_intno() { return 0; }
-    int ioport_read(int mem8_loc);
-    void ioport_write(int mem8_loc, int data);
+    ~PlainCPU() override {}
+    int get_hard_irq() override { return 0; }
+    int get_hard_intno() override { return 0; }
+    int ioport_read(int mem8_loc) override;
+    void ioport_write(int mem8_loc, int data) override;
 };
 
 class Test386 {
