@@ -183,24 +183,24 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 regs[(mem8 >> 3) & 7] = x;
                 goto EXEC_LOOP;
             case 0xa0: // MOV AL,
-                mem8_loc = convert_offset_to_linear(false);
+                convert_offset_to_linear(false);
                 x = ld8_mem8_read();
                 regs[0] = (regs[0] & -256) | x;
                 goto EXEC_LOOP;
             case 0xa1: // MOV AX,
-                mem8_loc = convert_offset_to_linear(false);
+                convert_offset_to_linear(false);
                 x = ld32_mem8_read();
                 regs[0] = x;
                 goto EXEC_LOOP;
             case 0xa2: // MOV ,AL
-                mem8_loc = convert_offset_to_linear(true);
+                convert_offset_to_linear(true);
                 st8_mem8_write(regs[0]);
                 goto EXEC_LOOP;
             case 0xa3: // MOV ,AX
                 if (ipr & 0x0040) { // test386, check LOCK prefix (not allowed)
                     abort(6);
                 }
-                mem8_loc = convert_offset_to_linear(true);
+                convert_offset_to_linear(true);
                 st32_mem8_write(regs[0]);
                 goto EXEC_LOOP;
             case 0xd7: // XLAT
@@ -2579,12 +2579,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     set_lower_word(opcode & 7, ld16_mem8_direct());
                     goto EXEC_LOOP;
                 case 0x1a1: // MOV AX,
-                    mem8_loc = convert_offset_to_linear(false);
+                    convert_offset_to_linear(false);
                     x = ld16_mem8_read();
                     set_lower_word(0, x);
                     goto EXEC_LOOP;
                 case 0x1a3: // MOV ,AX
-                    mem8_loc = convert_offset_to_linear(true);
+                    convert_offset_to_linear(true);
                     st16_mem8_write(regs[0]);
                     goto EXEC_LOOP;
                 case 0x1c7: // MOV

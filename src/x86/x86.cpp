@@ -1579,14 +1579,14 @@ void x86Internal::segment_translation(int modRM) {
     mem8_loc = mem8_loc + segs[sreg].base;
     return;
 }
-int x86Internal::convert_offset_to_linear(bool writable) {
-    uint64_t mem8_loc;
+void x86Internal::convert_offset_to_linear(bool writable) {
+    uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
-        mem8_loc = ld16_mem8_direct() & 0xffff;
+        la = ld16_mem8_direct() & 0xffff;
         stride = 2; // 16 bit mode
     } else {
-        mem8_loc = (phys_mem8[far] |
+        la = (phys_mem8[far] |
                    (phys_mem8[far + 1] << 8) |
                    (phys_mem8[far + 2] << 16) |
                    (phys_mem8[far + 3] << 24)) & 0xffffffff;
@@ -1611,12 +1611,12 @@ int x86Internal::convert_offset_to_linear(bool writable) {
     if (type_notok) {
         abort(13, 0);
     }
-    mem8_loc = segs[sreg].base + mem8_loc;
+    la = segs[sreg].base + la;
     // limit checking
     if (segs[sreg].flags & (1 << 10)) { // expand-down segment
-        limit_notok = mem8_loc < (uint64_t)segs[sreg].base + segs[sreg].limit + 1;
+        limit_notok = la < (uint64_t)segs[sreg].base + segs[sreg].limit + 1;
     } else {
-        limit_notok = mem8_loc > (uint64_t)segs[sreg].base + segs[sreg].limit - (stride - 1);
+        limit_notok = la > (uint64_t)segs[sreg].base + segs[sreg].limit - (stride - 1);
     }
     if (limit_notok) {
         if (sreg == 2) {
@@ -1625,7 +1625,7 @@ int x86Internal::convert_offset_to_linear(bool writable) {
             abort(13, 0); // #GP(0)
         }
     }
-    return mem8_loc;
+    mem8_loc = la;
 }
 void x86Internal::update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[sreg] = {selector, base, limit, flags};
