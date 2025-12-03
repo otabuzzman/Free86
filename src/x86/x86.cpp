@@ -3069,7 +3069,7 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
 void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
-    int _cpl = cpl, dpl, rpl, iopl, es, cs, ss, ds, fs, gs;
+    int _cpl = cpl, dpl, rpl, es, cs, ss, ds, fs, gs;
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = compile_sizemask(segs[2].flags);
@@ -3325,7 +3325,7 @@ int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
     }
 }
 void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
-    int reg_idx1, selector;
+    int selector;
     if (!check_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3628,7 +3628,6 @@ void x86Internal::op_VERR_VERW(int selector, bool writable) {
     osm = 24;
 }
 void x86Internal::op_ARPL() {
-    int reg_idx0;
     if (!check_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3817,7 +3816,6 @@ void x86Internal::op_BOUND() {
     }
 }
 void x86Internal::op_PUSHA16() {
-    int reg_idx1;
     y = regs[4] - 16;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3828,7 +3826,6 @@ void x86Internal::op_PUSHA16() {
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void x86Internal::op_PUSHA() {
-    int reg_idx1;
     y = regs[4] - 32;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3839,7 +3836,6 @@ void x86Internal::op_PUSHA() {
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void x86Internal::op_POPA16() {
-    int reg_idx1;
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
@@ -3850,7 +3846,6 @@ void x86Internal::op_POPA16() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 16) & SS_mask);
 }
 void x86Internal::op_POPA() {
-    int reg_idx1;
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {

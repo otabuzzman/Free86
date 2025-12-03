@@ -1,7 +1,7 @@
 #include "x86.h"
 
 void x86Internal::op_INSB() {
-    int address_size_mask, ecx, edx, edi, iopl;
+    int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -34,7 +34,7 @@ void x86Internal::op_INSB() {
     }
 }
 void x86Internal::op_OUTSB() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl;
+    int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -256,7 +256,7 @@ void x86Internal::op_SCASB() {
     }
 }
 void x86Internal::op_INSW() {
-    int address_size_mask, ecx, edx, edi, iopl;
+    int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -289,7 +289,7 @@ void x86Internal::op_INSW() {
     }
 }
 void x86Internal::op_OUTSW() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl;
+    int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -511,7 +511,7 @@ void x86Internal::op_SCASW() {
     }
 }
 void x86Internal::op_INS16() {
-    int address_size_mask, ecx, edx, edi, iopl;
+    int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -544,7 +544,7 @@ void x86Internal::op_INS16() {
     }
 }
 void x86Internal::op_OUTS16() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl;
+    int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -766,7 +766,7 @@ void x86Internal::op_SCAS16() {
     }
 }
 void x86Internal::op_INSD() {
-    int address_size_mask, ecx, edx, edi, iopl;
+    int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -799,7 +799,7 @@ void x86Internal::op_INSD() {
     }
 }
 void x86Internal::op_OUTSD() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl;
+    int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
