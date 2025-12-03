@@ -325,8 +325,8 @@ class x86Internal {
     virtual int get_hard_irq() = 0;
     virtual int get_hard_intno() = 0;
 
-    virtual int ioport_read(int mem8_loc) = 0;
-    virtual void ioport_write(int mem8_loc, int data) = 0;
+    virtual int ioport_read(int port_num) = 0;
+    virtual void ioport_write(int port_num, int data) = 0;
 
     int ld8_port(int port_num);
     int ld16_port(int port_num);

@@ -712,8 +712,8 @@ class WiredCPU : public x86Internal {
     }
     int get_hard_irq() override;
     int get_hard_intno() override;
-    int ioport_read(int mem8_loc) override;
-    void ioport_write(int mem8_loc, int data) override;
+    int ioport_read(int port_num) override;
+    void ioport_write(int port_num, int data) override;
 };
 
 #endif // _H_PC

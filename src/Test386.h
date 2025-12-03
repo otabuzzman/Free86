@@ -9,8 +9,8 @@ class PlainCPU : public x86Internal {
     ~PlainCPU() override {}
     int get_hard_irq() override { return 0; }
     int get_hard_intno() override { return 0; }
-    int ioport_read(int mem8_loc) override;
-    void ioport_write(int mem8_loc, int data) override;
+    int ioport_read(int port_num) override;
+    void ioport_write(int port_num, int data) override;
 };
 
 class Test386 {
@@ -59,13 +59,13 @@ public:
     }
 };
 
-int PlainCPU::ioport_read(int mem8_loc) {
-    int port = mem8_loc & (1024 - 1);
+int PlainCPU::ioport_read(int port_num) {
+    int port = port_num & (1024 - 1);
     printf("*** ioport_read 0x%04x\n", port);
     return 0xff;
 }
-void PlainCPU::ioport_write(int mem8_loc, int data) {
-    int port = mem8_loc & (1024 - 1);
+void PlainCPU::ioport_write(int port_num, int data) {
+    int port = port_num & (1024 - 1);
     if (port == 0x0190) { // default POST_PORT in test386
         printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
     } else { // any other value considered OUT_PORT
