@@ -189,7 +189,7 @@ class x86Internal {
     // intermediate values
     int operation; // bits 5..3 of opcode or modR/M byte
     int reg_idx0, reg_idx1; // register indices (0-7)
-    int data, y, z, v;         // anything else
+    int x, y, z, v;         // anything else
 
     // linear byte address...
     uint32_t mem8_loc;
