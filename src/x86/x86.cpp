@@ -153,7 +153,7 @@ void x86Internal::update_SSB() {
     x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
 }
 int x86Internal::instruction_length(int opcode, int eip_linear) {
-    int ipr, mem8, operation, stride;
+    int ipr, operation, stride;
     int n = 1;
     ipr = ipr_default;
     if (ipr & 0x0100) {
@@ -3324,7 +3324,7 @@ int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
     }
 }
 void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
-    int mem8, reg_idx1, selector;
+    int reg_idx1, selector;
     if (!check_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3627,7 +3627,7 @@ void x86Internal::op_VERR_VERW(int selector, bool writable) {
     osm = 24;
 }
 void x86Internal::op_ARPL() {
-    int mem8, reg_idx0;
+    int reg_idx0;
     if (!check_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3786,7 +3786,6 @@ void x86Internal::op_DAS() {
     osm = 24;
 }
 void x86Internal::op_BOUND16() {
-    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3802,7 +3801,6 @@ void x86Internal::op_BOUND16() {
     }
 }
 void x86Internal::op_BOUND() {
-    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3938,7 +3936,6 @@ void x86Internal::op_ENTER() {
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
 void x86Internal::ld_full_pointer16(int sreg) {
-    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
@@ -3951,7 +3948,6 @@ void x86Internal::ld_full_pointer16(int sreg) {
     set_lower_word((mem8 >> 3) & 7, x);
 }
 void x86Internal::ld_full_pointer32(int sreg) {
-    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
