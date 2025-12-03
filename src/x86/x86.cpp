@@ -1651,7 +1651,7 @@ void x86Internal::set_segment_register_real__v86(int sreg, int selector) {
 }
 void x86Internal::set_segment_register_protected(int sreg, int selector) {
     SegmentDescriptor xdt;
-    int dte_lower_dword, dte_upper_dword, dpl, rpl, selector_index;
+    int dte_lower_dword, dte_upper_dword, rpl, selector_index;
     if ((selector & 0xfffc) == 0) { // null selector
         if (sreg == 2) {
             abort(13, 0);
@@ -1708,7 +1708,7 @@ void x86Internal::set_segment_register_protected(int sreg, int selector) {
     }
 }
 int x86Internal::is_segment_accessible(int selector, bool writable) {
-    int dte_lower_dword, dte_upper_dword, rpl, dpl;
+    int dte_lower_dword, dte_upper_dword, rpl;
     int e[2];
     if ((selector & 0xfffc) == 0) {
         return 1;
@@ -2745,7 +2745,7 @@ void x86Internal::op_JMPF_virtual_mode(int selector, int address) {
     update_SSB();
 }
 void x86Internal::op_JMPF(int selector, int address) {
-    int dte_lower_dword, dte_upper_dword, dpl, rpl;
+    int dte_lower_dword, dte_upper_dword, rpl;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
@@ -2820,7 +2820,7 @@ void x86Internal::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, 
 }
 void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
-    int dpl, rpl, offset, count;
+    int rpl, offset, count;
     int ss, esp, start_esp, spl;
     // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
@@ -3064,7 +3064,7 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
 void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
-    int _cpl = cpl, dpl, rpl, es, cs, ss, ds, fs, gs;
+    int _cpl = cpl, rpl, es, cs, ss, ds, fs, gs;
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = compile_sizemask(segs[2].flags);
@@ -3232,7 +3232,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
     }
 }
 void x86Internal::clear_segment_register(int sreg, int privilege_level) {
-    int dpl, dte_upper_dword;
+    int dte_upper_dword;
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
     }
@@ -3270,7 +3270,7 @@ void x86Internal::op_RETF(bool is_operand_size32, int return_offset) {
     }
 }
 int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
-    int dte_lower_dword, dte_upper_dword, rpl, dpl, descriptor_type;
+    int dte_lower_dword, dte_upper_dword, rpl, descriptor_type;
     int e[2];
     if ((selector & 0xfffc) == 0) {
         return -1;
