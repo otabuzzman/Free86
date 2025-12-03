@@ -306,7 +306,7 @@ class x86Internal {
     }
 
     void do_tlb_set_page(int linear_address, int writable, bool user);
-    int do_tlb_lookup(int mem8_loc, int writable);
+    int do_tlb_lookup(int linear_address, int writable);
 
     void fetch_decode_execute(int cycles);
 
