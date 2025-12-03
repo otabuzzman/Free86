@@ -1,7 +1,7 @@
 #include "x86.h"
 
 bool x86Internal::is_CF() {
-    bool rval = false;
+    bool r = false;
     int _ocm;
     uint32_t _ocm_dst;
     if (osm >= 25) {
@@ -13,70 +13,70 @@ bool x86Internal::is_CF() {
     }
     switch (_ocm % 25) {
     case 0:
-        rval = (_ocm_dst & 0xff) < (osm_src & 0xff);
+        r = (_ocm_dst & 0xff) < (osm_src & 0xff);
         break;
     case 1:
-        rval = (_ocm_dst & 0xffff) < (osm_src & 0xffff);
+        r = (_ocm_dst & 0xffff) < (osm_src & 0xffff);
         break;
     case 2:
-        rval = _ocm_dst < osm_src;
+        r = _ocm_dst < osm_src;
         break;
     case 3:
-        rval = (_ocm_dst & 0xff) <= (osm_src & 0xff);
+        r = (_ocm_dst & 0xff) <= (osm_src & 0xff);
         break;
     case 4:
-        rval = (_ocm_dst & 0xffff) <= (osm_src & 0xffff);
+        r = (_ocm_dst & 0xffff) <= (osm_src & 0xffff);
         break;
     case 5:
-        rval = _ocm_dst <= osm_src;
+        r = _ocm_dst <= osm_src;
         break;
     case 6:
-        rval = ((_ocm_dst + osm_src) & 0xff) < (osm_src & 0xff);
+        r = ((_ocm_dst + osm_src) & 0xff) < (osm_src & 0xff);
         break;
     case 7:
-        rval = ((_ocm_dst + osm_src) & 0xffff) < (osm_src & 0xffff);
+        r = ((_ocm_dst + osm_src) & 0xffff) < (osm_src & 0xffff);
         break;
     case 8:
-        rval = (_ocm_dst + osm_src) < osm_src;
+        r = (_ocm_dst + osm_src) < osm_src;
         break;
     case 9:
-        rval = ((_ocm_dst + osm_src + 1) & 0xff) <= (osm_src & 0xff);
+        r = ((_ocm_dst + osm_src + 1) & 0xff) <= (osm_src & 0xff);
         break;
     case 10:
-        rval = ((_ocm_dst + osm_src + 1) & 0xffff) <= (osm_src & 0xffff);
+        r = ((_ocm_dst + osm_src + 1) & 0xffff) <= (osm_src & 0xffff);
         break;
     case 11:
-        rval = ((_ocm_dst + osm_src + 1) <= osm_src);
+        r = ((_ocm_dst + osm_src + 1) <= osm_src);
         break;
     case 12:
     case 13:
     case 14:
-        rval = 0;
+        r = 0;
         break;
     case 15:
-        rval = (osm_src >> 7) & 1;
+        r = (osm_src >> 7) & 1;
         break;
     case 16:
-        rval = (osm_src >> 15) & 1;
+        r = (osm_src >> 15) & 1;
         break;
     case 17:
-        rval = (osm_src >> 31) & 1;
+        r = (osm_src >> 31) & 1;
         break;
     case 18:
     case 19:
     case 20:
-        rval = osm_src & 1;
+        r = osm_src & 1;
         break;
     case 21:
     case 22:
     case 23:
-        rval = osm_src != 0;
+        r = osm_src != 0;
         break;
     case 24:
-        rval = osm_src & 1;
+        r = osm_src & 1;
         break;
     }
-    return rval;
+    return r;
 }
 int x86Internal::is_PF() {
     if (osm == 24) {
@@ -86,36 +86,36 @@ int x86Internal::is_PF() {
     }
 }
 int x86Internal::is_AF() {
-    int rval = 0;
+    int x, r = 0;
     switch (osm % 0x1f) {
     case 0:
     case 1:
     case 2:
         x = osm_dst - osm_src;
-        rval = (osm_dst ^ x ^ osm_src) & 0x10;
+        r = (osm_dst ^ x ^ osm_src) & 0x10;
         break;
     case 3:
     case 4:
     case 5:
         x = osm_dst - osm_src - 1;
-        rval = (osm_dst ^ x ^ osm_src) & 0x10;
+        r = (osm_dst ^ x ^ osm_src) & 0x10;
         break;
     case 6:
     case 7:
     case 8:
         x = osm_dst + osm_src;
-        rval = (osm_dst ^ x ^ osm_src) & 0x10;
+        r = (osm_dst ^ x ^ osm_src) & 0x10;
         break;
     case 9:
     case 10:
     case 11:
         x = osm_dst + osm_src + 1;
-        rval = (osm_dst ^ x ^ osm_src) & 0x10;
+        r = (osm_dst ^ x ^ osm_src) & 0x10;
         break;
     case 12:
     case 13:
     case 14:
-        rval = 0;
+        r = 0;
         break;
     case 15:
     case 16:
@@ -126,154 +126,155 @@ int x86Internal::is_AF() {
     case 21:
     case 22:
     case 23:
-        rval = 0;
+        r = 0;
         break;
     case 24:
-        rval = osm_src & 0x10;
+        r = osm_src & 0x10;
         break;
     case 25:
     case 26:
     case 27:
-        rval = (osm_dst ^ (osm_dst - 1)) & 0x10;
+        r = (osm_dst ^ (osm_dst - 1)) & 0x10;
         break;
     case 28:
     case 29:
     case 30:
-        rval = (osm_dst ^ (osm_dst + 1)) & 0x10;
+        r = (osm_dst ^ (osm_dst + 1)) & 0x10;
         break;
     }
-    return rval;
+    return r;
 }
 bool x86Internal::is_OF() {
-    bool rval = false;
+    bool r = false;
+    int x;
     switch (osm % 0x1f) {
     case 0:
         x = osm_dst - osm_src;
-        rval = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 7) & 1;
+        r = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 7) & 1;
         break;
     case 1:
         x = osm_dst - osm_src;
-        rval = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 15) & 1;
+        r = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 15) & 1;
         break;
     case 2:
         x = osm_dst - osm_src;
-        rval = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 31) & 1;
+        r = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 31) & 1;
         break;
     case 3:
         x = osm_dst - osm_src - 1;
-        rval = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 7) & 1;
+        r = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 7) & 1;
         break;
     case 4:
         x = osm_dst - osm_src - 1;
-        rval = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 15) & 1;
+        r = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 15) & 1;
         break;
     case 5:
         x = osm_dst - osm_src - 1;
-        rval = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 31) & 1;
+        r = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 31) & 1;
         break;
     case 6:
         x = osm_dst + osm_src;
-        rval = (((x ^ osm_src) & (x ^ osm_dst)) >> 7) & 1;
+        r = (((x ^ osm_src) & (x ^ osm_dst)) >> 7) & 1;
         break;
     case 7:
         x = osm_dst + osm_src;
-        rval = (((x ^ osm_src) & (x ^ osm_dst)) >> 15) & 1;
+        r = (((x ^ osm_src) & (x ^ osm_dst)) >> 15) & 1;
         break;
     case 8:
         x = osm_dst + osm_src;
-        rval = (((x ^ osm_src) & (x ^ osm_dst)) >> 31) & 1;
+        r = (((x ^ osm_src) & (x ^ osm_dst)) >> 31) & 1;
         break;
     case 9:
         x = osm_dst + osm_src + 1;
-        rval = (((x ^ osm_src) & (x ^ osm_dst)) >> 7) & 1;
+        r = (((x ^ osm_src) & (x ^ osm_dst)) >> 7) & 1;
         break;
     case 10:
         x = osm_dst + osm_src + 1;
-        rval = (((x ^ osm_src) & (x ^ osm_dst)) >> 15) & 1;
+        r = (((x ^ osm_src) & (x ^ osm_dst)) >> 15) & 1;
         break;
     case 11:
         x = osm_dst + osm_src + 1;
-        rval = (((x ^ osm_src) & (x ^ osm_dst)) >> 31) & 1;
+        r = (((x ^ osm_src) & (x ^ osm_dst)) >> 31) & 1;
         break;
     case 12:
     case 13:
     case 14:
-        rval = 0;
+        r = 0;
         break;
     case 15:
     case 18:
-        rval = ((osm_src ^ osm_dst) >> 7) & 1;
+        r = ((osm_src ^ osm_dst) >> 7) & 1;
         break;
     case 16:
     case 19:
-        rval = ((osm_src ^ osm_dst) >> 15) & 1;
+        r = ((osm_src ^ osm_dst) >> 15) & 1;
         break;
     case 17:
     case 20:
-        rval = ((osm_src ^ osm_dst) >> 31) & 1;
+        r = ((osm_src ^ osm_dst) >> 31) & 1;
         break;
     case 21:
     case 22:
     case 23:
-        rval = osm_src != 0;
+        r = osm_src != 0;
         break;
     case 24:
-        rval = (osm_src >> 11) & 1;
+        r = (osm_src >> 11) & 1;
         break;
     case 25:
-        rval = (osm_dst & 0xff) == 0x80;
+        r = (osm_dst & 0xff) == 0x80;
         break;
     case 26:
-        rval = (osm_dst & 0xffff) == 0x8000;
+        r = (osm_dst & 0xffff) == 0x8000;
         break;
     case 27:
-        rval = osm_dst == -2147483648;
+        r = osm_dst == -2147483648;
         break;
     case 28:
-        rval = (osm_dst & 0xff) == 0x7f;
+        r = (osm_dst & 0xff) == 0x7f;
         break;
     case 29:
-        rval = (osm_dst & 0xffff) == 0x7fff;
+        r = (osm_dst & 0xffff) == 0x7fff;
         break;
     case 30:
-        rval = osm_dst == 0x7fffffff;
+        r = osm_dst == 0x7fffffff;
         break;
     }
-    return rval;
+    return r;
 }
 bool x86Internal::is_BE() { // `below' for signed comparison, PM p. 317
-    bool rval;
+    bool r;
     switch (osm) {
     case 6:
-        rval = ((osm_dst + osm_src) & 0xff) <= (osm_src & 0xff);
+        r = ((osm_dst + osm_src) & 0xff) <= (osm_src & 0xff);
         break;
     case 7:
-        rval = ((osm_dst + osm_src) & 0xffff) <= (osm_src & 0xffff);
+        r = ((osm_dst + osm_src) & 0xffff) <= (osm_src & 0xffff);
         break;
     case 8: {
         uint32_t val = osm_dst + osm_src;
-        rval = val <= osm_src;
+        r = val <= osm_src;
     } break;
     case 24:
-        rval = (osm_src & (0x0040 | 0x0001)) != 0;
+        r = (osm_src & (0x0040 | 0x0001)) != 0;
         break;
     default:
-        rval = is_CF() | (osm_dst == 0);
+        r = is_CF() | (osm_dst == 0);
         break;
     }
-    return rval;
+    return r;
 }
 int x86Internal::is_LE() { // `less' for unsigned comparison, PM p. 317
-    bool rval;
+    bool r;
     switch (osm) {
     case 6:
-        rval = ((osm_dst + osm_src) << 24) <= (osm_src << 24);
+        r = ((osm_dst + osm_src) << 24) <= (osm_src << 24);
         break;
     case 7:
-        rval = ((osm_dst + osm_src) << 16) <= (osm_src << 16);
+        r = ((osm_dst + osm_src) << 16) <= (osm_src << 16);
         break;
     case 8:
-        rval = (osm_dst + osm_src) <= osm_src;
+        r = (osm_dst + osm_src) <= osm_src;
         break;
     case 12:
     case 13:
@@ -284,28 +285,28 @@ int x86Internal::is_LE() { // `less' for unsigned comparison, PM p. 317
     case 28:
     case 29:
     case 30:
-        rval = osm_dst <= 0;
+        r = osm_dst <= 0;
         break;
     case 24:
-        rval = (((osm_src >> 7) ^ (osm_src >> 11)) | (osm_src >> 6)) & 1;
+        r = (((osm_src >> 7) ^ (osm_src >> 11)) | (osm_src >> 6)) & 1;
         break;
     default:
-        rval = (((osm_dst < 0)) ^ is_OF()) | (osm_dst == 0);
+        r = (((osm_dst < 0)) ^ is_OF()) | (osm_dst == 0);
         break;
     }
-    return rval;
+    return r;
 }
 int x86Internal::is_LT() {
-    bool rval;
+    bool r;
     switch (osm) {
     case 6:
-        rval = ((osm_dst + osm_src) << 24) < (osm_src << 24);
+        r = ((osm_dst + osm_src) << 24) < (osm_src << 24);
         break;
     case 7:
-        rval = ((osm_dst + osm_src) << 16) < (osm_src << 16);
+        r = ((osm_dst + osm_src) << 16) < (osm_src << 16);
         break;
     case 8:
-        rval = (osm_dst + osm_src) < osm_src;
+        r = (osm_dst + osm_src) < osm_src;
         break;
     case 12:
     case 13:
@@ -316,46 +317,46 @@ int x86Internal::is_LT() {
     case 28:
     case 29:
     case 30:
-        rval = osm_dst < 0;
+        r = osm_dst < 0;
         break;
     case 24:
-        rval = ((osm_src >> 7) ^ (osm_src >> 11)) & 1;
+        r = ((osm_src >> 7) ^ (osm_src >> 11)) & 1;
         break;
     default:
-        rval = ((osm_dst < 0)) ^ is_OF();
+        r = ((osm_dst < 0)) ^ is_OF();
         break;
     }
-    return rval;
+    return r;
 }
 int x86Internal::can_jump(int condition) {
-    bool rval = false;
+    bool r = false;
     switch ((condition >> 1) & 7) {
     case 0:
-        rval = is_OF();
+        r = is_OF();
         break;
     case 1:
-        rval = is_CF();
+        r = is_CF();
         break;
     case 2:
-        rval = osm_dst == 0;
+        r = osm_dst == 0;
         break;
     case 3:
-        rval = is_BE();
+        r = is_BE();
         break;
     case 4:
-        rval = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0));
+        r = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0));
         break;
     case 5:
-        rval = is_PF();
+        r = is_PF();
         break;
     case 6:
-        rval = is_LT();
+        r = is_LT();
         break;
     case 7:
-        rval = is_LE();
+        r = is_LE();
         break;
     }
-    return rval ^ (condition & 1);
+    return r ^ (condition & 1);
 }
 int x86Internal::compile_flags(bool shift) {
     int f0 = 0, f11 = 0;
