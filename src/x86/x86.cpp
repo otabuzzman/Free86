@@ -5,7 +5,7 @@ x86Internal::x86Internal(int mem_size) {
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
-    phys_mem8 = (uint8_t *)calloc(1, mem_size + ((15 + 3) & ~3));
+    phys_mem8 = (uint8_t *) calloc(1, mem_size + ((15 + 3) & ~3));
     phys_mem16 = reinterpret_cast<uint16_t *>(phys_mem8);
     phys_mem32 = reinterpret_cast<uint32_t *>(phys_mem8);
     tlb_read_kernel = new int[tlb_size];
@@ -26,7 +26,7 @@ x86Internal::~x86Internal() {
     delete[] tlb_write_user;
 }
 [[noreturn]] void x86Internal::abort(int interrupt_id, int error_code) {
-    cycles_processed += (cycles_requested - cycles_remaining);
+    cycles_processed += cycles_requested - cycles_remaining;
     interrupt = {interrupt_id, error_code};
     throw interrupt;
 }
@@ -58,7 +58,7 @@ void x86Internal::do_tlb_set_page(int linear_address, int writable, bool user) {
                         pde |= 0x00000020;
                         st32_phys(pde_address, pde);
                     }
-                    clean = (writable && !(pte & 0x00000040)); // WR request and page not dirty
+                    clean = writable && !(pte & 0x00000040); // WR request and page not dirty
                     if (!(pte & 0x00000020) || clean) {  // page not accessed or previous
                         pte |= 0x00000020;     // set page accessed
                         if (clean) {
@@ -1349,7 +1349,7 @@ void x86Internal::segment_translation(int modRM) {
             break;
         case 0x0c:
             sib = phys_mem8[far++];
-            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
+            mem8_loc = (phys_mem8[far++] << 24) >> 24;
             sib_base = sib & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             sib_index = (sib >> 3) & 7;
@@ -1394,7 +1394,7 @@ void x86Internal::segment_translation(int modRM) {
         case 0x0d:
         case 0x0e:
         case 0x0f:
-            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
+            mem8_loc = (phys_mem8[far++] << 24) >> 24;
             sib_base = modRM & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             break;
@@ -1427,7 +1427,7 @@ void x86Internal::segment_translation(int modRM) {
                 mem8_loc = 0;
                 break;
             case 1:
-                mem8_loc = ((phys_mem8[far++] << 24) >> 24);
+                mem8_loc = (phys_mem8[far++] << 24) >> 24;
                 break;
             default:
                 mem8_loc = ld16_mem8_direct();
@@ -1499,7 +1499,7 @@ void x86Internal::segment_translation(int modRM) {
             break;
         case 0x0c:
             sib = phys_mem8[far++];
-            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
+            mem8_loc = (phys_mem8[far++] << 24) >> 24;
             sib_base = sib & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             sib_index = (sib >> 3) & 7;
@@ -1545,7 +1545,7 @@ void x86Internal::segment_translation(int modRM) {
         case 0x0d:
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
-            mem8_loc = ((phys_mem8[far++] << 24) >> 24);
+            mem8_loc = (phys_mem8[far++] << 24) >> 24;
             sib_base = modRM & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             break;
@@ -1701,7 +1701,7 @@ void x86Internal::set_segment_register_protected(int sreg, int selector) {
             }
         }
         if (!(dte_upper_dword & (1 << 8))) {
-            dte_upper_dword |= (1 << 8);
+            dte_upper_dword |= 1 << 8;
             st32_mem8_kernel_write(dte_upper_dword);
         }
         update_segment_register(sreg, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
@@ -1819,7 +1819,7 @@ int x86Internal::op_INC8(int data) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((data + 1) << 24) >> 24);
+    osm_dst = ((data + 1) << 24) >> 24;
     osm = 25;
     return osm_dst;
 }
@@ -1828,7 +1828,7 @@ int x86Internal::op_INC16(int data) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((data + 1) << 16) >> 16);
+    osm_dst = ((data + 1) << 16) >> 16;
     osm = 26;
     return osm_dst;
 }
@@ -1837,7 +1837,7 @@ int x86Internal::op_DEC8(int data) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((data - 1) << 24) >> 24);
+    osm_dst = ((data - 1) << 24) >> 24;
     osm = 28;
     return osm_dst;
 }
@@ -1846,7 +1846,7 @@ int x86Internal::op_DEC16(int data) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((data - 1) << 16) >> 16);
+    osm_dst = ((data - 1) << 16) >> 16;
     osm = 29;
     return osm_dst;
 }
@@ -1872,7 +1872,7 @@ int x86Internal::op_SHRD_SHLD16(int dst, int src, int count) {
             if (c > 16) {
                 x |= src << (32 - c);
             }
-            osm_dst = d = ((x << 16) >> 16);
+            osm_dst = d = (x << 16) >> 16;
             osm = 19;
         }
     }
@@ -1884,8 +1884,8 @@ int x86Internal::op_SHRD(int dst, int src, int count) {
     c = count & 0x1f;
     if (c) {
         osm_src = d >> (c - 1);
-        uint32_t lval = ((uint32_t) d >> c);
-        uint32_t rval = ((uint32_t) src << (32 - c));
+        uint32_t lval = (uint32_t) d >> c;
+        uint32_t rval = (uint32_t) src << (32 - c);
         osm_dst = d = lval | rval;
         osm = 20;
     }
@@ -1897,8 +1897,8 @@ int x86Internal::op_SHLD(int dst, int src, int count) {
     c = count & 0x1f;
     if (c) {
         osm_src = d << (c - 1);
-        uint32_t lval = (d << c);
-        uint32_t rval = ((uint32_t) src >> (32 - c));
+        uint32_t lval = d << c;
+        uint32_t rval = (uint32_t) src >> (32 - c);
         osm_dst = d = lval | rval;
         osm = 17;
     }
@@ -2028,7 +2028,7 @@ void x86Internal::op_DIV8(int divisor) {
         abort(0);
     }
     q = a / d;
-    r = (a % d);
+    r = a % d;
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
 void x86Internal::op_IDIV8(int divisor) {
@@ -2042,7 +2042,7 @@ void x86Internal::op_IDIV8(int divisor) {
     if (((q << 24) >> 24) != q) {
         abort(0);
     }
-    r = (a % d);
+    r = a % d;
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
 void x86Internal::op_DIV16(int divisor) {
@@ -2054,7 +2054,7 @@ void x86Internal::op_DIV16(int divisor) {
         abort(0);
     }
     q = au / d;
-    r = (au % d);
+    r = au % d;
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
@@ -2069,7 +2069,7 @@ void x86Internal::op_IDIV16(int divisor) {
     if (((q << 16) >> 16) != q) {
         abort(0);
     }
-    r = (a % d);
+    r = a % d;
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
@@ -2144,22 +2144,22 @@ void x86Internal::op_MUL8(int multiplicand, int multiplier) {
     mr = multiplier & 0xff;
     x = (md & 0xff) * (mr & 0xff);
     osm_src = x >> 8;
-    osm_dst = ((x << 24) >> 24);
+    osm_dst = (x << 24) >> 24;
     osm = 21;
 }
 void x86Internal::op_IMUL8(int multiplicand, int multiplier) {
     int md, mr;
-    md = ((multiplicand << 24) >> 24);
-    mr = ((multiplier << 24) >> 24);
+    md = (multiplicand << 24) >> 24;
+    mr = (multiplier << 24) >> 24;
     x = md * mr;
-    osm_dst = ((x << 24) >> 24);
+    osm_dst = (x << 24) >> 24;
     osm_src = x != osm_dst;
     osm = 21;
 }
 void x86Internal::op_MUL16(int multiplicand, int multiplier) {
     x = (multiplicand & 0xffff) * (multiplier & 0xffff);
     osm_src = x >> 16;
-    osm_dst = ((x << 16) >> 16);
+    osm_dst = (x << 16) >> 16;
     osm = 22;
 }
 void x86Internal::op_IMUL16(int multiplicand, int multiplier) {
@@ -2167,7 +2167,7 @@ void x86Internal::op_IMUL16(int multiplicand, int multiplier) {
     md = (multiplicand << 16) >> 16;
     mr = (multiplier << 16) >> 16;
     x = md * mr;
-    osm_dst = ((x << 16) >> 16);
+    osm_dst = (x << 16) >> 16;
     osm_src = x != osm_dst;
     osm = 22;
 }
@@ -2215,15 +2215,15 @@ int x86Internal::do_multiply32(int multiplicand, int multiplier) {
         r = Jc * Tc;
         v = Ic * Uc;
         m = Jc * Uc;
-        r += ((m & 0xffff) << 16);
-        v += (m >> 16);
+        r += (m & 0xffff) << 16;
+        v += m >> 16;
         if (r >= 4294967296) {
             r -= 4294967296;
             v++;
         }
         m = Ic * Tc;
-        r += ((m & 0xffff) << 16);
-        v += (m >> 16);
+        r += (m & 0xffff) << 16;
+        v += m >> 16;
         if (r >= 4294967296) {
             r -= 4294967296;
             v++;
@@ -2239,7 +2239,7 @@ int x86Internal::do_arithmetic8(int dst, int src) {
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        d = (((d + src) << 24) >> 24);
+        d = ((d + src) << 24) >> 24;
         osm_dst = d;
         osm = 0;
         break;
@@ -2251,36 +2251,36 @@ int x86Internal::do_arithmetic8(int dst, int src) {
     case 2:
         cf = is_CF();
         osm_src = src;
-        d = (((d + src + cf) << 24) >> 24);
+        d = ((d + src + cf) << 24) >> 24;
         osm_dst = d;
         osm = cf ? 3 : 0;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        d = (((d - src - cf) << 24) >> 24);
+        d = ((d - src - cf) << 24) >> 24;
         osm_dst = d;
         osm = cf ? 9 : 6;
         break;
     case 4:
-        d = (((d & src) << 24) >> 24);
+        d = ((d & src) << 24) >> 24;
         osm_dst = d;
         osm = 12;
         break;
     case 5:
         osm_src = src;
-        d = (((d - src) << 24) >> 24);
+        d = ((d - src) << 24) >> 24;
         osm_dst = d;
         osm = 6;
         break;
     case 6:
-        d = (((d ^ src) << 24) >> 24);
+        d = ((d ^ src) << 24) >> 24;
         osm_dst = d;
         osm = 12;
         break;
     case 7:
         osm_src = src;
-        osm_dst = (((dst - src) << 24) >> 24);
+        osm_dst = ((dst - src) << 24) >> 24;
         osm = 6;
         break;
     }
@@ -2292,7 +2292,7 @@ int x86Internal::do_arithmetic16(int dst, int src) {
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        d = (((d + src) << 16) >> 16);
+        d = ((d + src) << 16) >> 16;
         osm_dst = d;
         osm = 1;
         break;
@@ -2304,36 +2304,36 @@ int x86Internal::do_arithmetic16(int dst, int src) {
     case 2:
         cf = is_CF();
         osm_src = src;
-        d = (((d + src + cf) << 16) >> 16);
+        d = ((d + src + cf) << 16) >> 16;
         osm_dst = d;
         osm = cf ? 4 : 1;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        d = (((d - src - cf) << 16) >> 16);
+        d = ((d - src - cf) << 16) >> 16;
         osm_dst = d;
         osm = cf ? 10 : 7;
         break;
     case 4:
-        d = (((d & src) << 16) >> 16);
+        d = ((d & src) << 16) >> 16;
         osm_dst = d;
         osm = 13;
         break;
     case 5:
         osm_src = src;
-        d = (((d - src) << 16) >> 16);
+        d = ((d - src) << 16) >> 16;
         osm_dst = d;
         osm = 7;
         break;
     case 6:
-        d = (((d ^ src) << 16) >> 16);
+        d = ((d ^ src) << 16) >> 16;
         osm_dst = d;
         osm = 13;
         break;
     case 7:
         osm_src = src;
-        osm_dst = (((d - src) << 16) >> 16);
+        osm_dst = ((d - src) << 16) >> 16;
         osm = 7;
         break;
     }
@@ -2401,9 +2401,9 @@ int x86Internal::do_shift8(int src, int count) {
             c = count & 0x7;
             s1 = (s1 << c) | (s1 >> (8 - c));
             osm_src = compile_flags(true);
-            osm_src |= (s1 & 0x0001);
+            osm_src |= s1 & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2414,9 +2414,9 @@ int x86Internal::do_shift8(int src, int count) {
             c = count & 0x7;
             s1 = (s1 >> c) | (s1 << (8 - c));
             osm_src = compile_flags(true);
-            osm_src |= ((s1 >> 7) & 0x0001);
+            osm_src |= (s1 >> 7) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2431,9 +2431,9 @@ int x86Internal::do_shift8(int src, int count) {
                 s1 |= s2 >> (9 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (8 - c)) & 0x0001);
+            osm_src |= (s2 >> (8 - c)) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2448,9 +2448,9 @@ int x86Internal::do_shift8(int src, int count) {
                 s1 |= s2 << (9 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (c - 1)) & 0x0001);
+            osm_src |= (s2 >> (c - 1)) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) << 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2461,7 +2461,7 @@ int x86Internal::do_shift8(int src, int count) {
         c = count & 0x1f;
         if (c) {
             osm_src = s1 << (c - 1);
-            osm_dst = s1 = (((s1 << c) << 24) >> 24);
+            osm_dst = s1 = ((s1 << c) << 24) >> 24;
             osm = 15;
         }
         break;
@@ -2469,7 +2469,7 @@ int x86Internal::do_shift8(int src, int count) {
         c = count & 0x1f;
         if (c) {
             osm_src = s1 >> (c - 1);
-            osm_dst = s1 = (((s1 >> c) << 24) >> 24);
+            osm_dst = s1 = ((s1 >> c) << 24) >> 24;
             osm = 18;
         }
         break;
@@ -2478,7 +2478,7 @@ int x86Internal::do_shift8(int src, int count) {
         if (c) {
             s1 = (src << 24) >> 24;
             osm_src = s1 >> (c - 1);
-            osm_dst = s1 = (((s1 >> c) << 24) >> 24);
+            osm_dst = s1 = ((s1 >> c) << 24) >> 24;
             osm = 18;
         }
         break;
@@ -2494,9 +2494,9 @@ int x86Internal::do_shift16(int src, int count) {
             c = count & 0xf;
             s1 = (s1 << c) | (s1 >> (16 - c));
             osm_src = compile_flags(true);
-            osm_src |= (s1 & 0x0001);
+            osm_src |= s1 & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2507,9 +2507,9 @@ int x86Internal::do_shift16(int src, int count) {
             c = count & 0xf;
             s1 = (s1 >> c) | (s1 << (16 - c));
             osm_src = compile_flags(true);
-            osm_src |= ((s1 >> 15) & 0x0001);
+            osm_src |= (s1 >> 15) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2524,9 +2524,9 @@ int x86Internal::do_shift16(int src, int count) {
                 s1 |= s2 >> (17 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (16 - c)) & 0x0001);
+            osm_src |= (s2 >> (16 - c)) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2541,9 +2541,9 @@ int x86Internal::do_shift16(int src, int count) {
                 s1 |= s2 << (17 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (c - 1)) & 0x0001);
+            osm_src |= (s2 >> (c - 1)) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 4) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2554,7 +2554,7 @@ int x86Internal::do_shift16(int src, int count) {
         c = count & 0x1f;
         if (c) {
             osm_src = s1 << (c - 1);
-            osm_dst = s1 = (((s1 << c) << 16) >> 16);
+            osm_dst = s1 = ((s1 << c) << 16) >> 16;
             osm = 16;
         }
         break;
@@ -2562,7 +2562,7 @@ int x86Internal::do_shift16(int src, int count) {
         c = count & 0x1f;
         if (c) {
             osm_src = s1 >> (c - 1);
-            osm_dst = s1 = (((s1 >> c) << 16) >> 16);
+            osm_dst = s1 = ((s1 >> c) << 16) >> 16;
             osm = 19;
         }
         break;
@@ -2571,7 +2571,7 @@ int x86Internal::do_shift16(int src, int count) {
         if (c) {
             s1 = (src << 16) >> 16;
             osm_src = s1 >> (c - 1);
-            osm_dst = s1 = (((s1 >> c) << 16) >> 16);
+            osm_dst = s1 = ((s1 >> c) << 16) >> 16;
             osm = 19;
         }
         break;
@@ -2588,9 +2588,9 @@ int x86Internal::do_shift32(uint32_t src, int count) {
         if (c) {
             s1 = (s1 << c) | (s1 >> (32 - c));
             osm_src = compile_flags(true);
-            osm_src |= (s1 & 0x0001);
+            osm_src |= s1 & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2601,9 +2601,9 @@ int x86Internal::do_shift32(uint32_t src, int count) {
         if (c) {
             s1 = (s1 >> c) | (s1 << (32 - c));
             osm_src = compile_flags(true);
-            osm_src |= ((s1 >> 31) & 0x0001);
+            osm_src |= (s1 >> 31) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2618,9 +2618,9 @@ int x86Internal::do_shift32(uint32_t src, int count) {
                 s1 |= s2 >> (33 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (32 - c)) & 0x0001);
+            osm_src |= (s2 >> (32 - c)) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2635,9 +2635,9 @@ int x86Internal::do_shift32(uint32_t src, int count) {
                 s1 |= s2 << (33 - c);
             }
             osm_src = compile_flags(true);
-            osm_src |= ((s2 >> (c - 1)) & 0x0001);
+            osm_src |= (s2 >> (c - 1)) & 0x0001;
             if (c == 1) {
-                osm_src |= (((s2 ^ s1) >> 20) & 0x0800);
+                osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2726,7 +2726,7 @@ void x86Internal::op_LTR(int selector) {
             abort(11, selector & 0xfffc);
         }
         compile_segment_descriptor(&tr, dte_lower_dword, dte_upper_dword);
-        dte_upper_dword |= (1 << 9);
+        dte_upper_dword |= 1 << 9;
         st32_mem8_kernel_write(dte_upper_dword);
     }
     tr.selector = selector;
@@ -2741,7 +2741,7 @@ void x86Internal::do_JMPF(int selector, int address) {
 void x86Internal::op_JMPF_virtual_mode(int selector, int address) {
     eip = address, far = far_start = 0;
     segs[1].selector = selector;
-    segs[1].base = (selector << 4);
+    segs[1].base = selector << 4;
     update_SSB();
 }
 void x86Internal::op_JMPF(int selector, int address) {
@@ -2815,7 +2815,7 @@ void x86Internal::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, 
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = address, far = far_start = 0;
     segs[1].selector = selector;
-    segs[1].base = (selector << 4);
+    segs[1].base = selector << 4;
     update_SSB();
 }
 void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
@@ -3045,7 +3045,7 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
     }
     regs[4] = (regs[4] & ~SS_mask) | ((esp + return_offset) & SS_mask);
     segs[1].selector = cs;
-    segs[1].base = (cs << 4);
+    segs[1].base = cs << 4;
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         int mask;
@@ -3395,7 +3395,7 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int r
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
-    segs[1].base = (selector << 4);
+    segs[1].base = selector << 4;
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
 void x86Internal::do_interrupt_protected_mode(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
@@ -3655,7 +3655,7 @@ void x86Internal::op_CPUID() {
         regs[0] = (5 << 8) | (4 << 4) | 3; // family | model | stepping
         regs[3] = 8 << 8;
         regs[1] = 0;
-        regs[2] = (1 << 4);
+        regs[2] = 1 << 4;
         break;
     }
 }
@@ -3668,7 +3668,7 @@ void x86Internal::op_AAM(int radix) {
     ah = al / radix;
     al = al % radix;
     regs[0] = (regs[0] & ~0xffff) | al | (ah << 8);
-    osm_dst = ((al << 24) >> 24);
+    osm_dst = (al << 24) >> 24;
     osm = 12;
 }
 void x86Internal::op_AAD(int radix) {
@@ -3677,7 +3677,7 @@ void x86Internal::op_AAD(int radix) {
     ah = (regs[0] >> 8) & 0xff;
     al = (ah * radix + al) & 0xff;
     regs[0] = (regs[0] & ~0xffff) | al;
-    osm_dst = ((al << 24) >> 24);
+    osm_dst = (al << 24) >> 24;
     osm = 12;
 }
 void x86Internal::op_AAA() {
@@ -3738,7 +3738,7 @@ void x86Internal::op_DAA() {
     regs[0] = (regs[0] & ~0xff) | al;
     flag_bits |= (al == 0) << 6;
     flag_bits |= parity_LUT[al] << 2;
-    flag_bits |= (al & 0x80);
+    flag_bits |= al & 0x80;
     osm_src = flag_bits;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
@@ -3765,7 +3765,7 @@ void x86Internal::op_DAS() {
     regs[0] = (regs[0] & ~0xff) | al;
     flag_bits |= (al == 0) << 6;
     flag_bits |= parity_LUT[al] << 2;
-    flag_bits |= (al & 0x80);
+    flag_bits |= al & 0x80;
     osm_src = flag_bits;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;

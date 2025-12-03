@@ -344,7 +344,7 @@ int x86Internal::can_jump(int condition) {
         r = is_BE();
         break;
     case 4:
-        r = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0));
+        r = osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0);
         break;
     case 5:
         r = is_PF();
@@ -361,13 +361,13 @@ int x86Internal::can_jump(int condition) {
 int x86Internal::compile_flags(bool shift) {
     int f0 = 0, f11 = 0;
     if (!shift) {
-        f0 = (is_CF() << 0);
-        f11 = (is_OF() << 11);
+        f0 = is_CF() << 0;
+        f11 = is_OF() << 11;
     }
-    int f2 = (is_PF() << 2);
+    int f2 = is_PF() << 2;
     int f4 = is_AF();
-    int f6 = ((osm_dst == 0) << 6);
-    int f7 = ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7);
+    int f6 = (osm_dst == 0) << 6;
+    int f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7;
     return f0 | f2 | f4 | f6 | f7 | f11;
 }
 int x86Internal::get_EFLAGS() {

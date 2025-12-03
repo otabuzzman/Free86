@@ -35,7 +35,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     ipr |= 0x0100;
                 }
                 opcode = phys_mem8[far++];
-                opcode |= (ipr & 0x0100);
+                opcode |= ipr & 0x0100;
                 break;
             case 0x67: // address-size override prefix
                 if (ipr == ipr_default) {
@@ -47,7 +47,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     ipr |= 0x0080;
                 }
                 opcode = phys_mem8[far++];
-                opcode |= (ipr & 0x0100);
+                opcode |= ipr & 0x0100;
                 break;
             case 0xf0: // LOCK prefix
                 if (ipr == ipr_default) {
@@ -55,7 +55,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 ipr |= 0x0040;
                 opcode = phys_mem8[far++];
-                opcode |= (ipr & 0x0100);
+                opcode |= ipr & 0x0100;
                 break;
             case 0xf2: // REPN[EZ] repeat string operation prefix
                 if (ipr == ipr_default) {
@@ -63,7 +63,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 ipr |= 0x0020;
                 opcode = phys_mem8[far++];
-                opcode |= (ipr & 0x0100);
+                opcode |= ipr & 0x0100;
                 break;
             case 0xf3: // REP[EZ] repeat string operation prefix
                 if (ipr == ipr_default) {
@@ -71,7 +71,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 ipr |= 0x0010;
                 opcode = phys_mem8[far++];
-                opcode |= (ipr & 0x0100);
+                opcode |= ipr & 0x0100;
                 break;
             case 0x26: // ES segment override prefix
             case 0x2e: // CS segment override prefix
@@ -82,7 +82,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 ipr = (ipr & ~0x000f) | (((opcode >> 3) & 3) + 1);
                 opcode = phys_mem8[far++];
-                opcode |= (ipr & 0x0100);
+                opcode |= ipr & 0x0100;
                 break;
             case 0x64: // FS segment override prefix
             case 0x65: // GS segment override prefix
@@ -91,7 +91,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 ipr = (ipr & ~0x000f) | ((opcode & 7) + 1);
                 opcode = phys_mem8[far++];
-                opcode |= (ipr & 0x0100);
+                opcode |= ipr & 0x0100;
                 break;
             case 0xb0: // MOV AL
             case 0xb1: // MOV CL
@@ -124,7 +124,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             case 0x88: // MOV
                 mem8 = phys_mem8[far++];
                 reg_idx1 = (mem8 >> 3) & 7;
-                x = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
+                x = regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1);
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     tlb_hash = (reg_idx0 & 4) << 1;
@@ -158,7 +158,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 mem8 = phys_mem8[far++];
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                    x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                 } else {
                     segment_translation(mem8);
                     x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
@@ -265,7 +265,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 reg_idx1 = (mem8 >> 3) & 7;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                    x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                 } else {
                     segment_translation(mem8);
@@ -310,7 +310,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 x = segs[reg_idx1].selector;
                 if ((mem8 >> 6) == 3) {
-                    if ((((ipr >> 8) & 1) ^ 1)) {
+                    if (((ipr >> 8) & 1) ^ 1) {
                         regs[mem8 & 7] = x;
                     } else {
                         set_lower_word(mem8 & 7, x);
@@ -337,7 +337,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 mem8 = phys_mem8[far++];
                 operation = opcode >> 3;
                 reg_idx1 = (mem8 >> 3) & 7;
-                y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
+                y = regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1);
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
                     set_lower_byte(reg_idx0, do_arithmetic8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
@@ -419,7 +419,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 reg_idx1 = (mem8 >> 3) & 7;
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    y = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                    y = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                 } else {
                     segment_translation(mem8);
                     y = ld8_mem8_read();
@@ -595,18 +595,18 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         segment_translation(mem8);
                         x = ld32_mem8_read();
                     }
-                    y = ((phys_mem8[far++] << 24) >> 24);
+                    y = (phys_mem8[far++] << 24) >> 24;
                     osm_src = y;
                     osm_dst = x - osm_src;
                     osm = 8;
                 } else {
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        y = ((phys_mem8[far++] << 24) >> 24);
+                        y = (phys_mem8[far++] << 24) >> 24;
                         regs[reg_idx0] = do_arithmetic32(regs[reg_idx0], y);
                     } else {
                         segment_translation(mem8);
-                        y = ((phys_mem8[far++] << 24) >> 24);
+                        y = (phys_mem8[far++] << 24) >> 24;
                         x = ld32_mem8_write();
                         x = do_arithmetic32(x, y);
                         st32_mem8_write(x);
@@ -654,7 +654,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     segment_translation(mem8);
                     y = ld32_mem8_read();
                 }
-                z = ((phys_mem8[far++] << 24) >> 24);
+                z = (phys_mem8[far++] << 24) >> 24;
                 op_IMUL32(y, z);
                 regs[reg_idx1] = x;
                 goto EXEC_LOOP;
@@ -679,14 +679,14 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 mem8 = phys_mem8[far++];
                 if ((mem8 >> 6) == 3) {
                     reg_idx0 = mem8 & 7;
-                    x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                    x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                 } else {
                     segment_translation(mem8);
                     x = ld8_mem8_read();
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
-                y = (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1));
-                osm_dst = (((x & y) << 24) >> 24);
+                y = regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1);
+                osm_dst = ((x & y) << 24) >> 24;
                 osm = 12;
                 goto EXEC_LOOP;
             case 0x85: // TEST
@@ -703,7 +703,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0xa8: // TEST
                 y = phys_mem8[far++];
-                osm_dst = (((regs[0] & y) << 24) >> 24);
+                osm_dst = ((regs[0] & y) << 24) >> 24;
                 osm = 12;
                 goto EXEC_LOOP;
             case 0xa9: // TEST
@@ -722,13 +722,13 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
                         x = ld8_mem8_read();
                     }
                     y = phys_mem8[far++];
-                    osm_dst = (((x & y) << 24) >> 24);
+                    osm_dst = ((x & y) << 24) >> 24;
                     osm = 12;
                     break;
                 case 2:
@@ -757,7 +757,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 4:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
                         x = ld8_mem8_read();
@@ -768,7 +768,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 5:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
                         x = ld8_mem8_read();
@@ -779,7 +779,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 6:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
                         x = ld8_mem8_read();
@@ -789,7 +789,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 7:
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
                         x = ld8_mem8_read();
@@ -1061,7 +1061,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0x6a: // PUSH
-                x = ((phys_mem8[far++] << 24) >> 24);
+                x = (phys_mem8[far++] << 24) >> 24;
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4] - 4;
                     st32_mem8_write(x);
@@ -1089,7 +1089,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     abort(13);
                 }
                 x = get_EFLAGS() & ~(0x00010000 | 0x00020000);
-                if ((((ipr >> 8) & 1) ^ 1)) {
+                if (((ipr >> 8) & 1) ^ 1) {
                     push_dword(x);
                 } else {
                     push_word(x);
@@ -1100,7 +1100,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((eflags & 0x00020000) && iopl != 3) {
                     abort(13);
                 }
-                if ((((ipr >> 8) & 1) ^ 1)) {
+                if (((ipr >> 8) & 1) ^ 1) {
                     x = read_stack_dword();
                     pop_dword();
                     y = -1;
@@ -1109,7 +1109,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     pop_word();
                     y = 0xffff;
                 }
-                z = (0x00000100 | 0x00004000 | 0x00040000 | 0x00200000);
+                z = 0x00000100 | 0x00004000 | 0x00040000 | 0x00200000;
                 if (cpl == 0) {
                     z |= 0x00000200 | 0x00003000;
                 } else {
@@ -1227,7 +1227,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         segment_translation(mem8);
                         x = ld32_mem8_read();
                     }
-                    y = (eip + far - far_start);
+                    y = eip + far - far_start;
                     if (x86_64_long_mode) {
                         mem8_loc = regs[4] - 4;
                         st32_mem8_write(y);
@@ -1281,7 +1281,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0xeb: // JMP
-                x = ((phys_mem8[far++] << 24) >> 24);
+                x = (phys_mem8[far++] << 24) >> 24;
                 far = far + x;
                 goto EXEC_LOOP;
             case 0xe9: // JMP
@@ -1293,7 +1293,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 far = far + x;
                 goto EXEC_LOOP;
             case 0xea: // JMPF
-                if ((((ipr >> 8) & 1) ^ 1)) {
+                if (((ipr >> 8) & 1) ^ 1) {
                     {
                         x = phys_mem8[far] |
                             (phys_mem8[far + 1] << 8) |
@@ -1309,7 +1309,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x70: // JO
                 if (is_OF()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1317,7 +1317,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x71: // JNO
                 if (!is_OF()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1325,7 +1325,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x72: // JB
                 if (is_CF()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1333,7 +1333,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x73: // JNB
                 if (!is_CF()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1341,7 +1341,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x74: // JZ
                 if (osm_dst == 0) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1349,7 +1349,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x75: // JNZ
                 if (!(osm_dst == 0)) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1357,7 +1357,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x76: // JBE
                 if (is_BE()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1365,15 +1365,15 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x77: // JNBE
                 if (!is_BE()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto EXEC_LOOP;
             case 0x78: // JS
-                if ((osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                if (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) {
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1381,7 +1381,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x79: // JNS
                 if (!(osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1389,7 +1389,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x7a: // JP
                 if (is_PF()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1397,7 +1397,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x7b: // JNP
                 if (!is_PF()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1405,7 +1405,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x7c: // JL
                 if (is_LT()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1413,7 +1413,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x7d: // JNL
                 if (!is_LT()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1421,7 +1421,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x7e: // JLE
                 if (is_LE()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1429,7 +1429,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0x7f: // JNLE
                 if (!is_LE()) {
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     far = far + x;
                 } else {
                     far = far + 1;
@@ -1438,7 +1438,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             case 0xe0: // LOOPNE
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
-                x = ((phys_mem8[far++] << 24) >> 24);
+                x = (phys_mem8[far++] << 24) >> 24;
                 if (ipr & 0x0080) {
                     v = 0xffff;
                 } else {
@@ -1450,7 +1450,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if (opcode == 0) {
                     z = !(osm_dst == 0);
                 } else if (opcode == 1) {
-                    z = (osm_dst == 0);
+                    z = osm_dst == 0;
                 } else {
                     z = 1;
                 }
@@ -1463,7 +1463,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 }
                 goto EXEC_LOOP;
             case 0xe3: // JCXZ
-                x = ((phys_mem8[far++] << 24) >> 24);
+                x = (phys_mem8[far++] << 24) >> 24;
                 if (ipr & 0x0080) {
                     v = 0xffff;
                 } else {
@@ -1500,7 +1500,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     (phys_mem8[far + 2] << 16) |
                     (phys_mem8[far + 3] << 24);
                 far += 4;
-                y = (eip + far - far_start);
+                y = eip + far - far_start;
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4] - 4;
                     st32_mem8_write(y);
@@ -1511,7 +1511,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 far = far + x;
                 goto EXEC_LOOP;
             case 0x9a: // CALLF
-                z = (((ipr >> 8) & 1) ^ 1);
+                z = ((ipr >> 8) & 1) ^ 1;
                 if (z) {
                     x = phys_mem8[far] |
                         (phys_mem8[far + 1] << 8) |
@@ -1549,7 +1549,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             case 0x90: // NOP
                 goto EXEC_LOOP;
             case 0xcc: // INT
-                y = (eip + far - far_start);
+                y = eip + far - far_start;
                 do_interrupt(3, 0, 0, 1, y);
                 goto EXEC_LOOP;
             case 0xcd: // INT
@@ -1557,12 +1557,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 if ((eflags & 0x00020000) && ((eflags >> 12) & 3) != 3) {
                     abort(13);
                 }
-                y = (eip + far - far_start);
+                y = eip + far - far_start;
                 do_interrupt(x, 0, 0, 1, y);
                 goto EXEC_LOOP;
             case 0xce: // INTO
                 if (is_OF()) {
-                    y = (eip + far - far_start);
+                    y = eip + far - far_start;
                     do_interrupt(4, 0, 0, 1, y);
                 }
                 goto EXEC_LOOP;
@@ -1919,14 +1919,14 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
                         x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                                  ? __ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
-                    regs[reg_idx1] = ((x << 24) >> 24);
+                    regs[reg_idx1] = (x << 24) >> 24;
                     goto EXEC_LOOP;
                 case 0xbf: // MOVSX
                     mem8 = phys_mem8[far++];
@@ -1937,7 +1937,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         segment_translation(mem8);
                         x = ld16_mem8_read();
                     }
-                    regs[reg_idx1] = ((x << 16) >> 16);
+                    regs[reg_idx1] = (x << 16) >> 16;
                     goto EXEC_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     if (!check_protected() || (eflags & 0x00020000)) {
@@ -2279,7 +2279,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                         y = do_arithmetic8(x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         set_lower_byte(reg_idx1, x);
                         set_lower_byte(reg_idx0, y);
@@ -2315,7 +2315,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     reg_idx1 = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                        x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                         y = do_arithmetic8(regs[0], x);
                         if (y == 0) {
                             set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
@@ -2713,11 +2713,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     operation = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        y = ((phys_mem8[far++] << 24) >> 24);
+                        y = (phys_mem8[far++] << 24) >> 24;
                         set_lower_word(reg_idx0, do_arithmetic16(regs[reg_idx0], y));
                     } else {
                         segment_translation(mem8);
-                        y = ((phys_mem8[far++] << 24) >> 24);
+                        y = (phys_mem8[far++] << 24) >> 24;
                         if (operation != 7) {
                             x = ld16_mem8_write();
                             x = do_arithmetic16(x, y);
@@ -2759,7 +2759,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         segment_translation(mem8);
                         y = ld16_mem8_read();
                     }
-                    z = ((phys_mem8[far++] << 24) >> 24);
+                    z = (phys_mem8[far++] << 24) >> 24;
                     op_IMUL16(y, z);
                     set_lower_word(reg_idx1, x);
                     goto EXEC_LOOP;
@@ -2785,12 +2785,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         x = ld16_mem8_read();
                     }
                     y = regs[(mem8 >> 3) & 7];
-                    osm_dst = (((x & y) << 16) >> 16);
+                    osm_dst = ((x & y) << 16) >> 16;
                     osm = 13;
                     goto EXEC_LOOP;
                 case 0x1a9: // TEST
                     y = ld16_mem8_direct();
-                    osm_dst = (((regs[0] & y) << 16) >> 16);
+                    osm_dst = ((regs[0] & y) << 16) >> 16;
                     osm = 13;
                     goto EXEC_LOOP;
                 case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
@@ -2805,7 +2805,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                             x = ld16_mem8_read();
                         }
                         y = ld16_mem8_direct();
-                        osm_dst = (((x & y) << 16) >> 16);
+                        osm_dst = ((x & y) << 16) >> 16;
                         osm = 13;
                         break;
                     case 2:
@@ -2976,7 +2976,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     push_word(x);
                     goto EXEC_LOOP;
                 case 0x16a: // PUSH
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     push_word(x);
                     goto EXEC_LOOP;
                 case 0x1c8: // ENTER
@@ -3081,7 +3081,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     }
                     goto EXEC_LOOP;
                 case 0x1eb: // JMP
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x1e9: // JMP
@@ -3104,7 +3104,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 case 0x17d: // JNL
                 case 0x17e: // JLE
                 case 0x17f: // JNLE
-                    x = ((phys_mem8[far++] << 24) >> 24);
+                    x = (phys_mem8[far++] << 24) >> 24;
                     y = can_jump(opcode & 0xf);
                     if (y) {
                         eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
@@ -3383,7 +3383,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                         reg_idx1 = (mem8 >> 3) & 7;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1));
+                            x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                         } else {
                             segment_translation(mem8);
                             x = ld8_mem8_read();
@@ -3728,6 +3728,6 @@ void x86Internal::fetch_decode_execute(int cycles) {
     EXEC_LOOP:;
     } while (--cycles_remaining);
 OUTER_LOOP:
-    cycles_processed += (cycles_requested - cycles_remaining);
-    eip = (eip + far - far_start);
+    cycles_processed += cycles_requested - cycles_remaining;
+    eip = eip + far - far_start;
 }

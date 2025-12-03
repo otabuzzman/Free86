@@ -243,7 +243,7 @@ class x86Internal {
         }
         segs[1] = {0, 0xffff0000, 0, 0};
         idt = {0, 0, 0x03ff, 0};
-        cr0 = (1 << 4); // 80387 present
+        cr0 = 1 << 4; // 80387 present
     }
 
     [[noreturn]] void abort(int interrupt_id, int error_code = 0);
