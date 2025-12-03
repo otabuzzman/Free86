@@ -2826,7 +2826,7 @@ void x86Internal::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, 
 void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int dpl, rpl, offset, count;
-    int SS_base, SS_mask, ss, esp, start_esp, spl;
+    int ss, esp, start_esp, spl;
     // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
@@ -2957,7 +2957,6 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
             }
             // Ue = compile_sizemask(segs[2].flags);
             // Ve = segs[2].base;
-            int x = 0;
             SS_mask = compile_sizemask(dte_upper_dword);
             SS_base = compile_dte_base(dte_lower_dword, dte_upper_dword);
             if (is_operand_size32) {
@@ -2971,7 +2970,8 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
                     // x = Xe(Ve + ((start_esp + i * 4) & Ue));
                     esp = esp - 4;
                     mem8_loc = SS_base + (esp & SS_mask);
-                    st32_mem8_kernel_write(x);
+                    st32_mem8_kernel_write(0);
+                    // st32_mem8_kernel_write(x);
                 }
             } else {
                 esp = esp - 2;
@@ -2984,7 +2984,8 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
                     // x = Ye(Ve + ((start_esp + i * 2) & Ue));
                     esp = esp - 2;
                     mem8_loc = SS_base + (esp & SS_mask);
-                    st16_mem8_kernel_write(x);
+                    st16_mem8_kernel_write(0);
+                    // st16_mem8_kernel_write(x);
                 }
             }
             ss = (ss & ~3) | dpl;
@@ -3017,7 +3018,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
     }
 }
 void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
-    int cs, esp, stack_eip, stack_eflags, SS_base, SS_mask;
+    int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = 0xffff;
@@ -3066,7 +3067,7 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
     update_SSB();
 }
 void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
-    int SS_base, SS_mask, esp, stack_esp, stack_eip, stack_eflags = 0;
+    int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     int _cpl = cpl, dpl, rpl, iopl, es, cs, ss, ds, fs, gs;
     esp = regs[4];
@@ -3410,7 +3411,7 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int e
 void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
     int selector, offset, st_error_code, is_interlevel, is_386;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
-    int _return_address, SS_base, SS_mask, ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
+    int _return_address, ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
     st_error_code = 0;
     if (!is_sw && !is_hw) {
         switch (interrupt_id) { // with error codes, Intel IA-32 SDM (latest), Vol. 3A, 7.3
