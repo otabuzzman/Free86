@@ -234,8 +234,7 @@ void x86Internal::st32_mem8_write(int dword) {
     if (check_real__v86() || (tlb_hash | mem8_loc) & 3) {
         __st32_mem8_write(dword);
     } else {
-        int idx = (mem8_loc ^ tlb_hash) >> 2;
-        phys_mem32[idx] = dword;
+        phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = dword;
     }
 }
 void x86Internal::push_word(int word) {
