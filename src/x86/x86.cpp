@@ -1326,8 +1326,8 @@ void x86Internal::set_lower_byte(int reg, int byte) {
 void x86Internal::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-int x86Internal::segment_translation(int modRM) {
-    int mem8_loc, sib, sib_base, sib_index, sreg;
+void x86Internal::segment_translation(int modRM) {
+    int sib, sib_base, sib_index, sreg;
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
@@ -1415,7 +1415,7 @@ int x86Internal::segment_translation(int modRM) {
             mem8_loc = mem8_loc + regs[sib_base];
             break;
         }
-        return mem8_loc;
+        return;
     } else if (ipr & 0x0080) {
         int _sreg; // if no data segement override prefix
         if ((modRM & 0xc7) == 0x06) {
@@ -1476,7 +1476,7 @@ int x86Internal::segment_translation(int modRM) {
             sreg--;
         }
         mem8_loc = mem8_loc + segs[sreg].base;
-        return mem8_loc;
+        return;
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
@@ -1577,7 +1577,7 @@ int x86Internal::segment_translation(int modRM) {
             sreg--;
         }
     mem8_loc = mem8_loc + segs[sreg].base;
-    return mem8_loc;
+    return;
 }
 int x86Internal::convert_offset_to_linear(bool writable) {
     uint64_t mem8_loc;
@@ -3329,7 +3329,7 @@ void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     if ((mem8 >> 6) == 3) {
         selector = regs[mem8 & 7] & 0xffff;
     } else {
-        mem8_loc = segment_translation(mem8);
+        segment_translation(mem8);
         selector = ld16_mem8_read();
     }
     x = ld_descriptor_field(selector, is_lsl);
@@ -3621,7 +3621,7 @@ void x86Internal::op_ARPL() {
         reg_idx0 = mem8 & 7;
         x = regs[reg_idx0] & 0xffff;
     } else {
-        mem8_loc = segment_translation(mem8);
+        segment_translation(mem8);
         x = ld16_mem8_write();
     }
     y = regs[(mem8 >> 3) & 7];
@@ -3775,7 +3775,7 @@ void x86Internal::op_BOUND16() {
     if ((mem8 >> 6) == 3) {
         abort(6);
     }
-    mem8_loc = segment_translation(mem8);
+    segment_translation(mem8);
     x = (ld16_mem8_read() << 16) >> 16;
     mem8_loc = mem8_loc + 2;
     y = (ld16_mem8_read() << 16) >> 16;
@@ -3790,7 +3790,7 @@ void x86Internal::op_BOUND() {
     if ((mem8 >> 6) == 3) {
         abort(6);
     }
-    mem8_loc = segment_translation(mem8);
+    segment_translation(mem8);
     x = ld32_mem8_read();
     mem8_loc = mem8_loc + 4;
     y = ld32_mem8_read();
@@ -3921,7 +3921,7 @@ void x86Internal::ld_full_pointer16(int sreg) {
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
     }
-    mem8_loc = segment_translation(mem8);
+    segment_translation(mem8);
     x = ld16_mem8_read();
     mem8_loc += 2;
     y = ld16_mem8_read();
@@ -3933,7 +3933,7 @@ void x86Internal::ld_full_pointer32(int sreg) {
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
     }
-    mem8_loc = segment_translation(mem8);
+    segment_translation(mem8);
     x = ld32_mem8_read();
     mem8_loc += 4;
     y = ld16_mem8_read();

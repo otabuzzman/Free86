@@ -403,7 +403,7 @@ class x86Internal {
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 
-    int segment_translation(int mem8);
+    void segment_translation(int modRM);
     int convert_offset_to_linear(bool writable);
 
     void update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
