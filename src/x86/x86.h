@@ -44,18 +44,21 @@ class x86Internal {
 /*
    Fetch address register
    
-   The fetch address register (FAR) stores the physical memory address
-   of the next byte to be retrieved in the current fetch cycle.
+   The fetch address register (FAR, aka MAR) stores the physical memory
+   address of the next byte to be retrieved in the current fetch cycle.
  */
     uint32_t far;       // fetch address register
     uint32_t far_start; // first fetch address of current cycle
+
+    int opcode; // sort of fetch data register (FDR, aka MDR)
 
     // ES, CS, SS, DS, FS, GS, LDT, TR
     SegmentDescriptor segs[7];
     int df; // direction Flag
 
-    int cpl;  // current privilege level
+    int cpl;  // current privilege level register
     int dpl;  // descriptor privilege level
+    int rpl;  // requested privilege level
     int iopl; // IO privilege level
 
     SegmentDescriptor gdt; // GDT register
@@ -71,8 +74,6 @@ class x86Internal {
     int halted = 0;
 
     Interrupt interrupt;
-
-    int opcode; // sort of fetch data register (FDR, aka MDR)
 
 /*
    Operand Size Mode
