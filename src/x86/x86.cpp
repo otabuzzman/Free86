@@ -1708,17 +1708,16 @@ void x86Internal::set_segment_register_protected(int sreg, int selector) {
     }
 }
 int x86Internal::is_segment_accessible(int selector, bool writable) {
-    int dte_lower_dword, dte_upper_dword;
-    int e[2];
+    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     if ((selector & 0xfffc) == 0) {
         return 1;
     }
-    load_xdt_descriptor(e, selector);
-    if (e[0] == 0 && e[1] == 0) {
+    load_xdt_descriptor(descriptor_table_entry, selector);
+    dte_lower_dword = descriptor_table_entry[0];
+    dte_upper_dword = descriptor_table_entry[1];
+    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         return 1;
     }
-    // dte_lower_dword = e[0];
-    dte_upper_dword = e[1];
     if (!(dte_upper_dword & (1 << 12))) {
         return 1;
     }
@@ -2745,18 +2744,17 @@ void x86Internal::op_JMPF_virtual_mode(int selector, int address) {
     update_SSB();
 }
 void x86Internal::op_JMPF(int selector, int address) {
-    int dte_lower_dword, dte_upper_dword;
+    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    int e[2];
-    load_xdt_descriptor(e, selector);
-    if (e[0] == 0 && e[1] == 0) {
+    load_xdt_descriptor(descriptor_table_entry, selector);
+    dte_lower_dword = descriptor_table_entry[0];
+    dte_upper_dword = descriptor_table_entry[1];
+    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         abort(13, selector & 0xfffc);
     }
-    dte_lower_dword = e[0];
-    dte_upper_dword = e[1];
     if (dte_upper_dword & (1 << 12)) {
         if (!(dte_upper_dword & (1 << 11))) {
             abort(13, selector & 0xfffc);
@@ -3269,17 +3267,16 @@ void x86Internal::op_RETF(bool is_operand_size32, int return_offset) {
     }
 }
 int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
-    int dte_lower_dword, dte_upper_dword, descriptor_type;
-    int e[2];
+    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     if ((selector & 0xfffc) == 0) {
         return -1;
     }
-    load_xdt_descriptor(e, selector);
-    if (e[0] == 0 && e[1] == 0) {
+    load_xdt_descriptor(descriptor_table_entry, selector);
+    dte_lower_dword = descriptor_table_entry[0];
+    dte_upper_dword = descriptor_table_entry[1];
+    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         return -1;
     }
-    dte_lower_dword = e[0];
-    dte_upper_dword = e[1];
     rpl = selector & 3;
     dpl = (dte_upper_dword >> 13) & 3;
     if (dte_upper_dword & (1 << 12)) {
