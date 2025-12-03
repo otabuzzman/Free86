@@ -3245,7 +3245,6 @@ void x86Internal::clear_segment_register(int sreg, int privilege_level) {
     }
 }
 void x86Internal::op_IRET(bool is_operand_size32) {
-    int iopl;
     if (!check_protected() || (eflags & 0x00020000)) {
         if (eflags & 0x00020000) {
             iopl = (eflags >> 12) & 3;
