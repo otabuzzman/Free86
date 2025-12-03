@@ -3627,7 +3627,7 @@ void x86Internal::op_VERR_VERW(int selector, bool writable) {
     osm = 24;
 }
 void x86Internal::op_ARPL() {
-    int mem8, y, reg_idx0;
+    int mem8, reg_idx0;
     if (!check_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3786,7 +3786,7 @@ void x86Internal::op_DAS() {
     osm = 24;
 }
 void x86Internal::op_BOUND16() {
-    int mem8, y, z;
+    int mem8, z;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3802,7 +3802,7 @@ void x86Internal::op_BOUND16() {
     }
 }
 void x86Internal::op_BOUND() {
-    int mem8, y, z;
+    int mem8, z;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3818,7 +3818,7 @@ void x86Internal::op_BOUND() {
     }
 }
 void x86Internal::op_PUSHA16() {
-    int y, reg_idx1;
+    int reg_idx1;
     y = regs[4] - 16;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3829,7 +3829,7 @@ void x86Internal::op_PUSHA16() {
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void x86Internal::op_PUSHA() {
-    int y, reg_idx1;
+    int reg_idx1;
     y = regs[4] - 32;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3862,7 +3862,6 @@ void x86Internal::op_POPA() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
 void x86Internal::op_LEAVE16() {
-    int y;
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld16_mem8_read();
@@ -3870,7 +3869,6 @@ void x86Internal::op_LEAVE16() {
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
 void x86Internal::op_LEAVE() {
-    int y;
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld32_mem8_read();
@@ -3940,7 +3938,7 @@ void x86Internal::op_ENTER() {
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
 void x86Internal::ld_full_pointer16(int sreg) {
-    int y, mem8;
+    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
@@ -3953,7 +3951,7 @@ void x86Internal::ld_full_pointer16(int sreg) {
     set_lower_word((mem8 >> 3) & 7, x);
 }
 void x86Internal::ld_full_pointer32(int sreg) {
-    int y, mem8;
+    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
