@@ -473,9 +473,9 @@ class x86Internal {
     void op_LAR_LSL(bool is_operand_size32, bool is_lsl);
     int ld_descriptor_field(int selector, bool is_lsl);
 
-    void do_interrupt(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
-    void do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
-    void do_interrupt_protected_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw);
+    void do_interrupt(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address);
+    void do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int return_address);
+    void do_interrupt_protected_mode(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address);
 
     void op_VERR_VERW(int selector, bool is_verw);
     void op_ARPL();

@@ -3353,7 +3353,7 @@ void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::do_interrupt(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
+void x86Internal::do_interrupt(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
     if (interrupt_id == 0x06) {
         int n, eip_linear;
         std::string str =
@@ -3374,13 +3374,13 @@ void x86Internal::do_interrupt(int interrupt_id, int is_sw, int error_code, int 
         printf("%s\n", str.c_str());
     }
     if (check_protected()) {
-        do_interrupt_protected_mode(interrupt_id, is_sw, error_code, return_address, is_hw);
+        do_interrupt_protected_mode(interrupt_id, error_code, is_hw, is_sw, return_address);
     } else {
-        do_interrupt_real__v86_mode(interrupt_id, is_sw, error_code, return_address, is_hw);
+        do_interrupt_real__v86_mode(interrupt_id, is_sw, return_address);
     }
 }
-void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
-    int selector, offset, esp, _return_address;
+void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int return_address) {
+    int selector, offset, esp;
     if (interrupt_id * 4 + 3 > idt.limit) {
         abort(13, interrupt_id * 8 + 2);
     }
@@ -3389,11 +3389,6 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int e
     mem8_loc = mem8_loc + 2;
     selector = ld16_mem8_kernel_read();
     esp = regs[4];
-    if (is_sw) {
-        _return_address = return_address;
-    } else {
-        _return_address = eip;
-    }
     esp = esp - 2;
     mem8_loc = (esp & SS_mask) + SS_base;
     st16_mem8_write(get_EFLAGS());
@@ -3402,17 +3397,17 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int e
     st16_mem8_write(segs[1].selector);
     esp = esp - 2;
     mem8_loc = (esp & SS_mask) + SS_base;
-    st16_mem8_write(_return_address);
+    st16_mem8_write(is_sw ? return_address : eip);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = (selector << 4);
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int error_code, int return_address, int is_hw) {
+void x86Internal::do_interrupt_protected_mode(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
     int selector, offset, st_error_code, is_interlevel, is_386;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
-    int _return_address, ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
+    int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
     st_error_code = 0;
     if (!is_sw && !is_hw) {
         switch (interrupt_id) { // with error codes, Intel IA-32 SDM (latest), Vol. 3A, 7.3
@@ -3426,11 +3421,6 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int e
             st_error_code = 1;
             break;
         }
-    }
-    if (is_sw) {
-        _return_address = return_address;
-    } else {
-        _return_address = eip;
     }
     if (interrupt_id * 8 + 7 > idt.limit) {
         abort(13, interrupt_id * 8 + 2);
@@ -3552,7 +3542,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int e
         st32_mem8_kernel_write(segs[1].selector);
         esp = esp - 4;
         mem8_loc = SS_base + (esp & SS_mask);
-        st32_mem8_kernel_write(_return_address);
+        st32_mem8_kernel_write(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
@@ -3589,7 +3579,7 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int is_sw, int e
         st16_mem8_kernel_write(segs[1].selector);
         esp = esp - 2;
         mem8_loc = SS_base + (esp & SS_mask);
-        st16_mem8_kernel_write(_return_address);
+        st16_mem8_kernel_write(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);

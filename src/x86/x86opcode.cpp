@@ -13,11 +13,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
     far = far_start = 0;
     update_SSB(); // segments state block
     if (interrupt.id >= 0) {
-        do_interrupt(interrupt.id, 0, interrupt.error_code, 0, 0);
+        do_interrupt(interrupt.id, interrupt.error_code, 0, 0, 0);
         interrupt = {-1, 0};
     }
     if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
-        do_interrupt(get_hard_intno(), 0, 0, 0, 1);
+        do_interrupt(get_hard_intno(), 0, 1, 0, 0);
     }
     do {
         fetch_opcode();
@@ -1543,7 +1543,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 goto EXEC_LOOP;
             case 0xcc: // INT
                 y = (eip + far - far_start);
-                do_interrupt(3, 1, 0, y, 0);
+                do_interrupt(3, 0, 0, 1, y);
                 goto EXEC_LOOP;
             case 0xcd: // INT
                 x = phys_mem8[far++];
@@ -1551,12 +1551,12 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     abort(13);
                 }
                 y = (eip + far - far_start);
-                do_interrupt(x, 1, 0, y, 0);
+                do_interrupt(x, 0, 0, 1, y);
                 goto EXEC_LOOP;
             case 0xce: // INTO
                 if (is_OF()) {
                     y = (eip + far - far_start);
-                    do_interrupt(4, 1, 0, y, 0);
+                    do_interrupt(4, 0, 0, 1, y);
                 }
                 goto EXEC_LOOP;
             case 0x62: // BOUND
