@@ -87,22 +87,23 @@ void x86Internal::do_tlb_set_page(int linear_address, int writable, bool user) {
         abort(14, error_code);
     }
 }
-int x86Internal::do_tlb_lookup(int mem8_loc, int writable) {
-    int tlb_lookup;
+int x86Internal::do_tlb_lookup(int linear_address, int writable) {
+    int tlb_hash, lat20;
+    lat20 = linear_address >> 12;
     if (writable) {
-        tlb_lookup = tlb_write[mem8_loc >> 12];
+        tlb_hash = tlb_write[lat20];
     } else {
-        tlb_lookup = tlb_read[mem8_loc >> 12];
+        tlb_hash = tlb_read[lat20];
     }
-    if (tlb_lookup == -1) {
-        do_tlb_set_page(mem8_loc, writable, cpl == 3);
+    if (tlb_hash == -1) {
+        do_tlb_set_page(linear_address, writable, cpl == 3);
         if (writable) {
-            tlb_lookup = tlb_write[mem8_loc >> 12];
+            tlb_hash = tlb_write[lat20];
         } else {
-            tlb_lookup = tlb_read[mem8_loc >> 12];
+            tlb_hash = tlb_read[lat20];
         }
     }
-    return tlb_lookup ^ mem8_loc;
+    return tlb_hash ^ linear_address;
 }
 void x86Internal::fetch_opcode() {
     eip = eip + far - far_start;
