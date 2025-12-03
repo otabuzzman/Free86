@@ -1849,7 +1849,7 @@ int x86Internal::op_DEC16(int x) {
     osm = 29;
     return osm_dst;
 }
-int x86Internal::op_SHRD_SHLD16(int operation, int dst, int src, int count) {
+int x86Internal::op_SHRD_SHLD16(int dst, int src, int count) {
     int d, s, c;
     d = dst;
     c = count & 0x1f;
@@ -1911,7 +1911,7 @@ void x86Internal::op_BT(int bit_base, int bit_offset) {
     osm_src = bit_base >> (bit_offset & 0x1f);
     osm = 20;
 }
-int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
+int x86Internal::op_BTS_BTR_BTC16(int bit_base, int bit_offset) {
     int o, r;
     o = bit_offset & 0xf;
     osm_src = bit_base >> o;
@@ -1931,7 +1931,7 @@ int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
     osm = 19;
     return r;
 }
-int x86Internal::op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset) {
+int x86Internal::op_BTS_BTR_BTC(int bit_base, int bit_offset) {
     int o, r;
     o = bit_offset & 0x1f;
     osm_src = bit_base >> o;
@@ -2238,7 +2238,7 @@ int x86Internal::do_multiply32(int multiplicand, int multiplier) {
     }
     return r;
 }
-int x86Internal::do_arithmetic8(int operation, int dst, int src) {
+int x86Internal::do_arithmetic8(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2291,7 +2291,7 @@ int x86Internal::do_arithmetic8(int operation, int dst, int src) {
     }
     return d;
 }
-int x86Internal::do_arithmetic16(int operation, int dst, int src) {
+int x86Internal::do_arithmetic16(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2344,7 +2344,7 @@ int x86Internal::do_arithmetic16(int operation, int dst, int src) {
     }
     return d;
 }
-int x86Internal::do_arithmetic32(int operation, int dst, int src) {
+int x86Internal::do_arithmetic32(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2397,7 +2397,7 @@ int x86Internal::do_arithmetic32(int operation, int dst, int src) {
     }
     return d;
 }
-int x86Internal::do_shift8(int operation, int src, int count) {
+int x86Internal::do_shift8(int src, int count) {
     int s1, s2, c, cf;
     s1 = s2 = src & 0xff;
     switch (operation & 7) {
@@ -2490,7 +2490,7 @@ int x86Internal::do_shift8(int operation, int src, int count) {
     }
     return s1;
 }
-int x86Internal::do_shift16(int operation, int src, int count) {
+int x86Internal::do_shift16(int src, int count) {
     int s1, s2, c, cf;
     s1 = s2 = src & 0xffff;
     switch (operation & 7) {
@@ -2583,7 +2583,7 @@ int x86Internal::do_shift16(int operation, int src, int count) {
     }
     return s1;
 }
-int x86Internal::do_shift32(int operation, uint32_t src, int count) {
+int x86Internal::do_shift32(uint32_t src, int count) {
     uint32_t s1, s2;
     int c, cf;
     s1 = s2 = src;

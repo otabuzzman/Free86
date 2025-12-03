@@ -246,7 +246,7 @@ class x86Internal {
         cr0 = (1 << 4); // 80387 present
     }
 
-    [[noreturn]] void abort(int interrupt_id, int error_code = 0) ;
+    [[noreturn]] void abort(int interrupt_id, int error_code = 0);
 
     void tlb_set_page(uint32_t linear_address, int pte, int writable, int user) {
         int tlb_hash = linear_address ^ pte; // poor man's XOR hash
@@ -422,13 +422,13 @@ class x86Internal {
     int op_INC16(int x);
     int op_DEC8(int x);
     int op_DEC16(int x);
-    int op_SHRD_SHLD16(int operation, int dst, int src, int count);
+    int op_SHRD_SHLD16(int dst, int src, int count);
     int op_SHRD(int dst, int src, int count);
     int op_SHLD(int dst, int src, int count);
     void op_BT16(int bit_base, int bit_offset);
     void op_BT(int bit_base, int bit_offset);
-    int op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset);
-    int op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset);
+    int op_BTS_BTR_BTC16(int bit_base, int bit_offset);
+    int op_BTS_BTR_BTC(int bit_base, int bit_offset);
     int op_BSF16(int dst, int src);
     int op_BSF(int dst, int src);
     int op_BSR16(int dst, int src);
@@ -448,13 +448,13 @@ class x86Internal {
 
     int do_multiply32(int multiplicand, int multiplier);
 
-    int do_arithmetic8(int operation, int dst, int src);
-    int do_arithmetic16(int operation, int dst, int src);
-    int do_arithmetic32(int operation, int dst, int src);
+    int do_arithmetic8(int dst, int src);
+    int do_arithmetic16(int dst, int src);
+    int do_arithmetic32(int dst, int src);
 
-    int do_shift8(int operation, int src, int count);
-    int do_shift16(int operation, int src, int count);
-    int do_shift32(int operation, uint32_t src, int count);
+    int do_shift8(int src, int count);
+    int do_shift16(int src, int count);
+    int do_shift32(uint32_t src, int count);
 
     void op_LDTR(int selector);
     void op_LTR(int selector);
