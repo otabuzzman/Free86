@@ -3786,7 +3786,7 @@ void x86Internal::op_DAS() {
     osm = 24;
 }
 void x86Internal::op_BOUND16() {
-    int mem8, z;
+    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3802,7 +3802,7 @@ void x86Internal::op_BOUND16() {
     }
 }
 void x86Internal::op_BOUND() {
-    int mem8, z;
+    int mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
