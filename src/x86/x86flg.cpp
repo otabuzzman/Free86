@@ -87,7 +87,6 @@ int x86Internal::is_PF() {
 }
 int x86Internal::is_AF() {
     int rval = 0;
-    int x;
     switch (osm % 0x1f) {
     case 0:
     case 1:
@@ -147,7 +146,6 @@ int x86Internal::is_AF() {
 }
 bool x86Internal::is_OF() {
     bool rval = false;
-    int x;
     switch (osm % 0x1f) {
     case 0:
         x = osm_dst - osm_src;

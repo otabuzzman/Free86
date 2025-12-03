@@ -1850,7 +1850,7 @@ int x86Internal::op_DEC16(int x) {
     return osm_dst;
 }
 int x86Internal::op_SHRD_SHLD16(int operation, int dst, int src, int count) {
-    int d, s, c, x;
+    int d, s, c;
     d = dst;
     c = count & 0x1f;
     if (c) {
@@ -1912,7 +1912,7 @@ void x86Internal::op_BT(int bit_base, int bit_offset) {
     osm = 20;
 }
 int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
-    int o, x, r;
+    int o, r;
     o = bit_offset & 0xf;
     osm_src = bit_base >> o;
     x = 1 << o;
@@ -1932,7 +1932,7 @@ int x86Internal::op_BTS_BTR_BTC16(int operation, int bit_base, int bit_offset) {
     return r;
 }
 int x86Internal::op_BTS_BTR_BTC(int operation, int bit_base, int bit_offset) {
-    int o, x, r;
+    int o, r;
     o = bit_offset & 0x1f;
     osm_src = bit_base >> o;
     x = 1 << o;
@@ -2138,7 +2138,7 @@ int x86Internal::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) 
     return q;
 }
 int x86Internal::op_MUL8(int multiplicand, int multiplier) {
-    int md, mr, x;
+    int md, mr;
     md = multiplicand & 0xff;
     mr = multiplier & 0xff;
     x = (md & 0xff) * (mr & 0xff);
@@ -2148,7 +2148,7 @@ int x86Internal::op_MUL8(int multiplicand, int multiplier) {
     return x;
 }
 int x86Internal::op_IMUL8(int multiplicand, int multiplier) {
-    int md, mr, x;
+    int md, mr;
     md = ((multiplicand << 24) >> 24);
     mr = ((multiplier << 24) >> 24);
     x = md * mr;
@@ -2158,7 +2158,6 @@ int x86Internal::op_IMUL8(int multiplicand, int multiplier) {
     return x;
 }
 int x86Internal::op_MUL16(int multiplicand, int multiplier) {
-    int x;
     x = (multiplicand & 0xffff) * (multiplier & 0xffff);
     osm_src = x >> 16;
     osm_dst = ((x << 16) >> 16);
@@ -2166,7 +2165,7 @@ int x86Internal::op_MUL16(int multiplicand, int multiplier) {
     return x;
 }
 int x86Internal::op_IMUL16(int multiplicand, int multiplier) {
-    int md, mr, x;
+    int md, mr;
     md = (multiplicand << 16) >> 16;
     mr = (multiplier << 16) >> 16;
     x = md * mr;
@@ -3325,7 +3324,7 @@ int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
     }
 }
 void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
-    int x, mem8, reg_idx1, selector;
+    int mem8, reg_idx1, selector;
     if (!check_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3628,7 +3627,7 @@ void x86Internal::op_VERR_VERW(int selector, bool writable) {
     osm = 24;
 }
 void x86Internal::op_ARPL() {
-    int mem8, x, y, reg_idx0;
+    int mem8, y, reg_idx0;
     if (!check_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3787,7 +3786,7 @@ void x86Internal::op_DAS() {
     osm = 24;
 }
 void x86Internal::op_BOUND16() {
-    int mem8, x, y, z;
+    int mem8, y, z;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3803,7 +3802,7 @@ void x86Internal::op_BOUND16() {
     }
 }
 void x86Internal::op_BOUND() {
-    int mem8, x, y, z;
+    int mem8, y, z;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3819,7 +3818,7 @@ void x86Internal::op_BOUND() {
     }
 }
 void x86Internal::op_PUSHA16() {
-    int x, y, reg_idx1;
+    int y, reg_idx1;
     y = regs[4] - 16;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3830,7 +3829,7 @@ void x86Internal::op_PUSHA16() {
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void x86Internal::op_PUSHA() {
-    int x, y, reg_idx1;
+    int y, reg_idx1;
     y = regs[4] - 32;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3863,7 +3862,7 @@ void x86Internal::op_POPA() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
 void x86Internal::op_LEAVE16() {
-    int x, y;
+    int y;
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld16_mem8_read();
@@ -3871,7 +3870,7 @@ void x86Internal::op_LEAVE16() {
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
 void x86Internal::op_LEAVE() {
-    int x, y;
+    int y;
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld32_mem8_read();
@@ -3879,7 +3878,7 @@ void x86Internal::op_LEAVE() {
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
 }
 void x86Internal::op_ENTER16() {
-    int cf, Qf, le, Rf, x, Sf;
+    int cf, Qf, le, Rf, Sf;
     cf = ld16_mem8_direct();
     Qf = phys_mem8[far++];
     Qf &= 0x1f;
@@ -3910,7 +3909,7 @@ void x86Internal::op_ENTER16() {
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
 void x86Internal::op_ENTER() {
-    int cf, Qf, le, Rf, x, Sf;
+    int cf, Qf, le, Rf, Sf;
     cf = ld16_mem8_direct();
     Qf = phys_mem8[far++];
     Qf &= 0x1f;
@@ -3941,7 +3940,7 @@ void x86Internal::op_ENTER() {
     regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
 }
 void x86Internal::ld_full_pointer16(int sreg) {
-    int x, y, mem8;
+    int y, mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
@@ -3954,7 +3953,7 @@ void x86Internal::ld_full_pointer16(int sreg) {
     set_lower_word((mem8 >> 3) & 7, x);
 }
 void x86Internal::ld_full_pointer32(int sreg) {
-    int x, y, mem8;
+    int y, mem8;
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);

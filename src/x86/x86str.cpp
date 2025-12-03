@@ -1,7 +1,7 @@
 #include "x86.h"
 
 void x86Internal::op_INSB() {
-    int address_size_mask, ecx, edx, edi, iopl, x;
+    int address_size_mask, ecx, edx, edi, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -34,7 +34,7 @@ void x86Internal::op_INSB() {
     }
 }
 void x86Internal::op_OUTSB() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl, x;
+    int address_size_mask, ecx, edx, esi, sreg, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -187,7 +187,7 @@ void x86Internal::op_CMPSB() {
     }
 }
 void x86Internal::op_LODSB() {
-    int address_size_mask, ecx, esi, sreg, x;
+    int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -220,7 +220,7 @@ void x86Internal::op_LODSB() {
     }
 }
 void x86Internal::op_SCASB() {
-    int address_size_mask, ecx, edi, x;
+    int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -256,7 +256,7 @@ void x86Internal::op_SCASB() {
     }
 }
 void x86Internal::op_INSW() {
-    int address_size_mask, ecx, edx, edi, iopl, x;
+    int address_size_mask, ecx, edx, edi, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -289,7 +289,7 @@ void x86Internal::op_INSW() {
     }
 }
 void x86Internal::op_OUTSW() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl, x;
+    int address_size_mask, ecx, edx, esi, sreg, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -442,7 +442,7 @@ void x86Internal::op_CMPSW() {
     }
 }
 void x86Internal::op_LODSW() {
-    int address_size_mask, ecx, esi, sreg, x;
+    int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -475,7 +475,7 @@ void x86Internal::op_LODSW() {
     }
 }
 void x86Internal::op_SCASW() {
-    int address_size_mask, ecx, edi, x;
+    int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -511,7 +511,7 @@ void x86Internal::op_SCASW() {
     }
 }
 void x86Internal::op_INS16() {
-    int address_size_mask, ecx, edx, edi, iopl, x;
+    int address_size_mask, ecx, edx, edi, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -544,7 +544,7 @@ void x86Internal::op_INS16() {
     }
 }
 void x86Internal::op_OUTS16() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl, x;
+    int address_size_mask, ecx, edx, esi, sreg, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -697,7 +697,7 @@ void x86Internal::op_CMPS16() {
     }
 }
 void x86Internal::op_LODS16() {
-    int address_size_mask, ecx, esi, sreg, x;
+    int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -730,7 +730,7 @@ void x86Internal::op_LODS16() {
     }
 }
 void x86Internal::op_SCAS16() {
-    int address_size_mask, ecx, edi, x;
+    int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -766,7 +766,7 @@ void x86Internal::op_SCAS16() {
     }
 }
 void x86Internal::op_INSD() {
-    int address_size_mask, ecx, edx, edi, iopl, x;
+    int address_size_mask, ecx, edx, edi, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -799,7 +799,7 @@ void x86Internal::op_INSD() {
     }
 }
 void x86Internal::op_OUTSD() {
-    int address_size_mask, ecx, edx, esi, sreg, iopl, x;
+    int address_size_mask, ecx, edx, esi, sreg, iopl;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -952,7 +952,7 @@ void x86Internal::op_CMPSD() {
     }
 }
 void x86Internal::op_LODSD() {
-    int address_size_mask, ecx, esi, sreg, x;
+    int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -985,7 +985,7 @@ void x86Internal::op_LODSD() {
     }
 }
 void x86Internal::op_SCASD() {
-    int address_size_mask, ecx, edi, x;
+    int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
