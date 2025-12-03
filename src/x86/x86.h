@@ -335,24 +335,24 @@ class x86Internal {
     void st16_port(int port_num, int x);
     void st32_port(int port_num, int x);
 
-    uint8_t ld8_phys(int mem8_loc) {
-        return phys_mem8[mem8_loc];
+    uint8_t ld8_phys(int address) {
+        return phys_mem8[address];
     }
-    void st8_phys(int mem8_loc, uint8_t x) {
-        phys_mem8[mem8_loc] = x;
+    void st8_phys(int address, uint8_t x) {
+        phys_mem8[address] = x;
     }
-    void st8_phys(int mem8_loc, std::string str) {
+    void st8_phys(int address, std::string str) {
         auto s = str.c_str();
         for (int i = 0; i < str.length(); i++) {
-            st8_phys(mem8_loc++, s[i] & 0xff);
+            st8_phys(address++, s[i] & 0xff);
         }
-        st8_phys(mem8_loc, 0);
+        st8_phys(address, 0);
     }
-    int ld32_phys(int mem8_loc) {
-        return phys_mem32[mem8_loc >> 2];
+    int ld32_phys(int address) {
+        return phys_mem32[address >> 2];
     }
-    void st32_phys(int mem8_loc, int x) {
-        phys_mem32[mem8_loc >> 2] = x;
+    void st32_phys(int address, int x) {
+        phys_mem32[address >> 2] = x;
     }
 
     int __ld8_mem8_kernel_read();
