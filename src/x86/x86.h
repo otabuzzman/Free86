@@ -189,7 +189,7 @@ class x86Internal {
     // intermediate values
     int operation; // bits 5..3 of opcode or modR/M byte
     int reg_idx0, reg_idx1; // register indices (0-7)
-    int x, y, z, v;         // anything else
+    int data, y, z, v;         // anything else
 
     // linear byte address...
     uint32_t mem8_loc;
@@ -315,12 +315,12 @@ class x86Internal {
 
     int instruction_length(int opcode);
 
-    void set_CR0(int x);
-    void set_CR3(int x);
-    void set_CR4(int x);
+    void set_CR0(int bits);
+    void set_CR3(int bits);
+    void set_CR4(int bits);
     bool check_real__v86();
     bool check_protected();
-    void set_current_privilege_level(int x);
+    void set_current_privilege_level(int data);
 
     virtual int get_hard_irq() = 0;
     virtual int get_hard_intno() = 0;
@@ -331,19 +331,20 @@ class x86Internal {
     int ld8_port(int port_num);
     int ld16_port(int port_num);
     int ld32_port(int port_num);
-    void st8_port(int port_num, int x);
-    void st16_port(int port_num, int x);
-    void st32_port(int port_num, int x);
+    void st8_port(int port_num, int byte);
+    void st16_port(int port_num, int word);
+    void st32_port(int port_num, int dword);
 
     uint8_t ld8_phys(int address) {
         return phys_mem8[address];
     }
-    void st8_phys(int address, uint8_t x) {
-        phys_mem8[address] = x;
+    void st8_phys(int address, uint8_t byte) {
+        phys_mem8[address] = byte;
     }
-    void st8_phys(int address, std::string str) {
-        auto s = str.c_str();
-        for (int i = 0; i < str.length(); i++) {
+    void st8_phys(int address, std::string data) {
+        auto s = data.c_str();
+        auto l = data.length();
+        for (int i = 0; i < l; i++) {
             st8_phys(address++, s[i] & 0xff);
         }
         st8_phys(address, 0);
@@ -351,8 +352,8 @@ class x86Internal {
     int ld32_phys(int address) {
         return phys_mem32[address >> 2];
     }
-    void st32_phys(int address, int x) {
-        phys_mem32[address >> 2] = x;
+    void st32_phys(int address, int dword) {
+        phys_mem32[address >> 2] = dword;
     }
 
     int __ld8_mem8_kernel_read();
@@ -378,29 +379,29 @@ class x86Internal {
     int __ld32_mem8_write();
     int ld32_mem8_write(); // ...dword
 
-    void __st8_mem8_kernel_write(int x);
-    void st8_mem8_kernel_write(int x); // in kernel WR memory: store byte
-    void __st16_mem8_kernel_write(int x);
-    void st16_mem8_kernel_write(int x); // ...word
-    void __st32_mem8_kernel_write(int x);
-    void st32_mem8_kernel_write(int x); // ...dword
+    void __st8_mem8_kernel_write(int byte);
+    void st8_mem8_kernel_write(int byte); // in kernel WR memory: store byte
+    void __st16_mem8_kernel_write(int word);
+    void st16_mem8_kernel_write(int word); // ...word
+    void __st32_mem8_kernel_write(int dword);
+    void st32_mem8_kernel_write(int dword); // ...dword
 
-    void __st8_mem8_write(int x);
-    void st8_mem8_write(int x); // in user WR memory: store byte
-    void __st16_mem8_write(int x);
-    void st16_mem8_write(int x); // ...word
-    void __st32_mem8_write(int x);
-    void st32_mem8_write(int x); // ...dword
+    void __st8_mem8_write(int byte);
+    void st8_mem8_write(int byte); // in user WR memory: store byte
+    void __st16_mem8_write(int word);
+    void st16_mem8_write(int word); // ...word
+    void __st32_mem8_write(int dword);
+    void st32_mem8_write(int dword); // ...dword
 
-    void push_word(int x);
-    void push_dword(int x);
+    void push_word(int word);
+    void push_dword(int dword);
     void pop_word();
     void pop_dword();
     int read_stack_word();
     int read_stack_dword();
 
-    void set_lower_byte(int reg, int x);
-    void set_lower_word(int reg, int x);
+    void set_lower_byte(int reg, int byte);
+    void set_lower_word(int reg, int word);
 
     int segment_translation(int mem8);
     int convert_offset_to_linear(bool writable);
@@ -418,10 +419,10 @@ class x86Internal {
     void compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword);
     int compile_sizemask(int dte_upper_dword);
 
-    int op_INC8(int x);
-    int op_INC16(int x);
-    int op_DEC8(int x);
-    int op_DEC16(int x);
+    int op_INC8(int data);
+    int op_INC16(int data);
+    int op_DEC8(int data);
+    int op_DEC16(int data);
     int op_SHRD_SHLD16(int dst, int src, int count);
     int op_SHRD(int dst, int src, int count);
     int op_SHLD(int dst, int src, int count);
@@ -541,22 +542,22 @@ class x86Internal {
     int get_EFLAGS();
     void set_EFLAGS(int bits, int mask);
 
-    std::string hex_rep(int x, int n) {
+    std::string hex_rep(int number, int digits) {
         std::string s;
         char h[] = "0123456789ABCDEF";
-        for (int i = n - 1; i >= 0; i--) {
-            s = s + h[(x >> (i * 4)) & 15];
+        for (int i = digits - 1; i >= 0; i--) {
+            s = s + h[(number >> (i * 4)) & 15];
         }
         return s;
     }
-    std::string _4_bytes(int n) {
-        return hex_rep(n, 8);
+    std::string _4_bytes(int number) {
+        return hex_rep(number, 8);
     }
-    std::string _2_bytes(int n) {
-        return hex_rep(n, 4);
+    std::string _2_bytes(int number) {
+        return hex_rep(number, 4);
     }
-    std::string _1_byte(int n) {
-        return hex_rep(n, 2);
+    std::string _1_byte(int number) {
+        return hex_rep(number, 2);
     }
 };
 #endif // _X86_H

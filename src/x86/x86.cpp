@@ -1266,21 +1266,21 @@ int x86Internal::instruction_length(int opcode) {
 EXEC_LOOP:;
     return n;
 }
-void x86Internal::set_CR0(int x) {
+void x86Internal::set_CR0(int bits) {
     // if changing flags 31, 16, or 0, must flush tlb
-    if ((x & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
+    if ((bits & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
         tlb_flush_all();
     }
-    cr0 = x | (1 << 4); // keep bit 4 set to 1 (80387 present)
+    cr0 = bits | (1 << 4); // keep bit 4 set to 1 (80387 present)
 }
-void x86Internal::set_CR3(int x) {
-    cr3 = x;
+void x86Internal::set_CR3(int bits) {
+    cr3 = bits;
     if (cr0 & (1 << 31)) { // if in paging mode must reset tables
         tlb_flush_all();
     }
 }
-void x86Internal::set_CR4(int x) {
-    cr4 = x;
+void x86Internal::set_CR4(int bits) {
+    cr4 = bits;
 }
 bool x86Internal::check_real__v86() {
     return !check_protected();
@@ -1288,8 +1288,8 @@ bool x86Internal::check_real__v86() {
 bool x86Internal::check_protected() {
     return cr0 & (1 << 0);
 }
-void x86Internal::set_current_privilege_level(int x) {
-    cpl = x;
+void x86Internal::set_current_privilege_level(int data) {
+    cpl = data;
     if (cpl == 3) {
         tlb_read = tlb_read_user;
         tlb_write = tlb_write_user;
@@ -1307,24 +1307,24 @@ int x86Internal::ld16_port(int port_num) {
 int x86Internal::ld32_port(int port_num) {
     return ioport_read(port_num);
 }
-void x86Internal::st8_port(int port_num, int x) {
-    ioport_write(port_num, x);
+void x86Internal::st8_port(int port_num, int byte) {
+    ioport_write(port_num, byte);
 }
-void x86Internal::st16_port(int port_num, int x) {
-    ioport_write(port_num, x);
+void x86Internal::st16_port(int port_num, int word) {
+    ioport_write(port_num, word);
 }
-void x86Internal::st32_port(int port_num, int x) {
-    ioport_write(port_num, x);
+void x86Internal::st32_port(int port_num, int dword) {
+    ioport_write(port_num, dword);
 }
-void x86Internal::set_lower_byte(int reg, int x) {
+void x86Internal::set_lower_byte(int reg, int byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
-        regs[reg & 3] = (regs[reg & 3] & -65281) | ((x & 0xff) << 8);
+        regs[reg & 3] = (regs[reg & 3] & -65281) | ((byte & 0xff) << 8);
     } else { // set AL, CL, DL, BL
-        regs[reg & 3] = (regs[reg & 3] & -256) | (x & 0xff);
+        regs[reg & 3] = (regs[reg & 3] & -256) | (byte & 0xff);
     }
 }
-void x86Internal::set_lower_word(int reg, int x) {
-    regs[reg] = (regs[reg] & -65536) | (x & 0xffff);
+void x86Internal::set_lower_word(int reg, int word) {
+    regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
 int x86Internal::segment_translation(int modRM) {
     int mem8_loc, sib, sib_base, sib_index, sreg;
@@ -1814,39 +1814,39 @@ int x86Internal::compile_sizemask(int dte_upper_dword) {
         return 0xffff;
     }
 }
-int x86Internal::op_INC8(int x) {
+int x86Internal::op_INC8(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((x + 1) << 24) >> 24);
+    osm_dst = (((data + 1) << 24) >> 24);
     osm = 25;
     return osm_dst;
 }
-int x86Internal::op_INC16(int x) {
+int x86Internal::op_INC16(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((x + 1) << 16) >> 16);
+    osm_dst = (((data + 1) << 16) >> 16);
     osm = 26;
     return osm_dst;
 }
-int x86Internal::op_DEC8(int x) {
+int x86Internal::op_DEC8(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((x - 1) << 24) >> 24);
+    osm_dst = (((data - 1) << 24) >> 24);
     osm = 28;
     return osm_dst;
 }
-int x86Internal::op_DEC16(int x) {
+int x86Internal::op_DEC16(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = (((x - 1) << 16) >> 16);
+    osm_dst = (((data - 1) << 16) >> 16);
     osm = 29;
     return osm_dst;
 }
