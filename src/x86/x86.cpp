@@ -121,7 +121,7 @@ void x86Internal::fetch_opcode() {
         opcode = phys_mem8[far++];
         int page_offset = eip_linear & 0xfff;
         if (page_offset > (4096 - 15)) {
-            x = instruction_length(opcode, eip_linear);
+            x = instruction_length(opcode);
             if ((page_offset + x) > 4096) { // instruction extends page boundary
                 far = far_start = mem_size;
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
@@ -153,7 +153,7 @@ void x86Internal::update_SSB() {
     }
     x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
 }
-int x86Internal::instruction_length(int opcode, int eip_linear) {
+int x86Internal::instruction_length(int opcode) {
     int ipr, operation, stride;
     int n = 1;
     ipr = ipr_default;

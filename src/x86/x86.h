@@ -313,7 +313,7 @@ class x86Internal {
     void fetch_opcode();
     void update_SSB();
 
-    int instruction_length(int opcode, int eip_linear);
+    int instruction_length(int opcode);
 
     void set_CR0(int x);
     void set_CR3(int x);

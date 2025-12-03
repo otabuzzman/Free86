@@ -27,7 +27,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             switch (opcode) {
             case 0x66: // operand-size override prefix
                 if (ipr == ipr_default) {
-                    instruction_length(opcode, eip_linear);
+                    instruction_length(opcode);
                 }
                 if (ipr_default & 0x0100) {
                     ipr &= ~0x0100;
@@ -39,7 +39,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 break;
             case 0x67: // address-size override prefix
                 if (ipr == ipr_default) {
-                    instruction_length(opcode, eip_linear);
+                    instruction_length(opcode);
                 }
                 if (ipr_default & 0x0080) {
                     ipr &= ~0x0080;
@@ -51,7 +51,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 break;
             case 0xf0: // LOCK prefix
                 if (ipr == ipr_default) {
-                    instruction_length(opcode, eip_linear);
+                    instruction_length(opcode);
                 }
                 ipr |= 0x0040;
                 opcode = phys_mem8[far++];
@@ -59,7 +59,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 break;
             case 0xf2: // REPN[EZ] repeat string operation prefix
                 if (ipr == ipr_default) {
-                    instruction_length(opcode, eip_linear);
+                    instruction_length(opcode);
                 }
                 ipr |= 0x0020;
                 opcode = phys_mem8[far++];
@@ -67,7 +67,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
                 break;
             case 0xf3: // REP[EZ] repeat string operation prefix
                 if (ipr == ipr_default) {
-                    instruction_length(opcode, eip_linear);
+                    instruction_length(opcode);
                 }
                 ipr |= 0x0010;
                 opcode = phys_mem8[far++];
@@ -78,7 +78,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             case 0x36: // SS segment override prefix
             case 0x3e: // DS segment override prefix
                 if (ipr == ipr_default) {
-                    instruction_length(opcode, eip_linear);
+                    instruction_length(opcode);
                 }
                 ipr = (ipr & ~0x000f) | (((opcode >> 3) & 3) + 1);
                 opcode = phys_mem8[far++];
@@ -87,7 +87,7 @@ void x86Internal::fetch_decode_execute(int cycles) {
             case 0x64: // FS segment override prefix
             case 0x65: // GS segment override prefix
                 if (ipr == ipr_default) {
-                    instruction_length(opcode, eip_linear);
+                    instruction_length(opcode);
                 }
                 ipr = (ipr & ~0x000f) | ((opcode & 7) + 1);
                 opcode = phys_mem8[far++];
