@@ -58,7 +58,6 @@ int x86Internal::__ld8_mem8_read() {
     return mem8_val;
 }
 int x86Internal::ld8_mem8_read() {
-    int tlb_hash;
     return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                 ? __ld8_mem8_read()
@@ -72,7 +71,6 @@ int x86Internal::__ld16_mem8_read() {
     return x;
 }
 int x86Internal::ld16_mem8_read() {
-    int tlb_hash;
     return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 1
                 ? __ld16_mem8_read()
@@ -90,7 +88,6 @@ int x86Internal::__ld32_mem8_read() {
     return x;
 }
 int x86Internal::ld32_mem8_read() {
-    int tlb_hash;
     return (check_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 3
                 ? __ld32_mem8_read()
@@ -201,7 +198,7 @@ void x86Internal::__st8_mem8_write(int x) {
     }
 }
 void x86Internal::st8_mem8_write(int x) {
-    int tlb_hash = tlb_write[mem8_loc >> 12];
+    tlb_hash = tlb_write[mem8_loc >> 12];
     if (check_real__v86() || tlb_hash == -1) {
         __st8_mem8_write(x);
     } else {
@@ -215,7 +212,7 @@ void x86Internal::__st16_mem8_write(int x) {
     mem8_loc--;
 }
 void x86Internal::st16_mem8_write(int x) {
-    int tlb_hash = tlb_write[mem8_loc >> 12];
+    tlb_hash = tlb_write[mem8_loc >> 12];
     if (check_real__v86() || (tlb_hash | mem8_loc) & 1) {
         __st16_mem8_write(x);
     } else {
@@ -233,7 +230,7 @@ void x86Internal::__st32_mem8_write(int x) {
     mem8_loc -= 3;
 }
 void x86Internal::st32_mem8_write(int x) {
-    int tlb_hash = tlb_write[mem8_loc >> 12];
+    tlb_hash = tlb_write[mem8_loc >> 12];
     if (check_real__v86() || (tlb_hash | mem8_loc) & 3) {
         __st32_mem8_write(x);
     } else {
@@ -242,18 +239,16 @@ void x86Internal::st32_mem8_write(int x) {
     }
 }
 void x86Internal::push_word(int x) {
-    int wd;
-    wd = regs[4] - 2;
-    mem8_loc = (wd & SS_mask) + SS_base;
+    int esp = regs[4] - 2;
+    mem8_loc = (esp & SS_mask) + SS_base;
     st16_mem8_write(x);
-    regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void x86Internal::push_dword(int x) {
-    int wd;
-    wd = regs[4] - 4;
-    mem8_loc = (wd & SS_mask) + SS_base;
+    int esp = regs[4] - 4;
+    mem8_loc = (esp & SS_mask) + SS_base;
     st32_mem8_write(x);
-    regs[4] = (regs[4] & ~SS_mask) | (wd & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void x86Internal::pop_word() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
