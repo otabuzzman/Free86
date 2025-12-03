@@ -250,7 +250,7 @@ class x86Internal {
     [[noreturn]] void abort(int interrupt_id, int error_code = 0);
 
     void tlb_set_page(uint32_t linear_address, int pte, int writable, int user) {
-        int tlb_hash = linear_address ^ pte; // poor man's XOR hash
+        tlb_hash = linear_address ^ pte; // poor man's XOR hash
         uint32_t lat20 = linear_address >> 12;
         if (tlb_read_kernel[lat20] == -1) {
             if (tlb_pages_count >= 2048) {
