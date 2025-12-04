@@ -6,6 +6,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 
+if (WIN32)
+add_compile_options(
+  /W4
+)
+else()
 add_compile_options(
   -Weverything
   -Wno-c++98-compat # probably not harmful...
@@ -29,6 +34,7 @@ add_compile_options(
 add_compile_definitions(
   _CRT_SECURE_NO_WARNINGS
 )
+endif()
 
 add_executable(${PROJECT_NAME} ${sourcefiles})
 
