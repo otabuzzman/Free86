@@ -1650,7 +1650,7 @@ void x86Internal::set_segment_register_real__v86(int sreg, int selector) {
     }
 }
 void x86Internal::set_segment_register_protected(int sreg, int selector) {
-    SegmentDescriptor xdt;
+    SegmentRegister xdt;
     int dte_lower_dword, dte_upper_dword, selector_index;
     if ((selector & 0xfffc) == 0) { // null selector
         if (sreg == 2) {
@@ -1747,7 +1747,7 @@ int x86Internal::is_segment_accessible(int selector, bool writable) {
     return 0;
 }
 void x86Internal::load_xdt_descriptor(int *descriptor_table_entry, int selector) {
-    SegmentDescriptor xdt;
+    SegmentRegister xdt;
     int index, dte_lower_dword, dte_upper_dword;
     if (selector & 0x4) {
         xdt = ldt;
@@ -1801,10 +1801,10 @@ int x86Internal::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
     }
     return limit;
 }
-void x86Internal::compile_segment_descriptor(SegmentDescriptor *sd, int dte_lower_dword, int dte_upper_dword) {
-    sd->base = compile_dte_base(dte_lower_dword, dte_upper_dword);
-    sd->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
-    sd->flags = dte_upper_dword;
+void x86Internal::load_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword) {
+    segment_register->base = compile_dte_base(dte_lower_dword, dte_upper_dword);
+    segment_register->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
+    segment_register->flags = dte_upper_dword;
 }
 int x86Internal::compile_sizemask(int dte_upper_dword) {
     if (dte_upper_dword & (1 << 22)) {
@@ -2694,7 +2694,7 @@ void x86Internal::op_LDTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        compile_segment_descriptor(&ldt, dte_lower_dword, dte_upper_dword);
+        load_segment_register(&ldt, dte_lower_dword, dte_upper_dword);
     }
     ldt.selector = selector;
 }
@@ -2724,7 +2724,7 @@ void x86Internal::op_LTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        compile_segment_descriptor(&tr, dte_lower_dword, dte_upper_dword);
+        load_segment_register(&tr, dte_lower_dword, dte_upper_dword);
         dte_upper_dword |= 1 << 9;
         st32_mem8_kernel_write(dte_upper_dword);
     }
