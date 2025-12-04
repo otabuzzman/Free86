@@ -48,7 +48,7 @@ public:
         printf("*******************************\n\n\n");
     }
     void cycle() {
-        int cycles_requested = cpu->cycles_processed + 100000;
+        uint64_t cycles_requested = cpu->cycles_processed + 100000;
         while (cpu->cycles_processed < cycles_requested) {
             try {
                 cpu->fetch_decode_execute(cycles_requested - cpu->cycles_processed);

@@ -79,7 +79,7 @@ void PC::setup()
 
 void PC::cycle()
 {
-    int cycles_requested = cpu->cycles_processed + 100000;
+    uint64_t cycles_requested = cpu->cycles_processed + 100000;
 
     while (cpu->cycles_processed < cycles_requested) {
         cpu->pit->update_irq();

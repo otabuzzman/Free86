@@ -196,9 +196,9 @@ class x86Internal {
     uint32_t mem8_loc;
     int mem8; // ...and value
 
-    int cycles_requested;
-    int cycles_remaining;
-    int cycles_processed;
+    uint64_t cycles_requested;
+    uint64_t cycles_remaining;
+    uint64_t cycles_processed;
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -309,7 +309,7 @@ class x86Internal {
     void do_tlb_set_page(int linear_address, int writable, bool user);
     int do_tlb_lookup(int linear_address, int writable);
 
-    void fetch_decode_execute(int cycles);
+    void fetch_decode_execute(uint64_t cycles);
 
     void fetch_opcode();
     void update_SSB();

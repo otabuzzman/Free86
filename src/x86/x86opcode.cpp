@@ -1,6 +1,6 @@
 #include "x86.h"
 
-void x86Internal::fetch_decode_execute(int cycles) {
+void x86Internal::fetch_decode_execute(uint64_t cycles) {
     if (halted) {
         if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
             halted = 0;
@@ -2269,9 +2269,11 @@ void x86Internal::fetch_decode_execute(int cycles) {
                     if ((cr4 & (1 << 2)) && cpl != 0) {
                         abort(13);
                     }
-                    x = cycles_processed + (cycles_requested - cycles_remaining);
-                    regs[0] = x;
-                    regs[2] = x / 0x100000000;
+                    {
+                        uint64_t t = cycles_processed + (cycles_requested - cycles_remaining);
+                        regs[0] = t;
+                        regs[2] = t >> 32;
+                    }
                     goto EXEC_LOOP;
                 case 0xc0: // XADD (80486)
                     operation = 0;
