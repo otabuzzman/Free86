@@ -2,51 +2,51 @@
 
 bool x86Internal::is_CF() {
     bool r = false;
-    int _ocm;
-    uint32_t _ocm_dst;
+    int _osm;
+    uint32_t _osm_dst;
     if (osm >= 25) {
-        _ocm = ocm_preserved;
-        _ocm_dst = ocm_dst_preserved;
+        _osm = ocm_preserved;
+        _osm_dst = ocm_dst_preserved;
     } else {
-        _ocm = osm;
-        _ocm_dst = osm_dst;
+        _osm = osm;
+        _osm_dst = osm_dst;
     }
-    switch (_ocm % 25) {
+    switch (_osm % 25) {
     case 0:
-        r = (_ocm_dst & 0xff) < (osm_src & 0xff);
+        r = (_osm_dst & 0xff) < (osm_src & 0xff);
         break;
     case 1:
-        r = (_ocm_dst & 0xffff) < (osm_src & 0xffff);
+        r = (_osm_dst & 0xffff) < (osm_src & 0xffff);
         break;
     case 2:
-        r = _ocm_dst < osm_src;
+        r = _osm_dst < osm_src;
         break;
     case 3:
-        r = (_ocm_dst & 0xff) <= (osm_src & 0xff);
+        r = (_osm_dst & 0xff) <= (osm_src & 0xff);
         break;
     case 4:
-        r = (_ocm_dst & 0xffff) <= (osm_src & 0xffff);
+        r = (_osm_dst & 0xffff) <= (osm_src & 0xffff);
         break;
     case 5:
-        r = _ocm_dst <= osm_src;
+        r = _osm_dst <= osm_src;
         break;
     case 6:
-        r = ((_ocm_dst + osm_src) & 0xff) < (osm_src & 0xff);
+        r = ((_osm_dst + osm_src) & 0xff) < (osm_src & 0xff);
         break;
     case 7:
-        r = ((_ocm_dst + osm_src) & 0xffff) < (osm_src & 0xffff);
+        r = ((_osm_dst + osm_src) & 0xffff) < (osm_src & 0xffff);
         break;
     case 8:
-        r = (_ocm_dst + osm_src) < osm_src;
+        r = (_osm_dst + osm_src) < osm_src;
         break;
     case 9:
-        r = ((_ocm_dst + osm_src + 1) & 0xff) <= (osm_src & 0xff);
+        r = ((_osm_dst + osm_src + 1) & 0xff) <= (osm_src & 0xff);
         break;
     case 10:
-        r = ((_ocm_dst + osm_src + 1) & 0xffff) <= (osm_src & 0xffff);
+        r = ((_osm_dst + osm_src + 1) & 0xffff) <= (osm_src & 0xffff);
         break;
     case 11:
-        r = ((_ocm_dst + osm_src + 1) <= osm_src);
+        r = ((_osm_dst + osm_src + 1) <= osm_src);
         break;
     case 12:
     case 13:
