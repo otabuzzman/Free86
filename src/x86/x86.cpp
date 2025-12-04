@@ -2201,7 +2201,7 @@ void x86Internal::op_IMUL32(int multiplicand, int multiplier) {
     osm = 23;
 }
 int x86Internal::do_multiply32(int multiplicand, int multiplier) {
-    uint32_t lower_md, upper_md, upper_mr, m;
+    uint32_t lower_md, upper_md, lower_mr, upper_mr, m;
     uint64_t r = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (r <= 0xffffffff) {
         v = 0;
@@ -3142,7 +3142,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
         abort(13, cs & 0xfffc);
     }
     rpl = cs & 3;
-    if (rpl < _cpl) {
+    if (rpl < cpl) {
         abort(13, cs & 0xfffc);
     }
     dpl = (dte_upper_dword >> 13) & 3;
@@ -3159,7 +3159,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
         abort(11, cs & 0xfffc);
     }
     esp = esp + return_offset;
-    if (rpl == _cpl) {
+    if (rpl == cpl) {
         update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
         if (is_operand_size32 == 1) {
@@ -3216,11 +3216,11 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         int mask = 0x00000100 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
-        if (_cpl == 0) {
+        if (cpl == 0) {
             mask |= 0x00003000;
         }
         iopl = (eflags >> 12) & 3;
-        if (_cpl <= iopl) {
+        if (cpl <= iopl) {
             mask |= 0x00000200;
         }
         if (is_operand_size32 == 0) {
