@@ -1903,49 +1903,49 @@ int x86Internal::op_SHLD(int dst, int src, int count) {
     }
     return d;
 }
-void x86Internal::op_BT16(int bit_base, int bit_offset) {
-    osm_src = bit_base >> (bit_offset & 0xf);
+void x86Internal::op_BT16(int base, int offset) {
+    osm_src = base >> (offset & 0xf);
     osm = 19;
 }
-void x86Internal::op_BT(int bit_base, int bit_offset) {
-    osm_src = bit_base >> (bit_offset & 0x1f);
+void x86Internal::op_BT(int base, int offset) {
+    osm_src = base >> (offset & 0x1f);
     osm = 20;
 }
-int x86Internal::op_BTS_BTR_BTC16(int bit_base, int bit_offset) {
+int x86Internal::op_BTS_BTR_BTC16(int base, int offset) {
     int o, r;
-    o = bit_offset & 0xf;
-    osm_src = bit_base >> o;
+    o = offset & 0xf;
+    osm_src = base >> o;
     x = 1 << o;
     switch (operation) {
     case 1: // BTS
-        r = bit_base | x;
+        r = base | x;
         break;
     case 2: // BTR
-        r = bit_base & ~x;
+        r = base & ~x;
         break;
     case 3: // BTC
     default:
-        r = bit_base ^ x;
+        r = base ^ x;
         break;
     }
     osm = 19;
     return r;
 }
-int x86Internal::op_BTS_BTR_BTC(int bit_base, int bit_offset) {
+int x86Internal::op_BTS_BTR_BTC(int base, int offset) {
     int o, r;
-    o = bit_offset & 0x1f;
-    osm_src = bit_base >> o;
+    o = offset & 0x1f;
+    osm_src = base >> o;
     x = 1 << o;
     switch (operation) {
     case 1: // BTS
-        r = bit_base | x;
+        r = base | x;
         break;
     case 2: // BTR
-        r = bit_base & ~x;
+        r = base & ~x;
         break;
     case 3: // BTC
     default:
-        r = bit_base ^ x;
+        r = base ^ x;
         break;
     }
     osm = 20;
@@ -2201,26 +2201,26 @@ void x86Internal::op_IMUL32(int multiplicand, int multiplier) {
     osm = 23;
 }
 int x86Internal::do_multiply32(int multiplicand, int multiplier) {
-    uint32_t Jc, Ic, Tc, Uc, m;
+    uint32_t lower_md, upper_md, upper_mr, m;
     uint64_t r = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (r <= 0xffffffff) {
         v = 0;
         r &= -1;
     } else {
-        Jc = multiplicand & 0xffff;
-        Ic = (uint32_t) multiplicand >> 16;
-        Tc = multiplier & 0xffff;
-        Uc = (uint32_t) multiplier >> 16;
-        r = Jc * Tc;
-        v = Ic * Uc;
-        m = Jc * Uc;
+        lower_md = multiplicand & 0xffff;
+        upper_md = (uint32_t) multiplicand >> 16;
+        lower_mr = multiplier & 0xffff;
+        upper_mr = (uint32_t) multiplier >> 16;
+        r = lower_md * lower_mr;
+        v = upper_md * upper_mr;
+        m = lower_md * upper_mr;
         r += (m & 0xffff) << 16;
         v += m >> 16;
         if (r >= 4294967296) {
             r -= 4294967296;
             v++;
         }
-        m = Ic * Tc;
+        m = upper_md * lower_mr;
         r += (m & 0xffff) << 16;
         v += m >> 16;
         if (r >= 4294967296) {
@@ -3062,7 +3062,7 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
 void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
-    int _cpl = cpl, es, cs, ss, ds, fs, gs;
+    int cpl = this->cpl, es, cs, ss, ds, fs, gs;
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = compile_sizemask(segs[2].flags);
@@ -3637,9 +3637,7 @@ void x86Internal::op_ARPL() {
     osm = 24;
 }
 void x86Internal::op_CPUID() {
-    int eax;
-    eax = regs[0];
-    switch (eax) {
+    switch (regs[0]) {
     case 0: // vendor ID
         regs[0] = 1;
         regs[3] = 0x756e6547;
@@ -3677,92 +3675,92 @@ void x86Internal::op_AAD(int radix) {
     osm = 12;
 }
 void x86Internal::op_AAA() {
-    int Af, al, ah, f4, flag_bits;
-    flag_bits = compile_flags();
-    f4 = flag_bits & 0x0010;
+    int of, al, ah, f4, flags;
+    flags = compile_flags();
+    f4 = flags & 0x0010;
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
-    Af = al > 0xf9;
+    of = al > 0xf9;
     if (((al & 0x0f) > 9) || f4) {
         al = (al + 6) & 0x0f;
-        ah = (ah + 1 + Af) & 0xff;
-        flag_bits |= 0x0001 | 0x0010;
+        ah = (ah + 1 + of) & 0xff;
+        flags |= 0x0001 | 0x0010;
     } else {
-        flag_bits &= ~(0x0001 | 0x0010);
+        flags &= ~(0x0001 | 0x0010);
         al &= 0x0f;
     }
     regs[0] = (regs[0] & ~0xffff) | al | (ah << 8);
-    osm_src = flag_bits;
+    osm_src = flags;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
 void x86Internal::op_AAS() {
-    int Af, al, ah, f4, flag_bits;
-    flag_bits = compile_flags();
-    f4 = flag_bits & 0x0010; // AF
+    int of, al, ah, f4, flags;
+    flags = compile_flags();
+    f4 = flags & 0x0010; // AF
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
-    Af = al < 6;
+    of = al < 6;
     if (((al & 0x0f) > 9) || f4) {
         al = (al - 6) & 0x0f;
-        ah = (ah - 1 - Af) & 0xff;
-        flag_bits |= 0x0001 | 0x0010;
+        ah = (ah - 1 - of) & 0xff;
+        flags |= 0x0001 | 0x0010;
     } else {
-        flag_bits &= ~(0x0001 | 0x0010);
+        flags &= ~(0x0001 | 0x0010);
         al &= 0x0f;
     }
     regs[0] = (regs[0] & ~0xffff) | al | (ah << 8);
-    osm_src = flag_bits;
+    osm_src = flags;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
 void x86Internal::op_DAA() {
-    int al, f0, f4, flag_bits;
-    flag_bits = compile_flags();
-    f0 = flag_bits & 0x0001;
-    f4 = flag_bits & 0x0010;
+    int al, f0, f4, flags;
+    flags = compile_flags();
+    f0 = flags & 0x0001;
+    f4 = flags & 0x0010;
     al = regs[0] & 0xff;
-    flag_bits = 0;
+    flags = 0;
     if (((al & 0x0f) > 9) || f4) {
         al = (al + 6) & 0xff;
-        flag_bits |= 0x0010;
+        flags |= 0x0010;
     }
     if ((al > 0x9f) || f0) {
         al = (al + 0x60) & 0xff;
-        flag_bits |= 0x0001;
+        flags |= 0x0001;
     }
     regs[0] = (regs[0] & ~0xff) | al;
-    flag_bits |= (al == 0) << 6;
-    flag_bits |= parity_LUT[al] << 2;
-    flag_bits |= al & 0x80;
-    osm_src = flag_bits;
+    flags |= (al == 0) << 6;
+    flags |= parity_LUT[al] << 2;
+    flags |= al & 0x80;
+    osm_src = flags;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
 void x86Internal::op_DAS() {
-    int al, Gf, f0, f4, flag_bits;
-    flag_bits = compile_flags();
-    f0 = flag_bits & 0x0001;
-    f4 = flag_bits & 0x0010;
+    int al, of, f0, f4, flags;
+    flags = compile_flags();
+    f0 = flags & 0x0001;
+    f4 = flags & 0x0010;
     al = regs[0] & 0xff;
-    flag_bits = 0;
-    Gf = al;
+    flags = 0;
+    of = al;
     if (((al & 0x0f) > 9) || f4) {
-        flag_bits |= 0x0010;
+        flags |= 0x0010;
         if (al < 6 || f0) {
-            flag_bits |= 0x0001;
+            flags |= 0x0001;
         }
         al = (al - 6) & 0xff;
     }
-    if ((Gf > 0x99) || f0) {
+    if ((of > 0x99) || f0) {
         al = (al - 0x60) & 0xff;
-        flag_bits |= 0x0001;
+        flags |= 0x0001;
     }
     regs[0] = (regs[0] & ~0xff) | al;
-    flag_bits |= (al == 0) << 6;
-    flag_bits |= parity_LUT[al] << 2;
-    flag_bits |= al & 0x80;
-    osm_src = flag_bits;
+    flags |= (al == 0) << 6;
+    flags |= parity_LUT[al] << 2;
+    flags |= al & 0x80;
+    osm_src = flags;
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
@@ -3851,66 +3849,66 @@ void x86Internal::op_LEAVE() {
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
 }
 void x86Internal::op_ENTER16() {
-    int cf, Qf, le, Rf, Sf;
-    cf = ld16_mem8_direct();
-    Qf = phys_mem8[far++];
-    Qf &= 0x1f;
-    le = regs[4];
-    Rf = regs[5];
-    le = le - 2;
-    mem8_loc = (le & SS_mask) + SS_base;
-    st16_mem8_write(Rf);
-    Sf = le;
-    if (Qf != 0) {
-        while (Qf > 1) {
-            Rf = Rf - 2;
-            mem8_loc = (Rf & SS_mask) + SS_base;
+    int c, l, esp, ebp, exp;
+    c = ld16_mem8_direct();
+    l = phys_mem8[far++];
+    l &= 0x1f;
+    esp = regs[4];
+    ebp = regs[5];
+    esp = esp - 2;
+    mem8_loc = (esp & SS_mask) + SS_base;
+    st16_mem8_write(ebp);
+    exp = esp;
+    if (l != 0) {
+        while (l > 1) {
+            ebp = ebp - 2;
+            mem8_loc = (ebp & SS_mask) + SS_base;
             x = ld16_mem8_read();
-            le = le - 2;
-            mem8_loc = (le & SS_mask) + SS_base;
+            esp = esp - 2;
+            mem8_loc = (esp & SS_mask) + SS_base;
             st16_mem8_write(x);
-            Qf--;
+            l--;
         }
-        le = le - 2;
-        mem8_loc = (le & SS_mask) + SS_base;
-        st16_mem8_write(Sf);
+        esp = esp - 2;
+        mem8_loc = (esp & SS_mask) + SS_base;
+        st16_mem8_write(exp);
     }
-    le = le - cf;
-    mem8_loc = (le & SS_mask) + SS_base;
+    esp = esp - c;
+    mem8_loc = (esp & SS_mask) + SS_base;
     ld16_mem8_write();
-    regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
-    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
+    regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void x86Internal::op_ENTER() {
-    int cf, Qf, le, Rf, Sf;
-    cf = ld16_mem8_direct();
-    Qf = phys_mem8[far++];
-    Qf &= 0x1f;
-    le = regs[4];
-    Rf = regs[5];
-    le = le - 4;
-    mem8_loc = (le & SS_mask) + SS_base;
-    st32_mem8_write(Rf);
-    Sf = (Rf & ~SS_mask) | (le & SS_mask);
-    if (Qf != 0) {
-        while (Qf > 1) {
-            Rf = Rf - 4;
-            mem8_loc = (Rf & SS_mask) + SS_base;
+    int c, l, esp, ebp, exp;
+    c = ld16_mem8_direct();
+    l = phys_mem8[far++];
+    l &= 0x1f;
+    esp = regs[4];
+    ebp = regs[5];
+    esp = esp - 4;
+    mem8_loc = (esp & SS_mask) + SS_base;
+    st32_mem8_write(ebp);
+    exp = (ebp & ~SS_mask) | (esp & SS_mask);
+    if (l != 0) {
+        while (l > 1) {
+            ebp = ebp - 4;
+            mem8_loc = (ebp & SS_mask) + SS_base;
             x = ld32_mem8_read();
-            le = le - 4;
-            mem8_loc = (le & SS_mask) + SS_base;
+            esp = esp - 4;
+            mem8_loc = (esp & SS_mask) + SS_base;
             st32_mem8_write(x);
-            Qf--;
+            l--;
         }
-        le = le - 4;
-        mem8_loc = (le & SS_mask) + SS_base;
-        st32_mem8_write(Sf);
+        esp = esp - 4;
+        mem8_loc = (esp & SS_mask) + SS_base;
+        st32_mem8_write(exp);
     }
-    le = le - cf;
-    mem8_loc = (le & SS_mask) + SS_base;
+    esp = esp - c;
+    mem8_loc = (esp & SS_mask) + SS_base;
     ld32_mem8_write();
-    regs[5] = (regs[5] & ~SS_mask) | (Sf & SS_mask);
-    regs[4] = (regs[4] & ~SS_mask) | (le & SS_mask);
+    regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void x86Internal::ld_full_pointer16(int sreg) {
     mem8 = phys_mem8[far++];

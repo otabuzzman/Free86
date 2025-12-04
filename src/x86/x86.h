@@ -427,10 +427,10 @@ class x86Internal {
     int op_SHRD_SHLD16(int dst, int src, int count);
     int op_SHRD(int dst, int src, int count);
     int op_SHLD(int dst, int src, int count);
-    void op_BT16(int bit_base, int bit_offset);
-    void op_BT(int bit_base, int bit_offset);
-    int op_BTS_BTR_BTC16(int bit_base, int bit_offset);
-    int op_BTS_BTR_BTC(int bit_base, int bit_offset);
+    void op_BT16(int base, int offset);
+    void op_BT(int base, int offset);
+    int op_BTS_BTR_BTC16(int base, int offset);
+    int op_BTS_BTR_BTC(int base, int offset);
     int op_BSF16(int dst, int src);
     int op_BSF(int dst, int src);
     int op_BSR16(int dst, int src);
