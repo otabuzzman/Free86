@@ -25,14 +25,43 @@ x86Internal::~x86Internal() {
     delete[] tlb_read_user;
     delete[] tlb_write_user;
 }
+void x86Internal::reset() {
+    // Intel IA-32 SDM (latest), Vol. 3A, 11.1.1
+    for (int i = 0 ; i < 8 ; i++) {
+        regs[i] = 0;
+    }
+    eflags = 0x2;
+    eip = 0xfff0;
+    for (int i = 0 ; i < 7 ; i++) {
+        segs[i] = {0, 0, 0, 0};
+    }
+    segs[1] = {0, 0xffff0000, 0, 0};
+    idt = {0, 0, 0x03ff, 0};
+    cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
+}
 [[noreturn]] void x86Internal::abort(int interrupt_id, int error_code) {
     this->cycles += cycles_requested - cycles_remaining;
     interrupt = {interrupt_id, error_code};
     throw interrupt;
 }
+void x86Internal::update_SSB() {
+    CS_base = segs[1].base;
+    if (segs[1].flags & (1 << 22)) {
+        ipr_default = 0;
+    } else {
+        ipr_default = 0x0100 | 0x0080;
+    }
+    SS_base = segs[2].base;
+    if (segs[2].flags & (1 << 22)) {
+        SS_mask = -1;
+    } else {
+        SS_mask = 0xffff;
+    }
+    x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
+}
 void x86Internal::fetch_opcode() {
     eip = eip + far - far_start;
-    eip_linear = check_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
+    eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
     int64_t eip_tlb_hash = tlb_read[eip_linear >> 12];
     // `eip_tlb_hash' equals -1 or instruction with maximum bytes (15)
     // would extend across the page boundary.
@@ -62,21 +91,6 @@ void x86Internal::fetch_opcode() {
         far = far_start = eip_linear ^ eip_tlb_hash;
         opcode = phys_mem8[far++];
     }
-}
-void x86Internal::update_SSB() {
-    CS_base = segs[1].base;
-    if (segs[1].flags & (1 << 22)) {
-        ipr_default = 0;
-    } else {
-        ipr_default = 0x0100 | 0x0080;
-    }
-    SS_base = segs[2].base;
-    if (segs[2].flags & (1 << 22)) {
-        SS_mask = -1;
-    } else {
-        SS_mask = 0xffff;
-    }
-    x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
 }
 int x86Internal::instruction_length(int opcode) {
     int ipr, operation, stride;
@@ -110,7 +124,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            opcode = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
@@ -124,7 +138,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            opcode = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
@@ -364,7 +378,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -388,7 +402,7 @@ int x86Internal::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -459,7 +473,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -483,7 +497,7 @@ int x86Internal::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -541,7 +555,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                         ? __ld8_mem8_read()
                         : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -565,7 +579,7 @@ int x86Internal::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -621,7 +635,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -645,7 +659,7 @@ int x86Internal::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -704,7 +718,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                      ? __ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -728,7 +742,7 @@ int x86Internal::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                              ? __ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -811,7 +825,7 @@ int x86Internal::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            opcode = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+            opcode = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                           ? __ld8_mem8_read()
                           : phys_mem8[mem8_loc ^ tlb_hash]);
             switch (opcode) {
@@ -915,7 +929,7 @@ int x86Internal::instruction_length(int opcode) {
                     abort(13);
                 }
                 mem8_loc = eip_linear + (n++);
-                mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                             ? __ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
@@ -939,7 +953,7 @@ int x86Internal::instruction_length(int opcode) {
                             abort(13);
                         }
                         mem8_loc = eip_linear + (n++);
-                        mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                        mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                                  ? __ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
@@ -993,7 +1007,7 @@ int x86Internal::instruction_length(int opcode) {
                     abort(13);
                 }
                 mem8_loc = eip_linear + (n++);
-                mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                             ? __ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
@@ -1017,7 +1031,7 @@ int x86Internal::instruction_length(int opcode) {
                             abort(13);
                         }
                         mem8_loc = eip_linear + (n++);
-                        mem8 = (check_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                        mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                                  ? __ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
@@ -1207,11 +1221,14 @@ void x86Internal::set_CR3(int bits) {
 void x86Internal::set_CR4(int bits) {
     cr4 = bits;
 }
-bool x86Internal::check_real__v86() {
-    return !check_protected();
+bool x86Internal::is_real__v86() {
+    return !is_protected();
 }
-bool x86Internal::check_protected() {
+bool x86Internal::is_protected() {
     return cr0 & (1 << 0);
+}
+bool x86Internal::is_paging_disabled() {
+    return !((cr0 & (1 << 31)) && is_protected());
 }
 void x86Internal::set_current_privilege_level(int data) {
     cpl = data;
@@ -1253,7 +1270,7 @@ void x86Internal::set_lower_word(int reg, int word) {
 }
 void x86Internal::page_translation(int linear_address, int writable, bool user) {
     int pde_address, pde, pte_address, pte, pxe, set_RW = 0, set_US = 1, clean, error_code;
-    if (!((cr0 & (1 << 31)) && (cr0 & (1 << 0)))) {
+    if (is_paging_disabled()) {
         set_RW = 1;
         set_US = 0;
         tlb_update(linear_address & -4096, linear_address & -4096, set_RW, set_US);
@@ -1616,7 +1633,7 @@ void x86Internal::update_segment_register(int sreg, int selector, uint32_t base,
 void x86Internal::set_segment_register(int sreg, int selector) {
     int s;
     s = selector & 0xffff;
-    if (check_protected()) {
+    if (is_protected()) {
         set_segment_register_protected(sreg, s);
     } else { // real or v86 mode
         set_segment_register_real__v86(sreg, s);
@@ -2713,7 +2730,7 @@ void x86Internal::op_LTR(int selector) {
     tr.selector = selector;
 }
 void x86Internal::do_JMPF(int selector, int address) {
-    if (!check_protected() || (eflags & 0x00020000)) {
+    if (!is_protected() || (eflags & 0x00020000)) {
         op_JMPF_virtual_mode(selector, address);
     } else {
         op_JMPF(selector, address);
@@ -2769,7 +2786,7 @@ void x86Internal::op_JMPF(int selector, int address) {
     }
 }
 void x86Internal::do_CALLF(bool is_operand_size32, int selector, int address, int return_address) {
-    if (!check_protected() || (eflags & 0x00020000)) {
+    if (!is_protected() || (eflags & 0x00020000)) {
         op_CALLF_real__v86_mode(is_operand_size32, selector, address, return_address);
     } else {
         op_CALLF_protected_mode(is_operand_size32, selector, address, return_address);
@@ -3225,7 +3242,7 @@ void x86Internal::clear_segment_register(int sreg, int privilege_level) {
     }
 }
 void x86Internal::op_IRET(bool is_operand_size32) {
-    if (!check_protected() || (eflags & 0x00020000)) {
+    if (!is_protected() || (eflags & 0x00020000)) {
         if (eflags & 0x00020000) {
             iopl = (eflags >> 12) & 3;
             if (iopl != 3) {
@@ -3242,7 +3259,7 @@ void x86Internal::op_IRET(bool is_operand_size32) {
     }
 }
 void x86Internal::op_RETF(bool is_operand_size32, int return_offset) {
-    if (!check_protected() || (eflags & 0x00020000)) {
+    if (!is_protected() || (eflags & 0x00020000)) {
         do_return_real__v86_mode(is_operand_size32, 0, return_offset);
     } else {
         do_return_protected_mode(is_operand_size32, 0, return_offset);
@@ -3299,7 +3316,7 @@ int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
 }
 void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     int selector;
-    if (!check_protected() || (eflags & 0x00020000)) {
+    if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
     mem8 = phys_mem8[far++];
@@ -3345,7 +3362,7 @@ void x86Internal::do_interrupt(int interrupt_id, int error_code, int is_hw, int 
         }
         printf("%s\n", str.c_str());
     }
-    if (check_protected()) {
+    if (is_protected()) {
         do_interrupt_protected_mode(interrupt_id, error_code, is_hw, is_sw, return_address);
     } else {
         do_interrupt_real__v86_mode(interrupt_id, is_sw, return_address);
@@ -3591,7 +3608,7 @@ void x86Internal::op_VERR_VERW(int selector, bool writable) {
     osm = 24;
 }
 void x86Internal::op_ARPL() {
-    if (!check_protected() || (eflags & 0x00020000)) {
+    if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
     mem8 = phys_mem8[far++];

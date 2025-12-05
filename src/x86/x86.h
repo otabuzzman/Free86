@@ -233,22 +233,9 @@ class x86Internal {
     x86Internal(int mem_size);
     virtual ~x86Internal();
 
-    void reset() {
-        // Intel IA-32 SDM (latest), Vol. 3A, 11.1.1
-        for (int i = 0 ; i < 8 ; i++) {
-            regs[i] = 0;
-        }
-        eflags = 0x2;
-        eip = 0xfff0;
-        for (int i = 0 ; i < 7 ; i++) {
-            segs[i] = {0, 0, 0, 0};
-        }
-        segs[1] = {0, 0xffff0000, 0, 0};
-        idt = {0, 0, 0x03ff, 0};
-        cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
-    }
-
+    void reset();
     [[noreturn]] void abort(int interrupt_id, int error_code = 0);
+    void fetch_decode_execute(uint64_t cycles);
 
     void tlb_update(uint32_t linear_address, int pte, int writable, int user) {
         tlb_hash = linear_address ^ pte; // poor man's XOR hash
@@ -324,18 +311,17 @@ class x86Internal {
         tlb_write_user[lat20] = -1;
     }
 
-    void fetch_decode_execute(uint64_t cycles);
-
-    void fetch_opcode();
     void update_SSB();
+    void fetch_opcode();
 
     int instruction_length(int opcode);
 
     void set_CR0(int bits);
     void set_CR3(int bits);
     void set_CR4(int bits);
-    bool check_real__v86();
-    bool check_protected();
+    bool is_real__v86();
+    bool is_protected();
+    bool is_paging_disabled();
     void set_current_privilege_level(int data);
 
     virtual int get_hard_irq() = 0;

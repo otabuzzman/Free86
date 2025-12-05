@@ -45,7 +45,7 @@ int x86Internal::ld16_mem8_direct() {
 }
 int x86Internal::__ld8_mem8_read() {
     int byte;
-    if (check_protected()) {
+    if (is_protected()) {
         page_translation(mem8_loc, 0, cpl == 3);
         tlb_hash = tlb_read[mem8_loc >> 12];
         byte = phys_mem8[mem8_loc ^ tlb_hash];
@@ -55,7 +55,7 @@ int x86Internal::__ld8_mem8_read() {
     return byte;
 }
 int x86Internal::ld8_mem8_read() {
-    return (check_real__v86() ||
+    return (is_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
                 ? __ld8_mem8_read()
                 : phys_mem8[mem8_loc ^ tlb_hash]);
@@ -68,7 +68,7 @@ int x86Internal::__ld16_mem8_read() {
     return word;
 }
 int x86Internal::ld16_mem8_read() {
-    return (check_real__v86() ||
+    return (is_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 1
                 ? __ld16_mem8_read()
                 : phys_mem16[(mem8_loc ^ tlb_hash) >> 1]);
@@ -85,14 +85,14 @@ int x86Internal::__ld32_mem8_read() {
     return dword;
 }
 int x86Internal::ld32_mem8_read() {
-    return (check_real__v86() ||
+    return (is_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 3
                 ? __ld32_mem8_read()
                 : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
 }
 int x86Internal::__ld8_mem8_write() {
     int byte;
-    if (check_protected()) {
+    if (is_protected()) {
         page_translation(mem8_loc, 1, cpl == 3);
         tlb_hash = tlb_write[mem8_loc >> 12];
         byte = phys_mem8[mem8_loc ^ tlb_hash];
@@ -102,7 +102,7 @@ int x86Internal::__ld8_mem8_write() {
     return byte;
 }
 int x86Internal::ld8_mem8_write() {
-    return (check_real__v86() ||
+    return (is_real__v86() ||
                     (tlb_hash = tlb_write[mem8_loc >> 12]) == -1)
                 ? __ld8_mem8_write()
                 : phys_mem8[mem8_loc ^ tlb_hash];
@@ -115,7 +115,7 @@ int x86Internal::__ld16_mem8_write() {
     return word;
 }
 int x86Internal::ld16_mem8_write() {
-    return (check_real__v86() ||
+    return (is_real__v86() ||
                     (tlb_hash = tlb_write[mem8_loc >> 12]) | mem8_loc) & 1
                 ? __ld16_mem8_write()
                 : phys_mem16[(mem8_loc ^ tlb_hash) >> 1];
@@ -132,7 +132,7 @@ int x86Internal::__ld32_mem8_write() {
     return dword;
 }
 int x86Internal::ld32_mem8_write() {
-    return (check_real__v86() ||
+    return (is_real__v86() ||
                     (tlb_hash = tlb_write[mem8_loc >> 12]) | mem8_loc) & 3
                ? __ld32_mem8_write()
                : phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
@@ -183,7 +183,7 @@ void x86Internal::st32_mem8_kernel_write(int dword) {
     }
 }
 void x86Internal::__st8_mem8_write(int byte) {
-    if (check_protected()) {
+    if (is_protected()) {
         page_translation(mem8_loc, 1, cpl == 3);
         tlb_hash = tlb_write[mem8_loc >> 12];
         phys_mem8[mem8_loc ^ tlb_hash] = byte;
@@ -193,7 +193,7 @@ void x86Internal::__st8_mem8_write(int byte) {
 }
 void x86Internal::st8_mem8_write(int byte) {
     tlb_hash = tlb_write[mem8_loc >> 12];
-    if (check_real__v86() || tlb_hash == -1) {
+    if (is_real__v86() || tlb_hash == -1) {
         __st8_mem8_write(byte);
     } else {
         phys_mem8[mem8_loc ^ tlb_hash] = byte;
@@ -207,7 +207,7 @@ void x86Internal::__st16_mem8_write(int word) {
 }
 void x86Internal::st16_mem8_write(int word) {
     tlb_hash = tlb_write[mem8_loc >> 12];
-    if (check_real__v86() || (tlb_hash | mem8_loc) & 1) {
+    if (is_real__v86() || (tlb_hash | mem8_loc) & 1) {
         __st16_mem8_write(word);
     } else {
         phys_mem16[(mem8_loc ^ tlb_hash) >> 1] = word;
@@ -225,7 +225,7 @@ void x86Internal::__st32_mem8_write(int dword) {
 }
 void x86Internal::st32_mem8_write(int dword) {
     tlb_hash = tlb_write[mem8_loc >> 12];
-    if (check_real__v86() || (tlb_hash | mem8_loc) & 3) {
+    if (is_real__v86() || (tlb_hash | mem8_loc) & 3) {
         __st32_mem8_write(dword);
     } else {
         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = dword;
