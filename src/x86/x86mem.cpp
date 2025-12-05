@@ -1,7 +1,7 @@
 #include "x86.h"
 
 int x86Internal::__ld8_mem8_kernel_read() {
-    do_tlb_set_page(mem8_loc, 0, 0);
+    page_translation(mem8_loc, 0, 0);
     tlb_hash = tlb_read_kernel[mem8_loc >> 12];
     return phys_mem8[mem8_loc ^ tlb_hash];
 }
@@ -46,7 +46,7 @@ int x86Internal::ld16_mem8_direct() {
 int x86Internal::__ld8_mem8_read() {
     int byte;
     if (check_protected()) {
-        do_tlb_set_page(mem8_loc, 0, cpl == 3);
+        page_translation(mem8_loc, 0, cpl == 3);
         tlb_hash = tlb_read[mem8_loc >> 12];
         byte = phys_mem8[mem8_loc ^ tlb_hash];
     } else {
@@ -93,7 +93,7 @@ int x86Internal::ld32_mem8_read() {
 int x86Internal::__ld8_mem8_write() {
     int byte;
     if (check_protected()) {
-        do_tlb_set_page(mem8_loc, 1, cpl == 3);
+        page_translation(mem8_loc, 1, cpl == 3);
         tlb_hash = tlb_write[mem8_loc >> 12];
         byte = phys_mem8[mem8_loc ^ tlb_hash];
     } else {
@@ -138,7 +138,7 @@ int x86Internal::ld32_mem8_write() {
                : phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
 }
 void x86Internal::__st8_mem8_kernel_write(int byte) {
-    do_tlb_set_page(mem8_loc, 1, 0);
+    page_translation(mem8_loc, 1, 0);
     tlb_hash = tlb_write_kernel[mem8_loc >> 12];
     phys_mem8[mem8_loc ^ tlb_hash] = byte;
 }
@@ -184,7 +184,7 @@ void x86Internal::st32_mem8_kernel_write(int dword) {
 }
 void x86Internal::__st8_mem8_write(int byte) {
     if (check_protected()) {
-        do_tlb_set_page(mem8_loc, 1, cpl == 3);
+        page_translation(mem8_loc, 1, cpl == 3);
         tlb_hash = tlb_write[mem8_loc >> 12];
         phys_mem8[mem8_loc ^ tlb_hash] = byte;
     } else {

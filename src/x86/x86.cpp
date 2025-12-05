@@ -30,81 +30,6 @@ x86Internal::~x86Internal() {
     interrupt = {interrupt_id, error_code};
     throw interrupt;
 }
-void x86Internal::do_tlb_set_page(int linear_address, int writable, bool user) {
-    int pde_address, pde, pte_address, pte, pxe, tlb_set_write = 0, tlb_set_user = 1, clean, error_code;
-    if (!(cr0 & (1 << 31))) {
-        tlb_set_write = 1;
-        tlb_set_user = 0;
-        tlb_set_page(linear_address & -4096, linear_address & -4096, tlb_set_write, tlb_set_user);
-    } else { // paging enabled
-        pde_address = (cr3 & -4096) + ((linear_address >> 20) & 0xffc);
-        pde = ld32_phys(pde_address);
-        if (!(pde & 0x00000001)) { // page not present
-            error_code = 0;
-        } else {
-            pte_address = (pde & -4096) + ((linear_address >> 10) & 0xffc);
-            pte = ld32_phys(pte_address);
-            if (!(pte & 0x00000001)) { // page not present
-                error_code = 0;
-            } else {
-                pxe = pde & pte;
-                if (user && !(pxe & 0x00000004)) { // user request and page supervisor
-                    error_code = 0x01;
-                // user request or RF set and WR request and RO page
-                } else if ((user || (cr0 & (1 << 16))) && writable && !(pxe & 0x00000002)) {
-                    error_code = 0x01;
-                } else {
-                    if (!(pde & 0x00000020)) { // page not accessed
-                        pde |= 0x00000020;
-                        st32_phys(pde_address, pde);
-                    }
-                    clean = writable && !(pte & 0x00000040); // WR request and page not dirty
-                    if (!(pte & 0x00000020) || clean) {  // page not accessed or previous
-                        pte |= 0x00000020;     // set page accessed
-                        if (clean) {
-                            pte |= 0x00000040; // set page dirty
-                        }
-                        st32_phys(pte_address, pte);
-                    }
-                    // page dirty and supervisor request and page not RO
-                    if ((pte & 0x00000040) && (!user || (pxe & 0x00000002))) {
-                        tlb_set_write = 1;
-                    }
-                    // page not supervisor
-                    if (pxe & 0x00000004) {
-                        tlb_set_user = 1;
-                    }
-                    tlb_set_page(linear_address & -4096, pte & -4096, tlb_set_write, tlb_set_user);
-                    return;
-                }
-            }
-        }
-        error_code |= writable << 1;
-        if (user) {
-            error_code |= 0x04;
-        }
-        cr2 = linear_address;
-        abort(14, error_code);
-    }
-}
-int x86Internal::do_tlb_lookup(int linear_address, int writable) {
-    int tlb_hash, lat20;
-    lat20 = linear_address >> 12;
-    if (writable) {
-        tlb_hash = tlb_write[lat20];
-    } else {
-        tlb_hash = tlb_read[lat20];
-    }
-    if (tlb_hash == -1) {
-        do_tlb_set_page(linear_address, writable, cpl == 3);
-        if (writable) {
-            tlb_hash = tlb_write[lat20];
-        } else {
-            tlb_hash = tlb_read[lat20];
-        }
-    }
-    return tlb_hash ^ linear_address;
-}
 void x86Internal::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = check_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
@@ -114,7 +39,7 @@ void x86Internal::fetch_opcode() {
     // combined check ok because bits 0-11 in `eip_tlb_hash' always 0.
     if (((eip_tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
         if (eip_tlb_hash == -1) {
-            do_tlb_set_page(eip_linear, 0, cpl == 3);
+            page_translation(eip_linear, 0, cpl == 3);
         }
         eip_tlb_hash = tlb_read[eip_linear >> 12];
         far = far_start = eip_linear ^ eip_tlb_hash;
@@ -1325,6 +1250,63 @@ void x86Internal::set_lower_byte(int reg, int byte) {
 }
 void x86Internal::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
+}
+void x86Internal::page_translation(int linear_address, int writable, bool user) {
+    int pde_address, pde, pte_address, pte, pxe, set_RW = 0, set_US = 1, clean, error_code;
+    if (!((cr0 & (1 << 31)) && (cr0 & (1 << 0)))) {
+        set_RW = 1;
+        set_US = 0;
+        tlb_update(linear_address & -4096, linear_address & -4096, set_RW, set_US);
+    } else { // paging enabled
+        pde_address = (cr3 & -4096) + ((linear_address >> 20) & 0xffc);
+        pde = ld32_phys(pde_address);
+        if (!(pde & 0x00000001)) { // page not present
+            error_code = 0;
+        } else {
+            pte_address = (pde & -4096) + ((linear_address >> 10) & 0xffc);
+            pte = ld32_phys(pte_address);
+            if (!(pte & 0x00000001)) { // page not present
+                error_code = 0;
+            } else {
+                pxe = pde & pte;
+                if (user && !(pxe & 0x00000004)) { // user request and page supervisor
+                    error_code = 0x01;
+                // user request or RF set and WR request and RO page
+                } else if ((user || (cr0 & (1 << 16))) && writable && !(pxe & 0x00000002)) {
+                    error_code = 0x01;
+                } else {
+                    if (!(pde & 0x00000020)) { // page not accessed
+                        pde |= 0x00000020;
+                        st32_phys(pde_address, pde);
+                    }
+                    clean = writable && !(pte & 0x00000040); // WR request and page not dirty
+                    if (!(pte & 0x00000020) || clean) {  // page not accessed or previous
+                        pte |= 0x00000020;     // set page accessed
+                        if (clean) {
+                            pte |= 0x00000040; // set page dirty
+                        }
+                        st32_phys(pte_address, pte);
+                    }
+                    // page dirty and supervisor request and page not RO
+                    if ((pte & 0x00000040) && (!user || (pxe & 0x00000002))) {
+                        set_RW = 1;
+                    }
+                    // page not supervisor
+                    if (pxe & 0x00000004) {
+                        set_US = 1;
+                    }
+                    tlb_update(linear_address & -4096, pte & -4096, set_RW, set_US);
+                    return;
+                }
+            }
+        }
+        error_code |= writable << 1;
+        if (user) {
+            error_code |= 0x04;
+        }
+        cr2 = linear_address;
+        abort(14, error_code);
+    }
 }
 void x86Internal::segment_translation(int modRM) {
     int sib, sib_base, sib_index, sreg;

@@ -249,7 +249,7 @@ class x86Internal {
 
     [[noreturn]] void abort(int interrupt_id, int error_code = 0);
 
-    void tlb_set_page(uint32_t linear_address, int pte, int writable, int user) {
+    void tlb_update(uint32_t linear_address, int pte, int writable, int user) {
         tlb_hash = linear_address ^ pte; // poor man's XOR hash
         uint32_t lat20 = linear_address >> 12;
         if (tlb_read_kernel[lat20] == -1) {
@@ -275,6 +275,23 @@ class x86Internal {
             tlb_read_user[lat20] = -1;
             tlb_write_user[lat20] = -1;
         }
+    }
+    int tlb_lookup(int linear_address, int writable) {
+        uint32_t lat20 = linear_address >> 12;
+        if (writable) {
+            tlb_hash = tlb_write[lat20];
+        } else {
+            tlb_hash = tlb_read[lat20];
+        }
+        if (tlb_hash == -1) {
+            page_translation(linear_address, writable, cpl == 3);
+            if (writable) {
+                tlb_hash = tlb_write[lat20];
+            } else {
+                tlb_hash = tlb_read[lat20];
+            }
+        }
+        return tlb_hash ^ linear_address;
     }
     void tlb_flush_page(uint32_t linear_address) {
         uint32_t lat20 = linear_address >> 12;
@@ -305,9 +322,6 @@ class x86Internal {
         tlb_read_user[lat20] = -1;
         tlb_write_user[lat20] = -1;
     }
-
-    void do_tlb_set_page(int linear_address, int writable, bool user);
-    int do_tlb_lookup(int linear_address, int writable);
 
     void fetch_decode_execute(uint64_t cycles);
 
@@ -403,6 +417,8 @@ class x86Internal {
 
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
+
+    void page_translation(int linear_address, int writable, bool user);
 
     void segment_translation(int modRM);
     void convert_offset_to_linear(bool writable);
