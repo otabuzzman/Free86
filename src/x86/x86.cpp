@@ -1271,7 +1271,7 @@ void x86Internal::page_translation(int linear_address, int writable, bool user) 
                 pxe = pde & pte;
                 if (user && !(pxe & 0x00000004)) { // user request and page supervisor
                     error_code = 0x01;
-                // user request or RF set and WR request and RO page
+                // user request or WP set and W request for RO page
                 } else if ((user || (cr0 & (1 << 16))) && writable && !(pxe & 0x00000002)) {
                     error_code = 0x01;
                 } else {

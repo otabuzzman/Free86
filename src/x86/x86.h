@@ -47,7 +47,7 @@ class x86Internal {
    The fetch address register (FAR, aka MAR) stores the physical memory
    address of the next byte to be retrieved in the current fetch cycle.
  */
-    uint32_t far;       // fetch address register
+    uint32_t far;       // fetch address register (FAR, aka MAR)
     uint32_t far_start; // first fetch address of current cycle
 
     int opcode; // sort of fetch data register (FDR, aka MDR)
@@ -186,6 +186,7 @@ class x86Internal {
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
+    // end of SSB
 
     // intermediate values
     int operation; // bits 5..3 of opcode or modR/M byte
