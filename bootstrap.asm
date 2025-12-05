@@ -1,13 +1,11 @@
 ;-----------------------------------------------------------------
 ; bootstrap.asm - setup 386 emulator for linuxstart.bin execution
 ;
-;             compile: nasm -f bin -o bootstrap.bin bootstrap.asm
+; compile:
+;     nasm -f bin -o bootstrap.bin -l bootstrap.lst bootstrap.asm
 ;-----------------------------------------------------------------
 
 CS_REAL    equ 0xf000
-
-DS         equ 0x10
-CS         equ 0x08
 LINUXSTART equ 0x00010000
 
 cpu 386
@@ -43,15 +41,10 @@ gdtA:
     db 0x00
 gdtO:
 
-; ----------------------------------------------------------------
-; GDTR at physical address 0x00000900
-; ----------------------------------------------------------------
-org 0x00000900
 gdtr:
     dw gdtO - gdtA - 1 ; limit
     dd gdtA               ; base
 
-org 0x00000A00
 bootstrap:
     cli
 
@@ -67,16 +60,15 @@ bootstrap:
     db 0x66 ; operand-size override prefix
     db 0xEA ; JMPF opcode
     dd setup386 ; 32 bit offset
-    dw CS       ; CS 0x08
+    dw 0x08     ; CS 0x08
 
-org 0x00000B00
 bits 32
 setup386:
     ; prepare state for linuxstart.bin
 
     ; CS contains selector 0x08 from far jump
     ; load data selectors with selector 0x10
-    mov ax, DS
+    mov ax, 0x10
     mov ds, ax
     mov es, ax
     mov fs, ax
@@ -88,7 +80,7 @@ setup386:
     mov ebx, 0x0000f800       ; cmdline_addr
     mov ecx, 2 * 1024 * 1024  ; initrd_size
 
-    jmp CS:LINUXSTART
+    jmp 0x08:LINUXSTART
 
 ; ----------------------------------------------------------------
 ;   fill-in NOPs until 0xfff0 where execution starts after reset
