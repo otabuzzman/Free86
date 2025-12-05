@@ -26,7 +26,7 @@ x86Internal::~x86Internal() {
     delete[] tlb_write_user;
 }
 [[noreturn]] void x86Internal::abort(int interrupt_id, int error_code) {
-    cycles_processed += cycles_requested - cycles_remaining;
+    this->cycles += cycles_requested - cycles_remaining;
     interrupt = {interrupt_id, error_code};
     throw interrupt;
 }

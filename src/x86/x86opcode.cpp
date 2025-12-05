@@ -2270,7 +2270,7 @@ void x86Internal::fetch_decode_execute(uint64_t cycles) {
                         abort(13);
                     }
                     {
-                        uint64_t t = cycles_processed + (cycles_requested - cycles_remaining);
+                        uint64_t t = this->cycles + (cycles_requested - cycles_remaining);
                         regs[0] = t;
                         regs[2] = t >> 32;
                     }
@@ -3730,6 +3730,6 @@ void x86Internal::fetch_decode_execute(uint64_t cycles) {
     EXEC_LOOP:;
     } while (--cycles_remaining);
 OUTER_LOOP:
-    cycles_processed += cycles_requested - cycles_remaining;
+    this->cycles += cycles_requested - cycles_remaining;
     eip = eip + far - far_start;
 }

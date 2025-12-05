@@ -73,6 +73,10 @@ class x86Internal {
 
     int halted = 0;
 
+    uint64_t cycles;
+    uint64_t cycles_requested;
+    uint64_t cycles_remaining;
+
     Interrupt interrupt;
 
 /*
@@ -188,7 +192,7 @@ class x86Internal {
     bool x86_64_long_mode = false;
     // end of SSB
 
-    // intermediate values
+    // auxiliary variables for inter-method exchange
     int operation; // bits 5..3 of opcode or modR/M byte
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
@@ -196,10 +200,6 @@ class x86Internal {
     // linear byte address...
     uint32_t mem8_loc;
     int mem8; // ...and value
-
-    uint64_t cycles_requested;
-    uint64_t cycles_remaining;
-    uint64_t cycles_processed;
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -245,7 +245,7 @@ class x86Internal {
         }
         segs[1] = {0, 0xffff0000, 0, 0};
         idt = {0, 0, 0x03ff, 0};
-        cr0 = 1 << 4; // 80387 present
+        cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
     }
 
     [[noreturn]] void abort(int interrupt_id, int error_code = 0);

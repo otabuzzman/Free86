@@ -48,10 +48,10 @@ public:
         printf("*******************************\n\n\n");
     }
     void cycle() {
-        uint64_t cycles_requested = cpu->cycles_processed + 100000;
-        while (cpu->cycles_processed < cycles_requested) {
+        uint64_t cycles = cpu->cycles + 100000;
+        while (cpu->cycles < cycles) {
             try {
-                cpu->fetch_decode_execute(cycles_requested - cpu->cycles_processed);
+                cpu->fetch_decode_execute(cycles - cpu->cycles);
                 if (cpu->halted)
                     break;
             } catch (Interrupt) {}
