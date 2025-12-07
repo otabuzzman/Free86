@@ -18,23 +18,6 @@ typedef struct Interrupt {
 
 class x86Internal {
   public:
-    int tlb_pages[2048]{0};
-    int tlb_pages_count = 0;
-    int tlb_size = 0x100000; // 1M
-    int *tlb_read_kernel;
-    int *tlb_write_kernel;
-    int *tlb_read_user;
-    int *tlb_write_user;
-    int *tlb_read; // current (user or kernel)
-    int *tlb_write;
-    int tlb_hash;
-
-    int mem_size;
-
-    uint8_t *phys_mem8;
-    uint16_t *phys_mem16;
-    uint32_t *phys_mem32;
-
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     int regs[8];
     int eflags;
@@ -74,10 +57,130 @@ class x86Internal {
     int halted = 0;
 
     uint64_t cycles;
+
+    x86Internal(int mem_size);
+    virtual ~x86Internal();
+
+    void reset();
+    void fetch_decode_execute(uint64_t cycles);
+
+    uint8_t ld8_phys(int address) {
+        return phys_mem8[address];
+    }
+    void st8_phys(int address, uint8_t byte) {
+        phys_mem8[address] = byte;
+    }
+    void st8_phys(int address, std::string data) {
+        auto s = data.c_str();
+        auto l = data.length();
+        for (int i = 0; i < l; i++) {
+            st8_phys(address++, s[i] & 0xff);
+        }
+        st8_phys(address, 0);
+    }
+    int ld32_phys(int address) {
+        return phys_mem32[address >> 2];
+    }
+    void st32_phys(int address, int dword) {
+        phys_mem32[address >> 2] = dword;
+    }
+
+  private:
     uint64_t cycles_requested;
     uint64_t cycles_remaining;
 
     Interrupt interrupt;
+
+    int tlb_pages[2048]{0};
+    int tlb_pages_count = 0;
+    int tlb_size = 0x100000; // 1M
+    int *tlb_read_kernel;
+    int *tlb_write_kernel;
+    int *tlb_read_user;
+    int *tlb_write_user;
+    int *tlb_read; // current (user or kernel)
+    int *tlb_write;
+    int tlb_hash;
+
+    void tlb_update(uint32_t linear_address, int pte, int writable, int user) {
+        tlb_hash = linear_address ^ pte; // poor man's XOR hash
+        uint32_t lat20 = linear_address >> 12;
+        if (tlb_read_kernel[lat20] == -1) {
+            if (tlb_pages_count >= 2048) {
+                tlb_flush_all((lat20 - 1) & 0xfffff);
+            }
+            tlb_pages[tlb_pages_count++] = lat20;
+        }
+        tlb_read_kernel[lat20] = tlb_hash;
+        if (writable) {
+            tlb_write_kernel[lat20] = tlb_hash;
+        } else {
+            tlb_write_kernel[lat20] = -1;
+        }
+        if (user) {
+            tlb_read_user[lat20] = tlb_hash;
+            if (writable) {
+                tlb_write_user[lat20] = tlb_hash;
+            } else {
+                tlb_write_user[lat20] = -1;
+            }
+        } else {
+            tlb_read_user[lat20] = -1;
+            tlb_write_user[lat20] = -1;
+        }
+    }
+    int tlb_lookup(int linear_address, int writable) {
+        uint32_t lat20 = linear_address >> 12;
+        if (writable) {
+            tlb_hash = tlb_write[lat20];
+        } else {
+            tlb_hash = tlb_read[lat20];
+        }
+        if (tlb_hash == -1) {
+            page_translation(linear_address, writable, cpl == 3);
+            if (writable) {
+                tlb_hash = tlb_write[lat20];
+            } else {
+                tlb_hash = tlb_read[lat20];
+            }
+        }
+        return tlb_hash ^ linear_address;
+    }
+    void tlb_flush_page(uint32_t linear_address) {
+        uint32_t lat20 = linear_address >> 12;
+        tlb_clear(lat20);
+    }
+    void tlb_flush_all() {
+        for (int i = 0; i < tlb_pages_count; i++) {
+            uint32_t lat20 = tlb_pages[i];
+            tlb_clear(lat20);
+        }
+        tlb_pages_count = 0;
+    }
+    void tlb_flush_all(uint32_t lat20) {
+        int n = 0;
+        for (int i = 0; i < tlb_pages_count; i++) {
+            uint32_t tlb_lat20 = tlb_pages[i];
+            if (tlb_lat20 == lat20) {
+                tlb_pages[n++] = tlb_lat20;
+            } else {
+                tlb_clear(tlb_lat20);
+            }
+        }
+        tlb_pages_count = n;
+    }
+    void tlb_clear(uint32_t lat20) {
+        tlb_read_kernel[lat20] = -1;
+        tlb_write_kernel[lat20] = -1;
+        tlb_read_user[lat20] = -1;
+        tlb_write_user[lat20] = -1;
+    }
+
+    int mem_size;
+
+    uint8_t *phys_mem8;
+    uint16_t *phys_mem16;
+    uint32_t *phys_mem32;
 
 /*
    Operand Size Mode
@@ -230,86 +333,7 @@ class x86Internal {
     };
     // clang-format on
 
-    x86Internal(int mem_size);
-    virtual ~x86Internal();
-
-    void reset();
     [[noreturn]] void abort(int interrupt_id, int error_code = 0);
-    void fetch_decode_execute(uint64_t cycles);
-
-    void tlb_update(uint32_t linear_address, int pte, int writable, int user) {
-        tlb_hash = linear_address ^ pte; // poor man's XOR hash
-        uint32_t lat20 = linear_address >> 12;
-        if (tlb_read_kernel[lat20] == -1) {
-            if (tlb_pages_count >= 2048) {
-                tlb_flush_all((lat20 - 1) & 0xfffff);
-            }
-            tlb_pages[tlb_pages_count++] = lat20;
-        }
-        tlb_read_kernel[lat20] = tlb_hash;
-        if (writable) {
-            tlb_write_kernel[lat20] = tlb_hash;
-        } else {
-            tlb_write_kernel[lat20] = -1;
-        }
-        if (user) {
-            tlb_read_user[lat20] = tlb_hash;
-            if (writable) {
-                tlb_write_user[lat20] = tlb_hash;
-            } else {
-                tlb_write_user[lat20] = -1;
-            }
-        } else {
-            tlb_read_user[lat20] = -1;
-            tlb_write_user[lat20] = -1;
-        }
-    }
-    int tlb_lookup(int linear_address, int writable) {
-        uint32_t lat20 = linear_address >> 12;
-        if (writable) {
-            tlb_hash = tlb_write[lat20];
-        } else {
-            tlb_hash = tlb_read[lat20];
-        }
-        if (tlb_hash == -1) {
-            page_translation(linear_address, writable, cpl == 3);
-            if (writable) {
-                tlb_hash = tlb_write[lat20];
-            } else {
-                tlb_hash = tlb_read[lat20];
-            }
-        }
-        return tlb_hash ^ linear_address;
-    }
-    void tlb_flush_page(uint32_t linear_address) {
-        uint32_t lat20 = linear_address >> 12;
-        tlb_clear(lat20);
-    }
-    void tlb_flush_all() {
-        for (int i = 0; i < tlb_pages_count; i++) {
-            uint32_t lat20 = tlb_pages[i];
-            tlb_clear(lat20);
-        }
-        tlb_pages_count = 0;
-    }
-    void tlb_flush_all(uint32_t lat20) {
-        int n = 0;
-        for (int i = 0; i < tlb_pages_count; i++) {
-            uint32_t tlb_lat20 = tlb_pages[i];
-            if (tlb_lat20 == lat20) {
-                tlb_pages[n++] = tlb_lat20;
-            } else {
-                tlb_clear(tlb_lat20);
-            }
-        }
-        tlb_pages_count = n;
-    }
-    void tlb_clear(uint32_t lat20) {
-        tlb_read_kernel[lat20] = -1;
-        tlb_write_kernel[lat20] = -1;
-        tlb_read_user[lat20] = -1;
-        tlb_write_user[lat20] = -1;
-    }
 
     void update_SSB();
     void fetch_opcode();
@@ -336,27 +360,6 @@ class x86Internal {
     void st8_port(int port_num, int byte);
     void st16_port(int port_num, int word);
     void st32_port(int port_num, int dword);
-
-    uint8_t ld8_phys(int address) {
-        return phys_mem8[address];
-    }
-    void st8_phys(int address, uint8_t byte) {
-        phys_mem8[address] = byte;
-    }
-    void st8_phys(int address, std::string data) {
-        auto s = data.c_str();
-        auto l = data.length();
-        for (int i = 0; i < l; i++) {
-            st8_phys(address++, s[i] & 0xff);
-        }
-        st8_phys(address, 0);
-    }
-    int ld32_phys(int address) {
-        return phys_mem32[address >> 2];
-    }
-    void st32_phys(int address, int dword) {
-        phys_mem32[address >> 2] = dword;
-    }
 
     int __ld8_mem8_kernel_read();
     int ld8_mem8_kernel_read(); // from kernel RO memory: load (return) byte
