@@ -50,7 +50,6 @@ int PC::load(std::string path, int offset)
 
 void PC::setup()
 {
-    // load("bootstrap.bin",                  0x000f0000); // set CPU state 386 program
     load("bin/linuxstart.bin",             0x00010000); // custom bootloader
     load("bin/vmlinux-2.6.20.bin",         0x00100000); // Linux kernel
     int initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
@@ -63,16 +62,8 @@ void PC::setup()
     printf("%s\n", cmdline.c_str());
     // end of set memory state
 
-    // set CPU state
-    cpu->regs[0] = 16 * 1024 * 1024;
-    cpu->regs[1] = cmdline_addr;
-    cpu->regs[3] = initrd_size;
-
-    cpu->segs[1].flags = (1 << 22); // CS, Bit 22 = 1 for 32 bit segment
-    cpu->segs[2].flags = (1 << 22); // SS, Bit 22 = 1 for 32 bit segment
-    cpu->segs[3].flags = (1 << 9);  // DS, Bit 9 = writable
-    cpu->cr0 = (1 << 0); // set protected mode
-    cpu->eip = 0x10000;  // start here
+    // set CPU state (see bootstrap.asm)
+    load("bootstrap.bin", 0x000f0000);
     // end of set CPU state
 
     printf("\n\n************************\n");

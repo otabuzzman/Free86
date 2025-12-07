@@ -1,0 +1,89 @@
+     1                                  ;-----------------------------------------------------------------
+     2                                  ; bootstrap.asm - setup 386 emulator for linuxstart.bin execution
+     3                                  ;
+     4                                  ; compile:
+     5                                  ;     nasm -f bin -o bootstrap.bin -l bootstrap.lst bootstrap.asm
+     6                                  ;-----------------------------------------------------------------
+     7                                  
+     8                                  C_SEG_REAL equ 0xf000
+     9                                  C_SEG_PROT equ 0x08
+    10                                  
+    11                                  C_SEG_LINUX equ 0x18
+    12                                  D_SEG_LINUX equ 0x10
+    13                                  
+    14                                  linuxstart equ 0x00010000
+    15                                  
+    16                                  cpu 386
+    17                                  
+    18                                  bits 16
+    19                                  start:
+    20 00000000 FA                          cli
+    21                                  
+    22                                      ; load GDTR
+    23 00000001 2E660F0116[5800]            o32 lgdt [cs:GDTR]
+    24                                  
+    25                                      ; protected mode
+    26 00000008 0F20C0                      mov eax, cr0
+    27 0000000B 6683C801                    or eax, 1
+    28 0000000F 0F22C0                      mov cr0, eax
+    29                                  
+    30 00000012 EA[1700]0800                jmp C_SEG_PROT:flush
+    31                                  
+    32                                  bits 32
+    33                                  flush:
+    34                                      ; prepare state
+    35 00000017 66B81000                    mov ax, D_SEG_LINUX
+    36 0000001B 8ED8                        mov ds, ax
+    37 0000001D 8ED0                        mov ss, ax
+    38                                  
+    39 0000001F B800000001                  mov eax, 16 * 1024 * 1024 ; mem_size
+    40 00000024 B900F80000                  mov ecx, 0x0000f800       ; cmdline_addr
+    41 00000029 BB00002000                  mov ebx, 2 * 1024 * 1024  ; initrd_size
+    42                                  
+    43 0000002E EA000001001800              jmp C_SEG_LINUX:linuxstart
+    44                                  
+    45                                  ; ----------------------------------------------------------------
+    46                                  ; GDT
+    47                                  ; ----------------------------------------------------------------
+    48 00000035 90<rep 3h>              align 8
+    49                                  GDT_alpha:
+    50                                      ; selector NULL
+    51 00000038 0000000000000000            dq 0
+    52                                  
+    53                                      ; CS selector 0x08, base 0xf0000, 32 bit
+    54 00000040 FFFF                        dw 0xFFFF
+    55 00000042 0000                        dw 0x0000
+    56 00000044 0F                          db 0x0F
+    57 00000045 9A                          db 0x9A
+    58 00000046 4F                          db 0x4F
+    59 00000047 00                          db 0x00
+    60                                  
+    61                                      ; DS selector 0x10, base 0, 32 bit
+    62 00000048 FFFF                        dw 0xFFFF
+    63 0000004A 0000                        dw 0x0000
+    64 0000004C 00                          db 0x00
+    65 0000004D 92                          db 0x92
+    66 0000004E 4F                          db 0x4F
+    67 0000004F 00                          db 0x00
+    68                                  
+    69                                      ; CS selector 0x18, base 0xFFFF0000, 32 bit
+    70 00000050 FFFF                        dw 0xFFFF
+    71 00000052 0000                        dw 0x0000
+    72 00000054 FF                          db 0xFF
+    73 00000055 9A                          db 0x9A
+    74 00000056 4F                          db 0x4F
+    75 00000057 FF                          db 0xFF
+    76                                  GDT_omega:
+    77                                  
+    78                                  GDTR:
+    79 00000058 1F00                        dw GDT_omega - GDT_alpha - 1   ; limit
+    80 0000005A [38000F00]                  dd C_SEG_REAL * 16 + GDT_alpha ; base
+    81                                  
+    82                                  ; ----------------------------------------------------------------
+    83                                  ;   fill-in NOPs until 0xfff0 where execution starts after reset
+    84                                  ; ----------------------------------------------------------------
+    85 0000005E 90<rep FF92h>           times 0xfff0-($-$$) nop
+    86                                  
+    87                                  bits 16
+    88                                  bootstrap:
+    89 0000FFF0 EA[0000]00F0                jmp   C_SEG_REAL:start

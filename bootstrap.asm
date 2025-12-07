@@ -5,82 +5,79 @@
 ;     nasm -f bin -o bootstrap.bin -l bootstrap.lst bootstrap.asm
 ;-----------------------------------------------------------------
 
-CS_REAL    equ 0xf000
-LINUXSTART equ 0x00010000
+C_SEG_REAL equ 0xf000
+C_SEG_PROT equ 0x08
+
+C_SEG_LINUX equ 0x18
+D_SEG_LINUX equ 0x10
+
+linuxstart equ 0x00010000
 
 cpu 386
-section .text
 
 bits 16
+start:
+    cli
+
+    ; load GDTR
+    o32 lgdt [cs:GDTR]
+
+    ; protected mode
+    mov eax, cr0
+    or eax, 1
+    mov cr0, eax
+
+    jmp C_SEG_PROT:flush
+
+bits 32
+flush:
+    ; prepare state
+    mov ax, D_SEG_LINUX
+    mov ds, ax
+    mov ss, ax
+
+    mov eax, 16 * 1024 * 1024 ; mem_size
+    mov ecx, 0x0000f800       ; cmdline_addr
+    mov ebx, 2 * 1024 * 1024  ; initrd_size
+
+    jmp C_SEG_LINUX:linuxstart
 
 ; ----------------------------------------------------------------
-; GDT at physical address 0x00000800
+; GDT
 ; ----------------------------------------------------------------
-org 0x00000800
-gdtA:
-    ; descriptor 0: null
+align 8
+GDT_alpha:
+    ; selector NULL
     dq 0
 
-    ; descriptor 1: code segment (selector 0x08)
-    ; base=0x00000000, limit=0xFFFFF, access=0x9A (code, exec/read, present),
-    ; granularity=0xCF (4K, 32 bit default)
+    ; CS selector 0x08, base 0xf0000, 32 bit
     dw 0xFFFF
     dw 0x0000
-    db 0x00
+    db 0x0F
     db 0x9A
-    db 0xCF
+    db 0x4F
     db 0x00
 
-    ; descriptor 2: data segment (selector 0x10)
-    ; base=0x00000000, limit=0xFFFFF, access=0x92 (data, writable, present)
+    ; DS selector 0x10, base 0, 32 bit
     dw 0xFFFF
     dw 0x0000
     db 0x00
     db 0x92
-    db 0xCF
+    db 0x4F
     db 0x00
-gdtO:
 
-gdtr:
-    dw gdtO - gdtA - 1 ; limit
-    dd gdtA               ; base
+    ; CS selector 0x18, base 0xFFFF0000, 32 bit
+    dw 0xFFFF
+    dw 0x0000
+    db 0xFF
+    db 0x9A
+    db 0x4F
+    db 0xFF
+GDT_omega:
 
-bootstrap:
-    cli
-
-    ; load GDTR
-    lgdt [gdtr] ; reads 6 bytes from 0x900
-
-    ; switch to protected mode
-    mov eax, cr0
-    or  eax, 1
-    mov cr0, eax
-
-    ; manually assembled far jump in PM which is not available in 16 bit mode.
-    db 0x66 ; operand-size override prefix
-    db 0xEA ; JMPF opcode
-    dd setup386 ; 32 bit offset
-    dw 0x08     ; CS 0x08
-
-bits 32
-setup386:
-    ; prepare state for linuxstart.bin
-
-    ; CS contains selector 0x08 from far jump
-    ; load data selectors with selector 0x10
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-
-    mov ss, ax
-
-    mov eax, 16 * 1024 * 1024 ; mem_size
-    mov ebx, 0x0000f800       ; cmdline_addr
-    mov ecx, 2 * 1024 * 1024  ; initrd_size
-
-    jmp 0x08:LINUXSTART
+GDTR:
+    dw GDT_omega - GDT_alpha - 1   ; limit
+    dd C_SEG_REAL * 16 + GDT_alpha ; base
 
 ; ----------------------------------------------------------------
 ;   fill-in NOPs until 0xfff0 where execution starts after reset
@@ -88,6 +85,5 @@ setup386:
 times 0xfff0-($-$$) nop
 
 bits 16
-
-resetIP: ; 0x0000fff0
-    jmp   CS_REAL:bootstrap
+bootstrap:
+    jmp   C_SEG_REAL:start
