@@ -26,6 +26,7 @@ x86Internal::~x86Internal() {
     delete[] tlb_write_user;
 }
 void x86Internal::reset() {
+    // reset CPU state
     // Intel IA-32 SDM (latest), Vol. 3A, 11.1.1
     for (int i = 0 ; i < 8 ; i++) {
         regs[i] = 0;
@@ -38,6 +39,9 @@ void x86Internal::reset() {
     segs[1] = {0, 0xffff0000, 0, 0};
     idt = {0, 0, 0x03ff, 0};
     cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
+    // reset emulator state
+    halted = 0;
+    cycles = 0;
 }
 [[noreturn]] void x86Internal::abort(int interrupt_id, int error_code) {
     this->cycles += cycles_requested - cycles_remaining;

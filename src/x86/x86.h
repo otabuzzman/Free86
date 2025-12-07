@@ -54,7 +54,7 @@ class x86Internal {
     int cr3;
     int cr4; // 80486
 
-    int halted = 0;
+    int halted;
 
     uint64_t cycles;
 
