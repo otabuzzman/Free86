@@ -59,14 +59,17 @@ public:
             } catch (const Interrupt& i) {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
-                    std::cout << "interrupt id " << i.id << ", error code " << i.error_code << std::endl;
-                    printf("A:%s B:%s C:%s D:%s SI:%s DI:%s IP:%s SP:%s BP:%s F:%s\n",
-                        hex(cpu->regs[0]).c_str(), hex(cpu->regs[3]).c_str(), // EAX, EBX
-                        hex(cpu->regs[1]).c_str(), hex(cpu->regs[2]).c_str(), // ECX, EDX
-                        hex((int) cpu->eip).c_str(), // EIP
-                        hex(cpu->regs[6]).c_str(), hex(cpu->regs[7]).c_str(), // ESI, EDI
-                        hex(cpu->regs[4]).c_str(), hex(cpu->regs[5]).c_str(), // ESP, EBP
-                        bin(cpu->eflags, true).substr(13, std::string::npos).c_str()); // FLAGS 19..0
+                    std::string message =
+                        "A:" + hex(cpu->regs[0]) + ", B:" + hex(cpu->regs[3]) + // EAX, EBX
+                        "C:" + hex(cpu->regs[1]) + ", D:" + hex(cpu->regs[2]) + // ECX, EDX
+                        "I:" + hex((int) cpu->eip) + // EIP
+                        "SI:" + hex(cpu->regs[6]) + ", DI:" + hex(cpu->regs[7]) + // ESI, EDI
+                        "SP:" + hex(cpu->regs[4]) + ", BP:" + hex(cpu->regs[5]) + // ESP, EBP
+                        "F:" + bin(cpu->eflags, true).substr(13, std::string::npos)) // FLAGS 19..0
+                    std::cout
+                        << "interrupt id " << i.id
+                        << ", error code " << i.error_code
+                        << std::endl << message << std::endl;
                 }
             } catch (const char *m) {
                 std::cout << m << std::endl;
