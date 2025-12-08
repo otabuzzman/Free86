@@ -85,7 +85,7 @@ void PC::cycle()
             if (cpu->halted)
                 break;
         } catch (const Interrupt& i) {
-        } catch (const char *m) {
+        } catch (const chat *m) {
             std::cout << m << std::endl;
             exit(1);
         }

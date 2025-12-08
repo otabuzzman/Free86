@@ -13,6 +13,35 @@ class PlainCPU : public x86Internal {
     int get_hard_intno() override { return 0; }
     int ioport_read(int port_num) override;
     void ioport_write(int port_num, int data) override;
+    std::string bin(char bits) {
+    #define V(byte) \
+        ((byte) & 80 ? '1' : '0') + \
+        ((byte) & 40 ? '1' : '0') + \
+        ((byte) & 20 ? '1' : '0') + \
+        ((byte) & 10 ? '1' : '0') + \
+        ((byte) &  8 ? '1' : '0') + \
+        ((byte) &  4 ? '1' : '0') + \
+        ((byte) &  2 ? '1' : '0') + \
+        ((byte) &  1 ? '1' : '0')
+        std::string result = "";
+        return result + V(bits);
+    }
+    std::string bin(short bits, bool divide = false) {
+        return bin((char)(bits >> 8)) + (divide ? "_" : "") + bin((char)(bits & 0xff));
+    }
+    std::string bin(int bits, bool divide = false) {
+        return bin((short)(bits >> 16), divide) + (divide ? "_" : "") + bin((short)(bits & 0xffff), divide);
+    }
+    std::string hex(char bits) {
+        std::string result = ""; char numerals[] = "0123456789ABCDEF";
+        return result + numerals[((bits >> 4) & 0xf)] + numerals[bits & 0xf];
+    }
+    std::string hex(short bits) {
+        return hex((char)(bits >> 8)) + hex((char)(bits & 0xff));
+    }
+    std::string hex(int bits) {
+        return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
+    }
 };
 
 class Test386 {
@@ -57,11 +86,16 @@ public:
                 if (cpu->halted)
                     break;
             } catch (const Interrupt& i) {
-                int mask = 1 << 6;
+                int mask = 0;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
-                    std::cout << "interrupt id " << i.id << ", error code " << i.error_code << std::endl;
+                    std::out << "interrupt id " << i.id << ", error code " << i.error_code << std::endl;
+                    printf("A:%s B:%s C:%s D:%s SI:%s DI:%s IP:%s SP:%s BP:%s F:%s\n",
+                        hex(cpu->regs[0]), hex(cpu->regs[3]), // EAX, EBX
+                        hex(cpu->regs[1]), hex(cpu->regs[2]), hex(cpu->eip), // ECX, EDX, EIP
+                        hex(cpu->regs[6]), hex(cpu->regs[7]), // ESI, EDI
+                        hex(cpu->regs[4]), hex(cpu->regs[5]), bin(cpu->eflags, true)); // ESP, EBP, EFLAGS
                 }
-            } catch (const char *m) {
+            } catch (const chat *m) {
                 std::cout << m << std::endl;
                 exit(1);
             }
