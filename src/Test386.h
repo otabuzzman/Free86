@@ -57,11 +57,11 @@ public:
                 if (cpu->halted)
                     break;
             } catch (const Interrupt& i) {
-                int mask = 0;
+                int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
-                    std::out << "interrupt id " << i.id << ", error code " << i.error_code << std::endl;
+                    std::cout << "interrupt id " << i.id << ", error code " << i.error_code << std::endl;
                 }
-            } catch (const chat *m) {
+            } catch (const char *m) {
                 std::cout << m << std::endl;
                 exit(1);
             }
