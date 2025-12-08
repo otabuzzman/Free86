@@ -1271,11 +1271,11 @@ void x86Internal::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
 void x86Internal::page_translation(int linear_address, int writable, bool user) {
-    int pde_address, pde, pte_address, pte, pxe, set_RW = 0, set_US = 1, clean, error_code;
+    int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, clean, error_code;
     if (is_paging_disabled()) {
-        set_RW = 1;
-        set_US = 0;
-        tlb_update(linear_address & -4096, linear_address & -4096, set_RW, set_US);
+        pte_RW = 1; // writable
+        pte_US = 0; // supervisor
+        tlb_update(linear_address & -4096, linear_address & -4096, pte_RW, pte_US);
     } else { // paging enabled
         pde_address = (cr3 & -4096) + ((linear_address >> 20) & 0xffc);
         pde = ld32_phys(pde_address);
@@ -1299,7 +1299,7 @@ void x86Internal::page_translation(int linear_address, int writable, bool user) 
                         st32_phys(pde_address, pde);
                     }
                     clean = writable && !(pte & 0x00000040); // WR request and page not dirty
-                    if (!(pte & 0x00000020) || clean) {  // page not accessed or previous
+                    if (!(pte & 0x00000020) || clean) { // page not accessed or previous
                         pte |= 0x00000020;     // set page accessed
                         if (clean) {
                             pte |= 0x00000040; // set page dirty
@@ -1308,13 +1308,13 @@ void x86Internal::page_translation(int linear_address, int writable, bool user) 
                     }
                     // page dirty and supervisor request and page not RO
                     if ((pte & 0x00000040) && (!user || (pxe & 0x00000002))) {
-                        set_RW = 1;
+                        pte_RW = 1;
                     }
                     // page not supervisor
                     if (pxe & 0x00000004) {
-                        set_US = 1;
+                        pte_US = 1;
                     }
-                    tlb_update(linear_address & -4096, pte & -4096, set_RW, set_US);
+                    tlb_update(linear_address & -4096, pte & -4096, pte_RW, pte_US);
                     return;
                 }
             }
@@ -3345,25 +3345,6 @@ void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     osm = 24;
 }
 void x86Internal::do_interrupt(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
-    if (interrupt_id == 0x06) {
-        int n, eip_linear;
-        std::string str =
-            "interrupt_id=" + _1_byte(interrupt_id) +
-            " error_code=" + _4_bytes(error_code) +
-            " EIP=" + _4_bytes(eip) + " ESP=" + _4_bytes(regs[4]) +
-            " EAX=" + _4_bytes(regs[0]) + " EBX=" + _4_bytes(regs[3]) +
-            " ECX=" + _4_bytes(regs[1]);
-        printf("%s\n", str.c_str());
-        eip_linear = eip + CS_base;
-        n = 4096 - (eip_linear & 0xfff);
-        n = std::min(n, 15);
-        str = "[EIP..EIP+" + _1_byte(n) + "]:";
-        for (int i = 0; i < n; i++) {
-            mem8_loc = eip_linear + i;
-            str += " " + _1_byte(ld8_mem8_read());
-        }
-        printf("%s\n", str.c_str());
-    }
     if (is_protected()) {
         do_interrupt_protected_mode(interrupt_id, error_code, is_hw, is_sw, return_address);
     } else {

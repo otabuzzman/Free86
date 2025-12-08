@@ -70,6 +70,28 @@ class x86Internal {
         phys_mem32[address >> 2] = dword;
     }
 
+    uint8_t *phys_mem8;
+    uint16_t *phys_mem16;
+    uint32_t *phys_mem32;
+
+    int tlb_lookup(int linear_address, int writable) {
+        uint32_t lat20 = linear_address >> 12;
+        if (writable) {
+            tlb_hash = tlb_write[lat20];
+        } else {
+            tlb_hash = tlb_read[lat20];
+        }
+        if (tlb_hash == -1) {
+            page_translation(linear_address, writable, cpl == 3);
+            if (writable) {
+                tlb_hash = tlb_write[lat20];
+            } else {
+                tlb_hash = tlb_read[lat20];
+            }
+        }
+        return linear_address ^ tlb_hash;
+    }
+
   private:
     uint32_t eip_linear;
 /*
@@ -94,6 +116,8 @@ class x86Internal {
 
     Interrupt interrupt;
 
+    int mem_size;
+
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
     int tlb_size = 0x100000; // 1M
@@ -105,8 +129,8 @@ class x86Internal {
     int *tlb_write;
     int tlb_hash;
 
-    void tlb_update(uint32_t linear_address, int pte, int writable, int user) {
-        tlb_hash = linear_address ^ pte; // poor man's XOR hash
+    void tlb_update(uint32_t linear_address /*data*/, int pte /*key*/, int writable, int user) {
+        tlb_hash = linear_address ^ pte; // poor man's XOR hash function
         uint32_t lat20 = linear_address >> 12;
         if (tlb_read_kernel[lat20] == -1) {
             if (tlb_pages_count >= 2048) {
@@ -131,23 +155,6 @@ class x86Internal {
             tlb_read_user[lat20] = -1;
             tlb_write_user[lat20] = -1;
         }
-    }
-    int tlb_lookup(int linear_address, int writable) {
-        uint32_t lat20 = linear_address >> 12;
-        if (writable) {
-            tlb_hash = tlb_write[lat20];
-        } else {
-            tlb_hash = tlb_read[lat20];
-        }
-        if (tlb_hash == -1) {
-            page_translation(linear_address, writable, cpl == 3);
-            if (writable) {
-                tlb_hash = tlb_write[lat20];
-            } else {
-                tlb_hash = tlb_read[lat20];
-            }
-        }
-        return tlb_hash ^ linear_address;
     }
     void tlb_flush_page(uint32_t linear_address) {
         uint32_t lat20 = linear_address >> 12;
@@ -178,12 +185,6 @@ class x86Internal {
         tlb_read_user[lat20] = -1;
         tlb_write_user[lat20] = -1;
     }
-
-    int mem_size;
-
-    uint8_t *phys_mem8;
-    uint16_t *phys_mem16;
-    uint32_t *phys_mem32;
 
 /*
    Operand Size Mode

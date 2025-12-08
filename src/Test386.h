@@ -59,17 +59,33 @@ public:
             } catch (const Interrupt& i) {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
-                    std::string message =
+                    std::string status =
                         "A:" + hex(cpu->regs[0]) + " B:" + hex(cpu->regs[3]) + // EAX, EBX
                         " C:" + hex(cpu->regs[1]) + " D:" + hex(cpu->regs[2]) + // ECX, EDX
                         " I:" + hex((int) cpu->eip) + // EIP
                         " SI:" + hex(cpu->regs[6]) + " DI:" + hex(cpu->regs[7]) + // ESI, EDI
                         " SP:" + hex(cpu->regs[4]) + " BP:" + hex(cpu->regs[5]) + // ESP, EBP
                         " F:" + bin(cpu->eflags, true).substr(13, std::string::npos); // FLAGS 19..0
+                    int n, eip_linear, phys8_loc;
+                    eip_linear = cpu->segs[1].base + cpu->eip;
+                    if (cpu->cr0 & 1) { // protected
+                        phys8_loc = cpu->tlb_lookup(eip_linear, 0);
+                        n = 4096 - (eip_linear & 0xfff);
+                        n = std::min(n, 15);
+                    } else {
+                        eip_linear &= 0xfffff;
+                        phys8_loc = eip_linear;
+                        n = 15;
+                    }
+                    std::string memory = "[EIP..EIP+" + hex((char) (n - 1)) + "]:";
+                    for (int i = 0; i < n; i++) {
+                        memory += " " + hex((char) cpu->phys_mem8[phys8_loc + i]);
+                    }
                     std::cout
                         << "interrupt id " << i.id
                         << ", error code " << i.error_code
-                        << std::endl << message << std::endl;
+                        << std::endl << status
+                        << std::endl << memory << std::endl;
                 }
             } catch (const char *m) {
                 std::cout << m << std::endl;
