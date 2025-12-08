@@ -1,6 +1,8 @@
 #ifndef _H_TEST386
 #define _H_TEST386
 
+#include <iostream>
+
 #include "x86/x86.h"
 
 class PlainCPU : public x86Internal {
@@ -54,7 +56,15 @@ public:
                 cpu->fetch_decode_execute(cycles - cpu->cycles);
                 if (cpu->halted)
                     break;
-            } catch (Interrupt) {}
+            } catch (const Interrupt& i) {
+                int mask = 0;
+                if ((32 > i.id) && (mask & (1 << i.id))) {
+                    std::out << "interrupt id " << i.id << ", error code " << i.error_code << std::endl;
+                }
+            } catch (const chat *m) {
+                std::cout << m << std::endl;
+                exit(1);
+            }
         }
     }
 };

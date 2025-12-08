@@ -23,26 +23,9 @@ class x86Internal {
     int eflags;
 
     uint32_t eip;
-    uint32_t eip_linear;
-/*
-   Fetch address register
-   
-   The fetch address register (FAR, aka MAR) stores the physical memory
-   address of the next byte to be retrieved in the current fetch cycle.
- */
-    uint32_t far;       // fetch address register (FAR, aka MAR)
-    uint32_t far_start; // first fetch address of current cycle
-
-    int opcode; // sort of fetch data register (FDR, aka MDR)
 
     // ES, CS, SS, DS, FS, GS, LDT, TR
     SegmentRegister segs[7];
-    int df; // direction Flag
-
-    int cpl;  // current privilege level register
-    int dpl;  // descriptor privilege level
-    int rpl;  // requested privilege level
-    int iopl; // IO privilege level
 
     SegmentRegister gdt; // GDT register
     SegmentRegister ldt; // LDT register
@@ -53,6 +36,8 @@ class x86Internal {
     int cr2;
     int cr3;
     int cr4; // 80486
+
+    int cpl;  // current privilege level register
 
     int halted;
 
@@ -86,6 +71,24 @@ class x86Internal {
     }
 
   private:
+    uint32_t eip_linear;
+/*
+   Fetch address register
+
+   The fetch address register (FAR, aka MAR) stores the physical memory
+   address of the next byte to be retrieved in the current fetch cycle.
+ */
+    uint32_t far;       // fetch address register (FAR, aka MAR)
+    uint32_t far_start; // first fetch address of current cycle
+
+    int opcode; // sort of fetch data register (FDR, aka MDR)
+
+    int df; // direction Flag (string instructions)
+
+    int dpl;  // descriptor privilege level
+    int rpl;  // requested privilege level
+    int iopl; // IO privilege level
+
     uint64_t cycles_requested;
     uint64_t cycles_remaining;
 

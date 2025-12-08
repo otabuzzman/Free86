@@ -84,7 +84,11 @@ void PC::cycle()
             cpu->fetch_decode_execute(cycles - cpu->cycles);
             if (cpu->halted)
                 break;
-        } catch (Interrupt) {}
+        } catch (const Interrupt& i) {
+        } catch (const chat *m) {
+            std::cout << m << std::endl;
+            exit(1);
+        }
     }
 }
 
