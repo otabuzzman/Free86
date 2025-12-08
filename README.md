@@ -42,7 +42,7 @@ Compile on Winos:
 
 ```bash
 cmake -DNO_SDL=ON -G "NMake Makefiles" .
-make
+nmake
 ```
 
 Add `-DCMAKE_BUILD_TYPE=Debug` to CMake command to compile for debugging.
