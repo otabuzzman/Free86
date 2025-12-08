@@ -62,8 +62,8 @@ void PC::setup()
     printf("%s\n", cmdline.c_str());
     // end of set memory state
 
-    // set CPU state (see bootstrap.asm)
-    load("bootstrap.bin", 0x000f0000);
+    // set CPU state (see bin/bootstrap.asm)
+    load("bin/bootstrap.bin", 0x000f0000);
     // end of set CPU state
 
     printf("\n\n************************\n");
