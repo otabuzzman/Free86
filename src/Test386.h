@@ -60,12 +60,12 @@ public:
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
                     std::string message =
-                        "A:" + hex(cpu->regs[0]) + ", B:" + hex(cpu->regs[3]) + // EAX, EBX
-                        "C:" + hex(cpu->regs[1]) + ", D:" + hex(cpu->regs[2]) + // ECX, EDX
-                        "I:" + hex((int) cpu->eip) + // EIP
-                        "SI:" + hex(cpu->regs[6]) + ", DI:" + hex(cpu->regs[7]) + // ESI, EDI
-                        "SP:" + hex(cpu->regs[4]) + ", BP:" + hex(cpu->regs[5]) + // ESP, EBP
-                        "F:" + bin(cpu->eflags, true).substr(13, std::string::npos)) // FLAGS 19..0
+                        "A:" + hex(cpu->regs[0]) + " B:" + hex(cpu->regs[3]) + // EAX, EBX
+                        " C:" + hex(cpu->regs[1]) + " D:" + hex(cpu->regs[2]) + // ECX, EDX
+                        " I:" + hex((int) cpu->eip) + // EIP
+                        " SI:" + hex(cpu->regs[6]) + " DI:" + hex(cpu->regs[7]) + // ESI, EDI
+                        " SP:" + hex(cpu->regs[4]) + " BP:" + hex(cpu->regs[5]) + // ESP, EBP
+                        " F:" + bin(cpu->eflags, true).substr(13, std::string::npos); // FLAGS 19..0
                     std::cout
                         << "interrupt id " << i.id
                         << ", error code " << i.error_code
