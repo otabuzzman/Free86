@@ -1,6 +1,6 @@
 #include "x86.h"
 
-void x86Internal::fetch_decode_execute(uint64_t cycles) {
+void x86::fetch_decode_execute(uint64_t cycles) {
     if (halted) {
         if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
             halted = 0;
