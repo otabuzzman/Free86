@@ -16,8 +16,7 @@ class PlainCPU : public x86Internal {
 };
 
 class Test386 {
-    PlainCPU *cpu = nullptr;
-public:
+  public:
     Test386(int mem_size) {
         cpu = new PlainCPU(mem_size);
     }
@@ -59,19 +58,13 @@ public:
             } catch (const Interrupt& i) {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
-                    std::string status =
-                        "A:" + hex(cpu->regs[0]) + " B:" + hex(cpu->regs[3]) + // EAX, EBX
-                        " C:" + hex(cpu->regs[1]) + " D:" + hex(cpu->regs[2]) + // ECX, EDX
-                        " I:" + hex((int) cpu->eip) + // EIP
-                        " SI:" + hex(cpu->regs[6]) + " DI:" + hex(cpu->regs[7]) + // ESI, EDI
-                        " SP:" + hex(cpu->regs[4]) + " BP:" + hex(cpu->regs[5]) + // ESP, EBP
-                        " F:" + bin(cpu->eflags, true).substr(13, std::string::npos); // FLAGS 19..0
+                    std::string status = compile_status_string(true);
                     int n, eip_linear, phys8_loc;
-                    eip_linear = cpu->segs[1].base + cpu->eip;
-                    if (cpu->cr0 & 1) { // protected
-                        phys8_loc = cpu->tlb_lookup(eip_linear, 0);
-                        n = 4096 - (eip_linear & 0xfff);
-                        n = std::min(n, 15);
+                    eip_linear = cpu->segs[1].base + cpu->eip; // offset to linear address
+                    if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
+                        phys8_loc = cpu->tlb_lookup(eip_linear, 0); // physical address
+                        n = 4096 - (eip_linear & 0xfff); // print bytes left to end-of-page...
+                        n = std::min(n, 15); // ...or up to maximum instruction length bytes
                     } else {
                         eip_linear &= 0xfffff;
                         phys8_loc = eip_linear;
@@ -79,7 +72,7 @@ public:
                     }
                     std::string memory = "[EIP..EIP+" + hex((char) (n - 1)) + "]:";
                     for (int i = 0; i < n; i++) {
-                        memory += " " + hex((char) cpu->phys_mem8[phys8_loc + i]);
+                        memory += " " + hex((char) cpu->ld8_phys(phys8_loc + i));
                     }
                     std::cout
                         << "interrupt id " << i.id
@@ -92,6 +85,81 @@ public:
                 exit(1);
             }
         }
+    }
+  private:
+    PlainCPU *cpu = nullptr;
+    std::string compile_status_string(bool compact = true) {
+        std::string a, c, d, b, si, di, ip, sp, bp, flags;
+        std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
+        a = "A:" + hex(cpu->regs[0]);
+        c = "C:" + hex(cpu->regs[1]);
+        d = "D:" + hex(cpu->regs[2]);
+        b = "B:" + hex(cpu->regs[3]);
+        si = "SI:" + hex(cpu->regs[6]);
+        di = "DI:" + hex(cpu->regs[7]);
+        i = "I:" + hex((int) cpu->eip);
+        sp = "SP:" + hex(cpu->regs[4]);
+        bp = "BP:" + hex(cpu->regs[5]);
+        flags = "F:" + bin(cpu->eflags, true).substr(21, std::string::npos));
+        if (compact) {
+            // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
+            return std::string(a + c + d + b + si + di + i + sp + bp + flags);
+        }
+        // EAX:00000000                ESP:CAFE55AA
+        // ECX:00000000                EBP:CAFE55AA
+        // EDX:00000000
+        // EBX:00000000
+        // ESI:00000000
+        // EDI:00000000                EIP:CAFE55AA
+        //
+        //        EFLAGS:00010001_00010001_00001111
+        //
+        // CS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+        // SS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+        // DS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+        // ES:CAFE:CAFE55AA:CAFFE:00010001_00001111
+        // FS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+        // GS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+        //
+        // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
+        a = "EAX:" + hex(cpu->regs[0]);
+        c = "ECX:" + hex(cpu->regs[1]);
+        d = "EDX:" + hex(cpu->regs[2]);
+        b = "EBX:" + hex(cpu->regs[3]);
+        si = "ESI:" + hex(cpu->regs[6]);
+        di = "EDI:" + hex(cpu->regs[7]);
+        i = "EIP:" + hex((int) cpu->eip);
+        sp = "ESP:" + hex(cpu->regs[4]);
+        bp = "EBP:" + hex(cpu->regs[5]);
+        flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9, std::string::npos));
+        cs = "CS:" + hex((short) cpu->segs[1].selector) + hex(cpu->segs[1].base) + bin((short) cpu->segs[1].limit, true).substr(5, std::string::npos);
+        ss = "SS:" + hex((short) cpu->segs[2].selector) + hex(cpu->segs[2].base) + bin((short) cpu->segs[2].limit, true).substr(5, std::string::npos);
+        ds = "DS:" + hex((short) cpu->segs[3].selector) + hex(cpu->segs[3].base) + bin((short) cpu->segs[3].limit, true).substr(5, std::string::npos);
+        es = "ES:" + hex((short) cpu->segs[0].selector) + hex(cpu->segs[0].base) + bin((short) cpu->segs[0].limit, true).substr(5, std::string::npos);
+        fs = "FS:" + hex((short) cpu->segs[4].selector) + hex(cpu->segs[4].base) + bin((short) cpu->segs[4].limit, true).substr(5, std::string::npos);
+        gs = "GS:" + hex((short) cpu->segs[5].selector) + hex(cpu->segs[5].base) + bin((short) cpu->segs[5].limit, true).substr(5, std::string::npos);
+        cr0 = "CR0:0.." + bin((short) cpu->cr0).substr(4, std::string::npos);
+        cr2 = "CR2:" + hex(cpu->cr2);
+        cr3 = "CR3:" + hex(cpu->cr3);
+        return std::string(
+            a + "                " + sp + std::endl +
+            c + "                " + bp + std::endl +
+            d + std::endl +
+            b + std::endl +
+            si + std::endl +
+            di + "                " + i + std::endl +
+            std::endl +
+            "       " + flags + std::endl +
+            std::endl +
+            cs + sdt::endl +
+            ss + sdt::endl +
+            ds + sdt::endl +
+            es + sdt::endl +
+            fs + sdt::endl +
+            gs + sdt::endl +
+            cr0 + "  " + cr1 + "  " + cr3 +
+            std::endl
+        )
     }
     std::string bin(char bits) {
     #define V(byte) \

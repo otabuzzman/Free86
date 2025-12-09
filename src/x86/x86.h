@@ -63,16 +63,6 @@ class x86Internal {
         }
         st8_phys(address, 0);
     }
-    int ld32_phys(int address) {
-        return phys_mem32[address >> 2];
-    }
-    void st32_phys(int address, int dword) {
-        phys_mem32[address >> 2] = dword;
-    }
-
-    uint8_t *phys_mem8;
-    uint16_t *phys_mem16;
-    uint32_t *phys_mem32;
 
     int tlb_lookup(int linear_address, int writable) {
         uint32_t lat20 = linear_address >> 12;
@@ -117,6 +107,17 @@ class x86Internal {
     Interrupt interrupt;
 
     int mem_size;
+
+    uint8_t *phys_mem8;
+    uint16_t *phys_mem16;
+    uint32_t *phys_mem32;
+
+    int ld32_phys(int address) {
+        return phys_mem32[address >> 2];
+    }
+    void st32_phys(int address, int dword) {
+        phys_mem32[address >> 2] = dword;
+    }
 
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
@@ -552,23 +553,5 @@ class x86Internal {
 
     int get_EFLAGS();
     void set_EFLAGS(int bits, int mask);
-
-    std::string hex_rep(int number, int digits) {
-        std::string s;
-        char h[] = "0123456789ABCDEF";
-        for (int i = digits - 1; i >= 0; i--) {
-            s = s + h[(number >> (i * 4)) & 15];
-        }
-        return s;
-    }
-    std::string _4_bytes(int number) {
-        return hex_rep(number, 8);
-    }
-    std::string _2_bytes(int number) {
-        return hex_rep(number, 4);
-    }
-    std::string _1_byte(int number) {
-        return hex_rep(number, 2);
-    }
 };
 #endif // _X86_H
