@@ -58,7 +58,7 @@ class Test386 {
             } catch (const Interrupt& i) {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
-                    std::string status = compile_status_string(true);
+                    std::string status = compile_status_string(false);
                     int n, eip_linear, phys8_loc;
                     eip_linear = cpu->segs[1].base + cpu->eip; // offset to linear address
                     if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
@@ -89,18 +89,18 @@ class Test386 {
   private:
     PlainCPU *cpu = nullptr;
     std::string compile_status_string(bool compact = true) {
-        std::string a, c, d, b, si, di, ip, sp, bp, flags;
+        std::string a, c, d, b, si, di, i, sp, bp, flags;
         std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
         a = "A:" + hex(cpu->regs[0]);
-        c = "C:" + hex(cpu->regs[1]);
-        d = "D:" + hex(cpu->regs[2]);
-        b = "B:" + hex(cpu->regs[3]);
-        si = "SI:" + hex(cpu->regs[6]);
-        di = "DI:" + hex(cpu->regs[7]);
-        i = "I:" + hex((int) cpu->eip);
-        sp = "SP:" + hex(cpu->regs[4]);
-        bp = "BP:" + hex(cpu->regs[5]);
-        flags = "F:" + bin(cpu->eflags, true).substr(21, std::string::npos));
+        c = " C:" + hex(cpu->regs[1]);
+        d = " D:" + hex(cpu->regs[2]);
+        b = " B:" + hex(cpu->regs[3]);
+        si = " SI:" + hex(cpu->regs[6]);
+        di = " DI:" + hex(cpu->regs[7]);
+        i = " I:" + hex((int) cpu->eip);
+        sp = " SP:" + hex(cpu->regs[4]);
+        bp = " BP:" + hex(cpu->regs[5]);
+        flags = " F:" + bin(cpu->eflags, true).substr(22, std::string::npos);
         if (compact) {
             // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
             return std::string(a + c + d + b + si + di + i + sp + bp + flags);
@@ -131,35 +131,32 @@ class Test386 {
         i = "EIP:" + hex((int) cpu->eip);
         sp = "ESP:" + hex(cpu->regs[4]);
         bp = "EBP:" + hex(cpu->regs[5]);
-        flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9, std::string::npos));
-        cs = "CS:" + hex((short) cpu->segs[1].selector) + hex(cpu->segs[1].base) + bin((short) cpu->segs[1].limit, true).substr(5, std::string::npos);
-        ss = "SS:" + hex((short) cpu->segs[2].selector) + hex(cpu->segs[2].base) + bin((short) cpu->segs[2].limit, true).substr(5, std::string::npos);
-        ds = "DS:" + hex((short) cpu->segs[3].selector) + hex(cpu->segs[3].base) + bin((short) cpu->segs[3].limit, true).substr(5, std::string::npos);
-        es = "ES:" + hex((short) cpu->segs[0].selector) + hex(cpu->segs[0].base) + bin((short) cpu->segs[0].limit, true).substr(5, std::string::npos);
-        fs = "FS:" + hex((short) cpu->segs[4].selector) + hex(cpu->segs[4].base) + bin((short) cpu->segs[4].limit, true).substr(5, std::string::npos);
-        gs = "GS:" + hex((short) cpu->segs[5].selector) + hex(cpu->segs[5].base) + bin((short) cpu->segs[5].limit, true).substr(5, std::string::npos);
-        cr0 = "CR0:0.." + bin((short) cpu->cr0).substr(4, std::string::npos);
+        flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9, std::string::npos);
+        cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex((int) cpu->segs[1].base) + ":" + hex((int) cpu->segs[1].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].flags, true);
+        ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex((int) cpu->segs[2].base) + ":" + hex((int) cpu->segs[2].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].flags, true);
+        ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex((int) cpu->segs[3].base) + ":" + hex((int) cpu->segs[3].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].flags, true);
+        es = "ES:" + hex((short) cpu->segs[0].selector) + ":" + hex((int) cpu->segs[0].base) + ":" + hex((int) cpu->segs[0].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[0].flags, true);
+        fs = "FS:" + hex((short) cpu->segs[4].selector) + ":" + hex((int) cpu->segs[4].base) + ":" + hex((int) cpu->segs[4].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[4].flags, true);
+        gs = "GS:" + hex((short) cpu->segs[5].selector) + ":" + hex((int) cpu->segs[5].base) + ":" + hex((int) cpu->segs[5].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[5].flags, true);
+        cr0 = "CR0:" + bin(cpu->cr0).replace(1, 26, "..");
         cr2 = "CR2:" + hex(cpu->cr2);
         cr3 = "CR3:" + hex(cpu->cr3);
         return std::string(
-            a + "                " + sp + std::endl +
-            c + "                " + bp + std::endl +
-            d + std::endl +
-            b + std::endl +
-            si + std::endl +
-            di + "                " + i + std::endl +
-            std::endl +
-            "       " + flags + std::endl +
-            std::endl +
-            cs + sdt::endl +
-            ss + sdt::endl +
-            ds + sdt::endl +
-            es + sdt::endl +
-            fs + sdt::endl +
-            gs + sdt::endl +
-            cr0 + "  " + cr1 + "  " + cr3 +
-            std::endl
-        )
+            a + "                " + sp + "\n" +
+            c + "                " + bp + "\n" +
+            d + "\n" +
+            b + "\n" +
+            si + "\n" +
+            di + "                " + i + "\n" +
+            "\n" + "       " + flags + "\n" +
+            "\n" + cs + "\n" +
+            ss + "\n" +
+            ds + "\n" +
+            es + "\n" +
+            fs + "\n" +
+            gs + "\n" +
+            "\n" + cr0 + "  " + cr2 + "  " + cr3
+        );
     }
     std::string bin(char bits) {
     #define V(byte) \
