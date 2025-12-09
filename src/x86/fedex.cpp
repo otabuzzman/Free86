@@ -321,10 +321,10 @@ void x86Internal::fetch_decode_execute(uint64_t cycles) {
                 }
                 goto EXEC_LOOP;
             case 0xc4: // LES
-                ld_full_pointer32(0);
+                ld32_full_pointer(0);
                 goto EXEC_LOOP;
             case 0xc5: // LDS
-                ld_full_pointer32(3);
+                ld32_full_pointer(3);
                 goto EXEC_LOOP;
             case 0x00: // ADD
             case 0x08: // OR
@@ -2110,7 +2110,7 @@ void x86Internal::fetch_decode_execute(uint64_t cycles) {
                 case 0xb2: // LSS
                 case 0xb4: // LFS
                 case 0xb5: // LGS
-                    ld_full_pointer32(opcode & 7);
+                    ld32_full_pointer(opcode & 7);
                     goto EXEC_LOOP;
                 case 0xa2: // CPUID (80486)
                     op_CPUID();
@@ -2627,10 +2627,10 @@ void x86Internal::fetch_decode_execute(uint64_t cycles) {
                     set_lower_word(reg_idx1, x);
                     goto EXEC_LOOP;
                 case 0x1c4: // LES
-                    ld_full_pointer16(0);
+                    ld16_full_pointer(0);
                     goto EXEC_LOOP;
                 case 0x1c5: // LDS
-                    ld_full_pointer16(3);
+                    ld16_full_pointer(3);
                     goto EXEC_LOOP;
                 case 0x101: // ADD
                 case 0x109: // OR
@@ -3435,7 +3435,7 @@ void x86Internal::fetch_decode_execute(uint64_t cycles) {
                     case 0x1b2: // LSS
                     case 0x1b4: // LFS
                     case 0x1b5: // LGS
-                        ld_full_pointer16(opcode & 7);
+                        ld16_full_pointer(opcode & 7);
                         goto EXEC_LOOP;
                     case 0x1a4: // SHLD
                     case 0x1ac: // SHRD

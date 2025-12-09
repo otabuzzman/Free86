@@ -508,8 +508,8 @@ class x86 {
     void op_LEAVE();
     void op_ENTER16();
     void op_ENTER();
-    void ld_full_pointer16(int sreg);
-    void ld_full_pointer32(int sreg);
+    void ld16_full_pointer(int sreg);
+    void ld32_full_pointer(int sreg);
 
     void op_INS16();
     void op_OUTS16();

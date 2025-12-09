@@ -3892,7 +3892,7 @@ void x86::op_ENTER() {
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void x86::ld_full_pointer16(int sreg) {
+void x86::ld16_full_pointer(int sreg) {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
@@ -3904,7 +3904,7 @@ void x86::ld_full_pointer16(int sreg) {
     set_segment_register(sreg, y);
     set_lower_word((mem8 >> 3) & 7, x);
 }
-void x86::ld_full_pointer32(int sreg) {
+void x86::ld32_full_pointer(int sreg) {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
