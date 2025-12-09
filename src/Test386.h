@@ -58,7 +58,7 @@ class Test386 {
             } catch (const Interrupt& i) {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
-                    std::string status = compile_status_string(false);
+                    std::string status = compile_status_string();
                     int n, eip_linear, phys8_loc;
                     eip_linear = cpu->segs[1].base + cpu->eip; // offset to linear address
                     if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
