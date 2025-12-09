@@ -1,6 +1,6 @@
 #include "x86.h"
 
-x86Internal::x86Internal(int mem_size) {
+x86::x86(int mem_size) {
     this->mem_size = mem_size;
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
@@ -19,14 +19,14 @@ x86Internal::x86Internal(int mem_size) {
     cycles = 0;
     set_current_privilege_level(0); // PM (1986), 10.3
 }
-x86Internal::~x86Internal() {
+x86::~x86() {
     free(phys_mem8);
     delete[] tlb_read_kernel;
     delete[] tlb_write_kernel;
     delete[] tlb_read_user;
     delete[] tlb_write_user;
 }
-void x86Internal::reset() {
+void x86::reset() {
     // Intel IA-32 SDM (latest), Vol. 3A, 11.1.1
     for (int i = 0 ; i < 8 ; i++) {
         regs[i] = 0;
@@ -41,12 +41,12 @@ void x86Internal::reset() {
     cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
     halted = 0;
 }
-[[noreturn]] void x86Internal::abort(int interrupt_id, int error_code) {
+[[noreturn]] void x86::abort(int interrupt_id, int error_code) {
     this->cycles += cycles_requested - cycles_remaining;
     interrupt = {interrupt_id, error_code};
     throw interrupt;
 }
-void x86Internal::update_SSB() {
+void x86::update_SSB() {
     CS_base = segs[1].base;
     if (segs[1].flags & (1 << 22)) {
         ipr_default = 0;
@@ -61,7 +61,7 @@ void x86Internal::update_SSB() {
     }
     x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
 }
-void x86Internal::fetch_opcode() {
+void x86::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
     int64_t eip_tlb_hash = tlb_read[eip_linear >> 12];
@@ -94,7 +94,7 @@ void x86Internal::fetch_opcode() {
         opcode = phys_mem8[far++];
     }
 }
-int x86Internal::instruction_length(int opcode) {
+int x86::instruction_length(int opcode) {
     int ipr, operation, stride;
     int n = 1;
     ipr = ipr_default;
@@ -1207,32 +1207,32 @@ int x86Internal::instruction_length(int opcode) {
 EXEC_LOOP:;
     return n;
 }
-void x86Internal::set_CR0(int bits) {
+void x86::set_CR0(int bits) {
     // if changing flags 31, 16, or 0, must flush tlb
     if ((bits & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
         tlb_flush_all();
     }
     cr0 = bits | (1 << 4); // keep bit 4 set to 1 (80387 present)
 }
-void x86Internal::set_CR3(int bits) {
+void x86::set_CR3(int bits) {
     cr3 = bits;
     if (cr0 & (1 << 31)) { // if in paging mode must reset tables
         tlb_flush_all();
     }
 }
-void x86Internal::set_CR4(int bits) {
+void x86::set_CR4(int bits) {
     cr4 = bits;
 }
-bool x86Internal::is_real__v86() {
+bool x86::is_real__v86() {
     return !is_protected();
 }
-bool x86Internal::is_protected() {
+bool x86::is_protected() {
     return cr0 & (1 << 0);
 }
-bool x86Internal::is_paging_disabled() {
+bool x86::is_paging_disabled() {
     return !((cr0 & (1 << 31)) && is_protected());
 }
-void x86Internal::set_current_privilege_level(int data) {
+void x86::set_current_privilege_level(int data) {
     cpl = data;
     if (cpl == 3) {
         tlb_read = tlb_read_user;
@@ -1242,35 +1242,35 @@ void x86Internal::set_current_privilege_level(int data) {
         tlb_write = tlb_write_kernel;
     }
 }
-int x86Internal::ld8_port(int port_num) {
+int x86::ld8_port(int port_num) {
     return ioport_read(port_num);
 }
-int x86Internal::ld16_port(int port_num) {
+int x86::ld16_port(int port_num) {
     return ioport_read(port_num);
 }
-int x86Internal::ld32_port(int port_num) {
+int x86::ld32_port(int port_num) {
     return ioport_read(port_num);
 }
-void x86Internal::st8_port(int port_num, int byte) {
+void x86::st8_port(int port_num, int byte) {
     ioport_write(port_num, byte);
 }
-void x86Internal::st16_port(int port_num, int word) {
+void x86::st16_port(int port_num, int word) {
     ioport_write(port_num, word);
 }
-void x86Internal::st32_port(int port_num, int dword) {
+void x86::st32_port(int port_num, int dword) {
     ioport_write(port_num, dword);
 }
-void x86Internal::set_lower_byte(int reg, int byte) {
+void x86::set_lower_byte(int reg, int byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
         regs[reg & 3] = (regs[reg & 3] & -65281) | ((byte & 0xff) << 8);
     } else { // set AL, CL, DL, BL
         regs[reg & 3] = (regs[reg & 3] & -256) | (byte & 0xff);
     }
 }
-void x86Internal::set_lower_word(int reg, int word) {
+void x86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-void x86Internal::page_translation(int linear_address, int writable, bool user) {
+void x86::page_translation(int linear_address, int writable, bool user) {
     int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, clean, error_code;
     if (is_paging_disabled()) {
         pte_RW = 1; // writable
@@ -1327,7 +1327,7 @@ void x86Internal::page_translation(int linear_address, int writable, bool user) 
         abort(14, error_code);
     }
 }
-void x86Internal::segment_translation(int modRM) {
+void x86::segment_translation(int modRM) {
     int sib, sib_base, sib_index, sreg;
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -1580,7 +1580,7 @@ void x86Internal::segment_translation(int modRM) {
     mem8_loc = mem8_loc + segs[sreg].base;
     return;
 }
-void x86Internal::convert_offset_to_linear(bool writable) {
+void x86::convert_offset_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
@@ -1628,11 +1628,11 @@ void x86Internal::convert_offset_to_linear(bool writable) {
     }
     mem8_loc = la;
 }
-void x86Internal::update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
+void x86::update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[sreg] = {selector, base, limit, flags};
     update_SSB();
 }
-void x86Internal::set_segment_register(int sreg, int selector) {
+void x86::set_segment_register(int sreg, int selector) {
     int s;
     s = selector & 0xffff;
     if (is_protected()) {
@@ -1641,7 +1641,7 @@ void x86Internal::set_segment_register(int sreg, int selector) {
         set_segment_register_real__v86(sreg, s);
     }
 }
-void x86Internal::set_segment_register_real__v86(int sreg, int selector) {
+void x86::set_segment_register_real__v86(int sreg, int selector) {
     if (eflags & 0x00020000) { // v86 mode
         update_segment_register(sreg, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
     } else { // real mode
@@ -1650,7 +1650,7 @@ void x86Internal::set_segment_register_real__v86(int sreg, int selector) {
         segs[sreg].limit = 0xffff;
     }
 }
-void x86Internal::set_segment_register_protected(int sreg, int selector) {
+void x86::set_segment_register_protected(int sreg, int selector) {
     SegmentRegister xdt;
     int dte_lower_dword, dte_upper_dword, selector_index;
     if ((selector & 0xfffc) == 0) { // null selector
@@ -1708,7 +1708,7 @@ void x86Internal::set_segment_register_protected(int sreg, int selector) {
         update_segment_register(sreg, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     }
 }
-int x86Internal::is_segment_accessible(int selector, bool writable) {
+int x86::is_segment_accessible(int selector, bool writable) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     if ((selector & 0xfffc) == 0) {
         return 1;
@@ -1747,7 +1747,7 @@ int x86Internal::is_segment_accessible(int selector, bool writable) {
     }
     return 0;
 }
-void x86Internal::load_xdt_descriptor(int *descriptor_table_entry, int selector) {
+void x86::load_xdt_descriptor(int *descriptor_table_entry, int selector) {
     SegmentRegister xdt;
     int index, dte_lower_dword, dte_upper_dword;
     if (selector & 0x4) {
@@ -1766,7 +1766,7 @@ void x86Internal::load_xdt_descriptor(int *descriptor_table_entry, int selector)
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-void x86Internal::load_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
+void x86::load_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
     int type, offset, is_386, dte_lower_dword, dte_upper_dword;
     if (!(tr.flags & (1 << 15))) { // present (P bit)
         abort(11, tr.selector & 0xfffc);
@@ -1792,29 +1792,29 @@ void x86Internal::load_tss_interlevel(int *descriptor_table_entry, int privilege
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-int x86Internal::compile_dte_base(int dte_lower_dword, int dte_upper_dword) {
+int x86::compile_dte_base(int dte_lower_dword, int dte_upper_dword) {
     return (((dte_lower_dword >> 16) & 0xffff) | ((dte_upper_dword & 0xff) << 16) | (dte_upper_dword & 0xff000000));
 }
-int x86Internal::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
+int x86::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
     int limit = (dte_lower_dword & 0xffff) | (dte_upper_dword & 0x000f0000);
     if (dte_upper_dword & (1 << 23)) {
         limit = (limit << 12) | 0xfff;
     }
     return limit;
 }
-void x86Internal::load_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword) {
+void x86::load_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword) {
     segment_register->base = compile_dte_base(dte_lower_dword, dte_upper_dword);
     segment_register->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
     segment_register->flags = dte_upper_dword;
 }
-int x86Internal::compile_sizemask(int dte_upper_dword) {
+int x86::compile_sizemask(int dte_upper_dword) {
     if (dte_upper_dword & (1 << 22)) {
         return -1;
     } else {
         return 0xffff;
     }
 }
-int x86Internal::op_INC8(int data) {
+int x86::op_INC8(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1823,7 +1823,7 @@ int x86Internal::op_INC8(int data) {
     osm = 25;
     return osm_dst;
 }
-int x86Internal::op_INC16(int data) {
+int x86::op_INC16(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1832,7 +1832,7 @@ int x86Internal::op_INC16(int data) {
     osm = 26;
     return osm_dst;
 }
-int x86Internal::op_DEC8(int data) {
+int x86::op_DEC8(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1841,7 +1841,7 @@ int x86Internal::op_DEC8(int data) {
     osm = 28;
     return osm_dst;
 }
-int x86Internal::op_DEC16(int data) {
+int x86::op_DEC16(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1850,7 +1850,7 @@ int x86Internal::op_DEC16(int data) {
     osm = 29;
     return osm_dst;
 }
-int x86Internal::op_SHRD_SHLD16(int dst, int src, int count) {
+int x86::op_SHRD_SHLD16(int dst, int src, int count) {
     int d, s, c;
     d = dst;
     c = count & 0x1f;
@@ -1878,7 +1878,7 @@ int x86Internal::op_SHRD_SHLD16(int dst, int src, int count) {
     }
     return d;
 }
-int x86Internal::op_SHRD(int dst, int src, int count) {
+int x86::op_SHRD(int dst, int src, int count) {
     int d, c;
     d = dst;
     c = count & 0x1f;
@@ -1891,7 +1891,7 @@ int x86Internal::op_SHRD(int dst, int src, int count) {
     }
     return d;
 }
-int x86Internal::op_SHLD(int dst, int src, int count) {
+int x86::op_SHLD(int dst, int src, int count) {
     int d, c;
     d = dst;
     c = count & 0x1f;
@@ -1904,15 +1904,15 @@ int x86Internal::op_SHLD(int dst, int src, int count) {
     }
     return d;
 }
-void x86Internal::op_BT16(int base, int offset) {
+void x86::op_BT16(int base, int offset) {
     osm_src = base >> (offset & 0xf);
     osm = 19;
 }
-void x86Internal::op_BT(int base, int offset) {
+void x86::op_BT(int base, int offset) {
     osm_src = base >> (offset & 0x1f);
     osm = 20;
 }
-int x86Internal::op_BTS_BTR_BTC16(int base, int offset) {
+int x86::op_BTS_BTR_BTC16(int base, int offset) {
     int o, r;
     o = offset & 0xf;
     osm_src = base >> o;
@@ -1932,7 +1932,7 @@ int x86Internal::op_BTS_BTR_BTC16(int base, int offset) {
     osm = 19;
     return r;
 }
-int x86Internal::op_BTS_BTR_BTC(int base, int offset) {
+int x86::op_BTS_BTR_BTC(int base, int offset) {
     int o, r;
     o = offset & 0x1f;
     osm_src = base >> o;
@@ -1952,7 +1952,7 @@ int x86Internal::op_BTS_BTR_BTC(int base, int offset) {
     osm = 20;
     return r;
 }
-int x86Internal::op_BSF16(int dst, int src) {
+int x86::op_BSF16(int dst, int src) {
     int d, s;
     d = dst;
     s = src & 0xffff;
@@ -1969,7 +1969,7 @@ int x86Internal::op_BSF16(int dst, int src) {
     osm = 14;
     return d;
 }
-int x86Internal::op_BSF(int dst, int src) {
+int x86::op_BSF(int dst, int src) {
     int d, s;
     d = dst;
     s = src;
@@ -1986,7 +1986,7 @@ int x86Internal::op_BSF(int dst, int src) {
     osm = 14;
     return d;
 }
-int x86Internal::op_BSR16(int dst, int src) {
+int x86::op_BSR16(int dst, int src) {
     int d, s;
     d = dst;
     s = src & 0xffff;
@@ -2003,7 +2003,7 @@ int x86Internal::op_BSR16(int dst, int src) {
     osm = 14;
     return d;
 }
-int x86Internal::op_BSR(int dst, int src) {
+int x86::op_BSR(int dst, int src) {
     int d, s;
     d = dst;
     s = src;
@@ -2020,7 +2020,7 @@ int x86Internal::op_BSR(int dst, int src) {
     osm = 14;
     return d;
 }
-void x86Internal::op_DIV8(int divisor) {
+void x86::op_DIV8(int divisor) {
     int d, a, q, r;
     d = divisor & 0xff;
     a = regs[0] & 0xffff;
@@ -2031,7 +2031,7 @@ void x86Internal::op_DIV8(int divisor) {
     r = a % d;
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_IDIV8(int divisor) {
+void x86::op_IDIV8(int divisor) {
     int d, a, q, r;
     d = (divisor << 24) >> 24;
     a = (regs[0] << 16) >> 16;
@@ -2045,7 +2045,7 @@ void x86Internal::op_IDIV8(int divisor) {
     r = a % d;
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void x86Internal::op_DIV16(int divisor) {
+void x86::op_DIV16(int divisor) {
     int d, a, q, r;
     d = divisor & 0xffff;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
@@ -2058,7 +2058,7 @@ void x86Internal::op_DIV16(int divisor) {
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-void x86Internal::op_IDIV16(int divisor) {
+void x86::op_IDIV16(int divisor) {
     int d, a, q, r;
     d = (divisor << 16) >> 16;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
@@ -2073,7 +2073,7 @@ void x86Internal::op_IDIV16(int divisor) {
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
+int x86::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
     uint32_t du, dl;
     int nd;
@@ -2101,7 +2101,7 @@ int x86Internal::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint
         return dl;
     }
 }
-int x86Internal::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
+int x86::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
     int du, dl, ndd, ndr, q;
     du = dividend_upper;
     dl = dividend_lower;
@@ -2138,7 +2138,7 @@ int x86Internal::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) 
     }
     return q;
 }
-void x86Internal::op_MUL8(int multiplicand, int multiplier) {
+void x86::op_MUL8(int multiplicand, int multiplier) {
     int md, mr;
     md = multiplicand & 0xff;
     mr = multiplier & 0xff;
@@ -2147,7 +2147,7 @@ void x86Internal::op_MUL8(int multiplicand, int multiplier) {
     osm_dst = (x << 24) >> 24;
     osm = 21;
 }
-void x86Internal::op_IMUL8(int multiplicand, int multiplier) {
+void x86::op_IMUL8(int multiplicand, int multiplier) {
     int md, mr;
     md = (multiplicand << 24) >> 24;
     mr = (multiplier << 24) >> 24;
@@ -2156,13 +2156,13 @@ void x86Internal::op_IMUL8(int multiplicand, int multiplier) {
     osm_src = x != osm_dst;
     osm = 21;
 }
-void x86Internal::op_MUL16(int multiplicand, int multiplier) {
+void x86::op_MUL16(int multiplicand, int multiplier) {
     x = (multiplicand & 0xffff) * (multiplier & 0xffff);
     osm_src = x >> 16;
     osm_dst = (x << 16) >> 16;
     osm = 22;
 }
-void x86Internal::op_IMUL16(int multiplicand, int multiplier) {
+void x86::op_IMUL16(int multiplicand, int multiplier) {
     int md, mr;
     md = (multiplicand << 16) >> 16;
     mr = (multiplier << 16) >> 16;
@@ -2171,12 +2171,12 @@ void x86Internal::op_IMUL16(int multiplicand, int multiplier) {
     osm_src = x != osm_dst;
     osm = 22;
 }
-void x86Internal::op_MUL32(int multiplicand, int multiplier) {
+void x86::op_MUL32(int multiplicand, int multiplier) {
     osm_dst = x = do_multiply32(multiplicand, multiplier);
     osm_src = v;
     osm = 23;
 }
-void x86Internal::op_IMUL32(int multiplicand, int multiplier) {
+void x86::op_IMUL32(int multiplicand, int multiplier) {
     int md, mr, s, r;
     md = multiplicand;
     mr = multiplier;
@@ -2201,7 +2201,7 @@ void x86Internal::op_IMUL32(int multiplicand, int multiplier) {
     osm_src = v - (r >> 31);
     osm = 23;
 }
-int x86Internal::do_multiply32(int multiplicand, int multiplier) {
+int x86::do_multiply32(int multiplicand, int multiplier) {
     uint32_t lower_md, upper_md, lower_mr, upper_mr, m;
     uint64_t r = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (r <= 0xffffffff) {
@@ -2233,7 +2233,7 @@ int x86Internal::do_multiply32(int multiplicand, int multiplier) {
     }
     return r;
 }
-int x86Internal::do_arithmetic8(int dst, int src) {
+int x86::do_arithmetic8(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2286,7 +2286,7 @@ int x86Internal::do_arithmetic8(int dst, int src) {
     }
     return d;
 }
-int x86Internal::do_arithmetic16(int dst, int src) {
+int x86::do_arithmetic16(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2339,7 +2339,7 @@ int x86Internal::do_arithmetic16(int dst, int src) {
     }
     return d;
 }
-int x86Internal::do_arithmetic32(int dst, int src) {
+int x86::do_arithmetic32(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2392,7 +2392,7 @@ int x86Internal::do_arithmetic32(int dst, int src) {
     }
     return d;
 }
-int x86Internal::do_shift8(int src, int count) {
+int x86::do_shift8(int src, int count) {
     int s1, s2, c, cf;
     s1 = s2 = src & 0xff;
     switch (operation & 7) {
@@ -2400,7 +2400,7 @@ int x86Internal::do_shift8(int src, int count) {
         if (count & 0x1f) {
             c = count & 0x7;
             s1 = (s1 << c) | (s1 >> (8 - c));
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= s1 & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) << 4) & 0x0800;
@@ -2413,7 +2413,7 @@ int x86Internal::do_shift8(int src, int count) {
         if (count & 0x1f) {
             c = count & 0x7;
             s1 = (s1 >> c) | (s1 << (8 - c));
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s1 >> 7) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) << 4) & 0x0800;
@@ -2430,7 +2430,7 @@ int x86Internal::do_shift8(int src, int count) {
             if (c > 1) {
                 s1 |= s2 >> (9 - c);
             }
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s2 >> (8 - c)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) << 4) & 0x0800;
@@ -2447,7 +2447,7 @@ int x86Internal::do_shift8(int src, int count) {
             if (c > 1) {
                 s1 |= s2 << (9 - c);
             }
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s2 >> (c - 1)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) << 4) & 0x0800;
@@ -2485,7 +2485,7 @@ int x86Internal::do_shift8(int src, int count) {
     }
     return s1;
 }
-int x86Internal::do_shift16(int src, int count) {
+int x86::do_shift16(int src, int count) {
     int s1, s2, c, cf;
     s1 = s2 = src & 0xffff;
     switch (operation & 7) {
@@ -2493,7 +2493,7 @@ int x86Internal::do_shift16(int src, int count) {
         if (count & 0x1f) {
             c = count & 0xf;
             s1 = (s1 << c) | (s1 >> (16 - c));
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= s1 & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
@@ -2506,7 +2506,7 @@ int x86Internal::do_shift16(int src, int count) {
         if (count & 0x1f) {
             c = count & 0xf;
             s1 = (s1 >> c) | (s1 << (16 - c));
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s1 >> 15) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
@@ -2523,7 +2523,7 @@ int x86Internal::do_shift16(int src, int count) {
             if (c > 1) {
                 s1 |= s2 >> (17 - c);
             }
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s2 >> (16 - c)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
@@ -2540,7 +2540,7 @@ int x86Internal::do_shift16(int src, int count) {
             if (c > 1) {
                 s1 |= s2 << (17 - c);
             }
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s2 >> (c - 1)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 4) & 0x0800;
@@ -2578,7 +2578,7 @@ int x86Internal::do_shift16(int src, int count) {
     }
     return s1;
 }
-int x86Internal::do_shift32(uint32_t src, int count) {
+int x86::do_shift32(uint32_t src, int count) {
     uint32_t s1, s2;
     int c, cf;
     s1 = s2 = src;
@@ -2587,7 +2587,7 @@ int x86Internal::do_shift32(uint32_t src, int count) {
         c = count & 0x1f;
         if (c) {
             s1 = (s1 << c) | (s1 >> (32 - c));
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= s1 & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
@@ -2600,7 +2600,7 @@ int x86Internal::do_shift32(uint32_t src, int count) {
         c = count & 0x1f;
         if (c) {
             s1 = (s1 >> c) | (s1 << (32 - c));
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s1 >> 31) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
@@ -2617,7 +2617,7 @@ int x86Internal::do_shift32(uint32_t src, int count) {
             if (c > 1) {
                 s1 |= s2 >> (33 - c);
             }
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s2 >> (32 - c)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
@@ -2634,7 +2634,7 @@ int x86Internal::do_shift32(uint32_t src, int count) {
             if (c > 1) {
                 s1 |= s2 << (33 - c);
             }
-            osm_src = compile_flags(true);
+            osm_src = compile_eflags(true);
             osm_src |= (s2 >> (c - 1)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s2 ^ s1) >> 20) & 0x0800;
@@ -2671,7 +2671,7 @@ int x86Internal::do_shift32(uint32_t src, int count) {
     }
     return s1;
 }
-void x86Internal::op_LDTR(int selector) {
+void x86::op_LDTR(int selector) {
     int dte_lower_dword, dte_upper_dword, index;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2699,7 +2699,7 @@ void x86Internal::op_LDTR(int selector) {
     }
     ldt.selector = selector;
 }
-void x86Internal::op_LTR(int selector) {
+void x86::op_LTR(int selector) {
     int dte_lower_dword, dte_upper_dword, index, descriptor_type;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2731,20 +2731,20 @@ void x86Internal::op_LTR(int selector) {
     }
     tr.selector = selector;
 }
-void x86Internal::do_JMPF(int selector, int address) {
+void x86::do_JMPF(int selector, int address) {
     if (!is_protected() || (eflags & 0x00020000)) {
         op_JMPF_virtual_mode(selector, address);
     } else {
         op_JMPF(selector, address);
     }
 }
-void x86Internal::op_JMPF_virtual_mode(int selector, int address) {
+void x86::op_JMPF_virtual_mode(int selector, int address) {
     eip = address, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = selector << 4;
     update_SSB();
 }
-void x86Internal::op_JMPF(int selector, int address) {
+void x86::op_JMPF(int selector, int address) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
@@ -2787,14 +2787,14 @@ void x86Internal::op_JMPF(int selector, int address) {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
-void x86Internal::do_CALLF(bool is_operand_size32, int selector, int address, int return_address) {
+void x86::do_CALLF(bool is_operand_size32, int selector, int address, int return_address) {
     if (!is_protected() || (eflags & 0x00020000)) {
         op_CALLF_real__v86_mode(is_operand_size32, selector, address, return_address);
     } else {
         op_CALLF_protected_mode(is_operand_size32, selector, address, return_address);
     }
 }
-void x86Internal::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address) {
+void x86::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address) {
     int esp = regs[4];
     if (is_operand_size32) {
         esp = esp - 4;
@@ -2817,7 +2817,7 @@ void x86Internal::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, 
     segs[1].base = selector << 4;
     update_SSB();
 }
-void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
+void x86::op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int offset, count;
     int ss, esp, start_esp, spl;
@@ -3011,7 +3011,7 @@ void x86Internal::op_CALLF_protected_mode(bool is_operand_size32, int selector, 
         eip = offset, far = far_start = 0;
     }
 }
-void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
+void x86::do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].base;
@@ -3060,7 +3060,7 @@ void x86Internal::do_return_real__v86_mode(bool is_operand_size32, bool is_iret,
     }
     update_SSB();
 }
-void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
+void x86::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     int cpl = this->cpl, es, cs, ss, ds, fs, gs;
@@ -3230,7 +3230,7 @@ void x86Internal::do_return_protected_mode(bool is_operand_size32, bool is_iret,
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void x86Internal::clear_segment_register(int sreg, int privilege_level) {
+void x86::clear_segment_register(int sreg, int privilege_level) {
     int dte_upper_dword;
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
@@ -3243,7 +3243,7 @@ void x86Internal::clear_segment_register(int sreg, int privilege_level) {
         }
     }
 }
-void x86Internal::op_IRET(bool is_operand_size32) {
+void x86::op_IRET(bool is_operand_size32) {
     if (!is_protected() || (eflags & 0x00020000)) {
         if (eflags & 0x00020000) {
             iopl = (eflags >> 12) & 3;
@@ -3260,14 +3260,14 @@ void x86Internal::op_IRET(bool is_operand_size32) {
         }
     }
 }
-void x86Internal::op_RETF(bool is_operand_size32, int return_offset) {
+void x86::op_RETF(bool is_operand_size32, int return_offset) {
     if (!is_protected() || (eflags & 0x00020000)) {
         do_return_real__v86_mode(is_operand_size32, 0, return_offset);
     } else {
         do_return_protected_mode(is_operand_size32, 0, return_offset);
     }
 }
-int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
+int x86::ld_descriptor_field(int selector, bool is_lsl) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     if ((selector & 0xfffc) == 0) {
         return -1;
@@ -3316,7 +3316,7 @@ int x86Internal::ld_descriptor_field(int selector, bool is_lsl) {
         return dte_upper_dword & 0x00f0ff00;
     }
 }
-void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
+void x86::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     int selector;
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
@@ -3330,7 +3330,7 @@ void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
         selector = ld16_mem8_read();
     }
     x = ld_descriptor_field(selector, is_lsl);
-    osm_src = compile_flags();
+    osm_src = compile_eflags();
     if (x == -1) {
         osm_src &= ~0x0040;
     } else {
@@ -3344,14 +3344,14 @@ void x86Internal::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::do_interrupt(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
+void x86::do_interrupt(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
     if (is_protected()) {
         do_interrupt_protected_mode(interrupt_id, error_code, is_hw, is_sw, return_address);
     } else {
         do_interrupt_real__v86_mode(interrupt_id, is_sw, return_address);
     }
 }
-void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int return_address) {
+void x86::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int return_address) {
     int selector, offset, esp;
     if (interrupt_id * 4 + 3 > idt.limit) {
         abort(13, interrupt_id * 8 + 2);
@@ -3376,7 +3376,7 @@ void x86Internal::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int r
     segs[1].base = selector << 4;
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void x86Internal::do_interrupt_protected_mode(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
+void x86::do_interrupt_protected_mode(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
     int selector, offset, st_error_code, is_interlevel, is_386;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
@@ -3578,10 +3578,10 @@ void x86Internal::do_interrupt_protected_mode(int interrupt_id, int error_code, 
     }
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
 }
-void x86Internal::op_VERR_VERW(int selector, bool writable) {
+void x86::op_VERR_VERW(int selector, bool writable) {
     int ok;
     ok = is_segment_accessible(selector, writable);
-    osm_src = compile_flags();
+    osm_src = compile_eflags();
     if (!ok) {
         osm_src |= 0x0040;
     } else {
@@ -3590,7 +3590,7 @@ void x86Internal::op_VERR_VERW(int selector, bool writable) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::op_ARPL() {
+void x86::op_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3603,7 +3603,7 @@ void x86Internal::op_ARPL() {
         x = ld16_mem8_write();
     }
     y = regs[(mem8 >> 3) & 7];
-    osm_src = compile_flags();
+    osm_src = compile_eflags();
     if ((x & 3) < (y & 3)) {
         x = (x & ~3) | (y & 3);
         if ((mem8 >> 6) == 3) {
@@ -3618,7 +3618,7 @@ void x86Internal::op_ARPL() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::op_CPUID() {
+void x86::op_CPUID() {
     switch (regs[0]) {
     case 0: // vendor ID
         regs[0] = 1;
@@ -3635,7 +3635,7 @@ void x86Internal::op_CPUID() {
         break;
     }
 }
-void x86Internal::op_AAM(int radix) {
+void x86::op_AAM(int radix) {
     int al, ah;
     if (radix == 0) {
         abort(0);
@@ -3647,7 +3647,7 @@ void x86Internal::op_AAM(int radix) {
     osm_dst = (al << 24) >> 24;
     osm = 12;
 }
-void x86Internal::op_AAD(int radix) {
+void x86::op_AAD(int radix) {
     int al, ah;
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
@@ -3656,9 +3656,9 @@ void x86Internal::op_AAD(int radix) {
     osm_dst = (al << 24) >> 24;
     osm = 12;
 }
-void x86Internal::op_AAA() {
+void x86::op_AAA() {
     int of, al, ah, f4, flags;
-    flags = compile_flags();
+    flags = compile_eflags();
     f4 = flags & 0x0010;
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
@@ -3676,9 +3676,9 @@ void x86Internal::op_AAA() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::op_AAS() {
+void x86::op_AAS() {
     int of, al, ah, f4, flags;
-    flags = compile_flags();
+    flags = compile_eflags();
     f4 = flags & 0x0010; // AF
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
@@ -3696,9 +3696,9 @@ void x86Internal::op_AAS() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::op_DAA() {
+void x86::op_DAA() {
     int al, f0, f4, flags;
-    flags = compile_flags();
+    flags = compile_eflags();
     f0 = flags & 0x0001;
     f4 = flags & 0x0010;
     al = regs[0] & 0xff;
@@ -3719,9 +3719,9 @@ void x86Internal::op_DAA() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::op_DAS() {
+void x86::op_DAS() {
     int al, of, f0, f4, flags;
-    flags = compile_flags();
+    flags = compile_eflags();
     f0 = flags & 0x0001;
     f4 = flags & 0x0010;
     al = regs[0] & 0xff;
@@ -3746,7 +3746,7 @@ void x86Internal::op_DAS() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86Internal::op_BOUND16() {
+void x86::op_BOUND16() {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3761,7 +3761,7 @@ void x86Internal::op_BOUND16() {
         abort(5);
     }
 }
-void x86Internal::op_BOUND() {
+void x86::op_BOUND() {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3776,7 +3776,7 @@ void x86Internal::op_BOUND() {
         abort(5);
     }
 }
-void x86Internal::op_PUSHA16() {
+void x86::op_PUSHA16() {
     y = regs[4] - 16;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3786,7 +3786,7 @@ void x86Internal::op_PUSHA16() {
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
-void x86Internal::op_PUSHA() {
+void x86::op_PUSHA() {
     y = regs[4] - 32;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3796,7 +3796,7 @@ void x86Internal::op_PUSHA() {
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
-void x86Internal::op_POPA16() {
+void x86::op_POPA16() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
@@ -3806,7 +3806,7 @@ void x86Internal::op_POPA16() {
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 16) & SS_mask);
 }
-void x86Internal::op_POPA() {
+void x86::op_POPA() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
@@ -3816,21 +3816,21 @@ void x86Internal::op_POPA() {
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
-void x86Internal::op_LEAVE16() {
+void x86::op_LEAVE16() {
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld16_mem8_read();
     set_lower_word(5, x);
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
-void x86Internal::op_LEAVE() {
+void x86::op_LEAVE() {
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld32_mem8_read();
     regs[5] = x;
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
 }
-void x86Internal::op_ENTER16() {
+void x86::op_ENTER16() {
     int c, l, esp, ebp, exp;
     c = ld16_mem8_direct();
     l = phys_mem8[far++];
@@ -3861,7 +3861,7 @@ void x86Internal::op_ENTER16() {
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void x86Internal::op_ENTER() {
+void x86::op_ENTER() {
     int c, l, esp, ebp, exp;
     c = ld16_mem8_direct();
     l = phys_mem8[far++];
@@ -3892,7 +3892,7 @@ void x86Internal::op_ENTER() {
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void x86Internal::ld_full_pointer16(int sreg) {
+void x86::ld_full_pointer16(int sreg) {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
@@ -3904,7 +3904,7 @@ void x86Internal::ld_full_pointer16(int sreg) {
     set_segment_register(sreg, y);
     set_lower_word((mem8 >> 3) & 7, x);
 }
-void x86Internal::ld_full_pointer32(int sreg) {
+void x86::ld_full_pointer32(int sreg) {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);

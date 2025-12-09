@@ -425,7 +425,7 @@ class IRQCH {
     int count = 0;
     int count_load_time = 0;
     float pit_time_unit = 0.596591F;
-    x86Internal *cpu;
+    x86 *cpu;
 
   public:
     int latched_count = 0;
@@ -433,7 +433,7 @@ class IRQCH {
     int mode = 0;
     int bcd = 0;
     int gate = 0;
-    IRQCH(x86Internal *_cpu) {
+    IRQCH(x86 *_cpu) {
         cpu = _cpu;
     }
     int get_time() {
@@ -537,12 +537,12 @@ class IRQCH {
 };
 class PIT {
     IRQCH *pit_channels[3];
-    x86Internal *cpu;
+    x86 *cpu;
     PIC *pic;
     int speaker_data_on = 0;
 
   public:
-    PIT(x86Internal *_cpu, PIC *_pic) {
+    PIT(x86 *_cpu, PIC *_pic) {
         cpu = _cpu;
         pic = _pic;
         for (int i = 0; i < 3; i++) {
@@ -651,7 +651,7 @@ inline void PIT::update_irq() {
     set_irq(1);
     set_irq(0);
 }
-class CPU : public x86Internal {
+class CPU : public x86 {
     CMOS *cmos = nullptr;
     KBD *kbd = nullptr;
 
@@ -659,7 +659,7 @@ class CPU : public x86Internal {
     PIC *pic = nullptr;
     PIT *pit = nullptr;
     Serial *serial = nullptr;
-    CPU(int mem_size) : x86Internal(mem_size) {
+    CPU(int mem_size) : x86(mem_size) {
         cmos = new CMOS();
         kbd = new KBD();
         pic = new PIC();

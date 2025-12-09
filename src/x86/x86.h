@@ -16,7 +16,7 @@ typedef struct Interrupt {
     int error_code;
 } Interrupt;
 
-class x86Internal {
+class x86 {
   public:
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     int regs[8];
@@ -43,8 +43,8 @@ class x86Internal {
 
     uint64_t cycles;
 
-    x86Internal(int mem_size);
-    virtual ~x86Internal();
+    x86(int mem_size);
+    virtual ~x86();
 
     void reset();
     void fetch_decode_execute(uint64_t cycles);
@@ -549,7 +549,7 @@ class x86Internal {
     int is_LE(); // less or equal, unsigned comparison
     int is_LT(); // less than
     int can_jump(int condition);
-    int compile_flags(bool shift = false);
+    int compile_eflags(bool shift = false);
 
     int get_EFLAGS();
     void set_EFLAGS(int bits, int mask);

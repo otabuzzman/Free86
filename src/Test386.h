@@ -5,9 +5,9 @@
 
 #include "x86/x86.h"
 
-class PlainCPU : public x86Internal {
+class PlainCPU : public x86 {
   public:
-    PlainCPU(int mem_size) : x86Internal(mem_size) {}
+    PlainCPU(int mem_size) : x86(mem_size) {}
     ~PlainCPU() override {}
     int get_hard_irq() override { return 0; }
     int get_hard_intno() override { return 0; }
