@@ -358,7 +358,7 @@ int x86::can_jump(int condition) {
     }
     return r ^ (condition & 1);
 }
-int x86::compile_flags(bool shift) {
+int x86::compile_eflags(bool shift) {
     int f0 = 0, f11 = 0;
     if (!shift) {
         f0 = is_CF() << 0;
@@ -371,7 +371,7 @@ int x86::compile_flags(bool shift) {
     return f0 | f2 | f4 | f6 | f7 | f11;
 }
 int x86::get_EFLAGS() {
-    int bits = compile_flags();
+    int bits = compile_eflags();
     bits |= df & 0x00000400;
     bits |= eflags;
     return bits;

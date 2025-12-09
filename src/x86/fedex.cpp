@@ -1570,17 +1570,17 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 op_BOUND();
                 goto EXEC_LOOP;
             case 0xf5: // CMC
-                osm_src = compile_flags() ^ 0x0001;
+                osm_src = compile_eflags() ^ 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto EXEC_LOOP;
             case 0xf8: // CLC
-                osm_src = compile_flags() & ~0x0001;
+                osm_src = compile_eflags() & ~0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto EXEC_LOOP;
             case 0xf9: // STC
-                osm_src = compile_flags() | 0x0001;
+                osm_src = compile_eflags() | 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto EXEC_LOOP;
