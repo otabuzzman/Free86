@@ -1,6 +1,6 @@
 #include "x86.h"
 
-bool x86::is_CF() {
+bool Free86::is_CF() {
     bool r = false;
     int _osm;
     uint32_t _osm_dst;
@@ -78,14 +78,14 @@ bool x86::is_CF() {
     }
     return r;
 }
-int x86::is_PF() {
+int Free86::is_PF() {
     if (osm == 24) {
         return (osm_src >> 2) & 1;
     } else {
         return parity_LUT[osm_dst & 0xff];
     }
 }
-int x86::is_AF() {
+int Free86::is_AF() {
     int x, r = 0;
     switch (osm % 0x1f) {
     case 0:
@@ -144,7 +144,7 @@ int x86::is_AF() {
     }
     return r;
 }
-bool x86::is_OF() {
+bool Free86::is_OF() {
     bool r = false;
     int x;
     switch (osm % 0x1f) {
@@ -242,7 +242,7 @@ bool x86::is_OF() {
     }
     return r;
 }
-bool x86::is_BE() { // `below' for signed comparison, PM p. 317
+bool Free86::is_BE() { // `below' for signed comparison, PM p. 317
     bool r;
     switch (osm) {
     case 6:
@@ -264,7 +264,7 @@ bool x86::is_BE() { // `below' for signed comparison, PM p. 317
     }
     return r;
 }
-int x86::is_LE() { // `less' for unsigned comparison, PM p. 317
+int Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
     bool r;
     switch (osm) {
     case 6:
@@ -296,7 +296,7 @@ int x86::is_LE() { // `less' for unsigned comparison, PM p. 317
     }
     return r;
 }
-int x86::is_LT() {
+int Free86::is_LT() {
     bool r;
     switch (osm) {
     case 6:
@@ -328,7 +328,7 @@ int x86::is_LT() {
     }
     return r;
 }
-int x86::can_jump(int condition) {
+int Free86::can_jump(int condition) {
     bool r = false;
     switch ((condition >> 1) & 7) {
     case 0:
@@ -358,7 +358,7 @@ int x86::can_jump(int condition) {
     }
     return r ^ (condition & 1);
 }
-int x86::compile_eflags(bool shift) {
+int Free86::compile_eflags(bool shift) {
     int f0 = 0, f11 = 0;
     if (!shift) {
         f0 = is_CF() << 0;
@@ -370,13 +370,13 @@ int x86::compile_eflags(bool shift) {
     int f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7;
     return f0 | f2 | f4 | f6 | f7 | f11;
 }
-int x86::get_EFLAGS() {
+int Free86::get_EFLAGS() {
     int bits = compile_eflags();
     bits |= df & 0x00000400;
     bits |= eflags;
     return bits;
 }
-void x86::set_EFLAGS(int bits, int mask) {
+void Free86::set_EFLAGS(int bits, int mask) {
     osm_src = bits & (0x0800 | 0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001);
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;

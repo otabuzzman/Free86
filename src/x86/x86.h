@@ -16,7 +16,7 @@ typedef struct Interrupt {
     int error_code;
 } Interrupt;
 
-class x86 {
+class Free86 {
   public:
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     int regs[8];
@@ -83,8 +83,8 @@ class x86 {
     virtual void io_write(int port, int data) = 0;
 
     // x86.cpp
-    x86(int mem_size);
-    virtual ~x86();
+    Free86(int mem_size);
+    virtual ~Free86();
 
     void reset();
 

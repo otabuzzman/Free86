@@ -5,9 +5,9 @@
 
 #include "x86/x86.h"
 
-class PlainCPU : public x86 {
+class PlainCPU : public Free86 {
   public:
-    PlainCPU(int mem_size) : x86(mem_size) {}
+    PlainCPU(int mem_size) : Free86(mem_size) {}
     ~PlainCPU() override {}
     int get_irq() override { return 0; }
     int get_iid() override { return 0; }
