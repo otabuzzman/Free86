@@ -65,7 +65,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - Run test suite
   ```
   # cd to Free86 sibling folder
-  cd ../free86
+  cd ../Free86
   
   # run suite and capture results
   exe/free86 >test386-EE-reference.txt
