@@ -54,7 +54,7 @@ class Test386 {
             try {
                 cpu->fetch_decode_execute(cycles - cpu->cycles);
                 if (cpu->halted)
-                    break;
+                    exit(0);
             } catch (const Interrupt& i) {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
