@@ -18,7 +18,7 @@ void x86::op_INSB() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld8_port(edx);
+        x = ld8_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st8_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
@@ -27,7 +27,7 @@ void x86::op_INSB() {
             far = far_start;
         }
     } else {
-        x = ld8_port(edx);
+        x = ld8_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st8_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
@@ -59,7 +59,7 @@ void x86::op_OUTSB() {
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld8_mem8_read();
-        st8_port(edx, x);
+        st8_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -68,7 +68,7 @@ void x86::op_OUTSB() {
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld8_mem8_read();
-        st8_port(edx, x);
+        st8_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
     }
 }
@@ -275,7 +275,7 @@ void x86::op_INSW() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_port(edx);
+        x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st16_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -284,7 +284,7 @@ void x86::op_INSW() {
             far = far_start;
         }
     } else {
-        x = ld16_port(edx);
+        x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st16_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -316,7 +316,7 @@ void x86::op_OUTSW() {
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld16_mem8_read();
-        st32_port(edx, x);
+        st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -325,7 +325,7 @@ void x86::op_OUTSW() {
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld16_mem8_read();
-        st32_port(edx, x);
+        st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
@@ -532,7 +532,7 @@ void x86::op_INS16() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_port(edx);
+        x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st16_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -541,7 +541,7 @@ void x86::op_INS16() {
             far = far_start;
         }
     } else {
-        x = ld16_port(edx);
+        x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st16_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -573,7 +573,7 @@ void x86::op_OUTS16() {
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld16_mem8_read();
-        st16_port(edx, x);
+        st16_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -582,7 +582,7 @@ void x86::op_OUTS16() {
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld16_mem8_read();
-        st16_port(edx, x);
+        st16_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
@@ -789,7 +789,7 @@ void x86::op_INSD() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld32_port(edx);
+        x = ld32_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st32_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
@@ -798,7 +798,7 @@ void x86::op_INSD() {
             far = far_start;
         }
     } else {
-        x = ld32_port(edx);
+        x = ld32_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
         st32_mem8_write(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
@@ -830,7 +830,7 @@ void x86::op_OUTSD() {
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld32_mem8_read();
-        st32_port(edx, x);
+        st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -839,7 +839,7 @@ void x86::op_OUTSD() {
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
         x = ld32_mem8_read();
-        st32_port(edx, x);
+        st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
     }
 }

@@ -1,16 +1,16 @@
 #include "x86.h"
 
-int x86::__ld8_mem8_kernel_read() {
+int x86::_ld8_mem8_kernel_read() {
     page_translation(mem8_loc, 0, 0);
     tlb_hash = tlb_read_kernel[mem8_loc >> 12];
     return phys_mem8[mem8_loc ^ tlb_hash];
 }
 int x86::ld8_mem8_kernel_read() {
     return ((tlb_hash = tlb_read_kernel[mem8_loc >> 12]) == -1)
-               ? __ld8_mem8_kernel_read()
+               ? _ld8_mem8_kernel_read()
                : phys_mem8[mem8_loc ^ tlb_hash];
 }
-int x86::__ld16_mem8_kernel_read() {
+int x86::_ld16_mem8_kernel_read() {
     int word = ld8_mem8_kernel_read();
     mem8_loc++;
     word |= ld8_mem8_kernel_read() << 8;
@@ -19,10 +19,10 @@ int x86::__ld16_mem8_kernel_read() {
 }
 int x86::ld16_mem8_kernel_read() {
     return ((tlb_hash = tlb_read_kernel[mem8_loc >> 12]) | mem8_loc) & 1
-               ? __ld16_mem8_kernel_read()
+               ? _ld16_mem8_kernel_read()
                : phys_mem16[(mem8_loc ^ tlb_hash) >> 1];
 }
-int x86::__ld32_mem8_kernel_read() {
+int x86::_ld32_mem8_kernel_read() {
     int dword = ld8_mem8_kernel_read();
     mem8_loc++;
     dword |= ld8_mem8_kernel_read() << 8;
@@ -35,7 +35,7 @@ int x86::__ld32_mem8_kernel_read() {
 }
 int x86::ld32_mem8_kernel_read() {
     return ((tlb_hash = tlb_read_kernel[mem8_loc >> 12]) | mem8_loc) & 3
-               ? __ld32_mem8_kernel_read()
+               ? _ld32_mem8_kernel_read()
                : phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
 }
 int x86::ld16_mem8_direct() {
@@ -43,7 +43,7 @@ int x86::ld16_mem8_direct() {
     int upper_byte = phys_mem8[far++];
     return lower_byte | (upper_byte << 8);
 }
-int x86::__ld8_mem8_read() {
+int x86::_ld8_mem8_read() {
     int byte;
     if (is_protected()) {
         page_translation(mem8_loc, 0, cpl == 3);
@@ -57,10 +57,10 @@ int x86::__ld8_mem8_read() {
 int x86::ld8_mem8_read() {
     return (is_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                ? __ld8_mem8_read()
+                ? _ld8_mem8_read()
                 : phys_mem8[mem8_loc ^ tlb_hash]);
 }
-int x86::__ld16_mem8_read() {
+int x86::_ld16_mem8_read() {
     int word = ld8_mem8_read();
     mem8_loc++;
     word |= ld8_mem8_read() << 8;
@@ -70,10 +70,10 @@ int x86::__ld16_mem8_read() {
 int x86::ld16_mem8_read() {
     return (is_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 1
-                ? __ld16_mem8_read()
+                ? _ld16_mem8_read()
                 : phys_mem16[(mem8_loc ^ tlb_hash) >> 1]);
 }
-int x86::__ld32_mem8_read() {
+int x86::_ld32_mem8_read() {
     int dword = ld8_mem8_read();
     mem8_loc++;
     dword |= ld8_mem8_read() << 8;
@@ -87,10 +87,10 @@ int x86::__ld32_mem8_read() {
 int x86::ld32_mem8_read() {
     return (is_real__v86() ||
                     ((tlb_hash = tlb_read[mem8_loc >> 12]) | mem8_loc) & 3
-                ? __ld32_mem8_read()
+                ? _ld32_mem8_read()
                 : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
 }
-int x86::__ld8_mem8_write() {
+int x86::_ld8_mem8_write() {
     int byte;
     if (is_protected()) {
         page_translation(mem8_loc, 1, cpl == 3);
@@ -104,10 +104,10 @@ int x86::__ld8_mem8_write() {
 int x86::ld8_mem8_write() {
     return (is_real__v86() ||
                     (tlb_hash = tlb_write[mem8_loc >> 12]) == -1)
-                ? __ld8_mem8_write()
+                ? _ld8_mem8_write()
                 : phys_mem8[mem8_loc ^ tlb_hash];
 }
-int x86::__ld16_mem8_write() {
+int x86::_ld16_mem8_write() {
     int word = ld8_mem8_write();
     mem8_loc++;
     word |= ld8_mem8_write() << 8;
@@ -117,10 +117,10 @@ int x86::__ld16_mem8_write() {
 int x86::ld16_mem8_write() {
     return (is_real__v86() ||
                     (tlb_hash = tlb_write[mem8_loc >> 12]) | mem8_loc) & 1
-                ? __ld16_mem8_write()
+                ? _ld16_mem8_write()
                 : phys_mem16[(mem8_loc ^ tlb_hash) >> 1];
 }
-int x86::__ld32_mem8_write() {
+int x86::_ld32_mem8_write() {
     int dword = ld8_mem8_write();
     mem8_loc++;
     dword |= ld8_mem8_write() << 8;
@@ -134,10 +134,10 @@ int x86::__ld32_mem8_write() {
 int x86::ld32_mem8_write() {
     return (is_real__v86() ||
                     (tlb_hash = tlb_write[mem8_loc >> 12]) | mem8_loc) & 3
-               ? __ld32_mem8_write()
+               ? _ld32_mem8_write()
                : phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
 }
-void x86::__st8_mem8_kernel_write(int byte) {
+void x86::_st8_mem8_kernel_write(int byte) {
     page_translation(mem8_loc, 1, 0);
     tlb_hash = tlb_write_kernel[mem8_loc >> 12];
     phys_mem8[mem8_loc ^ tlb_hash] = byte;
@@ -145,12 +145,12 @@ void x86::__st8_mem8_kernel_write(int byte) {
 void x86::st8_mem8_kernel_write(int byte) {
     tlb_hash = tlb_write_kernel[mem8_loc >> 12];
     if (tlb_hash == -1) {
-        __st8_mem8_kernel_write(byte);
+        _st8_mem8_kernel_write(byte);
     } else {
         phys_mem8[mem8_loc ^ tlb_hash] = byte;
     }
 }
-void x86::__st16_mem8_kernel_write(int word) {
+void x86::_st16_mem8_kernel_write(int word) {
     st8_mem8_kernel_write(word);
     mem8_loc++;
     st8_mem8_kernel_write(word >> 8);
@@ -159,12 +159,12 @@ void x86::__st16_mem8_kernel_write(int word) {
 void x86::st16_mem8_kernel_write(int word) {
     tlb_hash = tlb_write_kernel[mem8_loc >> 12];
     if ((tlb_hash | mem8_loc) & 1) {
-        __st16_mem8_kernel_write(word);
+        _st16_mem8_kernel_write(word);
     } else {
         phys_mem16[(mem8_loc ^ tlb_hash) >> 1] = word;
     }
 }
-void x86::__st32_mem8_kernel_write(int dword) {
+void x86::_st32_mem8_kernel_write(int dword) {
     st8_mem8_kernel_write(dword);
     mem8_loc++;
     st8_mem8_kernel_write(dword >> 8);
@@ -177,12 +177,12 @@ void x86::__st32_mem8_kernel_write(int dword) {
 void x86::st32_mem8_kernel_write(int dword) {
     tlb_hash = tlb_write_kernel[mem8_loc >> 12];
     if ((tlb_hash | mem8_loc) & 3) {
-        __st32_mem8_kernel_write(dword);
+        _st32_mem8_kernel_write(dword);
     } else {
         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = dword;
     }
 }
-void x86::__st8_mem8_write(int byte) {
+void x86::_st8_mem8_write(int byte) {
     if (is_protected()) {
         page_translation(mem8_loc, 1, cpl == 3);
         tlb_hash = tlb_write[mem8_loc >> 12];
@@ -194,12 +194,12 @@ void x86::__st8_mem8_write(int byte) {
 void x86::st8_mem8_write(int byte) {
     tlb_hash = tlb_write[mem8_loc >> 12];
     if (is_real__v86() || tlb_hash == -1) {
-        __st8_mem8_write(byte);
+        _st8_mem8_write(byte);
     } else {
         phys_mem8[mem8_loc ^ tlb_hash] = byte;
     }
 }
-void x86::__st16_mem8_write(int word) {
+void x86::_st16_mem8_write(int word) {
     st8_mem8_write(word);
     mem8_loc++;
     st8_mem8_write(word >> 8);
@@ -208,12 +208,12 @@ void x86::__st16_mem8_write(int word) {
 void x86::st16_mem8_write(int word) {
     tlb_hash = tlb_write[mem8_loc >> 12];
     if (is_real__v86() || (tlb_hash | mem8_loc) & 1) {
-        __st16_mem8_write(word);
+        _st16_mem8_write(word);
     } else {
         phys_mem16[(mem8_loc ^ tlb_hash) >> 1] = word;
     }
 }
-void x86::__st32_mem8_write(int dword) {
+void x86::_st32_mem8_write(int dword) {
     st8_mem8_write(dword);
     mem8_loc++;
     st8_mem8_write(dword >> 8);
@@ -226,7 +226,7 @@ void x86::__st32_mem8_write(int dword) {
 void x86::st32_mem8_write(int dword) {
     tlb_hash = tlb_write[mem8_loc >> 12];
     if (is_real__v86() || (tlb_hash | mem8_loc) & 3) {
-        __st32_mem8_write(dword);
+        _st32_mem8_write(dword);
     } else {
         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = dword;
     }

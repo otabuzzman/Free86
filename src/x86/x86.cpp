@@ -41,9 +41,9 @@ void x86::reset() {
     cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
     halted = 0;
 }
-[[noreturn]] void x86::abort(int interrupt_id, int error_code) {
+[[noreturn]] void x86::abort(int id, int error_code) {
     this->cycles += cycles_requested - cycles_remaining;
-    interrupt = {interrupt_id, error_code};
+    interrupt = {id, error_code};
     throw interrupt;
 }
 void x86::update_SSB() {
@@ -83,7 +83,7 @@ void x86::fetch_opcode() {
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
                     mem8_loc = eip_linear + y;
                     phys_mem8[far + y] = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld8_mem8_read()
+                             ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
                 far++;
@@ -127,7 +127,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld8_mem8_read()
+                     ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x67: // address-size override prefix
@@ -141,7 +141,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld8_mem8_read()
+                     ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x91: // XCHG C
@@ -381,7 +381,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld8_mem8_read()
+                     ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -405,7 +405,7 @@ int x86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld8_mem8_read()
+                             ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -476,7 +476,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld8_mem8_read()
+                     ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -500,7 +500,7 @@ int x86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld8_mem8_read()
+                             ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -558,7 +558,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                        ? __ld8_mem8_read()
+                        ? _ld8_mem8_read()
                         : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -582,7 +582,7 @@ int x86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld8_mem8_read()
+                             ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -638,7 +638,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld8_mem8_read()
+                     ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -662,7 +662,7 @@ int x86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld8_mem8_read()
+                             ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -721,7 +721,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                     ? __ld8_mem8_read()
+                     ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -745,7 +745,7 @@ int x86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld8_mem8_read()
+                             ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -828,7 +828,7 @@ int x86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                          ? __ld8_mem8_read()
+                          ? _ld8_mem8_read()
                           : phys_mem8[mem8_loc ^ tlb_hash]);
             switch (opcode) {
             case 0x06: // CLTS
@@ -932,7 +932,7 @@ int x86::instruction_length(int opcode) {
                 }
                 mem8_loc = eip_linear + (n++);
                 mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                            ? __ld8_mem8_read()
+                            ? _ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -956,7 +956,7 @@ int x86::instruction_length(int opcode) {
                         }
                         mem8_loc = eip_linear + (n++);
                         mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                                 ? __ld8_mem8_read()
+                                 ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -1010,7 +1010,7 @@ int x86::instruction_length(int opcode) {
                 }
                 mem8_loc = eip_linear + (n++);
                 mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                            ? __ld8_mem8_read()
+                            ? _ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -1034,7 +1034,7 @@ int x86::instruction_length(int opcode) {
                         }
                         mem8_loc = eip_linear + (n++);
                         mem8 = (is_real__v86() || ((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                                 ? __ld8_mem8_read()
+                                 ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -1242,23 +1242,23 @@ void x86::set_current_privilege_level(int data) {
         tlb_write = tlb_write_kernel;
     }
 }
-int x86::ld8_port(int port_num) {
-    return ioport_read(port_num);
+int x86::ld8_io(int port) {
+    return io_read(port);
 }
-int x86::ld16_port(int port_num) {
-    return ioport_read(port_num);
+int x86::ld16_io(int port) {
+    return io_read(port);
 }
-int x86::ld32_port(int port_num) {
-    return ioport_read(port_num);
+int x86::ld32_io(int port) {
+    return io_read(port);
 }
-void x86::st8_port(int port_num, int byte) {
-    ioport_write(port_num, byte);
+void x86::st8_io(int port, int byte) {
+    io_write(port, byte);
 }
-void x86::st16_port(int port_num, int word) {
-    ioport_write(port_num, word);
+void x86::st16_io(int port, int word) {
+    io_write(port, word);
 }
-void x86::st32_port(int port_num, int dword) {
-    ioport_write(port_num, dword);
+void x86::st32_io(int port, int dword) {
+    io_write(port, dword);
 }
 void x86::set_lower_byte(int reg, int byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
@@ -3267,7 +3267,7 @@ void x86::op_RETF(bool is_operand_size32, int return_offset) {
         do_return_protected_mode(is_operand_size32, 0, return_offset);
     }
 }
-int x86::ld_descriptor_field(int selector, bool is_lsl) {
+int x86::ld_descriptor_flags(int selector, bool is_lsl) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     if ((selector & 0xfffc) == 0) {
         return -1;
@@ -3329,7 +3329,7 @@ void x86::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
         segment_translation(mem8);
         selector = ld16_mem8_read();
     }
-    x = ld_descriptor_field(selector, is_lsl);
+    x = ld_descriptor_flags(selector, is_lsl);
     osm_src = compile_eflags();
     if (x == -1) {
         osm_src &= ~0x0040;
@@ -3344,19 +3344,19 @@ void x86::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void x86::do_interrupt(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
+void x86::do_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
     if (is_protected()) {
-        do_interrupt_protected_mode(interrupt_id, error_code, is_hw, is_sw, return_address);
+        do_interrupt_protected_mode(id, error_code, is_hw, is_sw, return_address);
     } else {
-        do_interrupt_real__v86_mode(interrupt_id, is_sw, return_address);
+        do_interrupt_real__v86_mode(id, is_sw, return_address);
     }
 }
-void x86::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int return_address) {
+void x86::do_interrupt_real__v86_mode(int id, int is_sw, int return_address) {
     int selector, offset, esp;
-    if (interrupt_id * 4 + 3 > idt.limit) {
-        abort(13, interrupt_id * 8 + 2);
+    if (id * 4 + 3 > idt.limit) {
+        abort(13, id * 8 + 2);
     }
-    mem8_loc = idt.base + (interrupt_id << 2);
+    mem8_loc = idt.base + (id << 2);
     offset = ld16_mem8_kernel_read();
     mem8_loc = mem8_loc + 2;
     selector = ld16_mem8_kernel_read();
@@ -3376,13 +3376,13 @@ void x86::do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int return_ad
     segs[1].base = selector << 4;
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void x86::do_interrupt_protected_mode(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address) {
+void x86::do_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
     int selector, offset, st_error_code, is_interlevel, is_386;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
     st_error_code = 0;
     if (!is_sw && !is_hw) {
-        switch (interrupt_id) { // with error codes, Intel IA-32 SDM (latest), Vol. 3A, 7.3
+        switch (id) { // with error codes, Intel IA-32 SDM (latest), Vol. 3A, 7.3
         case 8:  // double exception
         case 10: // invalid task state segment
         case 11: // segment not present
@@ -3394,10 +3394,10 @@ void x86::do_interrupt_protected_mode(int interrupt_id, int error_code, int is_h
             break;
         }
     }
-    if (interrupt_id * 8 + 7 > idt.limit) {
-        abort(13, interrupt_id * 8 + 2);
+    if (id * 8 + 7 > idt.limit) {
+        abort(13, id * 8 + 2);
     }
-    mem8_loc = idt.base + interrupt_id * 8;
+    mem8_loc = idt.base + id * 8;
     dte_lower_dword = ld32_mem8_kernel_read();
     mem8_loc += 4;
     dte_upper_dword = ld32_mem8_kernel_read();
@@ -3411,14 +3411,14 @@ void x86::do_interrupt_protected_mode(int interrupt_id, int error_code, int is_h
     case 7: // 16 bit trap gate
         throw "fatal: unsupported gate type";
     default:
-        abort(13, interrupt_id * 8 + 2);
+        abort(13, id * 8 + 2);
     }
     dpl = (dte_upper_dword >> 13) & 3;
     if (is_sw && dpl < cpl) {
-        abort(13, interrupt_id * 8 + 2);
+        abort(13, id * 8 + 2);
     }
     if (!(dte_upper_dword & (1 << 15))) {
-        abort(11, interrupt_id * 8 + 2);
+        abort(11, id * 8 + 2);
     }
     selector = dte_lower_dword >> 16;
     offset = (dte_upper_dword & -65536) | (dte_lower_dword & 0x0000ffff);

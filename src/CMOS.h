@@ -1,5 +1,5 @@
-#ifndef _H_CMOS
-#define _H_CMOS
+#ifndef CMOS_H
+#define CMOS_H
 
 #include <fstream>
 #include <time.h>
@@ -60,4 +60,4 @@ class CMOS {
     }
 };
 
-#endif // _H_CMOS
+#endif // CMOS_H

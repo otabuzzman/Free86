@@ -1,5 +1,5 @@
-#ifndef _H_CPU
-#define _H_CPU
+#ifndef CPU_H
+#define CPU_H
 
 #include "x86/x86.h"
 
@@ -673,9 +673,9 @@ class CPU : public x86 {
         delete pit;
         delete serial;
     }
-    int get_hard_irq();
-    int get_hard_intno();
-    int ioport_read(int mem8_loc);
-    void ioport_write(int mem8_loc, int data);
+    int get_irq();
+    int get_iid();
+    int io_read(int port);
+    void io_write(int port, int data);
 };
-#endif // _H_CPU
+#endif // CPU_H

@@ -1,5 +1,5 @@
-#ifndef _H_KBD
-#define _H_KBD
+#ifndef KBD_H
+#define KBD_H
 
 #include <fstream>
 
@@ -26,4 +26,4 @@ class KBD {
     }
 };
 
-#endif // _H_KBD
+#endif // KBD_H

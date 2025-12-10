@@ -2,7 +2,7 @@
 
 void x86::fetch_decode_execute(uint64_t cycles) {
     if (halted) {
-        if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+        if (get_irq() != 0 && (eflags & 0x00000200)) {
             halted = 0;
         } else {
             return;
@@ -16,8 +16,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
         do_interrupt(interrupt.id, interrupt.error_code, 0, 0, 0);
         interrupt = {-1, 0};
     }
-    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
-        do_interrupt(get_hard_intno(), 0, 1, 0, 0);
+    if (get_irq() != 0 && (eflags & 0x00000200)) {
+        do_interrupt(get_iid(), 0, 1, 0, 0);
     }
     do {
         fetch_opcode();
@@ -133,7 +133,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation(mem8);
                     tlb_hash = tlb_write[mem8_loc >> 12];
                     if (tlb_hash == -1) {
-                        __st8_mem8_write(x);
+                        _st8_mem8_write(x);
                     } else {
                         phys_mem8[mem8_loc ^ tlb_hash] = x;
                     }
@@ -148,7 +148,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation(mem8);
                     tlb_hash = tlb_write[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
-                        __st32_mem8_write(x);
+                        _st32_mem8_write(x);
                     } else {
                         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
                     }
@@ -162,7 +162,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation(mem8);
                     x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                             ? __ld8_mem8_read()
+                             ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
@@ -177,7 +177,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation(mem8);
                     tlb_hash = tlb_read[mem8_loc >> 12];
                     x = ((tlb_hash | mem8_loc) & 3
-                             ? __ld32_mem8_read()
+                             ? _ld32_mem8_read()
                              : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
                 }
                 regs[(mem8 >> 3) & 7] = x;
@@ -991,7 +991,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     mem8_loc = regs[4] - 4;
                     tlb_hash = tlb_write[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
-                        __st32_mem8_write(x);
+                        _st32_mem8_write(x);
                     } else {
                         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
                     }
@@ -1012,7 +1012,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     mem8_loc = regs[4];
                     tlb_hash = tlb_read[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
-                        x = __ld32_mem8_read();
+                        x = _ld32_mem8_read();
                     } else {
                         x = phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
                     }
@@ -1118,7 +1118,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     }
                 }
                 set_EFLAGS(x, z & y);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1523,26 +1523,26 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 }
                 y = ld16_mem8_direct();
                 do_CALLF(z, y, x, (eip + far - far_start));
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xca: // RET
                 y = (ld16_mem8_direct() << 16) >> 16;
                 op_RETF((((ipr >> 8) & 1) ^ 1), y);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xcb: // RET
                 op_RETF((((ipr >> 8) & 1) ^ 1), 0);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xcf: // IRET
                 op_IRET((((ipr >> 8) & 1) ^ 1));
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1603,7 +1603,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     abort(13);
                 }
                 eflags |= 0x00000200;
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1654,25 +1654,25 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x6c: // INSB
                 op_INSB();
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6d: // INSW/D
                 ipr & 0x0100 ? op_INSW() : op_INSD();
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6e: // OUTSB
                 op_OUTSB();
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0x6f: // OUTSW/D
                 ipr & 0x0100 ? op_OUTSW() : op_OUTSD();
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1705,8 +1705,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     abort(13);
                 }
                 x = phys_mem8[far++];
-                set_lower_byte(0, ld8_port(x));
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                set_lower_byte(0, ld8_io(x));
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1716,8 +1716,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     abort(13);
                 }
                 x = phys_mem8[far++];
-                regs[0] = ld32_port(x);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                regs[0] = ld32_io(x);
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1727,8 +1727,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     abort(13);
                 }
                 x = phys_mem8[far++];
-                st8_port(x, regs[0] & 0xff);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                st8_io(x, regs[0] & 0xff);
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1738,8 +1738,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     abort(13);
                 }
                 x = phys_mem8[far++];
-                st32_port(x, regs[0]);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                st32_io(x, regs[0]);
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1748,8 +1748,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                set_lower_byte(0, ld8_port(regs[2] & 0xffff));
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                set_lower_byte(0, ld8_io(regs[2] & 0xffff));
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1758,8 +1758,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                regs[0] = ld32_port(regs[2] & 0xffff);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                regs[0] = ld32_io(regs[2] & 0xffff);
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1768,8 +1768,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                st8_port(regs[2] & 0xffff, regs[0] & 0xff);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                st8_io(regs[2] & 0xffff, regs[0] & 0xff);
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1778,8 +1778,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                st32_port(regs[2] & 0xffff, regs[0]);
-                if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                st32_io(regs[2] & 0xffff, regs[0]);
+                if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
@@ -1898,7 +1898,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                                 ? __ld8_mem8_read()
+                                 ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
                     regs[reg_idx1] = x;
@@ -1923,7 +1923,7 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
-                                 ? __ld8_mem8_read()
+                                 ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
                     regs[reg_idx1] = (x << 24) >> 24;
@@ -3148,13 +3148,13 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0x16d: // INSW/D
                     op_INS16();
-                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                    if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
                 case 0x16f: // OUTSW/D
                     op_OUTS16();
-                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                    if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3164,8 +3164,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                         abort(13);
                     }
                     x = phys_mem8[far++];
-                    set_lower_word(0, ld16_port(x));
-                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                    set_lower_word(0, ld16_io(x));
+                    if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3175,8 +3175,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                         abort(13);
                     }
                     x = phys_mem8[far++];
-                    st16_port(x, regs[0] & 0xffff);
-                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                    st16_io(x, regs[0] & 0xffff);
+                    if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3185,8 +3185,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     if (cpl > iopl) {
                         abort(13);
                     }
-                    set_lower_word(0, ld16_port(regs[2] & 0xffff));
-                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                    set_lower_word(0, ld16_io(regs[2] & 0xffff));
+                    if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;
@@ -3195,8 +3195,8 @@ void x86::fetch_decode_execute(uint64_t cycles) {
                     if (cpl > iopl) {
                         abort(13);
                     }
-                    st16_port(regs[2] & 0xffff, regs[0] & 0xffff);
-                    if (get_hard_irq() != 0 && (eflags & 0x00000200)) {
+                    st16_io(regs[2] & 0xffff, regs[0] & 0xffff);
+                    if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto EXEC_LOOP;

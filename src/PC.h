@@ -1,5 +1,5 @@
-#ifndef _H_PC
-#define _H_PC
+#ifndef PC_H
+#define PC_H
 
 #include <cstddef>
 #include <stdexcept>
@@ -710,10 +710,10 @@ class WiredCPU : public x86 {
         delete pit;
         delete serial;
     }
-    int get_hard_irq() override;
-    int get_hard_intno() override;
-    int ioport_read(int port_num) override;
-    void ioport_write(int port_num, int data) override;
+    int get_irq() override;
+    int get_iid() override;
+    int io_read(int port) override;
+    void io_write(int port, int data) override;
 };
 
-#endif // _H_PC
+#endif // PC_H

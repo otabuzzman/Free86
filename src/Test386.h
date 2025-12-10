@@ -1,5 +1,5 @@
-#ifndef _H_TEST386
-#define _H_TEST386
+#ifndef TEST386_H
+#define TEST386_H
 
 #include <iostream>
 
@@ -9,10 +9,10 @@ class PlainCPU : public x86 {
   public:
     PlainCPU(int mem_size) : x86(mem_size) {}
     ~PlainCPU() override {}
-    int get_hard_irq() override { return 0; }
-    int get_hard_intno() override { return 0; }
-    int ioport_read(int port_num) override;
-    void ioport_write(int port_num, int data) override;
+    int get_irq() override { return 0; }
+    int get_iid() override { return 0; }
+    int io_read(int port) override;
+    void io_write(int port, int data) override;
 };
 
 class Test386 {
@@ -29,7 +29,7 @@ class Test386 {
         const int size = ftell(f);
         fseek(f, 0, SEEK_SET);
         auto buffer = new uint8_t[size];
-        auto __     = fread(buffer, size, 1, f);
+        auto _ = fread(buffer, size, 1, f);
     
         printf("load %d bytes at 0x%x\n", size, offset);
         for (int i = 0; i < size; i++) {
@@ -189,18 +189,18 @@ class Test386 {
     }
 };
 
-int PlainCPU::ioport_read(int port_num) {
-    int port = port_num & (1024 - 1);
-    printf("*** ioport_read 0x%04x\n", port);
+int PlainCPU::io_read(int por) {
+    int _port = port & (1024 - 1);
+    printf("*** ioport_read 0x%04x\n", _port);
     return 0xff;
 }
-void PlainCPU::ioport_write(int port_num, int data) {
-    int port = port_num & (1024 - 1);
-    if (port == 0x0190) { // default POST_PORT in test386
-        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
+void PlainCPU::io_write(int port, int data) {
+    int _port = port & (1024 - 1);
+    if (_port == 0x0190) { // default POST_PORT in test386
+        printf("*** ioport_write 0x%04x : 0x%08x\n", _port, data);
     } else { // any other value considered OUT_PORT
         printf("%c", data);
     }
 }
 
-#endif // _H_TEST386
+#endif // TEST386_H

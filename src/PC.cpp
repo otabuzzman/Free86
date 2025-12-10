@@ -37,7 +37,7 @@ int PC::load(std::string path, int offset)
     const int size = ftell(f);
     fseek(f, 0, SEEK_SET);
     auto buffer = new uint8_t[size];
-    auto __     = fread(buffer, size, 1, f);
+    auto _ = fread(buffer, size, 1, f);
 
     printf("load %d bytes at 0x%x\n", size, offset);
     for (int i = 0; i < size; i++) {
@@ -152,33 +152,33 @@ void PC::input()
     cpu->serial->input_fifo_push(chr);
 }
 #endif // NO_SDL
-int WiredCPU::get_hard_irq() {
+int WiredCPU::get_irq() {
     return pic->irq;
 }
-int WiredCPU::get_hard_intno() {
+int WiredCPU::get_iid() {
     return pic->get_hard_intno();
 }
-int WiredCPU::ioport_read(int port_num) {
-    int port = port_num & (1024 - 1);
-    switch (port) {
+int WiredCPU::io_read(int port) {
+    int _port = port & (1024 - 1);
+    switch (_port) {
     case 0x70:
     case 0x71:
-        return cmos->ioport_read(port_num);
+        return cmos->ioport_read(_port);
     case 0x64:
-        return kbd->read_status(port_num);
+        return kbd->read_status(_port);
     case 0x20:
     case 0x21:
-        return pic->pics[0]->ioport_read(port_num);
+        return pic->pics[0]->ioport_read(_port);
     case 0xa0:
     case 0xa1:
-        return pic->pics[1]->ioport_read(port_num);
+        return pic->pics[1]->ioport_read(_port);
     case 0x40:
     case 0x41:
     case 0x42:
     case 0x43:
-        return pit->ioport_read(port_num);
+        return pit->ioport_read(_port);
     case 0x61:
-        return pit->speaker_ioport_read(port_num);
+        return pit->speaker_ioport_read(_port);
     case 0x3f8:
     case 0x3f9:
     case 0x3fa:
@@ -187,34 +187,34 @@ int WiredCPU::ioport_read(int port_num) {
     case 0x3fd:
     case 0x3fe:
     case 0x3ff:
-        return serial->ioport_read(port_num);
+        return serial->ioport_read(_port);
     default:
         return 0xff;
     }
 }
-void WiredCPU::ioport_write(int port_num, int data) {
-    int port = port_num & (1024 - 1);
-    switch (port) {
+void WiredCPU::io_write(int port, int data) {
+    int _port = port & (1024 - 1);
+    switch (_port) {
     case 0x80: // POST
         break;
     case 0x70:
     case 0x71:
-        cmos->ioport_write(port_num, data);
+        cmos->ioport_write(_port, data);
         break;
     case 0x64:
-        kbd->write_command(port_num, data);
+        kbd->write_command(_port, data);
         break;
     case 0x20:
     case 0x21:
         try {
-            pic->pics[0]->ioport_write(port_num, data);
+            pic->pics[0]->ioport_write(_port, data);
         } catch (const char *) {
         }
         break;
     case 0xa0:
     case 0xa1:
         try {
-            pic->pics[1]->ioport_write(port_num, data);
+            pic->pics[1]->ioport_write(_port, data);
         } catch (const char *) {
         }
         break;
@@ -222,10 +222,10 @@ void WiredCPU::ioport_write(int port_num, int data) {
     case 0x41:
     case 0x42:
     case 0x43:
-        pit->ioport_write(port_num, data);
+        pit->ioport_write(_port, data);
         break;
     case 0x61:
-        pit->speaker_ioport_write(port_num, data);
+        pit->speaker_ioport_write(_port, data);
         break;
     case 0x3f8:
     case 0x3f9:
@@ -235,7 +235,7 @@ void WiredCPU::ioport_write(int port_num, int data) {
     case 0x3fd:
     case 0x3fe:
     case 0x3ff:
-        serial->ioport_write(port_num, data);
+        serial->ioport_write(_port, data);
         break;
     }
 }

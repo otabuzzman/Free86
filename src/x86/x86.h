@@ -1,5 +1,5 @@
-#ifndef _X86_H
-#define _X86_H
+#ifndef X86_H
+#define X86_H
 
 #include <fstream>
 #include <vector>
@@ -37,17 +37,11 @@ class x86 {
     int cr3;
     int cr4; // 80486
 
-    int cpl;  // current privilege level register
+    int cpl; // current privilege level register
 
     int halted;
 
     uint64_t cycles;
-
-    x86(int mem_size);
-    virtual ~x86();
-
-    void reset();
-    void fetch_decode_execute(uint64_t cycles);
 
     uint8_t ld8_phys(int address) {
         return phys_mem8[address];
@@ -81,6 +75,21 @@ class x86 {
         }
         return linear_address ^ tlb_hash;
     }
+
+    virtual int get_irq() = 0;
+    virtual int get_iid() = 0;
+
+    virtual int io_read(int port) = 0;
+    virtual void io_write(int port, int data) = 0;
+
+    // x86.cpp
+    x86(int mem_size);
+    virtual ~x86();
+
+    void reset();
+
+    // fedex.cpp
+    void fetch_decode_execute(uint64_t cycles);
 
   private:
     uint32_t eip_linear;
@@ -338,7 +347,8 @@ class x86 {
     };
     // clang-format on
 
-    [[noreturn]] void abort(int interrupt_id, int error_code = 0);
+    // x86.cpp
+    [[noreturn]] void abort(int /*interrupt*/ id, int error_code = 0);
 
     void update_SSB();
     void fetch_opcode();
@@ -353,62 +363,12 @@ class x86 {
     bool is_paging_disabled();
     void set_current_privilege_level(int data);
 
-    virtual int get_hard_irq() = 0;
-    virtual int get_hard_intno() = 0;
-
-    virtual int ioport_read(int port_num) = 0;
-    virtual void ioport_write(int port_num, int data) = 0;
-
-    int ld8_port(int port_num);
-    int ld16_port(int port_num);
-    int ld32_port(int port_num);
-    void st8_port(int port_num, int byte);
-    void st16_port(int port_num, int word);
-    void st32_port(int port_num, int dword);
-
-    int __ld8_mem8_kernel_read();
-    int ld8_mem8_kernel_read(); // from kernel RO memory: load (return) byte
-    int __ld16_mem8_kernel_read();
-    int ld16_mem8_kernel_read();  // ...word
-    int __ld32_mem8_kernel_read();
-    int ld32_mem8_kernel_read();  // ...dword
-
-    int ld16_mem8_direct(); // read word at FAR from memory, bypass TLB
-
-    int __ld8_mem8_read();
-    int ld8_mem8_read(); // from user RO memory: load (return) byte
-    int __ld16_mem8_read();
-    int ld16_mem8_read(); // ...word
-    int __ld32_mem8_read();
-    int ld32_mem8_read(); // ...dword
-
-    int __ld8_mem8_write();
-    int ld8_mem8_write(); // from user WR memory: load (return) byte
-    int __ld16_mem8_write();
-    int ld16_mem8_write(); // ...word
-    int __ld32_mem8_write();
-    int ld32_mem8_write(); // ...dword
-
-    void __st8_mem8_kernel_write(int byte);
-    void st8_mem8_kernel_write(int byte); // in kernel WR memory: store byte
-    void __st16_mem8_kernel_write(int word);
-    void st16_mem8_kernel_write(int word); // ...word
-    void __st32_mem8_kernel_write(int dword);
-    void st32_mem8_kernel_write(int dword); // ...dword
-
-    void __st8_mem8_write(int byte);
-    void st8_mem8_write(int byte); // in user WR memory: store byte
-    void __st16_mem8_write(int word);
-    void st16_mem8_write(int word); // ...word
-    void __st32_mem8_write(int dword);
-    void st32_mem8_write(int dword); // ...dword
-
-    void push_word(int word);
-    void push_dword(int dword);
-    void pop_word();
-    void pop_dword();
-    int read_stack_word();
-    int read_stack_dword();
+    int ld8_io(int port);
+    int ld16_io(int port);
+    int ld32_io(int port);
+    void st8_io(int port, int byte);
+    void st16_io(int port, int word);
+    void st32_io(int port, int dword);
 
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
@@ -483,11 +443,11 @@ class x86 {
     void op_IRET(bool is_operand_size32);
     void op_RETF(bool is_operand_size32, int return_offset);
     void op_LAR_LSL(bool is_operand_size32, bool is_lsl);
-    int ld_descriptor_field(int selector, bool is_lsl);
+    int ld_descriptor_flags(int selector, bool is_lsl);
 
-    void do_interrupt(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address);
-    void do_interrupt_real__v86_mode(int interrupt_id, int is_sw, int return_address);
-    void do_interrupt_protected_mode(int interrupt_id, int error_code, int is_hw, int is_sw, int return_address);
+    void do_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void do_interrupt_real__v86_mode(int id, int is_sw, int return_address);
+    void do_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
 
     void op_VERR_VERW(int selector, bool is_verw);
     void op_ARPL();
@@ -511,6 +471,7 @@ class x86 {
     void ld16_full_pointer(int sreg);
     void ld32_full_pointer(int sreg);
 
+    // string.cpp
     void op_INS16();
     void op_OUTS16();
     void op_MOVS16();
@@ -541,6 +502,52 @@ class x86 {
     void op_LODSD();
     void op_SCASD();
 
+    // memory.cpp
+    int _ld8_mem8_kernel_read();
+    int ld8_mem8_kernel_read(); // from kernel RO memory: load (return) byte
+    int _ld16_mem8_kernel_read();
+    int ld16_mem8_kernel_read();  // ...word
+    int _ld32_mem8_kernel_read();
+    int ld32_mem8_kernel_read();  // ...dword
+
+    int ld16_mem8_direct(); // read word at FAR from memory, bypass TLB
+
+    int _ld8_mem8_read();
+    int ld8_mem8_read(); // from user RO memory: load (return) byte
+    int _ld16_mem8_read();
+    int ld16_mem8_read(); // ...word
+    int _ld32_mem8_read();
+    int ld32_mem8_read(); // ...dword
+
+    int _ld8_mem8_write();
+    int ld8_mem8_write(); // from user WR memory: load (return) byte
+    int _ld16_mem8_write();
+    int ld16_mem8_write(); // ...word
+    int _ld32_mem8_write();
+    int ld32_mem8_write(); // ...dword
+
+    void _st8_mem8_kernel_write(int byte);
+    void st8_mem8_kernel_write(int byte); // in kernel WR memory: store byte
+    void _st16_mem8_kernel_write(int word);
+    void st16_mem8_kernel_write(int word); // ...word
+    void _st32_mem8_kernel_write(int dword);
+    void st32_mem8_kernel_write(int dword); // ...dword
+
+    void _st8_mem8_write(int byte);
+    void st8_mem8_write(int byte); // in user WR memory: store byte
+    void _st16_mem8_write(int word);
+    void st16_mem8_write(int word); // ...word
+    void _st32_mem8_write(int dword);
+    void st32_mem8_write(int dword); // ...dword
+
+    void push_word(int word);
+    void push_dword(int dword);
+    void pop_word();
+    void pop_dword();
+    int read_stack_word();
+    int read_stack_dword();
+
+    // eflags.cpp
     bool is_CF(); // carry (bit 0)
     int is_PF(); // parity (bit 2)
     int is_AF(); // adjust (bit 4)
@@ -554,4 +561,4 @@ class x86 {
     int get_EFLAGS();
     void set_EFLAGS(int bits, int mask);
 };
-#endif // _X86_H
+#endif // X86_H

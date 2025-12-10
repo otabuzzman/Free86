@@ -1,5 +1,5 @@
-#ifndef _RINGBUFFER_H
-#define _RINGBUFFER_H
+#ifndef RINGBUFFER_H
+#define RINGBUFFER_H
 
 #include <vector>
 #include <mutex>
@@ -91,4 +91,4 @@ int main()
 
 #endif    // RINGBUFFER_USAGE
 
-#endif    // _RINGBUFFER_H
+#endif    // RINGBUFFER_H
