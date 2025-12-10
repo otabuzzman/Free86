@@ -1,4 +1,4 @@
-#include "x86.h"
+#include "free86.h"
 
 Free86::Free86(int mem_size) {
     this->mem_size = mem_size;

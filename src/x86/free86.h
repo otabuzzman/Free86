@@ -1,5 +1,5 @@
-#ifndef X86_H
-#define X86_H
+#ifndef FREE86_H
+#define FREE86_H
 
 #include <fstream>
 #include <vector>
@@ -561,4 +561,4 @@ class Free86 {
     int get_EFLAGS();
     void set_EFLAGS(int bits, int mask);
 };
-#endif // X86_H
+#endif // FREE86_H

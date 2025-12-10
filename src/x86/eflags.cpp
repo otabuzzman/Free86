@@ -1,4 +1,4 @@
-#include "x86.h"
+#include "free86.h"
 
 bool Free86::is_CF() {
     bool r = false;

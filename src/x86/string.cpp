@@ -1,4 +1,4 @@
-#include "x86.h"
+#include "free86.h"
 
 void Free86::op_INSB() {
     int address_size_mask, ecx, edx, edi;
