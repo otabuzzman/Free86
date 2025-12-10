@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "x86/x86.h"
+#include "x86/free86.h"
 
 class PlainCPU : public Free86 {
   public:
