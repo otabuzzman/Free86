@@ -189,7 +189,7 @@ class Test386 {
     }
 };
 
-int PlainCPU::io_read(int por) {
+int PlainCPU::io_read(int port) {
     int _port = port & (1024 - 1);
     printf("*** ioport_read 0x%04x\n", _port);
     return 0xff;
