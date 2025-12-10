@@ -1,159 +1,81 @@
-# CPU-80386-cpp
-- No SDL2 version added
-- test386 suite support added
+# Free86
 
-<br>
+An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok. Missing features include segment limit and rights checks, task gates, and 16 bit interrupt and trap gates. However, there are also some additional 80486 functions, including the CPUID and RDTSC instructions. Therefore, the name was chosen which sounds like a _three_ when pronounced, but also reflects the freedom of implementation.
 
-## Intel 80386 PC emulator
+**Branches**
+- `master`: the original repository fixed for Visual Studio Code
+- `test386`: fixed to additionally pass Test386 suite
+- `refactor`: rework of code structure and naming conventions
 
-<br>
+**Linos (also WSL)**
+- Install C++, CMake
+- Run commands
+  ```
+  git clone https://github.com/otabuzman/Free86.git ; cd Free86
+  
+  # build for Linos boot
+  cmake -DNO_SDL=ON -DTEST386=OFF -G "Unix Makefiles" .
+  
+  # build for Test386 suite
+  cmake -DNO_SDL=ON -DTEST386=ON -G "Unix Makefiles" .
+  
+  # compile...
+  make
+  # ...and run 
+  exe/free86
+  ```
 
-install SDL2
+**MacOS**
+- Install CMake, Xcode, Xcode Command Line Tools
+- Run same commands as for Linos
 
-<pre>
-sudo apt-get install build-essential cmake clang-format libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-net-dev libsdl2-ttf-dev
-</pre>
+**Winos**
+- Install CMake, nmake, Visual Studio Community /w C++
+- Run commands
+  ```
+  git clone https://github.com/otabuzman/Free86.git ; cd Free86
+  
+  # build for Linos boot
+  cmake -DNO_SDL=ON -DTEST386=OFF -G "NMake Makefiles" .
+  
+  # build for Test386 suite
+  cmake -DNO_SDL=ON -DTEST386=ON -G "NMake Makefiles" .
+  
+  # compile...
+  make
+  # ...and run 
+  exe\free86
+  ```
 
-<br><br><br>
+**Winos/ Cygwin**
+- Install development tools, cmake
+- Run same commands as for Linos
 
-boot Linux
+**Test386**
+- Install [NASM](https://www.nasm.us/pub/nasm/releasebuilds/) (Netwide Assembler)
+- Run commands
+  ```
+  # clone repository beside Free86 folder
+  https://github.com/barotto/test386.asm ; cd test386
+  
+  # assemble test suite (see README)
+  nasm -i./src/ -f bin src/test386.asm -l test386.lst -o test386.bin
+  
+  ```
+- Run test suite
+  ```
+  # cd to Free86 sibling folder
+  cd ../free86
+  
+  # run suite and capture results
+  exe/free86 >test386-EE-reference.txt
+  
+  # compare results
+  diff ../test386.asm/test386-EE-reference.txt test386-EE-reference.txt
+  ```
+  Results comparison should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF bit.
 
-<br><br><br>
-
-### WIP
-
-https://user-images.githubusercontent.com/10168979/177424985-9e91d420-b6b8-4e00-8db4-0dbcb3d3b295.mp4
-
-![ss](https://user-images.githubusercontent.com/10168979/177425392-062bc70e-73c5-4fb4-a054-42669a44c054.png)
-
-use JSLinux as a reference
-
-<br>
-
-### macOS
-Debugging with VS Code requires `root` authentication via Dialog stating _Developer Tools Access needs to take control of another process for debugging to continue_. To suppress
-- once run `DevToolsSecurity --enable` and
-- once run `dseditgroup` to add users to group `_developer` (see man page)
-
-<br>
-
-### No SDL2
-SDL omitted. Uses terminal window for character I/O.
-
-Compile on Cygwin/ Linos/ Macos:
-
-```bash
-cmake -DNO_SDL=ON -G "Unix Makefiles" .
-make
-```
-
-Compile on Winos:
-
-```bash
-cmake -DNO_SDL=ON -G "NMake Makefiles" .
-nmake
-```
-
-Add `-DCMAKE_BUILD_TYPE=Debug` to CMake command to compile for debugging.
-
-Run:
-
-```bash
-# boot Linux, ^C terminates
-exe/cpp_app
-
-# set common tty behaviour
-stty -icanon -echo
-```
-
-<br>
-
-### test386
-Support is limited to the requirements of the test suite. For example, not every illegal instruction combined with LOCK results in an error (in fact, only MOV (0xA3)). Segment limit checking and type checking are also not fully implemented.
-
-- Clone [test386.asm](https://github.com/barotto/test386.asm) and cd into repository.
-- Set OUT_PORT to any value != 0 and != POST_PORT in `src/configuration.asm`.
-- Compile test386.asm as described in its README.
-
-Compile:
-
-```bash
-git checkout test386
-```
-
-Use commands from previous section.
-
-Add `-DTEST386=ON` to CMake command to compile for [test386](https://github.com/barotto/test386.asm) suite. Provides `../test386.asm/test386.bin`.
-
-Run:
-
-```bash
-# run suite and capture results
-exe/cpp_app >test386-EE-reference.txt
-
-# compare results
-diff ../test386.asm/test386-EE-reference.txt test386-EE-reference.txt
-```
-
-Results should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF bit.
-
-<br><br><br><br><br><br>
-
-## Intel 8086 version
-
-[8086 PC emulator](https://github.com/kxkx5150/CPU-8086-cpp)
-
-<br>
-
-## Zilog Z80 version
-
-[MSX1 Emulator](https://github.com/kxkx5150/CPU-Z80-cpp)
-
-<br>
-
-## MOS 6502 version
-
-[Apple II Emulator](https://github.com/kxkx5150/CPU-6502-cpp)  
-[NES (ファミコン) Emulator](https://github.com/kxkx5150/Famicom-cpp)  
-
-<br>
-
-## CHIP-8
-
-[CHIP8 Emulator](https://github.com/kxkx5150/CPU-CHIP8-cpp)  
-
-
-<br><br><br><br><br><br>
-
-vscode extensions
-
-<pre>
-    C/C++
-    C/C++ Extension Pack
-    Better C++ Syntax
-    CMake
-    CMake Tools
-    CodeLLDB
-    Makefile Tools
-    IntelliCode
-    clangd
-</pre>
-
-<br><br><br>
-
-(Ctrl + Shift + p)  
-CMake: Configure
-
-<br><br><br>
-
-### F7
-
-Build
-
-<br>
-
-### F5
-
-debug
-
-<br><br><br>
+**Acknowledgements**
+- parent repository [CPU-386-cpp](https://github.com/kxkx5150/CPU-80386-cpp) of this fork
+- CPU-386-cpp might derive from [jslinux-deobfuscated](https://github.com/levskaya/jslinux-deobfuscated)
+- jslinux-deobfuscated makes [JSLinux](https://bellard.org/jslinux/tech.html) from Fabrice Bellard readable
