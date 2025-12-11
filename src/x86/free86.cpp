@@ -6,8 +6,8 @@ Free86::Free86(int mem_size) {
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
     phys_mem8 = (uint8_t *) calloc(1, mem_size + ((15 + 3) & ~3));
-    phys_mem16 = reinterpret_cast<uint16_t *>(phys_mem8);
-    phys_mem32 = reinterpret_cast<uint32_t *>(phys_mem8);
+    phys_mem16 = (uint16_t *) (phys_mem8);
+    phys_mem32 = (uint32_t *) (phys_mem8);
     tlb_read_kernel = new int[tlb_size];
     tlb_write_kernel = new int[tlb_size];
     tlb_read_user = new int[tlb_size];
@@ -15,7 +15,7 @@ Free86::Free86(int mem_size) {
     for (int i = 0; i < tlb_size; i++) {
         tlb_clear(i);
     }
-    reset(); // chip
+    reset();
     cycles = 0;
     set_current_privilege_level(0); // PM (1986), 10.3
 }
@@ -27,7 +27,7 @@ Free86::~Free86() {
     delete[] tlb_write_user;
 }
 void Free86::reset() {
-    // Intel IA-32 SDM (latest), Vol. 3A, 11.1.1
+    // chip state variables (Intel 64 IA-32 SDM, Vol. 3A, 11.1.1)
     for (int i = 0 ; i < 8 ; i++) {
         regs[i] = 0;
     }
@@ -39,6 +39,7 @@ void Free86::reset() {
     segs[1] = {0, 0xffff0000, 0, 0};
     idt = {0, 0, 0x03ff, 0};
     cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
+    // emulator state variables
     halted = 0;
 }
 [[noreturn]] void Free86::abort(int id, int error_code) {

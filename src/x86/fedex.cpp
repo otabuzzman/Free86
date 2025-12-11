@@ -19,11 +19,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
     if (get_irq() != 0 && (eflags & 0x00000200)) {
         do_interrupt(get_iid(), 0, 1, 0, 0);
     }
-    do {
+    do { // cycles (actually instructions)
         fetch_opcode();
         ipr = ipr_default;
         opcode |= ipr & 0x0100;
-        while (true) {
+        while (true) { // loop over instruction bytes
             switch (opcode) {
             case 0x66: // operand-size override prefix
                 if (ipr == ipr_default) {
@@ -3107,8 +3107,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x17e: // JLE
                 case 0x17f: // JNLE
                     x = (phys_mem8[far++] << 24) >> 24;
-                    y = can_jump(opcode & 0xf);
-                    if (y) {
+                    if (can_jump(opcode & 0xf)) {
                         eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                     }
                     goto EXEC_LOOP;
