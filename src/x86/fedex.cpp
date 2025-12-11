@@ -13,11 +13,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
     far = far_start = 0;
     update_SSB(); // segments state block
     if (interrupt.id >= 0) {
-        interrupt(interrupt.id, interrupt.error_code, 0, 0, 0);
+        raise_interrupt(interrupt.id, interrupt.error_code, 0, 0, 0);
         interrupt = {-1, 0};
     }
     if (get_irq() != 0 && (eflags & 0x00000200)) {
-        interrupt(get_iid(), 0, 1, 0, 0);
+        raise_interrupt(get_iid(), 0, 1, 0, 0);
     }
     do { // cycles (actually instructions)
         fetch_opcode();
@@ -1550,7 +1550,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0xcc: // INT
                 y = eip + far - far_start;
-                interrupt(3, 0, 0, 1, y);
+                raise_interrupt(3, 0, 0, 1, y);
                 goto EXEC_LOOP;
             case 0xcd: // INT
                 x = phys_mem8[far++];
@@ -1558,12 +1558,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     abort(13);
                 }
                 y = eip + far - far_start;
-                interrupt(x, 0, 0, 1, y);
+                raise_interrupt(x, 0, 0, 1, y);
                 goto EXEC_LOOP;
             case 0xce: // INTO
                 if (is_OF()) {
                     y = eip + far - far_start;
-                    interrupt(4, 0, 0, 1, y);
+                    raise_interrupt(4, 0, 0, 1, y);
                 }
                 goto EXEC_LOOP;
             case 0x62: // BOUND

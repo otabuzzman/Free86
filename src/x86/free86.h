@@ -445,9 +445,9 @@ class Free86 {
     void aux_LAR_LSL(bool is_operand_size32, bool is_lsl);
     int ld_descriptor_flags(int selector, bool is_lsl);
 
-    void interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
-    void interrupt_real__v86_mode(int id, int is_sw, int return_address);
-    void interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void raise_interrupt_real__v86_mode(int id, int is_sw, int return_address);
+    void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
 
     void aux_VERR_VERW(int selector, bool is_verw);
     void aux_ARPL();

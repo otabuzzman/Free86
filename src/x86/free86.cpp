@@ -3345,14 +3345,14 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
+void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
     if (is_protected()) {
-        interrupt_protected_mode(id, error_code, is_hw, is_sw, return_address);
+        raise_interrupt_protected_mode(id, error_code, is_hw, is_sw, return_address);
     } else {
-        interrupt_real__v86_mode(id, is_sw, return_address);
+        raise_interrupt_real__v86_mode(id, is_sw, return_address);
     }
 }
-void Free86::interrupt_real__v86_mode(int id, int is_sw, int return_address) {
+void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_address) {
     int selector, offset, esp;
     if (id * 4 + 3 > idt.limit) {
         abort(13, id * 8 + 2);
@@ -3377,7 +3377,7 @@ void Free86::interrupt_real__v86_mode(int id, int is_sw, int return_address) {
     segs[1].base = selector << 4;
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void Free86::interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
+void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
     int selector, offset, st_error_code, is_interlevel, is_386;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
