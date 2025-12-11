@@ -17,7 +17,7 @@ Free86::Free86(int mem_size) {
     }
     reset();
     cycles = 0;
-    set_current_privilege_level(0); // PM (1986), 10.3
+    set_cpl(0); // PM (1986), 10.3
 }
 Free86::~Free86() {
     free(phys_mem8);
@@ -1230,11 +1230,11 @@ bool Free86::is_real__v86() {
 bool Free86::is_protected() {
     return cr0 & (1 << 0);
 }
-bool Free86::is_paging_disabled() {
-    return !((cr0 & (1 << 31)) && is_protected());
+bool Free86::is_paging() {
+    return (cr0 & (1 << 31)) && is_protected();
 }
-void Free86::set_current_privilege_level(int data) {
-    cpl = data;
+void Free86::set_cpl(int ring) {
+    cpl = ring;
     if (cpl == 3) {
         tlb_read = tlb_read_user;
         tlb_write = tlb_write_user;
@@ -1272,8 +1272,8 @@ void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
 void Free86::page_translation(int linear_address, int writable, bool user) {
-    int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, clean, error_code;
-    if (is_paging_disabled()) {
+    int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, ok, error_code;
+    if (!is_paging()) {
         pte_RW = 1; // writable
         pte_US = 0; // supervisor
         tlb_update(linear_address & -4096, linear_address & -4096, pte_RW, pte_US);
@@ -1299,10 +1299,10 @@ void Free86::page_translation(int linear_address, int writable, bool user) {
                         pde |= 0x00000020;
                         st32_phys(pde_address, pde);
                     }
-                    clean = writable && !(pte & 0x00000040); // WR request and page not dirty
-                    if (!(pte & 0x00000020) || clean) { // page not accessed or previous
+                    ok = writable && !(pte & 0x00000040); // WR request and page not dirty
+                    if (ok || !(pte & 0x00000020)) { // previous or page not yet accessed
                         pte |= 0x00000020;     // set page accessed
-                        if (clean) {
+                        if (ok) {
                             pte |= 0x00000040; // set page dirty
                         }
                         st32_phys(pte_address, pte);
@@ -3007,7 +3007,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         }
         selector = (selector & ~3) | dpl;
         update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-        set_current_privilege_level(dpl);
+        set_cpl(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         eip = offset, far = far_start = 0;
     }
@@ -3114,7 +3114,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
                 set_segment_register_real__v86(5, gs & 0xffff);
                 eip = stack_eip & 0xffff, far = far_start = 0;
                 regs[4] = (regs[4] & ~SS_mask) | (stack_esp & SS_mask);
-                set_current_privilege_level(3);
+                set_cpl(3);
                 return;
             }
         }
@@ -3212,7 +3212,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
         zero_segment_register(5, rpl);
         esp = stack_esp + return_offset;
         SS_mask = compile_sizemask(dte_upper_dword);
-        set_current_privilege_level(rpl);
+        set_cpl(rpl);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = stack_eip, far = far_start = 0;
@@ -3571,7 +3571,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     }
     selector = (selector & ~3) | dpl;
     update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-    set_current_privilege_level(dpl);
+    set_cpl(dpl);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
     if ((descriptor_type & 1) == 0) {

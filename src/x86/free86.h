@@ -360,8 +360,8 @@ class Free86 {
     void set_CR4(int bits);
     bool is_real__v86();
     bool is_protected();
-    bool is_paging_disabled();
-    void set_current_privilege_level(int data);
+    bool is_paging(); // PG && PE set
+    void set_cpl(int ring);
 
     int ld8_io(int port);
     int ld16_io(int port);
