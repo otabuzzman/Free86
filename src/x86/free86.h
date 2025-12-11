@@ -389,7 +389,7 @@ class Free86 {
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
     void fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword);
-    int compile_sizemask(int dte_upper_dword);
+    int get_addressmask(int dte_upper_dword);
 
     int aux_INC8(int data);
     int aux_INC16(int data);
@@ -468,8 +468,8 @@ class Free86 {
     void aux_LEAVE();
     void aux_ENTER16();
     void aux_ENTER();
-    void ld16_full_pointer(int sreg);
-    void ld32_full_pointer(int sreg);
+    void ld_full_pointer16(int sreg);
+    void ld_full_pointer32(int sreg);
 
     // string.cpp
     void aux_INS16();

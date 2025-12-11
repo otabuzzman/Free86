@@ -1808,7 +1808,7 @@ void Free86::fill_segment_register(SegmentRegister *segment_register, int dte_lo
     segment_register->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
     segment_register->flags = dte_upper_dword;
 }
-int Free86::compile_sizemask(int dte_upper_dword) {
+int Free86::get_addressmask(int dte_upper_dword) {
     if (dte_upper_dword & (1 << 22)) {
         return -1;
     } else {
@@ -2855,7 +2855,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             abort(11, selector & 0xfffc);
         }
         esp = start_esp;
-        SS_mask = compile_sizemask(segs[2].flags);
+        SS_mask = get_addressmask(segs[2].flags);
         SS_base = segs[2].base;
         if (is_operand_size32) {
             esp = esp - 4;
@@ -2950,9 +2950,9 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             if (!(dte_upper_dword & (1 << 15))) {
                 abort(10, ss & 0xfffc);
             }
-            // Ue = compile_sizemask(segs[2].flags);
+            // Ue = get_addressmask(segs[2].flags);
             // Ve = segs[2].base;
-            SS_mask = compile_sizemask(dte_upper_dword);
+            SS_mask = get_addressmask(dte_upper_dword);
             SS_base = compile_dte_base(dte_lower_dword, dte_upper_dword);
             if (is_operand_size32) {
                 esp = esp - 4;
@@ -2987,7 +2987,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             update_segment_register(2, ss, SS_base, compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         } else {
             esp = start_esp;
-            SS_mask = compile_sizemask(segs[2].flags);
+            SS_mask = get_addressmask(segs[2].flags);
             SS_base = segs[2].base;
         }
         if (is_operand_size32) {
@@ -3067,7 +3067,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     int cpl = this->cpl, es, cs, ss, ds, fs, gs;
     esp = regs[4];
     SS_base = segs[2].base;
-    SS_mask = compile_sizemask(segs[2].flags);
+    SS_mask = get_addressmask(segs[2].flags);
     if (is_operand_size32 == 1) {
         mem8_loc = SS_base + (esp & SS_mask);
         stack_eip = ld32_mem8_kernel_read();
@@ -3211,7 +3211,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
         zero_segment_register(4, rpl);
         zero_segment_register(5, rpl);
         esp = stack_esp + return_offset;
-        SS_mask = compile_sizemask(dte_upper_dword);
+        SS_mask = get_addressmask(dte_upper_dword);
         set_cpl(rpl);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -3468,7 +3468,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         if (!(ss_dte_lower_dword & (1 << 15))) {
             abort(10, ss & 0xfffc);
         }
-        SS_mask = compile_sizemask(ss_dte_lower_dword);
+        SS_mask = get_addressmask(ss_dte_lower_dword);
         SS_base = compile_dte_base(ss_dte_upper_dword, ss_dte_lower_dword);
         is_interlevel = 1;
     } else if ((dte_upper_dword & (1 << 10)) || dpl == cpl) {
@@ -3476,7 +3476,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
             abort(13, selector & 0xfffc);
         }
         dpl = cpl;
-        SS_mask = compile_sizemask(segs[2].flags);
+        SS_mask = get_addressmask(segs[2].flags);
         SS_base = segs[2].base;
         esp = regs[4];
         is_interlevel = 0;
@@ -3893,7 +3893,7 @@ void Free86::aux_ENTER() {
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::ld16_full_pointer(int sreg) {
+void Free86::ld_full_pointer16(int sreg) {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
@@ -3905,7 +3905,7 @@ void Free86::ld16_full_pointer(int sreg) {
     set_segment_register(sreg, y);
     set_lower_word((mem8 >> 3) & 7, x);
 }
-void Free86::ld32_full_pointer(int sreg) {
+void Free86::ld_full_pointer32(int sreg) {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
