@@ -337,11 +337,11 @@ class Free86 {
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
     };
-    const std::vector<int> do_shift8_LUT  = {
+    const std::vector<int> shift8_LUT  = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6,
         7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4
     };
-    const std::vector<int> do_shift16_LUT = {
+    const std::vector<int> shift16_LUT = {
          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
         16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
     };
@@ -384,123 +384,123 @@ class Free86 {
     void set_segment_register_protected(int sreg, int selector);
     int is_segment_accessible(int selector, bool writable);
 
-    void load_xdt_descriptor(int *descriptor_table_entry, int selector);
-    void load_tss_interlevel(int *descriptor_table_entry, int privilege_level);
+    void fill_xdt_descriptor(int *descriptor_table_entry, int selector);
+    void fill_tss_interlevel(int *descriptor_table_entry, int privilege_level);
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
-    void load_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword);
+    void fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword);
     int compile_sizemask(int dte_upper_dword);
 
-    int op_INC8(int data);
-    int op_INC16(int data);
-    int op_DEC8(int data);
-    int op_DEC16(int data);
-    int op_SHRD_SHLD16(int dst, int src, int count);
-    int op_SHRD(int dst, int src, int count);
-    int op_SHLD(int dst, int src, int count);
-    void op_BT16(int base, int offset);
-    void op_BT(int base, int offset);
-    int op_BTS_BTR_BTC16(int base, int offset);
-    int op_BTS_BTR_BTC(int base, int offset);
-    int op_BSF16(int dst, int src);
-    int op_BSF(int dst, int src);
-    int op_BSR16(int dst, int src);
-    int op_BSR(int dst, int src);
-    void op_DIV8(int divisor);
-    void op_IDIV8(int divisor);
-    void op_DIV16(int divisor);
-    void op_IDIV16(int divisor);
-    int op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
-    int op_IDIV32(int dividend_upper, int dividend_lower, int divisor);
-    void op_MUL8(int multiplicand, int multiplier);
-    void op_IMUL8(int multiplicand, int multiplier);
-    void op_MUL16(int multiplicand, int multiplier);
-    void op_IMUL16(int multiplicand, int multiplier);
-    void op_MUL32(int multiplicand, int multiplier);
-    void op_IMUL32(int multiplicand, int multiplier);
+    int aux_INC8(int data);
+    int aux_INC16(int data);
+    int aux_DEC8(int data);
+    int aux_DEC16(int data);
+    int aux_SHRD_SHLD16(int dst, int src, int count);
+    int aux_SHRD(int dst, int src, int count);
+    int aux_SHLD(int dst, int src, int count);
+    void aux_BT16(int base, int offset);
+    void aux_BT(int base, int offset);
+    int aux_BTS_BTR_BTC16(int base, int offset);
+    int aux_BTS_BTR_BTC(int base, int offset);
+    int aux_BSF16(int dst, int src);
+    int aux_BSF(int dst, int src);
+    int aux_BSR16(int dst, int src);
+    int aux_BSR(int dst, int src);
+    void aux_DIV8(int divisor);
+    void aux_IDIV8(int divisor);
+    void aux_DIV16(int divisor);
+    void aux_IDIV16(int divisor);
+    int aux_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    int aux_IDIV32(int dividend_upper, int dividend_lower, int divisor);
+    void aux_MUL8(int multiplicand, int multiplier);
+    void aux_IMUL8(int multiplicand, int multiplier);
+    void aux_MUL16(int multiplicand, int multiplier);
+    void aux_IMUL16(int multiplicand, int multiplier);
+    void aux_MUL32(int multiplicand, int multiplier);
+    void aux_IMUL32(int multiplicand, int multiplier);
 
-    int do_multiply32(int multiplicand, int multiplier);
+    int multiply32(int multiplicand, int multiplier);
 
-    int do_arithmetic8(int dst, int src);
-    int do_arithmetic16(int dst, int src);
-    int do_arithmetic32(int dst, int src);
+    int calculate8(int dst, int src);
+    int calculate16(int dst, int src);
+    int calculate32(int dst, int src);
 
-    int do_shift8(int src, int count);
-    int do_shift16(int src, int count);
-    int do_shift32(uint32_t src, int count);
+    int shift8(int src, int count);
+    int shift16(int src, int count);
+    int shift32(uint32_t src, int count);
 
-    void op_LDTR(int selector);
-    void op_LTR(int selector);
-    void do_JMPF(int selector, int address);
-    void op_JMPF_virtual_mode(int selector, int address);
-    void op_JMPF(int selector, int address);
-    void do_CALLF(bool is_operand_size32, int selector, int address, int return_address);
-    void op_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address);
-    void op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address);
-    void do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
-    void do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
-    void clear_segment_register(int sreg, int privilege_level);
-    void op_IRET(bool is_operand_size32);
-    void op_RETF(bool is_operand_size32, int return_offset);
-    void op_LAR_LSL(bool is_operand_size32, bool is_lsl);
+    void aux_LDTR(int selector);
+    void aux_LTR(int selector);
+    void aux_JMPF(int selector, int address);
+    void aux_JMPF_virtual_mode(int selector, int address);
+    void aux_JMPF(int selector, int address);
+    void aux_CALLF(bool is_operand_size32, int selector, int address, int return_address);
+    void aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address);
+    void aux_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address);
+    void return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
+    void return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
+    void zero_segment_register(int sreg, int privilege_level);
+    void aux_IRET(bool is_operand_size32);
+    void aux_RETF(bool is_operand_size32, int return_offset);
+    void aux_LAR_LSL(bool is_operand_size32, bool is_lsl);
     int ld_descriptor_flags(int selector, bool is_lsl);
 
-    void do_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
-    void do_interrupt_real__v86_mode(int id, int is_sw, int return_address);
-    void do_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void interrupt_real__v86_mode(int id, int is_sw, int return_address);
+    void interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
 
-    void op_VERR_VERW(int selector, bool is_verw);
-    void op_ARPL();
-    void op_CPUID();
-    void op_AAM(int radix);
-    void op_AAD(int radix);
-    void op_AAA();
-    void op_AAS();
-    void op_DAA();
-    void op_DAS();
-    void op_BOUND16();
-    void op_BOUND();
-    void op_PUSHA16();
-    void op_PUSHA();
-    void op_POPA16();
-    void op_POPA();
-    void op_LEAVE16();
-    void op_LEAVE();
-    void op_ENTER16();
-    void op_ENTER();
+    void aux_VERR_VERW(int selector, bool is_verw);
+    void aux_ARPL();
+    void aux_CPUID();
+    void aux_AAM(int radix);
+    void aux_AAD(int radix);
+    void aux_AAA();
+    void aux_AAS();
+    void aux_DAA();
+    void aux_DAS();
+    void aux_BOUND16();
+    void aux_BOUND();
+    void aux_PUSHA16();
+    void aux_PUSHA();
+    void aux_POPA16();
+    void aux_POPA();
+    void aux_LEAVE16();
+    void aux_LEAVE();
+    void aux_ENTER16();
+    void aux_ENTER();
     void ld16_full_pointer(int sreg);
     void ld32_full_pointer(int sreg);
 
     // string.cpp
-    void op_INS16();
-    void op_OUTS16();
-    void op_MOVS16();
-    void op_STOS16();
-    void op_CMPS16();
-    void op_LODS16();
-    void op_SCAS16();
+    void aux_INS16();
+    void aux_OUTS16();
+    void aux_MOVS16();
+    void aux_STOS16();
+    void aux_CMPS16();
+    void aux_LODS16();
+    void aux_SCAS16();
 
-    void op_INSB();
-    void op_OUTSB();
-    void op_MOVSB();
-    void op_STOSB();
-    void op_CMPSB();
-    void op_LODSB();
-    void op_SCASB();
-    void op_INSW();
-    void op_OUTSW();
-    void op_MOVSW();
-    void op_STOSW();
-    void op_CMPSW();
-    void op_LODSW();
-    void op_SCASW();
-    void op_INSD();
-    void op_OUTSD();
-    void op_MOVSD();
-    void op_STOSD();
-    void op_CMPSD();
-    void op_LODSD();
-    void op_SCASD();
+    void aux_INSB();
+    void aux_OUTSB();
+    void aux_MOVSB();
+    void aux_STOSB();
+    void aux_CMPSB();
+    void aux_LODSB();
+    void aux_SCASB();
+    void aux_INSW();
+    void aux_OUTSW();
+    void aux_MOVSW();
+    void aux_STOSW();
+    void aux_CMPSW();
+    void aux_LODSW();
+    void aux_SCASW();
+    void aux_INSD();
+    void aux_OUTSD();
+    void aux_MOVSD();
+    void aux_STOSD();
+    void aux_CMPSD();
+    void aux_LODSD();
+    void aux_SCASD();
 
     // memory.cpp
     int _ld8_mem8_kernel_read();
@@ -542,8 +542,8 @@ class Free86 {
 
     void push_word(int word);
     void push_dword(int dword);
-    void pop_word();
-    void pop_dword();
+    void paux_word();
+    void paux_dword();
     int read_stack_word();
     int read_stack_dword();
 

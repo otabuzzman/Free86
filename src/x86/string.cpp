@@ -1,6 +1,6 @@
 #include "free86.h"
 
-void Free86::op_INSB() {
+void Free86::aux_INSB() {
     int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -33,7 +33,7 @@ void Free86::op_INSB() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
-void Free86::op_OUTSB() {
+void Free86::aux_OUTSB() {
     int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -72,7 +72,7 @@ void Free86::op_OUTSB() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
     }
 }
-void Free86::op_MOVSB() {
+void Free86::aux_MOVSB() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -111,7 +111,7 @@ void Free86::op_MOVSB() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
-void Free86::op_STOSB() {
+void Free86::aux_STOSB() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -136,7 +136,7 @@ void Free86::op_STOSB() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
-void Free86::op_CMPSB() {
+void Free86::aux_CMPSB() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -162,7 +162,7 @@ void Free86::op_CMPSB() {
         x = ld8_mem8_read();
         mem8_loc = la;
         y = ld8_mem8_read();
-        do_arithmetic8(x, y);
+        calculate8(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -182,12 +182,12 @@ void Free86::op_CMPSB() {
         x = ld8_mem8_read();
         mem8_loc = la;
         y = ld8_mem8_read();
-        do_arithmetic8(x, y);
+        calculate8(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
-void Free86::op_LODSB() {
+void Free86::aux_LODSB() {
     int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -220,7 +220,7 @@ void Free86::op_LODSB() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
     }
 }
-void Free86::op_SCASB() {
+void Free86::aux_SCASB() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -236,7 +236,7 @@ void Free86::op_SCASB() {
             return;
         }
         x = ld8_mem8_read();
-        do_arithmetic8(regs[0], x);
+        calculate8(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
@@ -253,11 +253,11 @@ void Free86::op_SCASB() {
         }
     } else {
         x = ld8_mem8_read();
-        do_arithmetic8(regs[0], x);
+        calculate8(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
-void Free86::op_INSW() {
+void Free86::aux_INSW() {
     int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -290,7 +290,7 @@ void Free86::op_INSW() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_OUTSW() {
+void Free86::aux_OUTSW() {
     int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -329,7 +329,7 @@ void Free86::op_OUTSW() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_MOVSW() {
+void Free86::aux_MOVSW() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -368,7 +368,7 @@ void Free86::op_MOVSW() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_STOSW() {
+void Free86::aux_STOSW() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -393,7 +393,7 @@ void Free86::op_STOSW() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_CMPSW() {
+void Free86::aux_CMPSW() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -419,7 +419,7 @@ void Free86::op_CMPSW() {
         x = ld16_mem8_read();
         mem8_loc = la;
         y = ld16_mem8_read();
-        do_arithmetic16(x, y);
+        calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -439,12 +439,12 @@ void Free86::op_CMPSW() {
         x = ld16_mem8_read();
         mem8_loc = la;
         y = ld16_mem8_read();
-        do_arithmetic16(x, y);
+        calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_LODSW() {
+void Free86::aux_LODSW() {
     int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -477,7 +477,7 @@ void Free86::op_LODSW() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_SCASW() {
+void Free86::aux_SCASW() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -493,7 +493,7 @@ void Free86::op_SCASW() {
             return;
         }
         x = ld16_mem8_read();
-        do_arithmetic16(regs[0], x);
+        calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
@@ -510,11 +510,11 @@ void Free86::op_SCASW() {
         }
     } else {
         x = ld16_mem8_read();
-        do_arithmetic16(regs[0], x);
+        calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_INS16() {
+void Free86::aux_INS16() {
     int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -547,7 +547,7 @@ void Free86::op_INS16() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_OUTS16() {
+void Free86::aux_OUTS16() {
     int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -586,7 +586,7 @@ void Free86::op_OUTS16() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_MOVS16() {
+void Free86::aux_MOVS16() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -625,7 +625,7 @@ void Free86::op_MOVS16() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_STOS16() {
+void Free86::aux_STOS16() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -650,7 +650,7 @@ void Free86::op_STOS16() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_CMPS16() {
+void Free86::aux_CMPS16() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -676,7 +676,7 @@ void Free86::op_CMPS16() {
         x = ld16_mem8_read();
         mem8_loc = la;
         y = ld16_mem8_read();
-        do_arithmetic16(x, y);
+        calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -696,12 +696,12 @@ void Free86::op_CMPS16() {
         x = ld16_mem8_read();
         mem8_loc = la;
         y = ld16_mem8_read();
-        do_arithmetic16(x, y);
+        calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_LODS16() {
+void Free86::aux_LODS16() {
     int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -734,7 +734,7 @@ void Free86::op_LODS16() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_SCAS16() {
+void Free86::aux_SCAS16() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -750,7 +750,7 @@ void Free86::op_SCAS16() {
             return;
         }
         x = ld16_mem8_read();
-        do_arithmetic16(regs[0], x);
+        calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
@@ -767,11 +767,11 @@ void Free86::op_SCAS16() {
         }
     } else {
         x = ld16_mem8_read();
-        do_arithmetic16(regs[0], x);
+        calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
-void Free86::op_INSD() {
+void Free86::aux_INSD() {
     int address_size_mask, ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -804,7 +804,7 @@ void Free86::op_INSD() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
-void Free86::op_OUTSD() {
+void Free86::aux_OUTSD() {
     int address_size_mask, ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -843,7 +843,7 @@ void Free86::op_OUTSD() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
     }
 }
-void Free86::op_MOVSD() {
+void Free86::aux_MOVSD() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -882,7 +882,7 @@ void Free86::op_MOVSD() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
-void Free86::op_STOSD() {
+void Free86::aux_STOSD() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -907,7 +907,7 @@ void Free86::op_STOSD() {
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
-void Free86::op_CMPSD() {
+void Free86::aux_CMPSD() {
     int address_size_mask, ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -933,7 +933,7 @@ void Free86::op_CMPSD() {
         x = ld32_mem8_read();
         mem8_loc = la;
         y = ld32_mem8_read();
-        do_arithmetic32(x, y);
+        calculate32(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -953,12 +953,12 @@ void Free86::op_CMPSD() {
         x = ld32_mem8_read();
         mem8_loc = la;
         y = ld32_mem8_read();
-        do_arithmetic32(x, y);
+        calculate32(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
-void Free86::op_LODSD() {
+void Free86::aux_LODSD() {
     int address_size_mask, ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -991,7 +991,7 @@ void Free86::op_LODSD() {
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
     }
 }
-void Free86::op_SCASD() {
+void Free86::aux_SCASD() {
     int address_size_mask, ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
@@ -1007,7 +1007,7 @@ void Free86::op_SCASD() {
             return;
         }
         x = ld32_mem8_read();
-        do_arithmetic32(regs[0], x);
+        calculate32(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ipr & 0x0010) {
@@ -1024,7 +1024,7 @@ void Free86::op_SCASD() {
         }
     } else {
         x = ld32_mem8_read();
-        do_arithmetic32(regs[0], x);
+        calculate32(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }

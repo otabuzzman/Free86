@@ -243,10 +243,10 @@ void Free86::push_dword(int dword) {
     st32_mem8_write(dword);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::pop_word() {
+void Free86::paux_word() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
 }
-void Free86::pop_dword() {
+void Free86::paux_dword() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4) & SS_mask);
 }
 int Free86::read_stack_word() {

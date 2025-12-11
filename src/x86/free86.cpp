@@ -1714,7 +1714,7 @@ int Free86::is_segment_accessible(int selector, bool writable) {
     if ((selector & 0xfffc) == 0) {
         return 1;
     }
-    load_xdt_descriptor(descriptor_table_entry, selector);
+    fill_xdt_descriptor(descriptor_table_entry, selector);
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -1748,7 +1748,7 @@ int Free86::is_segment_accessible(int selector, bool writable) {
     }
     return 0;
 }
-void Free86::load_xdt_descriptor(int *descriptor_table_entry, int selector) {
+void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     SegmentRegister xdt;
     int index, dte_lower_dword, dte_upper_dword;
     if (selector & 0x4) {
@@ -1767,7 +1767,7 @@ void Free86::load_xdt_descriptor(int *descriptor_table_entry, int selector) {
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-void Free86::load_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
+void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
     int type, offset, is_386, dte_lower_dword, dte_upper_dword;
     if (!(tr.flags & (1 << 15))) { // present (P bit)
         abort(11, tr.selector & 0xfffc);
@@ -1803,7 +1803,7 @@ int Free86::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
     }
     return limit;
 }
-void Free86::load_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword) {
+void Free86::fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword) {
     segment_register->base = compile_dte_base(dte_lower_dword, dte_upper_dword);
     segment_register->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
     segment_register->flags = dte_upper_dword;
@@ -1815,7 +1815,7 @@ int Free86::compile_sizemask(int dte_upper_dword) {
         return 0xffff;
     }
 }
-int Free86::op_INC8(int data) {
+int Free86::aux_INC8(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1824,7 +1824,7 @@ int Free86::op_INC8(int data) {
     osm = 25;
     return osm_dst;
 }
-int Free86::op_INC16(int data) {
+int Free86::aux_INC16(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1833,7 +1833,7 @@ int Free86::op_INC16(int data) {
     osm = 26;
     return osm_dst;
 }
-int Free86::op_DEC8(int data) {
+int Free86::aux_DEC8(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1842,7 +1842,7 @@ int Free86::op_DEC8(int data) {
     osm = 28;
     return osm_dst;
 }
-int Free86::op_DEC16(int data) {
+int Free86::aux_DEC16(int data) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
@@ -1851,7 +1851,7 @@ int Free86::op_DEC16(int data) {
     osm = 29;
     return osm_dst;
 }
-int Free86::op_SHRD_SHLD16(int dst, int src, int count) {
+int Free86::aux_SHRD_SHLD16(int dst, int src, int count) {
     int d, s, c;
     d = dst;
     c = count & 0x1f;
@@ -1879,7 +1879,7 @@ int Free86::op_SHRD_SHLD16(int dst, int src, int count) {
     }
     return d;
 }
-int Free86::op_SHRD(int dst, int src, int count) {
+int Free86::aux_SHRD(int dst, int src, int count) {
     int d, c;
     d = dst;
     c = count & 0x1f;
@@ -1892,7 +1892,7 @@ int Free86::op_SHRD(int dst, int src, int count) {
     }
     return d;
 }
-int Free86::op_SHLD(int dst, int src, int count) {
+int Free86::aux_SHLD(int dst, int src, int count) {
     int d, c;
     d = dst;
     c = count & 0x1f;
@@ -1905,15 +1905,15 @@ int Free86::op_SHLD(int dst, int src, int count) {
     }
     return d;
 }
-void Free86::op_BT16(int base, int offset) {
+void Free86::aux_BT16(int base, int offset) {
     osm_src = base >> (offset & 0xf);
     osm = 19;
 }
-void Free86::op_BT(int base, int offset) {
+void Free86::aux_BT(int base, int offset) {
     osm_src = base >> (offset & 0x1f);
     osm = 20;
 }
-int Free86::op_BTS_BTR_BTC16(int base, int offset) {
+int Free86::aux_BTS_BTR_BTC16(int base, int offset) {
     int o, r;
     o = offset & 0xf;
     osm_src = base >> o;
@@ -1933,7 +1933,7 @@ int Free86::op_BTS_BTR_BTC16(int base, int offset) {
     osm = 19;
     return r;
 }
-int Free86::op_BTS_BTR_BTC(int base, int offset) {
+int Free86::aux_BTS_BTR_BTC(int base, int offset) {
     int o, r;
     o = offset & 0x1f;
     osm_src = base >> o;
@@ -1953,7 +1953,7 @@ int Free86::op_BTS_BTR_BTC(int base, int offset) {
     osm = 20;
     return r;
 }
-int Free86::op_BSF16(int dst, int src) {
+int Free86::aux_BSF16(int dst, int src) {
     int d, s;
     d = dst;
     s = src & 0xffff;
@@ -1970,7 +1970,7 @@ int Free86::op_BSF16(int dst, int src) {
     osm = 14;
     return d;
 }
-int Free86::op_BSF(int dst, int src) {
+int Free86::aux_BSF(int dst, int src) {
     int d, s;
     d = dst;
     s = src;
@@ -1987,7 +1987,7 @@ int Free86::op_BSF(int dst, int src) {
     osm = 14;
     return d;
 }
-int Free86::op_BSR16(int dst, int src) {
+int Free86::aux_BSR16(int dst, int src) {
     int d, s;
     d = dst;
     s = src & 0xffff;
@@ -2004,7 +2004,7 @@ int Free86::op_BSR16(int dst, int src) {
     osm = 14;
     return d;
 }
-int Free86::op_BSR(int dst, int src) {
+int Free86::aux_BSR(int dst, int src) {
     int d, s;
     d = dst;
     s = src;
@@ -2021,7 +2021,7 @@ int Free86::op_BSR(int dst, int src) {
     osm = 14;
     return d;
 }
-void Free86::op_DIV8(int divisor) {
+void Free86::aux_DIV8(int divisor) {
     int d, a, q, r;
     d = divisor & 0xff;
     a = regs[0] & 0xffff;
@@ -2032,7 +2032,7 @@ void Free86::op_DIV8(int divisor) {
     r = a % d;
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void Free86::op_IDIV8(int divisor) {
+void Free86::aux_IDIV8(int divisor) {
     int d, a, q, r;
     d = (divisor << 24) >> 24;
     a = (regs[0] << 16) >> 16;
@@ -2046,7 +2046,7 @@ void Free86::op_IDIV8(int divisor) {
     r = a % d;
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void Free86::op_DIV16(int divisor) {
+void Free86::aux_DIV16(int divisor) {
     int d, a, q, r;
     d = divisor & 0xffff;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
@@ -2059,7 +2059,7 @@ void Free86::op_DIV16(int divisor) {
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-void Free86::op_IDIV16(int divisor) {
+void Free86::aux_IDIV16(int divisor) {
     int d, a, q, r;
     d = (divisor << 16) >> 16;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
@@ -2074,7 +2074,7 @@ void Free86::op_IDIV16(int divisor) {
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-int Free86::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
+int Free86::aux_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
     uint32_t du, dl;
     int nd;
@@ -2102,7 +2102,7 @@ int Free86::op_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t 
         return dl;
     }
 }
-int Free86::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
+int Free86::aux_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
     int du, dl, ndd, ndr, q;
     du = dividend_upper;
     dl = dividend_lower;
@@ -2122,7 +2122,7 @@ int Free86::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
     } else {
         ndr = 0;
     }
-    q = op_DIV32(du, dl, divisor);
+    q = aux_DIV32(du, dl, divisor);
     ndr ^= ndd;
     if (ndr) {
         if (q > 0x80000000) {
@@ -2139,7 +2139,7 @@ int Free86::op_IDIV32(int dividend_upper, int dividend_lower, int divisor) {
     }
     return q;
 }
-void Free86::op_MUL8(int multiplicand, int multiplier) {
+void Free86::aux_MUL8(int multiplicand, int multiplier) {
     int md, mr;
     md = multiplicand & 0xff;
     mr = multiplier & 0xff;
@@ -2148,7 +2148,7 @@ void Free86::op_MUL8(int multiplicand, int multiplier) {
     osm_dst = (x << 24) >> 24;
     osm = 21;
 }
-void Free86::op_IMUL8(int multiplicand, int multiplier) {
+void Free86::aux_IMUL8(int multiplicand, int multiplier) {
     int md, mr;
     md = (multiplicand << 24) >> 24;
     mr = (multiplier << 24) >> 24;
@@ -2157,13 +2157,13 @@ void Free86::op_IMUL8(int multiplicand, int multiplier) {
     osm_src = x != osm_dst;
     osm = 21;
 }
-void Free86::op_MUL16(int multiplicand, int multiplier) {
+void Free86::aux_MUL16(int multiplicand, int multiplier) {
     x = (multiplicand & 0xffff) * (multiplier & 0xffff);
     osm_src = x >> 16;
     osm_dst = (x << 16) >> 16;
     osm = 22;
 }
-void Free86::op_IMUL16(int multiplicand, int multiplier) {
+void Free86::aux_IMUL16(int multiplicand, int multiplier) {
     int md, mr;
     md = (multiplicand << 16) >> 16;
     mr = (multiplier << 16) >> 16;
@@ -2172,12 +2172,12 @@ void Free86::op_IMUL16(int multiplicand, int multiplier) {
     osm_src = x != osm_dst;
     osm = 22;
 }
-void Free86::op_MUL32(int multiplicand, int multiplier) {
-    osm_dst = x = do_multiply32(multiplicand, multiplier);
+void Free86::aux_MUL32(int multiplicand, int multiplier) {
+    osm_dst = x = multiply32(multiplicand, multiplier);
     osm_src = v;
     osm = 23;
 }
-void Free86::op_IMUL32(int multiplicand, int multiplier) {
+void Free86::aux_IMUL32(int multiplicand, int multiplier) {
     int md, mr, s, r;
     md = multiplicand;
     mr = multiplier;
@@ -2190,7 +2190,7 @@ void Free86::op_IMUL32(int multiplicand, int multiplier) {
         mr = -mr;
         s ^= 1;
     }
-    r = do_multiply32(md, mr);
+    r = multiply32(md, mr);
     if (s) {
         v = ~v;
         r = -r;
@@ -2202,7 +2202,7 @@ void Free86::op_IMUL32(int multiplicand, int multiplier) {
     osm_src = v - (r >> 31);
     osm = 23;
 }
-int Free86::do_multiply32(int multiplicand, int multiplier) {
+int Free86::multiply32(int multiplicand, int multiplier) {
     uint32_t lower_md, upper_md, lower_mr, upper_mr, m;
     uint64_t r = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (r <= 0xffffffff) {
@@ -2234,7 +2234,7 @@ int Free86::do_multiply32(int multiplicand, int multiplier) {
     }
     return r;
 }
-int Free86::do_arithmetic8(int dst, int src) {
+int Free86::calculate8(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2287,7 +2287,7 @@ int Free86::do_arithmetic8(int dst, int src) {
     }
     return d;
 }
-int Free86::do_arithmetic16(int dst, int src) {
+int Free86::calculate16(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2340,7 +2340,7 @@ int Free86::do_arithmetic16(int dst, int src) {
     }
     return d;
 }
-int Free86::do_arithmetic32(int dst, int src) {
+int Free86::calculate32(int dst, int src) {
     int d, cf;
     d = dst;
     switch (operation & 7) {
@@ -2393,7 +2393,7 @@ int Free86::do_arithmetic32(int dst, int src) {
     }
     return d;
 }
-int Free86::do_shift8(int src, int count) {
+int Free86::shift8(int src, int count) {
     int s1, s2, c, cf;
     s1 = s2 = src & 0xff;
     switch (operation & 7) {
@@ -2424,7 +2424,7 @@ int Free86::do_shift8(int src, int count) {
         }
         break;
     case 2:
-        c = do_shift8_LUT[count & 0x1f];
+        c = shift8_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
             s1 = (s1 << c) | (cf << (c - 1));
@@ -2441,7 +2441,7 @@ int Free86::do_shift8(int src, int count) {
         }
         break;
     case 3:
-        c = do_shift8_LUT[count & 0x1f];
+        c = shift8_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
             s1 = (s1 >> c) | (cf << (8 - c));
@@ -2486,7 +2486,7 @@ int Free86::do_shift8(int src, int count) {
     }
     return s1;
 }
-int Free86::do_shift16(int src, int count) {
+int Free86::shift16(int src, int count) {
     int s1, s2, c, cf;
     s1 = s2 = src & 0xffff;
     switch (operation & 7) {
@@ -2517,7 +2517,7 @@ int Free86::do_shift16(int src, int count) {
         }
         break;
     case 2:
-        c = do_shift16_LUT[count & 0x1f];
+        c = shift16_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
             s1 = (s1 << c) | (cf << (c - 1));
@@ -2534,7 +2534,7 @@ int Free86::do_shift16(int src, int count) {
         }
         break;
     case 3:
-        c = do_shift16_LUT[count & 0x1f];
+        c = shift16_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
             s1 = (s1 >> c) | (cf << (16 - c));
@@ -2579,7 +2579,7 @@ int Free86::do_shift16(int src, int count) {
     }
     return s1;
 }
-int Free86::do_shift32(uint32_t src, int count) {
+int Free86::shift32(uint32_t src, int count) {
     uint32_t s1, s2;
     int c, cf;
     s1 = s2 = src;
@@ -2672,7 +2672,7 @@ int Free86::do_shift32(uint32_t src, int count) {
     }
     return s1;
 }
-void Free86::op_LDTR(int selector) {
+void Free86::aux_LDTR(int selector) {
     int dte_lower_dword, dte_upper_dword, index;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2696,11 +2696,11 @@ void Free86::op_LDTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        load_segment_register(&ldt, dte_lower_dword, dte_upper_dword);
+        fill_segment_register(&ldt, dte_lower_dword, dte_upper_dword);
     }
     ldt.selector = selector;
 }
-void Free86::op_LTR(int selector) {
+void Free86::aux_LTR(int selector) {
     int dte_lower_dword, dte_upper_dword, index, descriptor_type;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2726,32 +2726,32 @@ void Free86::op_LTR(int selector) {
         if (!(dte_upper_dword & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        load_segment_register(&tr, dte_lower_dword, dte_upper_dword);
+        fill_segment_register(&tr, dte_lower_dword, dte_upper_dword);
         dte_upper_dword |= 1 << 9;
         st32_mem8_kernel_write(dte_upper_dword);
     }
     tr.selector = selector;
 }
-void Free86::do_JMPF(int selector, int address) {
+void Free86::aux_JMPF(int selector, int address) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        op_JMPF_virtual_mode(selector, address);
+        aux_JMPF_virtual_mode(selector, address);
     } else {
-        op_JMPF(selector, address);
+        aux_JMPF(selector, address);
     }
 }
-void Free86::op_JMPF_virtual_mode(int selector, int address) {
+void Free86::aux_JMPF_virtual_mode(int selector, int address) {
     eip = address, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = selector << 4;
     update_SSB();
 }
-void Free86::op_JMPF(int selector, int address) {
+void Free86::aux_JMPF(int selector, int address) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    load_xdt_descriptor(descriptor_table_entry, selector);
+    fill_xdt_descriptor(descriptor_table_entry, selector);
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -2788,14 +2788,14 @@ void Free86::op_JMPF(int selector, int address) {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
-void Free86::do_CALLF(bool is_operand_size32, int selector, int address, int return_address) {
+void Free86::aux_CALLF(bool is_operand_size32, int selector, int address, int return_address) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        op_CALLF_real__v86_mode(is_operand_size32, selector, address, return_address);
+        aux_CALLF_real__v86_mode(is_operand_size32, selector, address, return_address);
     } else {
-        op_CALLF_protected_mode(is_operand_size32, selector, address, return_address);
+        aux_CALLF_protected_mode(is_operand_size32, selector, address, return_address);
     }
 }
-void Free86::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address) {
+void Free86::aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address) {
     int esp = regs[4];
     if (is_operand_size32) {
         esp = esp - 4;
@@ -2818,7 +2818,7 @@ void Free86::op_CALLF_real__v86_mode(bool is_operand_size32, int selector, int a
     segs[1].base = selector << 4;
     update_SSB();
 }
-void Free86::op_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
+void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int offset, count;
     int ss, esp, start_esp, spl;
@@ -2826,7 +2826,7 @@ void Free86::op_CALLF_protected_mode(bool is_operand_size32, int selector, int a
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    load_xdt_descriptor(descriptor_table_entry, selector);
+    fill_xdt_descriptor(descriptor_table_entry, selector);
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -2907,7 +2907,7 @@ void Free86::op_CALLF_protected_mode(bool is_operand_size32, int selector, int a
         if ((selector & 0xfffc) == 0) {
             abort(13, 0);
         }
-        load_xdt_descriptor(descriptor_table_entry, selector);
+        fill_xdt_descriptor(descriptor_table_entry, selector);
         dte_lower_dword = descriptor_table_entry[0];
         dte_upper_dword = descriptor_table_entry[1];
         if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -2925,7 +2925,7 @@ void Free86::op_CALLF_protected_mode(bool is_operand_size32, int selector, int a
         }
         if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, code (or data) segment descriptor
             int dte_lower_dword, dte_upper_dword;
-            load_tss_interlevel(descriptor_table_entry, dpl);
+            fill_tss_interlevel(descriptor_table_entry, dpl);
             ss = descriptor_table_entry[0];
             esp = descriptor_table_entry[1];
             if ((ss & 0xfffc) == 0) {
@@ -2934,7 +2934,7 @@ void Free86::op_CALLF_protected_mode(bool is_operand_size32, int selector, int a
             if ((ss & 3) != dpl) {
                 abort(10, ss & 0xfffc);
             }
-            load_xdt_descriptor(descriptor_table_entry, ss);
+            fill_xdt_descriptor(descriptor_table_entry, ss);
             dte_lower_dword = descriptor_table_entry[0];
             dte_upper_dword = descriptor_table_entry[1];
             if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -3012,7 +3012,7 @@ void Free86::op_CALLF_protected_mode(bool is_operand_size32, int selector, int a
         eip = offset, far = far_start = 0;
     }
 }
-void Free86::do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
+void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].base;
@@ -3061,7 +3061,7 @@ void Free86::do_return_real__v86_mode(bool is_operand_size32, bool is_iret, int 
     }
     update_SSB();
 }
-void Free86::do_return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
+void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     int cpl = this->cpl, es, cs, ss, ds, fs, gs;
@@ -3134,7 +3134,7 @@ void Free86::do_return_protected_mode(bool is_operand_size32, bool is_iret, int 
     if ((cs & 0xfffc) == 0) {
         abort(13, cs & 0xfffc);
     }
-    load_xdt_descriptor(descriptor_table_entry, cs);
+    fill_xdt_descriptor(descriptor_table_entry, cs);
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -3187,7 +3187,7 @@ void Free86::do_return_protected_mode(bool is_operand_size32, bool is_iret, int 
             if ((ss & 3) != rpl) {
                 abort(13, ss & 0xfffc);
             }
-            load_xdt_descriptor(descriptor_table_entry, ss);
+            fill_xdt_descriptor(descriptor_table_entry, ss);
             dte_lower_dword = descriptor_table_entry[0];
             dte_upper_dword = descriptor_table_entry[1];
             if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -3205,11 +3205,11 @@ void Free86::do_return_protected_mode(bool is_operand_size32, bool is_iret, int 
             }
             update_segment_register(2, ss, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         }
-        clear_segment_register(0, rpl);
+        zero_segment_register(0, rpl);
         update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-        clear_segment_register(3, rpl);
-        clear_segment_register(4, rpl);
-        clear_segment_register(5, rpl);
+        zero_segment_register(3, rpl);
+        zero_segment_register(4, rpl);
+        zero_segment_register(5, rpl);
         esp = stack_esp + return_offset;
         SS_mask = compile_sizemask(dte_upper_dword);
         set_current_privilege_level(rpl);
@@ -3231,7 +3231,7 @@ void Free86::do_return_protected_mode(bool is_operand_size32, bool is_iret, int 
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::clear_segment_register(int sreg, int privilege_level) {
+void Free86::zero_segment_register(int sreg, int privilege_level) {
     int dte_upper_dword;
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
@@ -3244,7 +3244,7 @@ void Free86::clear_segment_register(int sreg, int privilege_level) {
         }
     }
 }
-void Free86::op_IRET(bool is_operand_size32) {
+void Free86::aux_IRET(bool is_operand_size32) {
     if (!is_protected() || (eflags & 0x00020000)) {
         if (eflags & 0x00020000) {
             iopl = (eflags >> 12) & 3;
@@ -3252,20 +3252,20 @@ void Free86::op_IRET(bool is_operand_size32) {
                 abort(13);
             }
         }
-        do_return_real__v86_mode(is_operand_size32, 1, 0);
+        return_real__v86_mode(is_operand_size32, 1, 0);
     } else {
         if (eflags & 0x00004000) {
             throw "fatal: unsupported EFLAGS.NT == 1 in IRET";
         } else {
-            do_return_protected_mode(is_operand_size32, 1, 0);
+            return_protected_mode(is_operand_size32, 1, 0);
         }
     }
 }
-void Free86::op_RETF(bool is_operand_size32, int return_offset) {
+void Free86::aux_RETF(bool is_operand_size32, int return_offset) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        do_return_real__v86_mode(is_operand_size32, 0, return_offset);
+        return_real__v86_mode(is_operand_size32, 0, return_offset);
     } else {
-        do_return_protected_mode(is_operand_size32, 0, return_offset);
+        return_protected_mode(is_operand_size32, 0, return_offset);
     }
 }
 int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
@@ -3273,7 +3273,7 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
     if ((selector & 0xfffc) == 0) {
         return -1;
     }
-    load_xdt_descriptor(descriptor_table_entry, selector);
+    fill_xdt_descriptor(descriptor_table_entry, selector);
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -3317,7 +3317,7 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
         return dte_upper_dword & 0x00f0ff00;
     }
 }
-void Free86::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
+void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     int selector;
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
@@ -3345,14 +3345,14 @@ void Free86::op_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::do_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
+void Free86::interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
     if (is_protected()) {
-        do_interrupt_protected_mode(id, error_code, is_hw, is_sw, return_address);
+        interrupt_protected_mode(id, error_code, is_hw, is_sw, return_address);
     } else {
-        do_interrupt_real__v86_mode(id, is_sw, return_address);
+        interrupt_real__v86_mode(id, is_sw, return_address);
     }
 }
-void Free86::do_interrupt_real__v86_mode(int id, int is_sw, int return_address) {
+void Free86::interrupt_real__v86_mode(int id, int is_sw, int return_address) {
     int selector, offset, esp;
     if (id * 4 + 3 > idt.limit) {
         abort(13, id * 8 + 2);
@@ -3377,7 +3377,7 @@ void Free86::do_interrupt_real__v86_mode(int id, int is_sw, int return_address) 
     segs[1].base = selector << 4;
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void Free86::do_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
+void Free86::interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
     int selector, offset, st_error_code, is_interlevel, is_386;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
@@ -3426,7 +3426,7 @@ void Free86::do_interrupt_protected_mode(int id, int error_code, int is_hw, int 
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    load_xdt_descriptor(descriptor_table_entry, selector);
+    fill_xdt_descriptor(descriptor_table_entry, selector);
     dte_lower_dword = descriptor_table_entry[0];
     dte_upper_dword = descriptor_table_entry[1];
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
@@ -3443,7 +3443,7 @@ void Free86::do_interrupt_protected_mode(int id, int error_code, int is_hw, int 
         abort(11, selector & 0xfffc);
     }
     if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, code (or data) segment descriptor
-        load_tss_interlevel(descriptor_table_entry, dpl);
+        fill_tss_interlevel(descriptor_table_entry, dpl);
         ss = descriptor_table_entry[0];
         esp = descriptor_table_entry[1];
         if ((ss & 0xfffc) == 0) {
@@ -3452,7 +3452,7 @@ void Free86::do_interrupt_protected_mode(int id, int error_code, int is_hw, int 
         if ((ss & 3) != dpl) {
             abort(10, ss & 0xfffc);
         }
-        load_xdt_descriptor(descriptor_table_entry, ss);
+        fill_xdt_descriptor(descriptor_table_entry, ss);
         ss_dte_upper_dword = descriptor_table_entry[0];
         ss_dte_lower_dword = descriptor_table_entry[1];
         if (ss_dte_upper_dword == 0 && ss_dte_lower_dword == 0) {
@@ -3579,7 +3579,7 @@ void Free86::do_interrupt_protected_mode(int id, int error_code, int is_hw, int 
     }
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
 }
-void Free86::op_VERR_VERW(int selector, bool writable) {
+void Free86::aux_VERR_VERW(int selector, bool writable) {
     int ok;
     ok = is_segment_accessible(selector, writable);
     osm_src = compile_eflags();
@@ -3591,7 +3591,7 @@ void Free86::op_VERR_VERW(int selector, bool writable) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::op_ARPL() {
+void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -3619,7 +3619,7 @@ void Free86::op_ARPL() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::op_CPUID() {
+void Free86::aux_CPUID() {
     switch (regs[0]) {
     case 0: // vendor ID
         regs[0] = 1;
@@ -3636,7 +3636,7 @@ void Free86::op_CPUID() {
         break;
     }
 }
-void Free86::op_AAM(int radix) {
+void Free86::aux_AAM(int radix) {
     int al, ah;
     if (radix == 0) {
         abort(0);
@@ -3648,7 +3648,7 @@ void Free86::op_AAM(int radix) {
     osm_dst = (al << 24) >> 24;
     osm = 12;
 }
-void Free86::op_AAD(int radix) {
+void Free86::aux_AAD(int radix) {
     int al, ah;
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
@@ -3657,7 +3657,7 @@ void Free86::op_AAD(int radix) {
     osm_dst = (al << 24) >> 24;
     osm = 12;
 }
-void Free86::op_AAA() {
+void Free86::aux_AAA() {
     int of, al, ah, f4, flags;
     flags = compile_eflags();
     f4 = flags & 0x0010;
@@ -3677,7 +3677,7 @@ void Free86::op_AAA() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::op_AAS() {
+void Free86::aux_AAS() {
     int of, al, ah, f4, flags;
     flags = compile_eflags();
     f4 = flags & 0x0010; // AF
@@ -3697,7 +3697,7 @@ void Free86::op_AAS() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::op_DAA() {
+void Free86::aux_DAA() {
     int al, f0, f4, flags;
     flags = compile_eflags();
     f0 = flags & 0x0001;
@@ -3720,7 +3720,7 @@ void Free86::op_DAA() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::op_DAS() {
+void Free86::aux_DAS() {
     int al, of, f0, f4, flags;
     flags = compile_eflags();
     f0 = flags & 0x0001;
@@ -3747,7 +3747,7 @@ void Free86::op_DAS() {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-void Free86::op_BOUND16() {
+void Free86::aux_BOUND16() {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3762,7 +3762,7 @@ void Free86::op_BOUND16() {
         abort(5);
     }
 }
-void Free86::op_BOUND() {
+void Free86::aux_BOUND() {
     mem8 = phys_mem8[far++];
     if ((mem8 >> 6) == 3) {
         abort(6);
@@ -3777,7 +3777,7 @@ void Free86::op_BOUND() {
         abort(5);
     }
 }
-void Free86::op_PUSHA16() {
+void Free86::aux_PUSHA16() {
     y = regs[4] - 16;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3787,7 +3787,7 @@ void Free86::op_PUSHA16() {
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
-void Free86::op_PUSHA() {
+void Free86::aux_PUSHA() {
     y = regs[4] - 32;
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
@@ -3797,7 +3797,7 @@ void Free86::op_PUSHA() {
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
-void Free86::op_POPA16() {
+void Free86::aux_POPA16() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
@@ -3807,7 +3807,7 @@ void Free86::op_POPA16() {
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 16) & SS_mask);
 }
-void Free86::op_POPA() {
+void Free86::aux_POPA() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
@@ -3817,21 +3817,21 @@ void Free86::op_POPA() {
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
-void Free86::op_LEAVE16() {
+void Free86::aux_LEAVE16() {
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld16_mem8_read();
     set_lower_word(5, x);
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
-void Free86::op_LEAVE() {
+void Free86::aux_LEAVE() {
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
     x = ld32_mem8_read();
     regs[5] = x;
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
 }
-void Free86::op_ENTER16() {
+void Free86::aux_ENTER16() {
     int c, l, esp, ebp, exp;
     c = ld16_mem8_direct();
     l = phys_mem8[far++];
@@ -3862,7 +3862,7 @@ void Free86::op_ENTER16() {
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::op_ENTER() {
+void Free86::aux_ENTER() {
     int c, l, esp, ebp, exp;
     c = ld16_mem8_direct();
     l = phys_mem8[far++];
