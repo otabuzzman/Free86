@@ -2734,18 +2734,18 @@ void Free86::aux_LTR(int selector) {
 }
 void Free86::aux_JMPF(int selector, int address) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        aux_JMPF_virtual_mode(selector, address);
+        aux_JMPF_real__v86_mode(selector, address);
     } else {
-        aux_JMPF(selector, address);
+        aux_JMPF_protected_mode(selector, address);
     }
 }
-void Free86::aux_JMPF_virtual_mode(int selector, int address) {
+void Free86::aux_JMPF_real__v86_mode(int selector, int address) {
     eip = address, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].base = selector << 4;
     update_SSB();
 }
-void Free86::aux_JMPF(int selector, int address) {
+void Free86::aux_JMPF_protected_mode(int selector, int address) {
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
