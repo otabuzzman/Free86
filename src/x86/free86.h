@@ -432,8 +432,8 @@ class Free86 {
     void aux_LDTR(int selector);
     void aux_LTR(int selector);
     void aux_JMPF(int selector, int address);
-    void aux_JMPF_virtual_mode(int selector, int address);
-    void aux_JMPF(int selector, int address);
+    void aux_JMPF_real__v86_mode(int selector, int address);
+    void aux_JMPF_protected_mode(int selector, int address);
     void aux_CALLF(bool is_operand_size32, int selector, int address, int return_address);
     void aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address);
     void aux_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address);
