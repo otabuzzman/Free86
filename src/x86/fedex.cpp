@@ -160,9 +160,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation(mem8);
                     tlb_hash = tlb_readonly[mem8_loc >> 12];
-                    x = ((tlb_hash | mem8_loc) & 3
-                             ? _ld32_readonly_cpl3()
-                             : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
+                    x = ld32_readonly_cpl3();
                 }
                 regs[(mem8 >> 3) & 7] = x;
                 goto EXEC_LOOP;
