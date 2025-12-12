@@ -137,12 +137,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[mem8 & 7] = x;
                 } else {
                     segment_translation(mem8);
-                    tlb_hash = tlb_writable[mem8_loc >> 12];
-                    if ((tlb_hash | mem8_loc) & 3) {
-                        _st32_writable_cpl3(x);
-                    } else {
-                        phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
-                    }
+                    st32_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0x8a: // MOV
