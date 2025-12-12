@@ -965,7 +965,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[4] = mem8_loc + 4;
                 } else {
                     x = read_stack_dword();
-                    paux_dword();
+                    pop_dword();
                 }
                 regs[opcode & 7] = x;
                 goto EXEC_LOOP;
@@ -979,12 +979,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 mem8 = ld8_direct();
                 if ((mem8 >> 6) == 3) {
                     x = read_stack_dword();
-                    paux_dword();
+                    pop_dword();
                     regs[mem8 & 7] = x;
                 } else {
                     x = read_stack_dword();
                     y = regs[4];
-                    paux_dword();
+                    pop_dword();
                     z = regs[4];
                     segment_translation(mem8);
                     regs[4] = y;
@@ -1044,11 +1044,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 if (((ipr >> 8) & 1) ^ 1) {
                     x = read_stack_dword();
-                    paux_dword();
+                    pop_dword();
                     y = -1;
                 } else {
                     x = read_stack_word();
-                    paux_word();
+                    pop_word();
                     y = 0xffff;
                 }
                 z = 0x00000100 | 0x00004000 | 0x00040000 | 0x00200000;
@@ -1074,7 +1074,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x17: // POP
             case 0x1f: // POP
                 x = read_stack_dword() & 0xffff;
-                paux_dword();
+                pop_dword();
                 set_segment_register(opcode >> 3, x);
                 goto EXEC_LOOP;
             case 0x8d: // LEA
@@ -1422,7 +1422,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[4] = regs[4] + 4;
                 } else {
                     x = read_stack_dword();
-                    paux_dword();
+                    pop_dword();
                 }
                 eip = x, far = far_start = 0;
                 goto EXEC_LOOP;
@@ -2282,7 +2282,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0xa1: // POP FS
                 case 0xa9: // POP GS
                     x = read_stack_dword() & 0xffff;
-                    paux_dword();
+                    pop_dword();
                     set_segment_register((opcode >> 3) & 7, x);
                     goto EXEC_LOOP;
                 case 0xc8: // -
@@ -2863,7 +2863,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x15e: // POP SI
                 case 0x15f: // POP DI
                     x = read_stack_word();
-                    paux_word();
+                    pop_word();
                     set_lower_word(opcode & 7, x);
                     goto EXEC_LOOP;
                 case 0x160: // PUSHA
@@ -2876,12 +2876,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     mem8 = ld8_direct();
                     if ((mem8 >> 6) == 3) {
                         x = read_stack_word();
-                        paux_word();
+                        pop_word();
                         set_lower_word(mem8 & 7, x);
                     } else {
                         x = read_stack_word();
                         y = regs[4];
-                        paux_word();
+                        pop_word();
                         z = regs[4];
                         segment_translation(mem8);
                         regs[4] = y;
@@ -2913,7 +2913,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x117: // POP
                 case 0x11f: // POP
                     x = read_stack_word();
-                    paux_word();
+                    pop_word();
                     set_segment_register((opcode >> 3) & 3, x);
                     goto EXEC_LOOP;
                 case 0x18d: // LEA
@@ -3035,7 +3035,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0x1c3: // RET
                     x = read_stack_word();
-                    paux_word();
+                    pop_word();
                     eip = x, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x1e8: // CALL
@@ -3344,7 +3344,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     case 0x1a1: // POP FS
                     case 0x1a9: // POP GS
                         x = read_stack_word();
-                        paux_word();
+                        pop_word();
                         set_segment_register((opcode >> 3) & 7, x);
                         goto EXEC_LOOP;
                     case 0x1b2: // LSS

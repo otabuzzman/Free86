@@ -544,8 +544,8 @@ class Free86 {
 
     void push_word(int word);
     void push_dword(int dword);
-    void paux_word();
-    void paux_dword();
+    void pop_word();
+    void pop_dword();
     int read_stack_word();
     int read_stack_dword();
 
