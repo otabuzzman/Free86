@@ -7,7 +7,7 @@
 
 class PlainCPU : public Free86 {
   public:
-    PlainCPU(int mem_size) : Free86(mem_size) {}
+    PlainCPU(int memory_size) : Free86(memory_size) {}
     ~PlainCPU() override {}
     int get_irq() override { return 0; }
     int get_iid() override { return 0; }
@@ -17,8 +17,8 @@ class PlainCPU : public Free86 {
 
 class Test386 {
   public:
-    Test386(int mem_size) {
-        cpu = new PlainCPU(mem_size);
+    Test386(int memory_size) {
+        cpu = new PlainCPU(memory_size);
     }
     ~Test386() {
         delete cpu;

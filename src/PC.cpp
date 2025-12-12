@@ -12,9 +12,9 @@
 
 #include "PC.h"
 
-PC::PC(int mem_size)
+PC::PC(int memory_size)
 {
-    this->cpu = new WiredCPU(mem_size);
+    this->cpu = new WiredCPU(memory_size);
 #ifndef NO_SDL
     TTF_Init();
     font = TTF_OpenFont("bin/cp437.ttf", 14);

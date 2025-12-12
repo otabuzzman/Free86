@@ -1,13 +1,13 @@
 #include "free86.h"
 
-Free86::Free86(int mem_size) {
-    this->mem_size = mem_size;
+Free86::Free86(int memory_size) {
+    this->memory_size = memory_size;
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
-    phys_mem8 = (uint8_t *) calloc(1, mem_size + ((15 + 3) & ~3));
-    phys_mem16 = (uint16_t *) (phys_mem8);
-    phys_mem = (uint32_t *) (phys_mem8);
+    memory8 = (uint8_t *) calloc(1, memory_size + ((15 + 3) & ~3));
+    memory16 = (uint16_t *) (memory8);
+    memory = (uint32_t *) (memory8);
     tlb_readonly_cplX = new int[tlb_size];
     tlb_writable_cplX = new int[tlb_size];
     tlb_readonly_cpl3 = new int[tlb_size];
@@ -20,7 +20,7 @@ Free86::Free86(int mem_size) {
     set_cpl(0); // PM (1986), 10.3
 }
 Free86::~Free86() {
-    free(phys_mem8);
+    free(memory8);
     delete[] tlb_readonly_cplX;
     delete[] tlb_writable_cplX;
     delete[] tlb_readonly_cpl3;
@@ -80,10 +80,10 @@ void Free86::fetch_opcode() {
         if (page_offset > (4096 - 15)) {
             x = instruction_length(opcode);
             if ((page_offset + x) > 4096) { // instruction extends page boundary
-                far = far_start = mem_size;
+                far = far_start = memory_size;
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
-                    mem8_loc = eip_linear + y;
-                    phys_mem8[far + y] = ld8_readonly_cpl3();
+                    address_operand = eip_linear + y;
+                    memory8[far + y] = ld8_readonly_cpl3();
                 }
                 far++;
             }
@@ -124,7 +124,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             break;
         case 0x67: // address-size override prefix
@@ -136,7 +136,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             break;
         case 0x91: // XCHG C
@@ -374,7 +374,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             mem8 = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -396,7 +396,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    mem8_loc = eip_linear + (n++);
+                    address_operand = eip_linear + (n++);
                     mem8 = ld8_readonly_cpl3();
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -465,7 +465,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             mem8 = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -487,7 +487,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    mem8_loc = eip_linear + (n++);
+                    address_operand = eip_linear + (n++);
                     mem8 = ld8_readonly_cpl3();
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -543,7 +543,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             mem8 = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -565,7 +565,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    mem8_loc = eip_linear + (n++);
+                    address_operand = eip_linear + (n++);
                     mem8 = ld8_readonly_cpl3();
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -619,7 +619,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             mem8 = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -641,7 +641,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    mem8_loc = eip_linear + (n++);
+                    address_operand = eip_linear + (n++);
                     mem8 = ld8_readonly_cpl3();
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -698,7 +698,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             mem8 = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -720,7 +720,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    mem8_loc = eip_linear + (n++);
+                    address_operand = eip_linear + (n++);
                     mem8 = ld8_readonly_cpl3();
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -801,7 +801,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            mem8_loc = eip_linear + (n++);
+            address_operand = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             switch (opcode) {
             case 0x06: // CLTS
@@ -903,7 +903,7 @@ int Free86::instruction_length(int opcode) {
                 if ((n + 1) > 15) {
                     abort(13);
                 }
-                mem8_loc = eip_linear + (n++);
+                address_operand = eip_linear + (n++);
                 mem8 = ld8_readonly_cpl3();
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -925,7 +925,7 @@ int Free86::instruction_length(int opcode) {
                         if ((n + 1) > 15) {
                             abort(13);
                         }
-                        mem8_loc = eip_linear + (n++);
+                        address_operand = eip_linear + (n++);
                         mem8 = ld8_readonly_cpl3();
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -977,7 +977,7 @@ int Free86::instruction_length(int opcode) {
                 if ((n + 1) > 15) {
                     abort(13);
                 }
-                mem8_loc = eip_linear + (n++);
+                address_operand = eip_linear + (n++);
                 mem8 = ld8_readonly_cpl3();
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -999,7 +999,7 @@ int Free86::instruction_length(int opcode) {
                         if ((n + 1) > 15) {
                             abort(13);
                         }
-                        mem8_loc = eip_linear + (n++);
+                        address_operand = eip_linear + (n++);
                         mem8 = ld8_readonly_cpl3();
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -1300,37 +1300,37 @@ void Free86::segment_translation(int modRM) {
             sib = ld8_direct();
             sib_base = sib & 7;
             if (sib_base == 5) {
-                mem8_loc = ld_direct();
+                address_operand = ld_direct();
             } else {
-                mem8_loc = regs[sib_base];
+                address_operand = regs[sib_base];
             }
             sib_index = (sib >> 3) & 7;
             if (sib_index != 4) {
-                mem8_loc = mem8_loc + (regs[sib_index] << (sib >> 6));
+                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
             }
             break;
         case 0x0c:
             sib = ld8_direct();
-            mem8_loc = (ld8_direct() << 24) >> 24;
+            address_operand = (ld8_direct() << 24) >> 24;
             sib_base = sib & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             sib_index = (sib >> 3) & 7;
             if (sib_index != 4) {
-                mem8_loc = mem8_loc + (regs[sib_index] << (sib >> 6));
+                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
             }
             break;
         case 0x14:
             sib = ld8_direct();
-            mem8_loc = ld_direct();
+            address_operand = ld_direct();
             sib_base = sib & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             sib_index = (sib >> 3) & 7;
             if (sib_index != 4) {
-                mem8_loc = mem8_loc + (regs[sib_index] << (sib >> 6));
+                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
             }
             break;
         case 0x05:
-            mem8_loc = ld_direct();
+            address_operand = ld_direct();
             break;
         case 0x00:
         case 0x01:
@@ -1339,7 +1339,7 @@ void Free86::segment_translation(int modRM) {
         case 0x06:
         case 0x07:
             sib_base = modRM & 7;
-            mem8_loc = regs[sib_base];
+            address_operand = regs[sib_base];
             break;
         case 0x08:
         case 0x09:
@@ -1348,9 +1348,9 @@ void Free86::segment_translation(int modRM) {
         case 0x0d:
         case 0x0e:
         case 0x0f:
-            mem8_loc = (ld8_direct() << 24) >> 24;
+            address_operand = (ld8_direct() << 24) >> 24;
             sib_base = modRM & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             break;
         case 0x10:
         case 0x11:
@@ -1360,61 +1360,61 @@ void Free86::segment_translation(int modRM) {
         case 0x16:
         case 0x17:
         default:
-            mem8_loc = ld_direct();
+            address_operand = ld_direct();
             sib_base = modRM & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             break;
         }
         return;
     } else if (ipr & 0x0080) {
         int _sreg; // if no data segement override prefix
         if ((modRM & 0xc7) == 0x06) {
-            mem8_loc = ld16_direct();
+            address_operand = ld16_direct();
             _sreg = 3;
         } else {
             switch (modRM >> 6) {
             case 0:
-                mem8_loc = 0;
+                address_operand = 0;
                 break;
             case 1:
-                mem8_loc = (ld8_direct() << 24) >> 24;
+                address_operand = (ld8_direct() << 24) >> 24;
                 break;
             default:
-                mem8_loc = ld16_direct();
+                address_operand = ld16_direct();
                 break;
             }
             switch (modRM & 7) {
             case 0:
-                mem8_loc = (mem8_loc + regs[3] + regs[6]) & 0xffff;
+                address_operand = (address_operand + regs[3] + regs[6]) & 0xffff;
                 _sreg = 3;
                 break;
             case 1:
-                mem8_loc = (mem8_loc + regs[3] + regs[7]) & 0xffff;
+                address_operand = (address_operand + regs[3] + regs[7]) & 0xffff;
                 _sreg = 3;
                 break;
             case 2:
-                mem8_loc = (mem8_loc + regs[5] + regs[6]) & 0xffff;
+                address_operand = (address_operand + regs[5] + regs[6]) & 0xffff;
                 _sreg = 2;
                 break;
             case 3:
-                mem8_loc = (mem8_loc + regs[5] + regs[7]) & 0xffff;
+                address_operand = (address_operand + regs[5] + regs[7]) & 0xffff;
                 _sreg = 2;
                 break;
             case 4:
-                mem8_loc = (mem8_loc + regs[6]) & 0xffff;
+                address_operand = (address_operand + regs[6]) & 0xffff;
                 _sreg = 3;
                 break;
             case 5:
-                mem8_loc = (mem8_loc + regs[7]) & 0xffff;
+                address_operand = (address_operand + regs[7]) & 0xffff;
                 _sreg = 3;
                 break;
             case 6:
-                mem8_loc = (mem8_loc + regs[5]) & 0xffff;
+                address_operand = (address_operand + regs[5]) & 0xffff;
                 _sreg = 2;
                 break;
             case 7:
             default:
-                mem8_loc = (mem8_loc + regs[3]) & 0xffff;
+                address_operand = (address_operand + regs[3]) & 0xffff;
                 _sreg = 3;
                 break;
             }
@@ -1425,7 +1425,7 @@ void Free86::segment_translation(int modRM) {
         } else {
             sreg--;
         }
-        mem8_loc = mem8_loc + segs[sreg].base;
+        address_operand = address_operand + segs[sreg].base;
         return;
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -1433,38 +1433,38 @@ void Free86::segment_translation(int modRM) {
             sib = ld8_direct();
             sib_base = sib & 7;
             if (sib_base == 5) {
-                mem8_loc = ld_direct();
+                address_operand = ld_direct();
                 sib_base = 0;
             } else {
-                mem8_loc = regs[sib_base];
+                address_operand = regs[sib_base];
             }
             sib_index = (sib >> 3) & 7;
             if (sib_index != 4) {
-                mem8_loc = mem8_loc + (regs[sib_index] << (sib >> 6));
+                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
             }
             break;
         case 0x0c:
             sib = ld8_direct();
-            mem8_loc = (ld8_direct() << 24) >> 24;
+            address_operand = (ld8_direct() << 24) >> 24;
             sib_base = sib & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             sib_index = (sib >> 3) & 7;
             if (sib_index != 4) {
-                mem8_loc = mem8_loc + (regs[sib_index] << (sib >> 6));
+                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
             }
             break;
         case 0x14:
             sib = ld8_direct();
-            mem8_loc = ld_direct();
+            address_operand = ld_direct();
             sib_base = sib & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             sib_index = (sib >> 3) & 7;
             if (sib_index != 4) {
-                mem8_loc = mem8_loc + (regs[sib_index] << (sib >> 6));
+                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
             }
             break;
         case 0x05:
-            mem8_loc = ld_direct();
+            address_operand = ld_direct();
             sib_base = 0;
             break;
         case 0x00:
@@ -1474,7 +1474,7 @@ void Free86::segment_translation(int modRM) {
         case 0x06:
         case 0x07:
             sib_base = modRM & 7;
-            mem8_loc = regs[sib_base];
+            address_operand = regs[sib_base];
             break;
         case 0x08:
         case 0x09:
@@ -1483,9 +1483,9 @@ void Free86::segment_translation(int modRM) {
         case 0x0d:
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
-            mem8_loc = (ld8_direct() << 24) >> 24;
+            address_operand = (ld8_direct() << 24) >> 24;
             sib_base = modRM & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             break;
         case 0x10:
         case 0x11:
@@ -1495,9 +1495,9 @@ void Free86::segment_translation(int modRM) {
         case 0x16:
         case 0x17:
         default:
-            mem8_loc = ld_direct();
+            address_operand = ld_direct();
             sib_base = modRM & 7;
-            mem8_loc = mem8_loc + regs[sib_base];
+            address_operand = address_operand + regs[sib_base];
             break;
         }
     sreg = ipr & 0x000f;
@@ -1510,7 +1510,7 @@ void Free86::segment_translation(int modRM) {
     } else {
             sreg--;
         }
-    mem8_loc = mem8_loc + segs[sreg].base;
+    address_operand = address_operand + segs[sreg].base;
     return;
 }
 void Free86::convert_offset_to_linear(bool writable) {
@@ -1555,7 +1555,7 @@ void Free86::convert_offset_to_linear(bool writable) {
             abort(13, 0); // #GP(0)
         }
     }
-    mem8_loc = la;
+    address_operand = la;
 }
 void Free86::set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[sreg] = {selector, base, limit, flags}; // set register
@@ -1597,9 +1597,9 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
         if ((selector_index + 7) > xdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        mem8_loc = xdt.base + selector_index;
+        address_operand = xdt.base + selector_index;
         dte_lower_dword = ld_readonly_cplX();
-        mem8_loc += 4;
+        address_operand += 4;
         dte_upper_dword = ld_readonly_cplX();
         if (!(dte_upper_dword & (1 << 12))) {
             abort(13, selector & 0xfffc);
@@ -1688,9 +1688,9 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     if ((index + 7) > xdt.limit) {
         return;
     }
-    mem8_loc = xdt.base + index;
+    address_operand = xdt.base + index;
     dte_lower_dword = ld_readonly_cplX();
-    mem8_loc += 4;
+    address_operand += 4;
     dte_upper_dword = ld_readonly_cplX();
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
@@ -1709,13 +1709,13 @@ void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_leve
     if (offset + (4 << is_386) - 1 > tr.limit) {
         abort(10, tr.selector & 0xfffc);
     }
-    mem8_loc = tr.base + offset;
+    address_operand = tr.base + offset;
     if (is_386 == 0) {
         dte_upper_dword = ld16_readonly_cplX(); // privileged SP
-        mem8_loc += 2;
+        address_operand += 2;
     } else {
         dte_upper_dword = ld_readonly_cplX(); // privileged ESP
-        mem8_loc += 4;
+        address_operand += 4;
     }
     dte_lower_dword = ld16_readonly_cplX(); // privileged SS
     descriptor_table_entry[0] = dte_lower_dword;
@@ -2614,9 +2614,9 @@ void Free86::aux_LDTR(int selector) {
         if ((index + 7) > gdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        mem8_loc = gdt.base + index;
+        address_operand = gdt.base + index;
         dte_lower_dword = ld_readonly_cplX();
-        mem8_loc += 4;
+        address_operand += 4;
         dte_upper_dword = ld_readonly_cplX();
         if ((dte_upper_dword & (1 << 12)) || ((dte_upper_dword >> 8) & 0xf) != 2) {
             abort(13, selector & 0xfffc);
@@ -2643,9 +2643,9 @@ void Free86::aux_LTR(int selector) {
         if ((index + 7) > gdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        mem8_loc = gdt.base + index;
+        address_operand = gdt.base + index;
         dte_lower_dword = ld_readonly_cplX();
-        mem8_loc += 4;
+        address_operand += 4;
         dte_upper_dword = ld_readonly_cplX();
         descriptor_type = (dte_upper_dword >> 8) & 0xf;
         if ((dte_upper_dword & (1 << 12)) || (descriptor_type != 1 && descriptor_type != 9)) {
@@ -2727,17 +2727,17 @@ void Free86::aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int 
     int esp = regs[4];
     if (is_operand_size32) {
         esp = esp - 4;
-        mem8_loc = (esp & SS_mask) + SS_base;
+        address_operand = (esp & SS_mask) + SS_base;
         st_writable_cpl3(segs[1].selector);
         esp = esp - 4;
-        mem8_loc = (esp & SS_mask) + SS_base;
+        address_operand = (esp & SS_mask) + SS_base;
         st_writable_cpl3(return_address);
     } else {
         esp = esp - 2;
-        mem8_loc = (esp & SS_mask) + SS_base;
+        address_operand = (esp & SS_mask) + SS_base;
         st16_writable_cpl3(segs[1].selector);
         esp = esp - 2;
-        mem8_loc = (esp & SS_mask) + SS_base;
+        address_operand = (esp & SS_mask) + SS_base;
         st16_writable_cpl3(return_address);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -2787,17 +2787,17 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         SS_base = segs[2].base;
         if (is_operand_size32) {
             esp = esp - 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[1].selector);
             esp = esp - 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st_writable_cplX(return_address);
         } else {
             esp = esp - 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st16_writable_cplX(return_address);
         }
         int limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
@@ -2884,29 +2884,29 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             SS_base = compile_dte_base(dte_lower_dword, dte_upper_dword);
             if (is_operand_size32) {
                 esp = esp - 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[2].selector);
                 esp = esp - 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st_writable_cplX(start_esp);
                 for (int i = count - 1; i >= 0; i--) {
                     // x = Xe(Ve + ((start_esp + i * 4) & Ue));
                     esp = esp - 4;
-                    mem8_loc = SS_base + (esp & SS_mask);
+                    address_operand = SS_base + (esp & SS_mask);
                     st_writable_cplX(0);
                     // st_writable_cplX(x);
                 }
             } else {
                 esp = esp - 2;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[2].selector);
                 esp = esp - 2;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st16_writable_cplX(start_esp);
                 for (int i = count - 1; i >= 0; i--) {
                     // x = Ye(Ve + ((start_esp + i * 2) & Ue));
                     esp = esp - 2;
-                    mem8_loc = SS_base + (esp & SS_mask);
+                    address_operand = SS_base + (esp & SS_mask);
                     st16_writable_cplX(0);
                     // st16_writable_cplX(x);
                 }
@@ -2920,17 +2920,17 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         }
         if (is_operand_size32) {
             esp = esp - 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[1].selector);
             esp = esp - 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st_writable_cplX(return_address);
         } else {
             esp = esp - 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st16_writable_cplX(return_address);
         }
         selector = (selector & ~3) | dpl;
@@ -2946,27 +2946,27 @@ void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int ret
     SS_base = segs[2].base;
     SS_mask = 0xffff;
     if (is_operand_size32 == 1) {
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         stack_eip = ld_readonly_cplX();
         esp = esp + 4;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         cs = ld_readonly_cplX();
         esp = esp + 4;
         cs &= 0xffff;
         if (is_iret) {
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             stack_eflags = ld_readonly_cplX();
             esp = esp + 4;
         }
     } else {
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         stack_eip = ld16_readonly_cplX();
         esp = esp + 2;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             stack_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
@@ -2997,35 +2997,35 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     SS_base = segs[2].base;
     SS_mask = get_addressmask(segs[2].flags);
     if (is_operand_size32 == 1) {
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         stack_eip = ld_readonly_cplX();
         esp = esp + 4;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         cs = ld_readonly_cplX();
         esp = esp + 4;
         cs &= 0xffff;
         if (is_iret) {
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             stack_eflags = ld_readonly_cplX();
             esp = esp + 4;
             if (stack_eflags & 0x00020000) {
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 stack_esp = ld_readonly_cplX();
                 esp = esp + 4;
                 // pop segment selectors from stack
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 ss = ld_readonly_cplX();
                 esp = esp + 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 es = ld_readonly_cplX();
                 esp = esp + 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 ds = ld_readonly_cplX();
                 esp = esp + 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 fs = ld_readonly_cplX();
                 esp = esp + 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 gs = ld_readonly_cplX();
                 esp = esp + 4;
                 // clang-format off
@@ -3047,14 +3047,14 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
             }
         }
     } else {
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         stack_eip = ld16_readonly_cplX();
         esp = esp + 2;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             stack_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
@@ -3093,18 +3093,18 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
         set_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
         if (is_operand_size32 == 1) {
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             stack_esp = ld_readonly_cplX();
             esp = esp + 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             ss = ld_readonly_cplX();
             esp = esp + 4;
             ss &= 0xffff;
         } else {
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             stack_esp = ld16_readonly_cplX();
             esp = esp + 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             ss = ld16_readonly_cplX();
             esp = esp + 2;
         }
@@ -3191,19 +3191,19 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     if (id * 4 + 3 > idt.limit) {
         abort(13, id * 8 + 2);
     }
-    mem8_loc = idt.base + (id << 2);
+    address_operand = idt.base + (id << 2);
     offset = ld16_readonly_cplX();
-    mem8_loc = mem8_loc + 2;
+    address_operand = address_operand + 2;
     selector = ld16_readonly_cplX();
     esp = regs[4];
     esp = esp - 2;
-    mem8_loc = (esp & SS_mask) + SS_base;
+    address_operand = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(get_EFLAGS());
     esp = esp - 2;
-    mem8_loc = (esp & SS_mask) + SS_base;
+    address_operand = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(segs[1].selector);
     esp = esp - 2;
-    mem8_loc = (esp & SS_mask) + SS_base;
+    address_operand = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(is_sw ? return_address : eip);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
@@ -3232,9 +3232,9 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     if (id * 8 + 7 > idt.limit) {
         abort(13, id * 8 + 2);
     }
-    mem8_loc = idt.base + id * 8;
+    address_operand = idt.base + id * 8;
     dte_lower_dword = ld_readonly_cplX();
-    mem8_loc += 4;
+    address_operand += 4;
     dte_upper_dword = ld_readonly_cplX();
     descriptor_type = (dte_upper_dword >> 8) & 0x1f;
     switch (descriptor_type) {
@@ -3322,74 +3322,74 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         if (is_interlevel) {
             if (eflags & 0x00020000) {
                 esp = esp - 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[5].selector);
                 esp = esp - 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[4].selector);
                 esp = esp - 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[3].selector);
                 esp = esp - 4;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[0].selector);
             }
             esp = esp - 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[2].selector);
             esp = esp - 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st_writable_cplX(regs[4]);
         }
         esp = esp - 4;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         st_writable_cplX(get_EFLAGS());
         esp = esp - 4;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         st_writable_cplX(segs[1].selector);
         esp = esp - 4;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         st_writable_cplX(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 4;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st_writable_cplX(error_code);
         }
     } else {
         if (is_interlevel) {
             if (eflags & 0x00020000) {
                 esp = esp - 2;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[5].selector);
                 esp = esp - 2;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[4].selector);
                 esp = esp - 2;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[3].selector);
                 esp = esp - 2;
-                mem8_loc = SS_base + (esp & SS_mask);
+                address_operand = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[0].selector);
             }
             esp = esp - 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[2].selector);
             esp = esp - 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st16_writable_cplX(regs[4]);
         }
         esp = esp - 2;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         st16_writable_cplX(get_EFLAGS());
         esp = esp - 2;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         st16_writable_cplX(segs[1].selector);
         esp = esp - 2;
-        mem8_loc = SS_base + (esp & SS_mask);
+        address_operand = SS_base + (esp & SS_mask);
         st16_writable_cplX(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 2;
-            mem8_loc = SS_base + (esp & SS_mask);
+            address_operand = SS_base + (esp & SS_mask);
             st16_writable_cplX(error_code);
         }
     }
@@ -3682,7 +3682,7 @@ void Free86::aux_BOUND16() {
     }
     segment_translation(mem8);
     x = (ld16_readonly_cpl3() << 16) >> 16;
-    mem8_loc = mem8_loc + 2;
+    address_operand = address_operand + 2;
     y = (ld16_readonly_cpl3() << 16) >> 16;
     reg_idx1 = (mem8 >> 3) & 7;
     z = (regs[reg_idx1] << 16) >> 16;
@@ -3697,7 +3697,7 @@ void Free86::aux_BOUND() {
     }
     segment_translation(mem8);
     x = ld_readonly_cpl3();
-    mem8_loc = mem8_loc + 4;
+    address_operand = address_operand + 4;
     y = ld_readonly_cpl3();
     reg_idx1 = (mem8 >> 3) & 7;
     z = regs[reg_idx1];
@@ -3707,54 +3707,54 @@ void Free86::aux_BOUND() {
 }
 void Free86::aux_PUSHA16() {
     y = regs[4] - 16;
-    mem8_loc = (y & SS_mask) + SS_base;
+    address_operand = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         x = regs[reg_idx1];
         st16_writable_cpl3(x);
-        mem8_loc = mem8_loc + 2;
+        address_operand = address_operand + 2;
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void Free86::aux_PUSHA() {
     y = regs[4] - 32;
-    mem8_loc = (y & SS_mask) + SS_base;
+    address_operand = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         x = regs[reg_idx1];
         st_writable_cpl3(x);
-        mem8_loc = mem8_loc + 4;
+        address_operand = address_operand + 4;
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void Free86::aux_POPA16() {
-    mem8_loc = (regs[4] & SS_mask) + SS_base;
+    address_operand = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
             set_lower_word(reg_idx1, ld16_readonly_cpl3());
         }
-        mem8_loc = mem8_loc + 2;
+        address_operand = address_operand + 2;
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 16) & SS_mask);
 }
 void Free86::aux_POPA() {
-    mem8_loc = (regs[4] & SS_mask) + SS_base;
+    address_operand = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
             regs[reg_idx1] = ld_readonly_cpl3();
         }
-        mem8_loc = mem8_loc + 4;
+        address_operand = address_operand + 4;
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
 void Free86::aux_LEAVE16() {
     y = regs[5];
-    mem8_loc = (y & SS_mask) + SS_base;
+    address_operand = (y & SS_mask) + SS_base;
     x = ld16_readonly_cpl3();
     set_lower_word(5, x);
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
 void Free86::aux_LEAVE() {
     y = regs[5];
-    mem8_loc = (y & SS_mask) + SS_base;
+    address_operand = (y & SS_mask) + SS_base;
     x = ld_readonly_cpl3();
     regs[5] = x;
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
@@ -3767,25 +3767,25 @@ void Free86::aux_ENTER16() {
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 2;
-    mem8_loc = (esp & SS_mask) + SS_base;
+    address_operand = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(ebp);
     exp = esp;
     if (l != 0) {
         while (l > 1) {
             ebp = ebp - 2;
-            mem8_loc = (ebp & SS_mask) + SS_base;
+            address_operand = (ebp & SS_mask) + SS_base;
             x = ld16_readonly_cpl3();
             esp = esp - 2;
-            mem8_loc = (esp & SS_mask) + SS_base;
+            address_operand = (esp & SS_mask) + SS_base;
             st16_writable_cpl3(x);
             l--;
         }
         esp = esp - 2;
-        mem8_loc = (esp & SS_mask) + SS_base;
+        address_operand = (esp & SS_mask) + SS_base;
         st16_writable_cpl3(exp);
     }
     esp = esp - c;
-    mem8_loc = (esp & SS_mask) + SS_base;
+    address_operand = (esp & SS_mask) + SS_base;
     ld16_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -3798,25 +3798,25 @@ void Free86::aux_ENTER() {
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 4;
-    mem8_loc = (esp & SS_mask) + SS_base;
+    address_operand = (esp & SS_mask) + SS_base;
     st_writable_cpl3(ebp);
     exp = (ebp & ~SS_mask) | (esp & SS_mask);
     if (l != 0) {
         while (l > 1) {
             ebp = ebp - 4;
-            mem8_loc = (ebp & SS_mask) + SS_base;
+            address_operand = (ebp & SS_mask) + SS_base;
             x = ld_readonly_cpl3();
             esp = esp - 4;
-            mem8_loc = (esp & SS_mask) + SS_base;
+            address_operand = (esp & SS_mask) + SS_base;
             st_writable_cpl3(x);
             l--;
         }
         esp = esp - 4;
-        mem8_loc = (esp & SS_mask) + SS_base;
+        address_operand = (esp & SS_mask) + SS_base;
         st_writable_cpl3(exp);
     }
     esp = esp - c;
-    mem8_loc = (esp & SS_mask) + SS_base;
+    address_operand = (esp & SS_mask) + SS_base;
     ld_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -3828,7 +3828,7 @@ void Free86::ld_full_pointer16(int sreg) {
     }
     segment_translation(mem8);
     x = ld16_readonly_cpl3();
-    mem8_loc += 2;
+    address_operand += 2;
     y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
     set_lower_word((mem8 >> 3) & 7, x);
@@ -3840,7 +3840,7 @@ void Free86::ld_full_pointer(int sreg) {
     }
     segment_translation(mem8);
     x = ld_readonly_cpl3();
-    mem8_loc += 4;
+    address_operand += 4;
     y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
     regs[(mem8 >> 3) & 7] = x;

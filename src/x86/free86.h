@@ -72,7 +72,7 @@ class Free86 {
     virtual void io_write(int port, int data) = 0;
 
     // x86.cpp
-    Free86(int mem_size);
+    Free86(int memory_size);
     virtual ~Free86();
 
     void reset();
@@ -104,11 +104,11 @@ class Free86 {
 
     Interrupt interrupt;
 
-    int mem_size;
+    int memory_size;
 
-    uint8_t *phys_mem8;
-    uint16_t *phys_mem16;
-    uint32_t *phys_mem;
+    uint8_t *memory8;
+    uint16_t *memory16;
+    uint32_t *memory;
 
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
@@ -296,8 +296,7 @@ class Free86 {
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
 
-    // linear address...
-    uint32_t mem8_loc;
+    uint32_t address_operand; // linear, either immediate or calculated
     int mem8; // ...and value
 
     // clang-format off

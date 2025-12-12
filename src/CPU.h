@@ -659,7 +659,7 @@ class CPU : public Free86 {
     PIC *pic = nullptr;
     PIT *pit = nullptr;
     Serial *serial = nullptr;
-    CPU(int mem_size) : Free86(mem_size) {
+    CPU(int memory_size) : Free86(memory_size) {
         cmos = new CMOS();
         kbd = new KBD();
         pic = new PIC();
