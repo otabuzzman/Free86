@@ -3338,12 +3338,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         if ((mem8 >> 6) == 3) {
                             z = ld8_direct();
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, aux_SHRD_SHLD16(regs[reg_idx0], y, z));
+                            set_lower_word(reg_idx0, aux_SHRD16_SHLD16(regs[reg_idx0], y, z));
                         } else {
                             segment_translation(mem8);
                             z = ld8_direct();
                             x = ld16_writable_cpl3();
-                            x = aux_SHRD_SHLD16(x, y, z);
+                            x = aux_SHRD16_SHLD16(x, y, z);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
@@ -3355,11 +3355,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         operation = (opcode >> 3) & 1;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, aux_SHRD_SHLD16(regs[reg_idx0], y, z));
+                            set_lower_word(reg_idx0, aux_SHRD16_SHLD16(regs[reg_idx0], y, z));
                         } else {
                             segment_translation(mem8);
                             x = ld16_writable_cpl3();
-                            x = aux_SHRD_SHLD16(x, y, z);
+                            x = aux_SHRD16_SHLD16(x, y, z);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
@@ -3385,12 +3385,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             if ((mem8 >> 6) == 3) {
                                 reg_idx0 = mem8 & 7;
                                 y = ld8_direct();
-                                regs[reg_idx0] = aux_BTS_BTR_BTC16(regs[reg_idx0], y);
+                                regs[reg_idx0] = aux_BTS16_BTR16_BTC16(regs[reg_idx0], y);
                             } else {
                                 segment_translation(mem8);
                                 y = ld8_direct();
                                 x = ld16_writable_cpl3();
-                                x = aux_BTS_BTR_BTC16(x, y);
+                                x = aux_BTS16_BTR16_BTC16(x, y);
                                 st16_writable_cpl3(x);
                             }
                             break;
@@ -3418,12 +3418,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         operation = (opcode >> 3) & 3;
                         if ((mem8 >> 6) == 3) {
                             reg_idx0 = mem8 & 7;
-                            set_lower_word(reg_idx0, aux_BTS_BTR_BTC16(regs[reg_idx0], y));
+                            set_lower_word(reg_idx0, aux_BTS16_BTR16_BTC16(regs[reg_idx0], y));
                         } else {
                             segment_translation(mem8);
                             mem8_loc = mem8_loc + (((y & 0xffff) >> 4) << 1);
                             x = ld16_writable_cpl3();
-                            x = aux_BTS_BTR_BTC16(x, y);
+                            x = aux_BTS16_BTR16_BTC16(x, y);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;

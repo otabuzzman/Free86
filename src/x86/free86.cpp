@@ -1235,19 +1235,19 @@ void Free86::set_lower_byte(int reg, int byte) {
 void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-void Free86::page_translation(int linear_address, int writable, bool user) {
+void Free86::page_translation(int address, int writable, bool user) {
     int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, ok, error_code;
     if (!is_paging()) {
         pte_RW = 1; // writable
         pte_US = 0; // supervisor
-        tlb_update(linear_address & -4096, linear_address & -4096, pte_RW, pte_US);
+        tlb_update(address & -4096, address & -4096, pte_RW, pte_US);
     } else { // paging enabled
-        pde_address = (cr3 & -4096) + ((linear_address >> 20) & 0xffc);
+        pde_address = (cr3 & -4096) + ((address >> 20) & 0xffc);
         pde = ld_direct(pde_address);
         if (!(pde & 0x00000001)) { // page not present
             error_code = 0;
         } else {
-            pte_address = (pde & -4096) + ((linear_address >> 10) & 0xffc);
+            pte_address = (pde & -4096) + ((address >> 10) & 0xffc);
             pte = ld_direct(pte_address);
             if (!(pte & 0x00000001)) { // page not present
                 error_code = 0;
@@ -1279,7 +1279,7 @@ void Free86::page_translation(int linear_address, int writable, bool user) {
                     if (pxe & 0x00000004) {
                         pte_US = 1;
                     }
-                    tlb_update(linear_address & -4096, pte & -4096, pte_RW, pte_US);
+                    tlb_update(address & -4096, pte & -4096, pte_RW, pte_US);
                     return;
                 }
             }
@@ -1288,7 +1288,7 @@ void Free86::page_translation(int linear_address, int writable, bool user) {
         if (user) {
             error_code |= 0x04;
         }
-        cr2 = linear_address;
+        cr2 = address;
         abort(14, error_code);
     }
 }
@@ -1779,7 +1779,7 @@ int Free86::aux_DEC16(int data) {
     osm = 29;
     return osm_dst;
 }
-int Free86::aux_SHRD_SHLD16(int dst, int src, int count) {
+int Free86::aux_SHRD16_SHLD16(int dst, int src, int count) {
     int d, s, c;
     d = dst;
     c = count & 0x1f;
@@ -1841,7 +1841,7 @@ void Free86::aux_BT(int base, int offset) {
     osm_src = base >> (offset & 0x1f);
     osm = 20;
 }
-int Free86::aux_BTS_BTR_BTC16(int base, int offset) {
+int Free86::aux_BTS16_BTR16_BTC16(int base, int offset) {
     int o, r;
     o = offset & 0xf;
     osm_src = base >> o;
@@ -1960,20 +1960,6 @@ void Free86::aux_DIV8(int divisor) {
     r = a % d;
     set_lower_word(0, (q & 0xff) | (r << 8));
 }
-void Free86::aux_IDIV8(int divisor) {
-    int d, a, q, r;
-    d = (divisor << 24) >> 24;
-    a = (regs[0] << 16) >> 16;
-    if (d == 0) {
-        abort(0);
-    }
-    q = a / d;
-    if (((q << 24) >> 24) != q) {
-        abort(0);
-    }
-    r = a % d;
-    set_lower_word(0, (q & 0xff) | (r << 8));
-}
 void Free86::aux_DIV16(int divisor) {
     int d, a, q, r;
     d = divisor & 0xffff;
@@ -1984,21 +1970,6 @@ void Free86::aux_DIV16(int divisor) {
     }
     q = au / d;
     r = au % d;
-    set_lower_word(0, q);
-    set_lower_word(2, r);
-}
-void Free86::aux_IDIV16(int divisor) {
-    int d, a, q, r;
-    d = (divisor << 16) >> 16;
-    a = (regs[2] << 16) | (regs[0] & 0xffff);
-    if (d == 0) {
-        abort(0);
-    }
-    q = a / d;
-    if (((q << 16) >> 16) != q) {
-        abort(0);
-    }
-    r = a % d;
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
@@ -2029,6 +2000,35 @@ int Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t d
         v = du;
         return dl;
     }
+}
+void Free86::aux_IDIV8(int divisor) {
+    int d, a, q, r;
+    d = (divisor << 24) >> 24;
+    a = (regs[0] << 16) >> 16;
+    if (d == 0) {
+        abort(0);
+    }
+    q = a / d;
+    if (((q << 24) >> 24) != q) {
+        abort(0);
+    }
+    r = a % d;
+    set_lower_word(0, (q & 0xff) | (r << 8));
+}
+void Free86::aux_IDIV16(int divisor) {
+    int d, a, q, r;
+    d = (divisor << 16) >> 16;
+    a = (regs[2] << 16) | (regs[0] & 0xffff);
+    if (d == 0) {
+        abort(0);
+    }
+    q = a / d;
+    if (((q << 16) >> 16) != q) {
+        abort(0);
+    }
+    r = a % d;
+    set_lower_word(0, q);
+    set_lower_word(2, r);
 }
 int Free86::aux_IDIV(int dividend_upper, int dividend_lower, int divisor) {
     int du, dl, ndd, ndr, q;
@@ -2076,6 +2076,17 @@ void Free86::aux_MUL8(int multiplicand, int multiplier) {
     osm_dst = (x << 24) >> 24;
     osm = 21;
 }
+void Free86::aux_MUL16(int multiplicand, int multiplier) {
+    x = (multiplicand & 0xffff) * (multiplier & 0xffff);
+    osm_src = x >> 16;
+    osm_dst = (x << 16) >> 16;
+    osm = 22;
+}
+void Free86::aux_MUL(int multiplicand, int multiplier) {
+    osm_dst = x = multiply(multiplicand, multiplier);
+    osm_src = v;
+    osm = 23;
+}
 void Free86::aux_IMUL8(int multiplicand, int multiplier) {
     int md, mr;
     md = (multiplicand << 24) >> 24;
@@ -2085,12 +2096,6 @@ void Free86::aux_IMUL8(int multiplicand, int multiplier) {
     osm_src = x != osm_dst;
     osm = 21;
 }
-void Free86::aux_MUL16(int multiplicand, int multiplier) {
-    x = (multiplicand & 0xffff) * (multiplier & 0xffff);
-    osm_src = x >> 16;
-    osm_dst = (x << 16) >> 16;
-    osm = 22;
-}
 void Free86::aux_IMUL16(int multiplicand, int multiplier) {
     int md, mr;
     md = (multiplicand << 16) >> 16;
@@ -2099,11 +2104,6 @@ void Free86::aux_IMUL16(int multiplicand, int multiplier) {
     osm_dst = (x << 16) >> 16;
     osm_src = x != osm_dst;
     osm = 22;
-}
-void Free86::aux_MUL(int multiplicand, int multiplier) {
-    osm_dst = x = multiply(multiplicand, multiplier);
-    osm_src = v;
-    osm = 23;
 }
 void Free86::aux_IMUL(int multiplicand, int multiplier) {
     int md, mr, s, r;
@@ -3172,106 +3172,12 @@ void Free86::zero_segment_register(int sreg, int privilege_level) {
         }
     }
 }
-void Free86::aux_IRET(bool is_operand_size32) {
-    if (!is_protected() || (eflags & 0x00020000)) {
-        if (eflags & 0x00020000) {
-            iopl = (eflags >> 12) & 3;
-            if (iopl != 3) {
-                abort(13);
-            }
-        }
-        return_real__v86_mode(is_operand_size32, 1, 0);
-    } else {
-        if (eflags & 0x00004000) {
-            throw "fatal: unsupported EFLAGS.NT == 1 in IRET";
-        } else {
-            return_protected_mode(is_operand_size32, 1, 0);
-        }
-    }
-}
 void Free86::aux_RETF(bool is_operand_size32, int return_offset) {
     if (!is_protected() || (eflags & 0x00020000)) {
         return_real__v86_mode(is_operand_size32, 0, return_offset);
     } else {
         return_protected_mode(is_operand_size32, 0, return_offset);
     }
-}
-int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
-    if ((selector & 0xfffc) == 0) {
-        return -1;
-    }
-    fill_xdt_descriptor(descriptor_table_entry, selector);
-    dte_lower_dword = descriptor_table_entry[0];
-    dte_upper_dword = descriptor_table_entry[1];
-    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
-        return -1;
-    }
-    rpl = selector & 3;
-    dpl = (dte_upper_dword >> 13) & 3;
-    if (dte_upper_dword & (1 << 12)) {
-        if ((dte_upper_dword & (1 << 11)) && (dte_upper_dword & (1 << 10))) {
-        } else {
-            if (dpl < cpl || dpl < rpl) {
-                return -1;
-            }
-        }
-    } else {
-        descriptor_type = (dte_upper_dword >> 8) & 0xf;
-        switch (descriptor_type) {
-        case 1:
-        case 2:
-        case 3:
-        case 9:
-        case 11:
-            break;
-        case 4:
-        case 5:
-        case 12:
-            if (is_lsl) {
-                return -1;
-            }
-            break;
-        default:
-            return -1;
-        }
-        if (dpl < cpl || dpl < rpl) {
-            return -1;
-        }
-    }
-    if (is_lsl) {
-        return compile_dte_limit(dte_lower_dword, dte_upper_dword);
-    } else {
-        return dte_upper_dword & 0x00f0ff00;
-    }
-}
-void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
-    int selector;
-    if (!is_protected() || (eflags & 0x00020000)) {
-        abort(6);
-    }
-    mem8 = ld8_direct();
-    reg_idx1 = (mem8 >> 3) & 7;
-    if ((mem8 >> 6) == 3) {
-        selector = regs[mem8 & 7] & 0xffff;
-    } else {
-        segment_translation(mem8);
-        selector = ld16_readonly_cpl3();
-    }
-    x = ld_descriptor_flags(selector, is_lsl);
-    osm_src = compile_eflags();
-    if (x == -1) {
-        osm_src &= ~0x0040;
-    } else {
-        osm_src |= 0x0040;
-        if (is_operand_size32) {
-            regs[reg_idx1] = x;
-        } else {
-            set_lower_word(reg_idx1, x);
-        }
-    }
-    osm_dst = ((osm_src >> 6) & 1) ^ 1;
-    osm = 24;
 }
 void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
     if (is_protected()) {
@@ -3506,6 +3412,100 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         eflags &= ~0x00000200;
     }
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
+}
+void Free86::aux_IRET(bool is_operand_size32) {
+    if (!is_protected() || (eflags & 0x00020000)) {
+        if (eflags & 0x00020000) {
+            iopl = (eflags >> 12) & 3;
+            if (iopl != 3) {
+                abort(13);
+            }
+        }
+        return_real__v86_mode(is_operand_size32, 1, 0);
+    } else {
+        if (eflags & 0x00004000) {
+            throw "fatal: unsupported EFLAGS.NT == 1 in IRET";
+        } else {
+            return_protected_mode(is_operand_size32, 1, 0);
+        }
+    }
+}
+void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
+    int selector;
+    if (!is_protected() || (eflags & 0x00020000)) {
+        abort(6);
+    }
+    mem8 = ld8_direct();
+    reg_idx1 = (mem8 >> 3) & 7;
+    if ((mem8 >> 6) == 3) {
+        selector = regs[mem8 & 7] & 0xffff;
+    } else {
+        segment_translation(mem8);
+        selector = ld16_readonly_cpl3();
+    }
+    x = ld_descriptor_flags(selector, is_lsl);
+    osm_src = compile_eflags();
+    if (x == -1) {
+        osm_src &= ~0x0040;
+    } else {
+        osm_src |= 0x0040;
+        if (is_operand_size32) {
+            regs[reg_idx1] = x;
+        } else {
+            set_lower_word(reg_idx1, x);
+        }
+    }
+    osm_dst = ((osm_src >> 6) & 1) ^ 1;
+    osm = 24;
+}
+int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
+    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
+    if ((selector & 0xfffc) == 0) {
+        return -1;
+    }
+    fill_xdt_descriptor(descriptor_table_entry, selector);
+    dte_lower_dword = descriptor_table_entry[0];
+    dte_upper_dword = descriptor_table_entry[1];
+    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
+        return -1;
+    }
+    rpl = selector & 3;
+    dpl = (dte_upper_dword >> 13) & 3;
+    if (dte_upper_dword & (1 << 12)) {
+        if ((dte_upper_dword & (1 << 11)) && (dte_upper_dword & (1 << 10))) {
+        } else {
+            if (dpl < cpl || dpl < rpl) {
+                return -1;
+            }
+        }
+    } else {
+        descriptor_type = (dte_upper_dword >> 8) & 0xf;
+        switch (descriptor_type) {
+        case 1:
+        case 2:
+        case 3:
+        case 9:
+        case 11:
+            break;
+        case 4:
+        case 5:
+        case 12:
+            if (is_lsl) {
+                return -1;
+            }
+            break;
+        default:
+            return -1;
+        }
+        if (dpl < cpl || dpl < rpl) {
+            return -1;
+        }
+    }
+    if (is_lsl) {
+        return compile_dte_limit(dte_lower_dword, dte_upper_dword);
+    } else {
+        return dte_upper_dword & 0x00f0ff00;
+    }
 }
 void Free86::aux_VERR_VERW(int selector, bool writable) {
     int ok;

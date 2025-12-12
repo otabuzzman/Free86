@@ -47,22 +47,22 @@ class Free86 {
     void st8_direct(int address, int byte);
     void st8_direct(int address, std::string data);
 
-    int tlb_lookup(int linear_address, int writable) {
-        uint32_t lat20 = linear_address >> 12;
+    int tlb_lookup(int address, int writable) {
+        uint32_t lat20 = address >> 12;
         if (writable) {
             tlb_hash = tlb_writable[lat20];
         } else {
             tlb_hash = tlb_readonly[lat20];
         }
         if (tlb_hash == -1) {
-            page_translation(linear_address, writable, cpl == 3);
+            page_translation(address, writable, cpl == 3);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
             } else {
                 tlb_hash = tlb_readonly[lat20];
             }
         }
-        return linear_address ^ tlb_hash;
+        return address ^ tlb_hash;
     }
 
     virtual int get_irq() = 0;
@@ -121,9 +121,9 @@ class Free86 {
     int *tlb_writable;
     int tlb_hash;
 
-    void tlb_update(uint32_t linear_address /*data*/, int pte /*key*/, int writable, int user) {
-        tlb_hash = linear_address ^ pte; // poor man's XOR hash function
-        uint32_t lat20 = linear_address >> 12;
+    void tlb_update(uint32_t address /*data*/, int pte /*key*/, int writable, int user) {
+        tlb_hash = address ^ pte; // poor man's XOR hash function
+        uint32_t lat20 = address >> 12;
         if (tlb_readonly_cplX[lat20] == -1) {
             if (tlb_pages_count >= 2048) {
                 tlb_flush_all((lat20 - 1) & 0xfffff);
@@ -148,8 +148,8 @@ class Free86 {
             tlb_writable_cpl3[lat20] = -1;
         }
     }
-    void tlb_flush_page(uint32_t linear_address) {
-        uint32_t lat20 = linear_address >> 12;
+    void tlb_flush_page(uint32_t address) {
+        uint32_t lat20 = address >> 12;
         tlb_clear(lat20);
     }
     void tlb_flush_all() {
@@ -355,7 +355,7 @@ class Free86 {
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 
-    void page_translation(int linear_address, int writable, bool user);
+    void page_translation(int address, int writable, bool user);
 
     void segment_translation(int modRM);
     void convert_offset_to_linear(bool writable);
@@ -377,28 +377,28 @@ class Free86 {
     int aux_INC16(int data);
     int aux_DEC8(int data);
     int aux_DEC16(int data);
-    int aux_SHRD_SHLD16(int dst, int src, int count);
+    int aux_SHRD16_SHLD16(int dst, int src, int count);
     int aux_SHRD(int dst, int src, int count);
     int aux_SHLD(int dst, int src, int count);
     void aux_BT16(int base, int offset);
     void aux_BT(int base, int offset);
-    int aux_BTS_BTR_BTC16(int base, int offset);
+    int aux_BTS16_BTR16_BTC16(int base, int offset);
     int aux_BTS_BTR_BTC(int base, int offset);
     int aux_BSF16(int dst, int src);
     int aux_BSF(int dst, int src);
     int aux_BSR16(int dst, int src);
     int aux_BSR(int dst, int src);
     void aux_DIV8(int divisor);
-    void aux_IDIV8(int divisor);
     void aux_DIV16(int divisor);
-    void aux_IDIV16(int divisor);
     int aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    void aux_IDIV8(int divisor);
+    void aux_IDIV16(int divisor);
     int aux_IDIV(int dividend_upper, int dividend_lower, int divisor);
     void aux_MUL8(int multiplicand, int multiplier);
-    void aux_IMUL8(int multiplicand, int multiplier);
     void aux_MUL16(int multiplicand, int multiplier);
-    void aux_IMUL16(int multiplicand, int multiplier);
     void aux_MUL(int multiplicand, int multiplier);
+    void aux_IMUL8(int multiplicand, int multiplier);
+    void aux_IMUL16(int multiplicand, int multiplier);
     void aux_IMUL(int multiplicand, int multiplier);
 
     int multiply(int multiplicand, int multiplier);
@@ -422,15 +422,15 @@ class Free86 {
     void return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
     void return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
     void zero_segment_register(int sreg, int privilege_level);
-    void aux_IRET(bool is_operand_size32);
     void aux_RETF(bool is_operand_size32, int return_offset);
-    void aux_LAR_LSL(bool is_operand_size32, bool is_lsl);
-    int ld_descriptor_flags(int selector, bool is_lsl);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
     void raise_interrupt_real__v86_mode(int id, int is_sw, int return_address);
     void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void aux_IRET(bool is_operand_size32);
 
+    void aux_LAR_LSL(bool is_operand_size32, bool is_lsl);
+    int ld_descriptor_flags(int selector, bool is_lsl);
     void aux_VERR_VERW(int selector, bool is_verw);
     void aux_ARPL();
     void aux_CPUID();
