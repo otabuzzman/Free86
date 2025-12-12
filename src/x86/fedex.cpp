@@ -157,9 +157,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                 } else {
                     segment_translation(mem8);
-                    x = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_readonly_cpl3()
-                             : phys_mem8[mem8_loc ^ tlb_hash]);
+                    x = ld8_readonly_cpl3();
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
                 tlb_hash = (reg_idx1 & 4) << 1;
@@ -1819,9 +1817,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                     } else {
                         segment_translation(mem8);
-                        x = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                                 ? _ld8_readonly_cpl3()
-                                 : phys_mem8[mem8_loc ^ tlb_hash]);
+                        x = ld8_readonly_cpl3();
                     }
                     regs[reg_idx1] = x;
                     goto EXEC_LOOP;
@@ -1844,9 +1840,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
-                        x = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                                 ? _ld8_readonly_cpl3()
-                                 : phys_mem8[mem8_loc ^ tlb_hash]);
+                        x = ld8_readonly_cpl3();
                     }
                     regs[reg_idx1] = (x << 24) >> 24;
                     goto EXEC_LOOP;
