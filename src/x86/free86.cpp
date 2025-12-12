@@ -10,7 +10,7 @@ Free86::Free86(int mem_size) {
     phys_mem32 = (uint32_t *) (phys_mem8);
     tlb_readonly_cplX = new int[tlb_size];
     tlb_writable_cplX = new int[tlb_size];
-    tlb_readable_cpl3 = new int[tlb_size];
+    tlb_readonly_cpl3 = new int[tlb_size];
     tlb_writable_cpl3 = new int[tlb_size];
     for (int i = 0; i < tlb_size; i++) {
         tlb_clear(i);
@@ -23,7 +23,7 @@ Free86::~Free86() {
     free(phys_mem8);
     delete[] tlb_readonly_cplX;
     delete[] tlb_writable_cplX;
-    delete[] tlb_readable_cpl3;
+    delete[] tlb_readonly_cpl3;
     delete[] tlb_writable_cpl3;
 }
 void Free86::reset() {
@@ -65,7 +65,7 @@ void Free86::update_SSB() {
 void Free86::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
-    int64_t eip_tlb_hash = tlb_readable[eip_linear >> 12];
+    int64_t eip_tlb_hash = tlb_readonly[eip_linear >> 12];
     // `eip_tlb_hash' equals -1 or instruction with maximum bytes (15)
     // would extend across the page boundary.
     // combined check ok because bits 0-11 in `eip_tlb_hash' always 0.
@@ -73,7 +73,7 @@ void Free86::fetch_opcode() {
         if (eip_tlb_hash == -1) {
             page_translation(eip_linear, 0, cpl == 3);
         }
-        eip_tlb_hash = tlb_readable[eip_linear >> 12];
+        eip_tlb_hash = tlb_readonly[eip_linear >> 12];
         far = far_start = eip_linear ^ eip_tlb_hash;
         opcode = phys_mem8[far++];
         int page_offset = eip_linear & 0xfff;
@@ -83,7 +83,7 @@ void Free86::fetch_opcode() {
                 far = far_start = mem_size;
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
                     mem8_loc = eip_linear + y;
-                    phys_mem8[far + y] = (((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                    phys_mem8[far + y] = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                              ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
@@ -127,7 +127,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            opcode = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            opcode = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                      ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
@@ -141,7 +141,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            opcode = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            opcode = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                      ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
@@ -381,7 +381,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                      ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -405,7 +405,7 @@ int Free86::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                              ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -476,7 +476,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                      ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -500,7 +500,7 @@ int Free86::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                              ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -558,7 +558,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                         ? _ld8_mem8_read()
                         : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -582,7 +582,7 @@ int Free86::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                              ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -638,7 +638,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                      ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -662,7 +662,7 @@ int Free86::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                              ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -721,7 +721,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                      ? _ld8_mem8_read()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
@@ -745,7 +745,7 @@ int Free86::instruction_length(int opcode) {
                         abort(13);
                     }
                     mem8_loc = eip_linear + (n++);
-                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                    mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                              ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
@@ -828,7 +828,7 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             mem8_loc = eip_linear + (n++);
-            opcode = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+            opcode = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                           ? _ld8_mem8_read()
                           : phys_mem8[mem8_loc ^ tlb_hash]);
             switch (opcode) {
@@ -932,7 +932,7 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
                 mem8_loc = eip_linear + (n++);
-                mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                             ? _ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
@@ -956,7 +956,7 @@ int Free86::instruction_length(int opcode) {
                             abort(13);
                         }
                         mem8_loc = eip_linear + (n++);
-                        mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                        mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                                  ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
@@ -1010,7 +1010,7 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
                 mem8_loc = eip_linear + (n++);
-                mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                             ? _ld8_mem8_read()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
@@ -1034,7 +1034,7 @@ int Free86::instruction_length(int opcode) {
                             abort(13);
                         }
                         mem8_loc = eip_linear + (n++);
-                        mem8 = (is_real__v86() || ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                        mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                                  ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
@@ -1236,10 +1236,10 @@ bool Free86::is_paging() {
 void Free86::set_cpl(int level) {
     cpl = level;
     if (cpl == 3) {
-        tlb_readable = tlb_readable_cpl3;
+        tlb_readonly = tlb_readonly_cpl3;
         tlb_writable = tlb_writable_cpl3;
     } else {
-        tlb_readable = tlb_readonly_cplX;
+        tlb_readonly = tlb_readonly_cplX;
         tlb_writable = tlb_writable_cplX;
     }
 }

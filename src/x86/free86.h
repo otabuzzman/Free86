@@ -63,14 +63,14 @@ class Free86 {
         if (writable) {
             tlb_hash = tlb_writable[lat20];
         } else {
-            tlb_hash = tlb_readable[lat20];
+            tlb_hash = tlb_readonly[lat20];
         }
         if (tlb_hash == -1) {
             page_translation(linear_address, writable, cpl == 3);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
             } else {
-                tlb_hash = tlb_readable[lat20];
+                tlb_hash = tlb_readonly[lat20];
             }
         }
         return linear_address ^ tlb_hash;
@@ -130,12 +130,12 @@ class Free86 {
 
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
-    int tlb_size = 0x100000; // 1M
-    int *tlb_readonly_cplX;
+    int tlb_size = 0x100000; // 1M entries
+    int *tlb_readonly_cplX; // supervisor, any CPL
     int *tlb_writable_cplX;
-    int *tlb_readable_cpl3;
+    int *tlb_readonly_cpl3; // user, CPL == 3
     int *tlb_writable_cpl3;
-    int *tlb_readable; // current (user or kernel)
+    int *tlb_readonly; // current (user or supervisor)
     int *tlb_writable;
     int tlb_hash;
 
@@ -155,14 +155,14 @@ class Free86 {
             tlb_writable_cplX[lat20] = -1;
         }
         if (user) {
-            tlb_readable_cpl3[lat20] = tlb_hash;
+            tlb_readonly_cpl3[lat20] = tlb_hash;
             if (writable) {
                 tlb_writable_cpl3[lat20] = tlb_hash;
             } else {
                 tlb_writable_cpl3[lat20] = -1;
             }
         } else {
-            tlb_readable_cpl3[lat20] = -1;
+            tlb_readonly_cpl3[lat20] = -1;
             tlb_writable_cpl3[lat20] = -1;
         }
     }
@@ -192,7 +192,7 @@ class Free86 {
     void tlb_clear(uint32_t lat20) {
         tlb_readonly_cplX[lat20] = -1;
         tlb_writable_cplX[lat20] = -1;
-        tlb_readable_cpl3[lat20] = -1;
+        tlb_readonly_cpl3[lat20] = -1;
         tlb_writable_cpl3[lat20] = -1;
     }
 

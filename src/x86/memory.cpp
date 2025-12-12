@@ -47,7 +47,7 @@ int Free86::_ld8_mem8_read() {
     int byte;
     if (is_protected()) {
         page_translation(mem8_loc, 0, cpl == 3);
-        tlb_hash = tlb_readable[mem8_loc >> 12];
+        tlb_hash = tlb_readonly[mem8_loc >> 12];
         byte = phys_mem8[mem8_loc ^ tlb_hash];
     } else {
         byte = phys_mem8[mem8_loc];
@@ -56,7 +56,7 @@ int Free86::_ld8_mem8_read() {
 }
 int Free86::ld8_mem8_read() {
     return (is_real__v86() ||
-                    ((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
+                    ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
                 ? _ld8_mem8_read()
                 : phys_mem8[mem8_loc ^ tlb_hash]);
 }
@@ -69,7 +69,7 @@ int Free86::_ld16_mem8_read() {
 }
 int Free86::ld16_mem8_read() {
     return (is_real__v86() ||
-                    ((tlb_hash = tlb_readable[mem8_loc >> 12]) | mem8_loc) & 1
+                    ((tlb_hash = tlb_readonly[mem8_loc >> 12]) | mem8_loc) & 1
                 ? _ld16_mem8_read()
                 : phys_mem16[(mem8_loc ^ tlb_hash) >> 1]);
 }
@@ -86,7 +86,7 @@ int Free86::_ld32_mem8_read() {
 }
 int Free86::ld32_mem8_read() {
     return (is_real__v86() ||
-                    ((tlb_hash = tlb_readable[mem8_loc >> 12]) | mem8_loc) & 3
+                    ((tlb_hash = tlb_readonly[mem8_loc >> 12]) | mem8_loc) & 3
                 ? _ld32_mem8_read()
                 : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
 }
