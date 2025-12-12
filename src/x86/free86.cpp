@@ -1421,8 +1421,7 @@ void Free86::segment_translation(int modRM) {
     } else if (ipr & 0x0080) {
         int _sreg; // if no data segement override prefix
         if ((modRM & 0xc7) == 0x06) {
-            mem8_loc = phys_mem8[far++] |
-                       (phys_mem8[far++] << 8);
+            mem8_loc = ld16_direct();
             _sreg = 3;
         } else {
             switch (modRM >> 6) {
@@ -1433,8 +1432,7 @@ void Free86::segment_translation(int modRM) {
                 mem8_loc = (phys_mem8[far++] << 24) >> 24;
                 break;
             default:
-                mem8_loc = = phys_mem8[far++] |
-                       (phys_mem8[far++] << 8);
+                mem8_loc = ld16_direct();
                 break;
             }
             switch (modRM & 7) {
@@ -1587,8 +1585,7 @@ void Free86::convert_offset_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
-        la = phys_mem8[far++] |
-             (phys_mem8[far++] << 8);
+        la = ld16_direct() & 0xffff;
         stride = 2; // 16 bit mode
     } else {
         la = (phys_mem8[far] |
@@ -3836,8 +3833,7 @@ void Free86::aux_LEAVE() {
 }
 void Free86::aux_ENTER16() {
     int c, l, esp, ebp, exp;
-    c = phys_mem8[far++] |
-        (phys_mem8[far++] << 8);
+    c = ld16_direct();
     l = phys_mem8[far++];
     l &= 0x1f;
     esp = regs[4];
@@ -3868,8 +3864,7 @@ void Free86::aux_ENTER16() {
 }
 void Free86::aux_ENTER() {
     int c, l, esp, ebp, exp;
-    c = phys_mem8[far++] |
-        (phys_mem8[far++] << 8);
+    c = ld16_direct();
     l = phys_mem8[far++];
     l &= 0x1f;
     esp = regs[4];
