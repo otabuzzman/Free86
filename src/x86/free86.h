@@ -503,42 +503,42 @@ class Free86 {
     void aux_SCASD();
 
     // memory.cpp
-    int _ld8_mem8_kernel_read();
-    int ld8_mem8_kernel_read(); // from kernel RO memory: load (return) byte
-    int _ld16_mem8_kernel_read();
-    int ld16_mem8_kernel_read();  // ...word
-    int _ld32_mem8_kernel_read();
-    int ld32_mem8_kernel_read();  // ...dword
+    int _ld8_readonly_cplX();
+    int ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
+    int _ld16_readonly_cplX();
+    int ld16_readonly_cplX();  // ...word
+    int _ld32_readonly_cplX();
+    int ld32_readonly_cplX();  // ...dword
 
-    int ld16_mem8_direct(); // read word at FAR from memory, bypass TLB
+    int _ld8_readonly_cpl3();
+    int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
+    int _ld16_readonly_cpl3();
+    int ld16_readonly_cpl3(); // ...word
+    int _ld32_readonly_cpl3();
+    int ld32_readonly_cpl3(); // ...dword
 
-    int _ld8_mem8_read();
-    int ld8_mem8_read(); // from user RO memory: load (return) byte
-    int _ld16_mem8_read();
-    int ld16_mem8_read(); // ...word
-    int _ld32_mem8_read();
-    int ld32_mem8_read(); // ...dword
+    int _ld8_writable_cpl3();
+    int ld8_writable_cpl3(); // from user WR memory: load (return) byte
+    int _ld16_writable_cpl3();
+    int ld16_writable_cpl3(); // ...word
+    int _ld32_writable_cpl3();
+    int ld32_writable_cpl3(); // ...dword
 
-    int _ld8_mem8_write();
-    int ld8_mem8_write(); // from user WR memory: load (return) byte
-    int _ld16_mem8_write();
-    int ld16_mem8_write(); // ...word
-    int _ld32_mem8_write();
-    int ld32_mem8_write(); // ...dword
+    void _st8_writable_cplX(int byte);
+    void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
+    void _st16_writable_cplX(int word);
+    void st16_writable_cplX(int word); // ...word
+    void _st32_writable_cplX(int dword);
+    void st32_writable_cplX(int dword); // ...dword
 
-    void _st8_mem8_kernel_write(int byte);
-    void st8_mem8_kernel_write(int byte); // in kernel WR memory: store byte
-    void _st16_mem8_kernel_write(int word);
-    void st16_mem8_kernel_write(int word); // ...word
-    void _st32_mem8_kernel_write(int dword);
-    void st32_mem8_kernel_write(int dword); // ...dword
+    void _st8_writable_cpl3(int byte);
+    void st8_writable_cpl3(int byte); // in user WR memory: store byte
+    void _st16_writable_cpl3(int word);
+    void st16_writable_cpl3(int word); // ...word
+    void _st32_writable_cpl3(int dword);
+    void st32_writable_cpl3(int dword); // ...dword
 
-    void _st8_mem8_write(int byte);
-    void st8_mem8_write(int byte); // in user WR memory: store byte
-    void _st16_mem8_write(int word);
-    void st16_mem8_write(int word); // ...word
-    void _st32_mem8_write(int dword);
-    void st32_mem8_write(int dword); // ...dword
+    int ld16_direct(); // read word at FAR from memory, bypass TLB
 
     void push_word(int word);
     void push_dword(int dword);

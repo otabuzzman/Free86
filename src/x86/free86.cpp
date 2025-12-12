@@ -84,7 +84,7 @@ void Free86::fetch_opcode() {
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
                     mem8_loc = eip_linear + y;
                     phys_mem8[far + y] = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_mem8_read()
+                             ? _ld8_readonly_cpl3()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
                 far++;
@@ -128,7 +128,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                     ? _ld8_mem8_read()
+                     ? _ld8_readonly_cpl3()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x67: // address-size override prefix
@@ -142,7 +142,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                     ? _ld8_mem8_read()
+                     ? _ld8_readonly_cpl3()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             break;
         case 0x91: // XCHG C
@@ -382,7 +382,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                     ? _ld8_mem8_read()
+                     ? _ld8_readonly_cpl3()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -406,7 +406,7 @@ int Free86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_mem8_read()
+                             ? _ld8_readonly_cpl3()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -477,7 +477,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                     ? _ld8_mem8_read()
+                     ? _ld8_readonly_cpl3()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -501,7 +501,7 @@ int Free86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_mem8_read()
+                             ? _ld8_readonly_cpl3()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -559,7 +559,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                        ? _ld8_mem8_read()
+                        ? _ld8_readonly_cpl3()
                         : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -583,7 +583,7 @@ int Free86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_mem8_read()
+                             ? _ld8_readonly_cpl3()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -639,7 +639,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                     ? _ld8_mem8_read()
+                     ? _ld8_readonly_cpl3()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -663,7 +663,7 @@ int Free86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_mem8_read()
+                             ? _ld8_readonly_cpl3()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -722,7 +722,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                     ? _ld8_mem8_read()
+                     ? _ld8_readonly_cpl3()
                      : phys_mem8[mem8_loc ^ tlb_hash]);
             if (ipr & 0x0080) {
                 switch (mem8 >> 6) {
@@ -746,7 +746,7 @@ int Free86::instruction_length(int opcode) {
                     }
                     mem8_loc = eip_linear + (n++);
                     mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_mem8_read()
+                             ? _ld8_readonly_cpl3()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                     if ((mem8 & 7) == 5) {
                         n += 4;
@@ -829,7 +829,7 @@ int Free86::instruction_length(int opcode) {
             }
             mem8_loc = eip_linear + (n++);
             opcode = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                          ? _ld8_mem8_read()
+                          ? _ld8_readonly_cpl3()
                           : phys_mem8[mem8_loc ^ tlb_hash]);
             switch (opcode) {
             case 0x06: // CLTS
@@ -933,7 +933,7 @@ int Free86::instruction_length(int opcode) {
                 }
                 mem8_loc = eip_linear + (n++);
                 mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                            ? _ld8_mem8_read()
+                            ? _ld8_readonly_cpl3()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -957,7 +957,7 @@ int Free86::instruction_length(int opcode) {
                         }
                         mem8_loc = eip_linear + (n++);
                         mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                                 ? _ld8_mem8_read()
+                                 ? _ld8_readonly_cpl3()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -1011,7 +1011,7 @@ int Free86::instruction_length(int opcode) {
                 }
                 mem8_loc = eip_linear + (n++);
                 mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                            ? _ld8_mem8_read()
+                            ? _ld8_readonly_cpl3()
                             : phys_mem8[mem8_loc ^ tlb_hash]);
                 if (ipr & 0x0080) {
                     switch (mem8 >> 6) {
@@ -1035,7 +1035,7 @@ int Free86::instruction_length(int opcode) {
                         }
                         mem8_loc = eip_linear + (n++);
                         mem8 = (is_real__v86() || ((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                                 ? _ld8_mem8_read()
+                                 ? _ld8_readonly_cpl3()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                         if ((mem8 & 7) == 5) {
                             n += 4;
@@ -1421,7 +1421,8 @@ void Free86::segment_translation(int modRM) {
     } else if (ipr & 0x0080) {
         int _sreg; // if no data segement override prefix
         if ((modRM & 0xc7) == 0x06) {
-            mem8_loc = ld16_mem8_direct();
+            mem8_loc = phys_mem8[far++] |
+                       (phys_mem8[far++] << 8);
             _sreg = 3;
         } else {
             switch (modRM >> 6) {
@@ -1432,7 +1433,8 @@ void Free86::segment_translation(int modRM) {
                 mem8_loc = (phys_mem8[far++] << 24) >> 24;
                 break;
             default:
-                mem8_loc = ld16_mem8_direct();
+                mem8_loc = = phys_mem8[far++] |
+                       (phys_mem8[far++] << 8);
                 break;
             }
             switch (modRM & 7) {
@@ -1585,7 +1587,8 @@ void Free86::convert_offset_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
-        la = ld16_mem8_direct() & 0xffff;
+        la = phys_mem8[far++] |
+             (phys_mem8[far++] << 8);
         stride = 2; // 16 bit mode
     } else {
         la = (phys_mem8[far] |
@@ -1670,9 +1673,9 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
             abort(13, selector & 0xfffc);
         }
         mem8_loc = xdt.base + selector_index;
-        dte_lower_dword = ld32_mem8_kernel_read();
+        dte_lower_dword = ld32_readonly_cplX();
         mem8_loc += 4;
-        dte_upper_dword = ld32_mem8_kernel_read();
+        dte_upper_dword = ld32_readonly_cplX();
         if (!(dte_upper_dword & (1 << 12))) {
             abort(13, selector & 0xfffc);
         }
@@ -1704,7 +1707,7 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
         }
         if (!(dte_upper_dword & (1 << 8))) {
             dte_upper_dword |= 1 << 8;
-            st32_mem8_kernel_write(dte_upper_dword);
+            st32_writable_cplX(dte_upper_dword);
         }
         set_segment_register(sreg, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     }
@@ -1761,9 +1764,9 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
         return;
     }
     mem8_loc = xdt.base + index;
-    dte_lower_dword = ld32_mem8_kernel_read();
+    dte_lower_dword = ld32_readonly_cplX();
     mem8_loc += 4;
-    dte_upper_dword = ld32_mem8_kernel_read();
+    dte_upper_dword = ld32_readonly_cplX();
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
@@ -1783,13 +1786,13 @@ void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_leve
     }
     mem8_loc = tr.base + offset;
     if (is_386 == 0) {
-        dte_upper_dword = ld16_mem8_kernel_read(); // privileged SP
+        dte_upper_dword = ld16_readonly_cplX(); // privileged SP
         mem8_loc += 2;
     } else {
-        dte_upper_dword = ld32_mem8_kernel_read(); // privileged ESP
+        dte_upper_dword = ld32_readonly_cplX(); // privileged ESP
         mem8_loc += 4;
     }
-    dte_lower_dword = ld16_mem8_kernel_read(); // privileged SS
+    dte_lower_dword = ld16_readonly_cplX(); // privileged SS
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
@@ -2687,9 +2690,9 @@ void Free86::aux_LDTR(int selector) {
             abort(13, selector & 0xfffc);
         }
         mem8_loc = gdt.base + index;
-        dte_lower_dword = ld32_mem8_kernel_read();
+        dte_lower_dword = ld32_readonly_cplX();
         mem8_loc += 4;
-        dte_upper_dword = ld32_mem8_kernel_read();
+        dte_upper_dword = ld32_readonly_cplX();
         if ((dte_upper_dword & (1 << 12)) || ((dte_upper_dword >> 8) & 0xf) != 2) {
             abort(13, selector & 0xfffc);
         }
@@ -2716,9 +2719,9 @@ void Free86::aux_LTR(int selector) {
             abort(13, selector & 0xfffc);
         }
         mem8_loc = gdt.base + index;
-        dte_lower_dword = ld32_mem8_kernel_read();
+        dte_lower_dword = ld32_readonly_cplX();
         mem8_loc += 4;
-        dte_upper_dword = ld32_mem8_kernel_read();
+        dte_upper_dword = ld32_readonly_cplX();
         descriptor_type = (dte_upper_dword >> 8) & 0xf;
         if ((dte_upper_dword & (1 << 12)) || (descriptor_type != 1 && descriptor_type != 9)) {
             abort(13, selector & 0xfffc);
@@ -2728,7 +2731,7 @@ void Free86::aux_LTR(int selector) {
         }
         fill_segment_register(&tr, dte_lower_dword, dte_upper_dword);
         dte_upper_dword |= 1 << 9;
-        st32_mem8_kernel_write(dte_upper_dword);
+        st32_writable_cplX(dte_upper_dword);
     }
     tr.selector = selector;
 }
@@ -2800,17 +2803,17 @@ void Free86::aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int 
     if (is_operand_size32) {
         esp = esp - 4;
         mem8_loc = (esp & SS_mask) + SS_base;
-        st32_mem8_write(segs[1].selector);
+        st32_writable_cpl3(segs[1].selector);
         esp = esp - 4;
         mem8_loc = (esp & SS_mask) + SS_base;
-        st32_mem8_write(return_address);
+        st32_writable_cpl3(return_address);
     } else {
         esp = esp - 2;
         mem8_loc = (esp & SS_mask) + SS_base;
-        st16_mem8_write(segs[1].selector);
+        st16_writable_cpl3(segs[1].selector);
         esp = esp - 2;
         mem8_loc = (esp & SS_mask) + SS_base;
-        st16_mem8_write(return_address);
+        st16_writable_cpl3(return_address);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = address, far = far_start = 0;
@@ -2860,17 +2863,17 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         if (is_operand_size32) {
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            st32_mem8_kernel_write(segs[1].selector);
+            st32_writable_cplX(segs[1].selector);
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            st32_mem8_kernel_write(return_address);
+            st32_writable_cplX(return_address);
         } else {
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            st16_mem8_kernel_write(segs[1].selector);
+            st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            st16_mem8_kernel_write(return_address);
+            st16_writable_cplX(return_address);
         }
         int limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
         if (address > limit) {
@@ -2957,30 +2960,30 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             if (is_operand_size32) {
                 esp = esp - 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st32_mem8_kernel_write(segs[2].selector);
+                st32_writable_cplX(segs[2].selector);
                 esp = esp - 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st32_mem8_kernel_write(start_esp);
+                st32_writable_cplX(start_esp);
                 for (int i = count - 1; i >= 0; i--) {
                     // x = Xe(Ve + ((start_esp + i * 4) & Ue));
                     esp = esp - 4;
                     mem8_loc = SS_base + (esp & SS_mask);
-                    st32_mem8_kernel_write(0);
-                    // st32_mem8_kernel_write(x);
+                    st32_writable_cplX(0);
+                    // st32_writable_cplX(x);
                 }
             } else {
                 esp = esp - 2;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st16_mem8_kernel_write(segs[2].selector);
+                st16_writable_cplX(segs[2].selector);
                 esp = esp - 2;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st16_mem8_kernel_write(start_esp);
+                st16_writable_cplX(start_esp);
                 for (int i = count - 1; i >= 0; i--) {
                     // x = Ye(Ve + ((start_esp + i * 2) & Ue));
                     esp = esp - 2;
                     mem8_loc = SS_base + (esp & SS_mask);
-                    st16_mem8_kernel_write(0);
-                    // st16_mem8_kernel_write(x);
+                    st16_writable_cplX(0);
+                    // st16_writable_cplX(x);
                 }
             }
             ss = (ss & ~3) | dpl;
@@ -2993,17 +2996,17 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         if (is_operand_size32) {
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            st32_mem8_kernel_write(segs[1].selector);
+            st32_writable_cplX(segs[1].selector);
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            st32_mem8_kernel_write(return_address);
+            st32_writable_cplX(return_address);
         } else {
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            st16_mem8_kernel_write(segs[1].selector);
+            st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            st16_mem8_kernel_write(return_address);
+            st16_writable_cplX(return_address);
         }
         selector = (selector & ~3) | dpl;
         set_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
@@ -3019,27 +3022,27 @@ void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int ret
     SS_mask = 0xffff;
     if (is_operand_size32 == 1) {
         mem8_loc = SS_base + (esp & SS_mask);
-        stack_eip = ld32_mem8_kernel_read();
+        stack_eip = ld32_readonly_cplX();
         esp = esp + 4;
         mem8_loc = SS_base + (esp & SS_mask);
-        cs = ld32_mem8_kernel_read();
+        cs = ld32_readonly_cplX();
         esp = esp + 4;
         cs &= 0xffff;
         if (is_iret) {
             mem8_loc = SS_base + (esp & SS_mask);
-            stack_eflags = ld32_mem8_kernel_read();
+            stack_eflags = ld32_readonly_cplX();
             esp = esp + 4;
         }
     } else {
         mem8_loc = SS_base + (esp & SS_mask);
-        stack_eip = ld16_mem8_kernel_read();
+        stack_eip = ld16_readonly_cplX();
         esp = esp + 2;
         mem8_loc = SS_base + (esp & SS_mask);
-        cs = ld16_mem8_kernel_read();
+        cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
             mem8_loc = SS_base + (esp & SS_mask);
-            stack_eflags = ld16_mem8_kernel_read();
+            stack_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
     }
@@ -3070,35 +3073,35 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     SS_mask = get_addressmask(segs[2].flags);
     if (is_operand_size32 == 1) {
         mem8_loc = SS_base + (esp & SS_mask);
-        stack_eip = ld32_mem8_kernel_read();
+        stack_eip = ld32_readonly_cplX();
         esp = esp + 4;
         mem8_loc = SS_base + (esp & SS_mask);
-        cs = ld32_mem8_kernel_read();
+        cs = ld32_readonly_cplX();
         esp = esp + 4;
         cs &= 0xffff;
         if (is_iret) {
             mem8_loc = SS_base + (esp & SS_mask);
-            stack_eflags = ld32_mem8_kernel_read();
+            stack_eflags = ld32_readonly_cplX();
             esp = esp + 4;
             if (stack_eflags & 0x00020000) {
                 mem8_loc = SS_base + (esp & SS_mask);
-                stack_esp = ld32_mem8_kernel_read();
+                stack_esp = ld32_readonly_cplX();
                 esp = esp + 4;
                 // pop segment selectors from stack
                 mem8_loc = SS_base + (esp & SS_mask);
-                ss = ld32_mem8_kernel_read();
+                ss = ld32_readonly_cplX();
                 esp = esp + 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                es = ld32_mem8_kernel_read();
+                es = ld32_readonly_cplX();
                 esp = esp + 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                ds = ld32_mem8_kernel_read();
+                ds = ld32_readonly_cplX();
                 esp = esp + 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                fs = ld32_mem8_kernel_read();
+                fs = ld32_readonly_cplX();
                 esp = esp + 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                gs = ld32_mem8_kernel_read();
+                gs = ld32_readonly_cplX();
                 esp = esp + 4;
                 // clang-format off
                 set_EFLAGS(stack_eflags, 0x00000100 | 0x00000200 |
@@ -3120,14 +3123,14 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
         }
     } else {
         mem8_loc = SS_base + (esp & SS_mask);
-        stack_eip = ld16_mem8_kernel_read();
+        stack_eip = ld16_readonly_cplX();
         esp = esp + 2;
         mem8_loc = SS_base + (esp & SS_mask);
-        cs = ld16_mem8_kernel_read();
+        cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
             mem8_loc = SS_base + (esp & SS_mask);
-            stack_eflags = ld16_mem8_kernel_read();
+            stack_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
     }
@@ -3166,18 +3169,18 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     } else {
         if (is_operand_size32 == 1) {
             mem8_loc = SS_base + (esp & SS_mask);
-            stack_esp = ld32_mem8_kernel_read();
+            stack_esp = ld32_readonly_cplX();
             esp = esp + 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            ss = ld32_mem8_kernel_read();
+            ss = ld32_readonly_cplX();
             esp = esp + 4;
             ss &= 0xffff;
         } else {
             mem8_loc = SS_base + (esp & SS_mask);
-            stack_esp = ld16_mem8_kernel_read();
+            stack_esp = ld16_readonly_cplX();
             esp = esp + 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            ss = ld16_mem8_kernel_read();
+            ss = ld16_readonly_cplX();
             esp = esp + 2;
         }
         if ((ss & 0xfffc) == 0) {
@@ -3328,7 +3331,7 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
         selector = regs[mem8 & 7] & 0xffff;
     } else {
         segment_translation(mem8);
-        selector = ld16_mem8_read();
+        selector = ld16_readonly_cpl3();
     }
     x = ld_descriptor_flags(selector, is_lsl);
     osm_src = compile_eflags();
@@ -3358,19 +3361,19 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
         abort(13, id * 8 + 2);
     }
     mem8_loc = idt.base + (id << 2);
-    offset = ld16_mem8_kernel_read();
+    offset = ld16_readonly_cplX();
     mem8_loc = mem8_loc + 2;
-    selector = ld16_mem8_kernel_read();
+    selector = ld16_readonly_cplX();
     esp = regs[4];
     esp = esp - 2;
     mem8_loc = (esp & SS_mask) + SS_base;
-    st16_mem8_write(get_EFLAGS());
+    st16_writable_cpl3(get_EFLAGS());
     esp = esp - 2;
     mem8_loc = (esp & SS_mask) + SS_base;
-    st16_mem8_write(segs[1].selector);
+    st16_writable_cpl3(segs[1].selector);
     esp = esp - 2;
     mem8_loc = (esp & SS_mask) + SS_base;
-    st16_mem8_write(is_sw ? return_address : eip);
+    st16_writable_cpl3(is_sw ? return_address : eip);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
@@ -3399,9 +3402,9 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         abort(13, id * 8 + 2);
     }
     mem8_loc = idt.base + id * 8;
-    dte_lower_dword = ld32_mem8_kernel_read();
+    dte_lower_dword = ld32_readonly_cplX();
     mem8_loc += 4;
-    dte_upper_dword = ld32_mem8_kernel_read();
+    dte_upper_dword = ld32_readonly_cplX();
     descriptor_type = (dte_upper_dword >> 8) & 0x1f;
     switch (descriptor_type) {
     case 14: // 32 bit interrupt gate
@@ -3489,74 +3492,74 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
             if (eflags & 0x00020000) {
                 esp = esp - 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st32_mem8_kernel_write(segs[5].selector);
+                st32_writable_cplX(segs[5].selector);
                 esp = esp - 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st32_mem8_kernel_write(segs[4].selector);
+                st32_writable_cplX(segs[4].selector);
                 esp = esp - 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st32_mem8_kernel_write(segs[3].selector);
+                st32_writable_cplX(segs[3].selector);
                 esp = esp - 4;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st32_mem8_kernel_write(segs[0].selector);
+                st32_writable_cplX(segs[0].selector);
             }
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            st32_mem8_kernel_write(segs[2].selector);
+            st32_writable_cplX(segs[2].selector);
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            st32_mem8_kernel_write(regs[4]);
+            st32_writable_cplX(regs[4]);
         }
         esp = esp - 4;
         mem8_loc = SS_base + (esp & SS_mask);
-        st32_mem8_kernel_write(get_EFLAGS());
+        st32_writable_cplX(get_EFLAGS());
         esp = esp - 4;
         mem8_loc = SS_base + (esp & SS_mask);
-        st32_mem8_kernel_write(segs[1].selector);
+        st32_writable_cplX(segs[1].selector);
         esp = esp - 4;
         mem8_loc = SS_base + (esp & SS_mask);
-        st32_mem8_kernel_write(is_sw ? return_address : eip);
+        st32_writable_cplX(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 4;
             mem8_loc = SS_base + (esp & SS_mask);
-            st32_mem8_kernel_write(error_code);
+            st32_writable_cplX(error_code);
         }
     } else {
         if (is_interlevel) {
             if (eflags & 0x00020000) {
                 esp = esp - 2;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st16_mem8_kernel_write(segs[5].selector);
+                st16_writable_cplX(segs[5].selector);
                 esp = esp - 2;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st16_mem8_kernel_write(segs[4].selector);
+                st16_writable_cplX(segs[4].selector);
                 esp = esp - 2;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st16_mem8_kernel_write(segs[3].selector);
+                st16_writable_cplX(segs[3].selector);
                 esp = esp - 2;
                 mem8_loc = SS_base + (esp & SS_mask);
-                st16_mem8_kernel_write(segs[0].selector);
+                st16_writable_cplX(segs[0].selector);
             }
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            st16_mem8_kernel_write(segs[2].selector);
+            st16_writable_cplX(segs[2].selector);
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            st16_mem8_kernel_write(regs[4]);
+            st16_writable_cplX(regs[4]);
         }
         esp = esp - 2;
         mem8_loc = SS_base + (esp & SS_mask);
-        st16_mem8_kernel_write(get_EFLAGS());
+        st16_writable_cplX(get_EFLAGS());
         esp = esp - 2;
         mem8_loc = SS_base + (esp & SS_mask);
-        st16_mem8_kernel_write(segs[1].selector);
+        st16_writable_cplX(segs[1].selector);
         esp = esp - 2;
         mem8_loc = SS_base + (esp & SS_mask);
-        st16_mem8_kernel_write(is_sw ? return_address : eip);
+        st16_writable_cplX(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 2;
             mem8_loc = SS_base + (esp & SS_mask);
-            st16_mem8_kernel_write(error_code);
+            st16_writable_cplX(error_code);
         }
     }
     if (is_interlevel) {
@@ -3601,7 +3604,7 @@ void Free86::aux_ARPL() {
         x = regs[reg_idx0] & 0xffff;
     } else {
         segment_translation(mem8);
-        x = ld16_mem8_write();
+        x = ld16_writable_cpl3();
     }
     y = regs[(mem8 >> 3) & 7];
     osm_src = compile_eflags();
@@ -3610,7 +3613,7 @@ void Free86::aux_ARPL() {
         if ((mem8 >> 6) == 3) {
             set_lower_word(reg_idx0, x);
         } else {
-            st16_mem8_write(x);
+            st16_writable_cpl3(x);
         }
         osm_src |= 0x0040;
     } else {
@@ -3753,9 +3756,9 @@ void Free86::aux_BOUND16() {
         abort(6);
     }
     segment_translation(mem8);
-    x = (ld16_mem8_read() << 16) >> 16;
+    x = (ld16_readonly_cpl3() << 16) >> 16;
     mem8_loc = mem8_loc + 2;
-    y = (ld16_mem8_read() << 16) >> 16;
+    y = (ld16_readonly_cpl3() << 16) >> 16;
     reg_idx1 = (mem8 >> 3) & 7;
     z = (regs[reg_idx1] << 16) >> 16;
     if (z < x || z > y) {
@@ -3768,9 +3771,9 @@ void Free86::aux_BOUND() {
         abort(6);
     }
     segment_translation(mem8);
-    x = ld32_mem8_read();
+    x = ld32_readonly_cpl3();
     mem8_loc = mem8_loc + 4;
-    y = ld32_mem8_read();
+    y = ld32_readonly_cpl3();
     reg_idx1 = (mem8 >> 3) & 7;
     z = regs[reg_idx1];
     if (z < x || z > y) {
@@ -3782,7 +3785,7 @@ void Free86::aux_PUSHA16() {
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         x = regs[reg_idx1];
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         mem8_loc = mem8_loc + 2;
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
@@ -3792,7 +3795,7 @@ void Free86::aux_PUSHA() {
     mem8_loc = (y & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         x = regs[reg_idx1];
-        st32_mem8_write(x);
+        st32_writable_cpl3(x);
         mem8_loc = mem8_loc + 4;
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
@@ -3801,7 +3804,7 @@ void Free86::aux_POPA16() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
-            set_lower_word(reg_idx1, ld16_mem8_read());
+            set_lower_word(reg_idx1, ld16_readonly_cpl3());
         }
         mem8_loc = mem8_loc + 2;
     }
@@ -3811,7 +3814,7 @@ void Free86::aux_POPA() {
     mem8_loc = (regs[4] & SS_mask) + SS_base;
     for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
         if (reg_idx1 != 4) {
-            regs[reg_idx1] = ld32_mem8_read();
+            regs[reg_idx1] = ld32_readonly_cpl3();
         }
         mem8_loc = mem8_loc + 4;
     }
@@ -3820,76 +3823,78 @@ void Free86::aux_POPA() {
 void Free86::aux_LEAVE16() {
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
-    x = ld16_mem8_read();
+    x = ld16_readonly_cpl3();
     set_lower_word(5, x);
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
 void Free86::aux_LEAVE() {
     y = regs[5];
     mem8_loc = (y & SS_mask) + SS_base;
-    x = ld32_mem8_read();
+    x = ld32_readonly_cpl3();
     regs[5] = x;
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
 }
 void Free86::aux_ENTER16() {
     int c, l, esp, ebp, exp;
-    c = ld16_mem8_direct();
+    c = phys_mem8[far++] |
+        (phys_mem8[far++] << 8);
     l = phys_mem8[far++];
     l &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 2;
     mem8_loc = (esp & SS_mask) + SS_base;
-    st16_mem8_write(ebp);
+    st16_writable_cpl3(ebp);
     exp = esp;
     if (l != 0) {
         while (l > 1) {
             ebp = ebp - 2;
             mem8_loc = (ebp & SS_mask) + SS_base;
-            x = ld16_mem8_read();
+            x = ld16_readonly_cpl3();
             esp = esp - 2;
             mem8_loc = (esp & SS_mask) + SS_base;
-            st16_mem8_write(x);
+            st16_writable_cpl3(x);
             l--;
         }
         esp = esp - 2;
         mem8_loc = (esp & SS_mask) + SS_base;
-        st16_mem8_write(exp);
+        st16_writable_cpl3(exp);
     }
     esp = esp - c;
     mem8_loc = (esp & SS_mask) + SS_base;
-    ld16_mem8_write();
+    ld16_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::aux_ENTER() {
     int c, l, esp, ebp, exp;
-    c = ld16_mem8_direct();
+    c = phys_mem8[far++] |
+        (phys_mem8[far++] << 8);
     l = phys_mem8[far++];
     l &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 4;
     mem8_loc = (esp & SS_mask) + SS_base;
-    st32_mem8_write(ebp);
+    st32_writable_cpl3(ebp);
     exp = (ebp & ~SS_mask) | (esp & SS_mask);
     if (l != 0) {
         while (l > 1) {
             ebp = ebp - 4;
             mem8_loc = (ebp & SS_mask) + SS_base;
-            x = ld32_mem8_read();
+            x = ld32_readonly_cpl3();
             esp = esp - 4;
             mem8_loc = (esp & SS_mask) + SS_base;
-            st32_mem8_write(x);
+            st32_writable_cpl3(x);
             l--;
         }
         esp = esp - 4;
         mem8_loc = (esp & SS_mask) + SS_base;
-        st32_mem8_write(exp);
+        st32_writable_cpl3(exp);
     }
     esp = esp - c;
     mem8_loc = (esp & SS_mask) + SS_base;
-    ld32_mem8_write();
+    ld32_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
@@ -3899,9 +3904,9 @@ void Free86::ld_full_pointer16(int sreg) {
         ; // abort(6);
     }
     segment_translation(mem8);
-    x = ld16_mem8_read();
+    x = ld16_readonly_cpl3();
     mem8_loc += 2;
-    y = ld16_mem8_read();
+    y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
     set_lower_word((mem8 >> 3) & 7, x);
 }
@@ -3911,9 +3916,9 @@ void Free86::ld_full_pointer32(int sreg) {
         ; // abort(6);
     }
     segment_translation(mem8);
-    x = ld32_mem8_read();
+    x = ld32_readonly_cpl3();
     mem8_loc += 4;
-    y = ld16_mem8_read();
+    y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
     regs[(mem8 >> 3) & 7] = x;
 }

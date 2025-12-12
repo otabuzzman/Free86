@@ -20,7 +20,7 @@ void Free86::aux_INSB() {
         }
         x = ld8_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st8_mem8_write(x);
+        st8_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -29,7 +29,7 @@ void Free86::aux_INSB() {
     } else {
         x = ld8_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st8_mem8_write(x);
+        st8_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
@@ -58,7 +58,7 @@ void Free86::aux_OUTSB() {
             return;
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         st8_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -67,7 +67,7 @@ void Free86::aux_OUTSB() {
         }
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         st8_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
     }
@@ -94,9 +94,9 @@ void Free86::aux_MOVSB() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         mem8_loc = la;
-        st8_mem8_write(x);
+        st8_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -104,9 +104,9 @@ void Free86::aux_MOVSB() {
             far = far_start;
         }
     } else {
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         mem8_loc = la;
-        st8_mem8_write(x);
+        st8_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
@@ -125,14 +125,14 @@ void Free86::aux_STOSB() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        st8_mem8_write(regs[0]);
+        st8_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        st8_mem8_write(regs[0]);
+        st8_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
 }
@@ -159,9 +159,9 @@ void Free86::aux_CMPSB() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         mem8_loc = la;
-        y = ld8_mem8_read();
+        y = ld8_readonly_cpl3();
         calculate8(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
@@ -179,9 +179,9 @@ void Free86::aux_CMPSB() {
             far = far_start;
         }
     } else {
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         mem8_loc = la;
-        y = ld8_mem8_read();
+        y = ld8_readonly_cpl3();
         calculate8(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
@@ -207,7 +207,7 @@ void Free86::aux_LODSB() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         regs[0] = (regs[0] & -256) | x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -215,7 +215,7 @@ void Free86::aux_LODSB() {
             far = far_start;
         }
     } else {
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         regs[0] = (regs[0] & -256) | x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 0)) & address_size_mask);
     }
@@ -235,7 +235,7 @@ void Free86::aux_SCASB() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         calculate8(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -252,7 +252,7 @@ void Free86::aux_SCASB() {
             far = far_start;
         }
     } else {
-        x = ld8_mem8_read();
+        x = ld8_readonly_cpl3();
         calculate8(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 0)) & address_size_mask);
     }
@@ -277,7 +277,7 @@ void Free86::aux_INSW() {
         }
         x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -286,7 +286,7 @@ void Free86::aux_INSW() {
     } else {
         x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
@@ -315,7 +315,7 @@ void Free86::aux_OUTSW() {
             return;
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -324,7 +324,7 @@ void Free86::aux_OUTSW() {
         }
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
@@ -351,9 +351,9 @@ void Free86::aux_MOVSW() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -361,9 +361,9 @@ void Free86::aux_MOVSW() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
@@ -382,14 +382,14 @@ void Free86::aux_STOSW() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        st16_mem8_write(regs[0]);
+        st16_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        st16_mem8_write(regs[0]);
+        st16_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
@@ -416,9 +416,9 @@ void Free86::aux_CMPSW() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        y = ld16_mem8_read();
+        y = ld16_readonly_cpl3();
         calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -436,9 +436,9 @@ void Free86::aux_CMPSW() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        y = ld16_mem8_read();
+        y = ld16_readonly_cpl3();
         calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -464,7 +464,7 @@ void Free86::aux_LODSW() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         regs[0] = x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -472,7 +472,7 @@ void Free86::aux_LODSW() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         regs[0] = x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
@@ -492,7 +492,7 @@ void Free86::aux_SCASW() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -509,7 +509,7 @@ void Free86::aux_SCASW() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
@@ -534,7 +534,7 @@ void Free86::aux_INS16() {
         }
         x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -543,7 +543,7 @@ void Free86::aux_INS16() {
     } else {
         x = ld16_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
@@ -572,7 +572,7 @@ void Free86::aux_OUTS16() {
             return;
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         st16_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -581,7 +581,7 @@ void Free86::aux_OUTS16() {
         }
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         st16_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
@@ -608,9 +608,9 @@ void Free86::aux_MOVS16() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -618,9 +618,9 @@ void Free86::aux_MOVS16() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        st16_mem8_write(x);
+        st16_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
@@ -639,14 +639,14 @@ void Free86::aux_STOS16() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        st16_mem8_write(regs[0]);
+        st16_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        st16_mem8_write(regs[0]);
+        st16_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
 }
@@ -673,9 +673,9 @@ void Free86::aux_CMPS16() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        y = ld16_mem8_read();
+        y = ld16_readonly_cpl3();
         calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -693,9 +693,9 @@ void Free86::aux_CMPS16() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         mem8_loc = la;
-        y = ld16_mem8_read();
+        y = ld16_readonly_cpl3();
         calculate16(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
@@ -721,7 +721,7 @@ void Free86::aux_LODS16() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         regs[0] = (regs[0] & -65536) | x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -729,7 +729,7 @@ void Free86::aux_LODS16() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         regs[0] = (regs[0] & -65536) | x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 1)) & address_size_mask);
     }
@@ -749,7 +749,7 @@ void Free86::aux_SCAS16() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -766,7 +766,7 @@ void Free86::aux_SCAS16() {
             far = far_start;
         }
     } else {
-        x = ld16_mem8_read();
+        x = ld16_readonly_cpl3();
         calculate16(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 1)) & address_size_mask);
     }
@@ -791,7 +791,7 @@ void Free86::aux_INSD() {
         }
         x = ld32_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st32_mem8_write(x);
+        st32_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
@@ -800,7 +800,7 @@ void Free86::aux_INSD() {
     } else {
         x = ld32_io(edx);
         mem8_loc = (edi & address_size_mask) + segs[0].base;
-        st32_mem8_write(x);
+        st32_writable_cpl3(x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
@@ -829,7 +829,7 @@ void Free86::aux_OUTSD() {
             return;
         }
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -838,7 +838,7 @@ void Free86::aux_OUTSD() {
         }
     } else {
         mem8_loc = (esi & address_size_mask) + segs[sreg].base;
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         st32_io(edx, x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
     }
@@ -865,9 +865,9 @@ void Free86::aux_MOVSD() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         mem8_loc = la;
-        st32_mem8_write(x);
+        st32_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -875,9 +875,9 @@ void Free86::aux_MOVSD() {
             far = far_start;
         }
     } else {
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         mem8_loc = la;
-        st32_mem8_write(x);
+        st32_writable_cpl3(x);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
@@ -896,14 +896,14 @@ void Free86::aux_STOSD() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        st32_mem8_write(regs[0]);
+        st32_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
         if (ecx & address_size_mask) {
             far = far_start;
         }
     } else {
-        st32_mem8_write(regs[0]);
+        st32_writable_cpl3(regs[0]);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }
 }
@@ -930,9 +930,9 @@ void Free86::aux_CMPSD() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         mem8_loc = la;
-        y = ld32_mem8_read();
+        y = ld32_readonly_cpl3();
         calculate32(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
@@ -950,9 +950,9 @@ void Free86::aux_CMPSD() {
             far = far_start;
         }
     } else {
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         mem8_loc = la;
-        y = ld32_mem8_read();
+        y = ld32_readonly_cpl3();
         calculate32(x, y);
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
@@ -978,7 +978,7 @@ void Free86::aux_LODSD() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         regs[0] = x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -986,7 +986,7 @@ void Free86::aux_LODSD() {
             far = far_start;
         }
     } else {
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         regs[0] = x;
         regs[6] = (esi & ~address_size_mask) | ((esi + (df << 2)) & address_size_mask);
     }
@@ -1006,7 +1006,7 @@ void Free86::aux_SCASD() {
         if ((ecx & address_size_mask) == 0) {
             return;
         }
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         calculate32(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
         regs[1] = ecx = (ecx & ~address_size_mask) | ((ecx - 1) & address_size_mask);
@@ -1023,7 +1023,7 @@ void Free86::aux_SCASD() {
             far = far_start;
         }
     } else {
-        x = ld32_mem8_read();
+        x = ld32_readonly_cpl3();
         calculate32(regs[0], x);
         regs[7] = (edi & ~address_size_mask) | ((edi + (df << 2)) & address_size_mask);
     }

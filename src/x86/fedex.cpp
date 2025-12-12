@@ -133,7 +133,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation(mem8);
                     tlb_hash = tlb_writable[mem8_loc >> 12];
                     if (tlb_hash == -1) {
-                        _st8_mem8_write(x);
+                        _st8_writable_cpl3(x);
                     } else {
                         phys_mem8[mem8_loc ^ tlb_hash] = x;
                     }
@@ -148,7 +148,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation(mem8);
                     tlb_hash = tlb_writable[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
-                        _st32_mem8_write(x);
+                        _st32_writable_cpl3(x);
                     } else {
                         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
                     }
@@ -162,7 +162,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation(mem8);
                     x = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                             ? _ld8_mem8_read()
+                             ? _ld8_readonly_cpl3()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
@@ -177,31 +177,31 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation(mem8);
                     tlb_hash = tlb_readonly[mem8_loc >> 12];
                     x = ((tlb_hash | mem8_loc) & 3
-                             ? _ld32_mem8_read()
+                             ? _ld32_readonly_cpl3()
                              : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
                 }
                 regs[(mem8 >> 3) & 7] = x;
                 goto EXEC_LOOP;
             case 0xa0: // MOV AL,
                 convert_offset_to_linear(false);
-                x = ld8_mem8_read();
+                x = ld8_readonly_cpl3();
                 regs[0] = (regs[0] & -256) | x;
                 goto EXEC_LOOP;
             case 0xa1: // MOV AX,
                 convert_offset_to_linear(false);
-                x = ld32_mem8_read();
+                x = ld32_readonly_cpl3();
                 regs[0] = x;
                 goto EXEC_LOOP;
             case 0xa2: // MOV ,AL
                 convert_offset_to_linear(true);
-                st8_mem8_write(regs[0]);
+                st8_writable_cpl3(regs[0]);
                 goto EXEC_LOOP;
             case 0xa3: // MOV ,AX
                 if (ipr & 0x0040) { // test386, check LOCK prefix (not allowed)
                     abort(6);
                 }
                 convert_offset_to_linear(true);
-                st32_mem8_write(regs[0]);
+                st32_writable_cpl3(regs[0]);
                 goto EXEC_LOOP;
             case 0xd7: // XLAT
                 mem8_loc = regs[3] + (regs[0] & 0xff);
@@ -215,7 +215,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     reg_idx1--;
                 }
                 mem8_loc = mem8_loc + segs[reg_idx1].base;
-                x = ld8_mem8_read();
+                x = ld8_readonly_cpl3();
                 set_lower_byte(0, x);
                 goto EXEC_LOOP;
             case 0xc6: // MOV
@@ -226,7 +226,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation(mem8);
                     x = phys_mem8[far++];
-                    st8_mem8_write(x);
+                    st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xc7: // MOV
@@ -245,7 +245,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         (phys_mem8[far + 2] << 16) |
                         (phys_mem8[far + 3] << 24);
                     far += 4;
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0x91: // XCHG C
@@ -269,8 +269,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                 } else {
                     segment_translation(mem8);
-                    x = ld8_mem8_write();
-                    st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                    x = ld8_writable_cpl3();
+                    st8_writable_cpl3((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                 }
                 set_lower_byte(reg_idx1, x);
                 goto EXEC_LOOP;
@@ -283,8 +283,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[reg_idx0] = regs[reg_idx1];
                 } else {
                     segment_translation(mem8);
-                    x = ld32_mem8_write();
-                    st32_mem8_write(regs[reg_idx1]);
+                    x = ld32_writable_cpl3();
+                    st32_writable_cpl3(regs[reg_idx1]);
                 }
                 regs[reg_idx1] = x;
                 goto EXEC_LOOP;
@@ -298,7 +298,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[mem8 & 7] & 0xffff;
                 } else {
                     segment_translation(mem8);
-                    x = ld16_mem8_read();
+                    x = ld16_readonly_cpl3();
                 }
                 set_segment_register(reg_idx1, x);
                 goto EXEC_LOOP;
@@ -317,7 +317,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                 } else {
                     segment_translation(mem8);
-                    st16_mem8_write(x);
+                    st16_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xc4: // LES
@@ -344,11 +344,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation(mem8);
                     if (operation != 7) {
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         x = calculate8(x, y);
-                        st8_mem8_write(x);
+                        st8_writable_cpl3(x);
                     } else {
-                        x = ld8_mem8_read();
+                        x = ld8_readonly_cpl3();
                         calculate8(x, y);
                     }
                 }
@@ -363,11 +363,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm = 2;
                 } else {
                     segment_translation(mem8);
-                    x = ld32_mem8_write();
+                    x = ld32_writable_cpl3();
                     osm_src = y;
                     osm_dst = x = x + osm_src;
                     osm = 2;
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0x09: // OR
@@ -384,9 +384,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[reg_idx0] = calculate32(regs[reg_idx0], y);
                 } else {
                     segment_translation(mem8);
-                    x = ld32_mem8_write();
+                    x = ld32_writable_cpl3();
                     x = calculate32(x, y);
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0x39: // CMP
@@ -400,7 +400,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm = 8;
                 } else {
                     segment_translation(mem8);
-                    x = ld32_mem8_read();
+                    x = ld32_readonly_cpl3();
                     osm_src = y;
                     osm_dst = x - osm_src;
                     osm = 8;
@@ -422,7 +422,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                 } else {
                     segment_translation(mem8);
-                    y = ld8_mem8_read();
+                    y = ld8_readonly_cpl3();
                 }
                 set_lower_byte(reg_idx1, calculate8((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
                 goto EXEC_LOOP;
@@ -433,7 +433,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = regs[mem8 & 7];
                 } else {
                     segment_translation(mem8);
-                    y = ld32_mem8_read();
+                    y = ld32_readonly_cpl3();
                 }
                 osm_src = y;
                 osm_dst = regs[reg_idx1] = regs[reg_idx1] + osm_src;
@@ -452,7 +452,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = regs[mem8 & 7];
                 } else {
                     segment_translation(mem8);
-                    y = ld32_mem8_read();
+                    y = ld32_readonly_cpl3();
                 }
                 regs[reg_idx1] = calculate32(regs[reg_idx1], y);
                 goto EXEC_LOOP;
@@ -464,7 +464,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = regs[mem8 & 7];
                 } else {
                     segment_translation(mem8);
-                    y = ld32_mem8_read();
+                    y = ld32_readonly_cpl3();
                 }
                 osm_src = y;
                 osm_dst = regs[reg_idx1] - osm_src;
@@ -536,11 +536,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation(mem8);
                     y = phys_mem8[far++];
                     if (operation != 7) {
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         x = calculate8(x, y);
-                        st8_mem8_write(x);
+                        st8_writable_cpl3(x);
                     } else {
-                        x = ld8_mem8_read();
+                        x = ld8_readonly_cpl3();
                         calculate8(x, y);
                     }
                 }
@@ -553,7 +553,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     y = phys_mem8[far] |
                         (phys_mem8[far + 1] << 8) |
@@ -579,9 +579,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             (phys_mem8[far + 2] << 16) |
                             (phys_mem8[far + 3] << 24);
                         far += 4;
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = calculate32(x, y);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                 }
                 goto EXEC_LOOP;
@@ -593,7 +593,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     y = (phys_mem8[far++] << 24) >> 24;
                     osm_src = y;
@@ -607,9 +607,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         y = (phys_mem8[far++] << 24) >> 24;
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = calculate32(x, y);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                 }
                 goto EXEC_LOOP;
@@ -652,7 +652,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = regs[mem8 & 7];
                 } else {
                     segment_translation(mem8);
-                    y = ld32_mem8_read();
+                    y = ld32_readonly_cpl3();
                 }
                 z = (phys_mem8[far++] << 24) >> 24;
                 aux_IMUL32(y, z);
@@ -665,7 +665,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = regs[mem8 & 7];
                 } else {
                     segment_translation(mem8);
-                    y = ld32_mem8_read();
+                    y = ld32_readonly_cpl3();
                 }
                 z = phys_mem8[far] |
                     (phys_mem8[far + 1] << 8) |
@@ -682,7 +682,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                 } else {
                     segment_translation(mem8);
-                    x = ld8_mem8_read();
+                    x = ld8_readonly_cpl3();
                 }
                 reg_idx1 = (mem8 >> 3) & 7;
                 y = regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1);
@@ -695,7 +695,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[mem8 & 7];
                 } else {
                     segment_translation(mem8);
-                    x = ld32_mem8_read();
+                    x = ld32_readonly_cpl3();
                 }
                 y = regs[(mem8 >> 3) & 7];
                 osm_dst = x & y;
@@ -725,7 +725,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_read();
+                        x = ld8_readonly_cpl3();
                     }
                     y = phys_mem8[far++];
                     osm_dst = ((x & y) << 24) >> 24;
@@ -737,9 +737,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(reg_idx0, ~(regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)));
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         x = ~x;
-                        st8_mem8_write(x);
+                        st8_writable_cpl3(x);
                     }
                     break;
                 case 3:
@@ -749,9 +749,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(reg_idx0, calculate8(0, (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         x = calculate8(0, x);
-                        st8_mem8_write(x);
+                        st8_writable_cpl3(x);
                     }
                     break;
                 case 4:
@@ -760,7 +760,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_read();
+                        x = ld8_readonly_cpl3();
                     }
                     aux_MUL8(regs[0], x);
                     set_lower_word(0, x);
@@ -771,7 +771,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_read();
+                        x = ld8_readonly_cpl3();
                     }
                     aux_IMUL8(regs[0], x);
                     set_lower_word(0, x);
@@ -782,7 +782,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_read();
+                        x = ld8_readonly_cpl3();
                     }
                     aux_DIV8(x);
                     break;
@@ -792,7 +792,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_read();
+                        x = ld8_readonly_cpl3();
                     }
                     aux_IDIV8(x);
                     break;
@@ -809,7 +809,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     y = phys_mem8[far] |
                         (phys_mem8[far + 1] << 8) |
@@ -825,9 +825,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[reg_idx0] = ~regs[reg_idx0];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = ~x;
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     break;
                 case 3:
@@ -837,9 +837,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[reg_idx0] = calculate32(0, regs[reg_idx0]);
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = calculate32(0, x);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     break;
                 case 4:
@@ -847,7 +847,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     aux_MUL32(regs[0], x);
                     regs[0] = x;
@@ -858,7 +858,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     aux_IMUL32(regs[0], x);
                     regs[0] = x;
@@ -869,7 +869,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     regs[0] = aux_DIV32(regs[2], regs[0], x);
                     regs[2] = v;
@@ -879,7 +879,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     regs[0] = aux_IDIV32(regs[2], regs[0], x);
                     regs[2] = v;
@@ -898,9 +898,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation(mem8);
                     y = phys_mem8[far++];
-                    x = ld8_mem8_write();
+                    x = ld8_writable_cpl3();
                     x = shift8(x, y);
-                    st8_mem8_write(x);
+                    st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xc1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
@@ -913,9 +913,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation(mem8);
                     y = phys_mem8[far++];
-                    x = ld32_mem8_write();
+                    x = ld32_writable_cpl3();
                     x = shift32(x, y);
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xd0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
@@ -926,9 +926,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     set_lower_byte(reg_idx0, shift8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), 1));
                 } else {
                     segment_translation(mem8);
-                    x = ld8_mem8_write();
+                    x = ld8_writable_cpl3();
                     x = shift8(x, 1);
-                    st8_mem8_write(x);
+                    st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xd1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
@@ -939,9 +939,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[reg_idx0] = shift32(regs[reg_idx0], 1);
                 } else {
                     segment_translation(mem8);
-                    x = ld32_mem8_write();
+                    x = ld32_writable_cpl3();
                     x = shift32(x, 1);
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xd2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
@@ -953,9 +953,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     set_lower_byte(reg_idx0, shift8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
                 } else {
                     segment_translation(mem8);
-                    x = ld8_mem8_write();
+                    x = ld8_writable_cpl3();
                     x = shift8(x, y);
-                    st8_mem8_write(x);
+                    st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xd3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
@@ -967,9 +967,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[reg_idx0] = shift32(regs[reg_idx0], y);
                 } else {
                     segment_translation(mem8);
-                    x = ld32_mem8_write();
+                    x = ld32_writable_cpl3();
                     x = shift32(x, y);
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0x98: // CBW
@@ -991,7 +991,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     mem8_loc = regs[4] - 4;
                     tlb_hash = tlb_writable[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
-                        _st32_mem8_write(x);
+                        _st32_writable_cpl3(x);
                     } else {
                         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
                     }
@@ -1012,7 +1012,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     mem8_loc = regs[4];
                     tlb_hash = tlb_readonly[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
-                        x = _ld32_mem8_read();
+                        x = _ld32_readonly_cpl3();
                     } else {
                         x = phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
                     }
@@ -1042,7 +1042,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     z = regs[4];
                     segment_translation(mem8);
                     regs[4] = y;
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                     regs[4] = z;
                 }
                 goto EXEC_LOOP;
@@ -1054,7 +1054,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 far += 4;
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4] - 4;
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                     regs[4] = mem8_loc;
                 } else {
                     push_dword(x);
@@ -1064,7 +1064,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 x = (phys_mem8[far++] << 24) >> 24;
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4] - 4;
-                    st32_mem8_write(x);
+                    st32_writable_cpl3(x);
                     regs[4] = mem8_loc;
                 } else {
                     push_dword(x);
@@ -1076,7 +1076,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xc9: // LEAVE
                 if (x86_64_long_mode) {
                     mem8_loc = regs[5];
-                    x = ld32_mem8_read();
+                    x = ld32_readonly_cpl3();
                     regs[5] = x;
                     regs[4] = mem8_loc + 4;
                 } else {
@@ -1154,9 +1154,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(reg_idx0, aux_INC8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         x = aux_INC8(x);
-                        st8_mem8_write(x);
+                        st8_writable_cpl3(x);
                     }
                     break;
                 case 1:
@@ -1165,9 +1165,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(reg_idx0, aux_DEC8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1))));
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         x = aux_DEC8(x);
-                        st8_mem8_write(x);
+                        st8_writable_cpl3(x);
                     }
                     break;
                 default:
@@ -1189,14 +1189,14 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         osm = 27;
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         if (osm < 25) {
                             ocm_preserved = osm;
                             ocm_dst_preserved = osm_dst;
                         }
                         x = osm_dst = x + 1;
                         osm = 27;
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     break;
                 case 1: // DEC
@@ -1210,14 +1210,14 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         osm = 30;
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         if (osm < 25) {
                             ocm_preserved = osm;
                             ocm_dst_preserved = osm_dst;
                         }
                         x = osm_dst = x - 1;
                         osm = 30;
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     break;
                 case 2: // CALL
@@ -1225,12 +1225,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     y = eip + far - far_start;
                     if (x86_64_long_mode) {
                         mem8_loc = regs[4] - 4;
-                        st32_mem8_write(y);
+                        st32_writable_cpl3(y);
                         regs[4] = mem8_loc;
                     } else {
                         push_dword(y);
@@ -1242,7 +1242,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     eip = x, far = far_start = 0;
                     break;
@@ -1251,11 +1251,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     if (x86_64_long_mode) {
                         mem8_loc = regs[4] - 4;
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                         regs[4] = mem8_loc;
                     } else {
                         push_dword(x);
@@ -1267,9 +1267,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         abort(6);
                     }
                     segment_translation(mem8);
-                    x = ld32_mem8_read();
+                    x = ld32_readonly_cpl3();
                     mem8_loc = mem8_loc + 4;
-                    y = ld16_mem8_read();
+                    y = ld16_readonly_cpl3();
                     if (operation == 3) {
                         aux_CALLF(1, y, x, (eip + far - far_start));
                     } else {
@@ -1302,9 +1302,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         far += 4;
                     }
                 } else {
-                    x = ld16_mem8_direct();
+                    x = ld16_direct();
                 }
-                y = ld16_mem8_direct();
+                y = ld16_direct();
                 aux_JMPF(y, x);
                 goto EXEC_LOOP;
             case 0x70: // JO
@@ -1478,7 +1478,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 goto EXEC_LOOP;
             case 0xc2: // RET
-                y = (ld16_mem8_direct() << 16) >> 16;
+                y = (ld16_direct() << 16) >> 16;
                 x = read_stack_dword();
                 regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + y) & SS_mask);
                 eip = x, far = far_start = 0;
@@ -1486,7 +1486,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xc3: // RET
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4];
-                    x = ld32_mem8_read();
+                    x = ld32_readonly_cpl3();
                     regs[4] = regs[4] + 4;
                 } else {
                     x = read_stack_dword();
@@ -1503,7 +1503,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 y = eip + far - far_start;
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4] - 4;
-                    st32_mem8_write(y);
+                    st32_writable_cpl3(y);
                     regs[4] = mem8_loc;
                 } else {
                     push_dword(y);
@@ -1519,16 +1519,16 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         (phys_mem8[far + 3] << 24);
                     far += 4;
                 } else {
-                    x = ld16_mem8_direct();
+                    x = ld16_direct();
                 }
-                y = ld16_mem8_direct();
+                y = ld16_direct();
                 aux_CALLF(z, y, x, (eip + far - far_start));
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
             case 0xca: // RET
-                y = (ld16_mem8_direct() << 16) >> 16;
+                y = (ld16_direct() << 16) >> 16;
                 aux_RETF((((ipr >> 8) & 1) ^ 1), y);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
@@ -1859,7 +1859,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(mem8 & 7, x);
                     } else {
                         segment_translation(mem8);
-                        st8_mem8_write(x);
+                        st8_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0x40: // CMOVx conditional move (80486) - overflow (OF == 1)
@@ -1883,7 +1883,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     if (can_jump(opcode & 0xf)) {
                         regs[(mem8 >> 3) & 7] = x;
@@ -1898,7 +1898,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         x = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                                 ? _ld8_mem8_read()
+                                 ? _ld8_readonly_cpl3()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
                     regs[reg_idx1] = x;
@@ -1910,7 +1910,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7] & 0xffff;
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_read();
+                        x = ld16_readonly_cpl3();
                     }
                     regs[reg_idx1] = x;
                     goto EXEC_LOOP;
@@ -1923,7 +1923,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         x = (((tlb_hash = tlb_readonly[mem8_loc >> 12]) == -1)
-                                 ? _ld8_mem8_read()
+                                 ? _ld8_readonly_cpl3()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
                     regs[reg_idx1] = (x << 24) >> 24;
@@ -1935,7 +1935,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_read();
+                        x = ld16_readonly_cpl3();
                     }
                     regs[reg_idx1] = (x << 16) >> 16;
                     goto EXEC_LOOP;
@@ -1957,7 +1957,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(mem8 & 7, x);
                         } else {
                             segment_translation(mem8);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         break;
                     case 2: // LDTR Load Local Descriptor Table Register
@@ -1969,7 +1969,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7] & 0xffff;
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         if (operation == 2) {
                             aux_LDTR(x);
@@ -1983,7 +1983,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7] & 0xffff;
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         aux_VERR_VERW(x, operation & 1);
                         break;
@@ -2004,9 +2004,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             abort(13);
                         }
                         segment_translation(mem8);
-                        x = ld16_mem8_read();
+                        x = ld16_readonly_cpl3();
                         mem8_loc += 2;
-                        y = ld32_mem8_read();
+                        y = ld32_readonly_cpl3();
                         if (operation == 2) {
                             gdt.base = y;
                             gdt.limit = x;
@@ -2125,9 +2125,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         z = phys_mem8[far++];
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = aux_SHLD(x, y, z);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xa5: // SHLD
@@ -2139,9 +2139,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[reg_idx0] = aux_SHLD(regs[reg_idx0], y, z);
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = aux_SHLD(x, y, z);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xac: // SHRD
@@ -2154,9 +2154,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         z = phys_mem8[far++];
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = aux_SHRD(x, y, z);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xad: // SHRD
@@ -2168,9 +2168,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[reg_idx0] = aux_SHRD(regs[reg_idx0], y, z);
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = aux_SHRD(x, y, z);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
@@ -2184,7 +2184,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation(mem8);
                             y = phys_mem8[far++];
-                            x = ld32_mem8_read();
+                            x = ld32_readonly_cpl3();
                         }
                         aux_BT(x, y);
                         break;
@@ -2199,9 +2199,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation(mem8);
                             y = phys_mem8[far++];
-                            x = ld32_mem8_write();
+                            x = ld32_writable_cpl3();
                             x = aux_BTS_BTR_BTC(x, y);
-                            st32_mem8_write(x);
+                            st32_writable_cpl3(x);
                         }
                         break;
                     default:
@@ -2216,7 +2216,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         mem8_loc = mem8_loc + ((y >> 5) << 2);
-                        x = ld32_mem8_read();
+                        x = ld32_readonly_cpl3();
                     }
                     aux_BT(x, y);
                     goto EXEC_LOOP;
@@ -2232,9 +2232,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         mem8_loc = mem8_loc + ((y >> 5) << 2);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         x = aux_BTS_BTR_BTC(x, y);
-                        st32_mem8_write(x);
+                        st32_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xbc: // BSF
@@ -2245,7 +2245,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         y = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        y = ld32_mem8_read();
+                        y = ld32_readonly_cpl3();
                     }
                     if (opcode & 1) {
                         regs[reg_idx1] = aux_BSR(regs[reg_idx1], y);
@@ -2260,7 +2260,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         y = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        y = ld32_mem8_read();
+                        y = ld32_readonly_cpl3();
                     }
                     aux_IMUL32(regs[reg_idx1], y);
                     regs[reg_idx1] = x;
@@ -2287,9 +2287,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(reg_idx0, y);
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         y = calculate8(x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
-                        st8_mem8_write(y);
+                        st8_writable_cpl3(y);
                         set_lower_byte(reg_idx1, x);
                     }
                     goto EXEC_LOOP;
@@ -2305,9 +2305,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[reg_idx0] = y;
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         y = calculate32(x, regs[reg_idx1]);
-                        st32_mem8_write(y);
+                        st32_writable_cpl3(y);
                         regs[reg_idx1] = x;
                     }
                     goto EXEC_LOOP;
@@ -2326,10 +2326,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                     } else {
                         segment_translation(mem8);
-                        x = ld8_mem8_write();
+                        x = ld8_writable_cpl3();
                         y = calculate8(regs[0], x);
                         if (y == 0) {
-                            st8_mem8_write((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                            st8_writable_cpl3((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
                             set_lower_byte(0, x);
                         }
@@ -2350,10 +2350,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                     } else {
                         segment_translation(mem8);
-                        x = ld32_mem8_write();
+                        x = ld32_writable_cpl3();
                         y = calculate32(regs[0], x);
                         if (y == 0) {
-                            st32_mem8_write(regs[reg_idx1]);
+                            st32_writable_cpl3(regs[reg_idx1]);
                         } else {
                             regs[0] = x;
                         }
@@ -2557,7 +2557,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_word(mem8 & 7, x);
                     } else {
                         segment_translation(mem8);
-                        st16_mem8_write(x);
+                        st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0x18b: // MOV
@@ -2566,7 +2566,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_read();
+                        x = ld16_readonly_cpl3();
                     }
                     set_lower_word((mem8 >> 3) & 7, x);
                     goto EXEC_LOOP;
@@ -2578,26 +2578,26 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x1bd: // MOV BP
                 case 0x1be: // MOV SI
                 case 0x1bf: // MOV DI
-                    set_lower_word(opcode & 7, ld16_mem8_direct());
+                    set_lower_word(opcode & 7, ld16_direct());
                     goto EXEC_LOOP;
                 case 0x1a1: // MOV AX,
                     convert_offset_to_linear(false);
-                    x = ld16_mem8_read();
+                    x = ld16_readonly_cpl3();
                     set_lower_word(0, x);
                     goto EXEC_LOOP;
                 case 0x1a3: // MOV ,AX
                     convert_offset_to_linear(true);
-                    st16_mem8_write(regs[0]);
+                    st16_writable_cpl3(regs[0]);
                     goto EXEC_LOOP;
                 case 0x1c7: // MOV
                     mem8 = phys_mem8[far++];
                     if ((mem8 >> 6) == 3) {
-                        x = ld16_mem8_direct();
+                        x = ld16_direct();
                         set_lower_word(mem8 & 7, x);
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_direct();
-                        st16_mem8_write(x);
+                        x = ld16_direct();
+                        st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0x191: // XCHG C
@@ -2621,8 +2621,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_word(reg_idx0, regs[reg_idx1]);
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_write();
-                        st16_mem8_write(regs[reg_idx1]);
+                        x = ld16_writable_cpl3();
+                        st16_writable_cpl3(regs[reg_idx1]);
                     }
                     set_lower_word(reg_idx1, x);
                     goto EXEC_LOOP;
@@ -2649,11 +2649,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         if (operation != 7) {
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = calculate16(x, y);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         } else {
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                             calculate16(x, y);
                         }
                     }
@@ -2673,7 +2673,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         y = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        y = ld16_mem8_read();
+                        y = ld16_readonly_cpl3();
                     }
                     set_lower_word(reg_idx1, calculate16(regs[reg_idx1], y));
                     goto EXEC_LOOP;
@@ -2685,7 +2685,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x12d: // SUB
                 case 0x135: // XOR
                 case 0x13d: // CMP
-                    y = ld16_mem8_direct();
+                    y = ld16_direct();
                     operation = (opcode >> 3) & 7;
                     set_lower_word(0, calculate16(regs[0], y));
                     goto EXEC_LOOP;
@@ -2694,18 +2694,18 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     operation = (mem8 >> 3) & 7;
                     if ((mem8 >> 6) == 3) {
                         reg_idx0 = mem8 & 7;
-                        y = ld16_mem8_direct();
+                        y = ld16_direct();
                         set_lower_word(reg_idx0, calculate16(regs[reg_idx0], y));
                     } else {
                         segment_translation(mem8);
-                        y = ld16_mem8_direct();
+                        y = ld16_direct();
                         if (operation != 7) {
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = calculate16(x, y);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         } else {
                             operation = 7;
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                             calculate16(x, y);
                         }
                     }
@@ -2721,11 +2721,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation(mem8);
                         y = (phys_mem8[far++] << 24) >> 24;
                         if (operation != 7) {
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = calculate16(x, y);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         } else {
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                             calculate16(x, y);
                         }
                     }
@@ -2759,7 +2759,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         y = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        y = ld16_mem8_read();
+                        y = ld16_readonly_cpl3();
                     }
                     z = (phys_mem8[far++] << 24) >> 24;
                     aux_IMUL16(y, z);
@@ -2772,9 +2772,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         y = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        y = ld16_mem8_read();
+                        y = ld16_readonly_cpl3();
                     }
-                    z = ld16_mem8_direct();
+                    z = ld16_direct();
                     aux_IMUL16(y, z);
                     set_lower_word(reg_idx1, x);
                     goto EXEC_LOOP;
@@ -2784,14 +2784,14 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[mem8 & 7];
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_read();
+                        x = ld16_readonly_cpl3();
                     }
                     y = regs[(mem8 >> 3) & 7];
                     osm_dst = ((x & y) << 16) >> 16;
                     osm = 13;
                     goto EXEC_LOOP;
                 case 0x1a9: // TEST
-                    y = ld16_mem8_direct();
+                    y = ld16_direct();
                     osm_dst = ((regs[0] & y) << 16) >> 16;
                     osm = 13;
                     goto EXEC_LOOP;
@@ -2804,9 +2804,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
-                        y = ld16_mem8_direct();
+                        y = ld16_direct();
                         osm_dst = ((x & y) << 16) >> 16;
                         osm = 13;
                         break;
@@ -2816,9 +2816,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(reg_idx0, ~regs[reg_idx0]);
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = ~x;
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         break;
                     case 3:
@@ -2829,9 +2829,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             operation = 5;
                             segment_translation(mem8);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = calculate16(0, x);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         break;
                     case 4:
@@ -2839,7 +2839,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         aux_MUL16(regs[0], x);
                         set_lower_word(0, x);
@@ -2850,7 +2850,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         aux_IMUL16(regs[0], x);
                         set_lower_word(0, x);
@@ -2861,7 +2861,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         aux_DIV16(x);
                         break;
@@ -2870,7 +2870,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         aux_IDIV16(x);
                         break;
@@ -2888,9 +2888,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation(mem8);
                         y = phys_mem8[far++];
-                        x = ld16_mem8_write();
+                        x = ld16_writable_cpl3();
                         x = shift16(x, y);
-                        st16_mem8_write(x);
+                        st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0x1d1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
@@ -2901,9 +2901,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_word(reg_idx0, shift16(regs[reg_idx0], 1));
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_write();
+                        x = ld16_writable_cpl3();
                         x = shift16(x, 1);
-                        st16_mem8_write(x);
+                        st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0x1d3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
@@ -2915,9 +2915,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_word(reg_idx0, shift16(regs[reg_idx0], y));
                     } else {
                         segment_translation(mem8);
-                        x = ld16_mem8_write();
+                        x = ld16_writable_cpl3();
                         x = shift16(x, y);
-                        st16_mem8_write(x);
+                        st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0x198: // CBW
@@ -2969,12 +2969,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         z = regs[4];
                         segment_translation(mem8);
                         regs[4] = y;
-                        st16_mem8_write(x);
+                        st16_writable_cpl3(x);
                         regs[4] = z;
                     }
                     goto EXEC_LOOP;
                 case 0x168: // PUSH
-                    x = ld16_mem8_direct();
+                    x = ld16_direct();
                     push_word(x);
                     goto EXEC_LOOP;
                 case 0x16a: // PUSH
@@ -3019,9 +3019,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(reg_idx0, aux_INC16(regs[reg_idx0]));
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = aux_INC16(x);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         break;
                     case 1:
@@ -3030,9 +3030,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(reg_idx0, aux_DEC16(regs[reg_idx0]));
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = aux_DEC16(x);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         break;
                     case 2:
@@ -3040,7 +3040,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7] & 0xffff;
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         push_word((eip + far - far_start));
                         eip = x, far = far_start = 0;
@@ -3050,7 +3050,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7] & 0xffff;
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         eip = x, far = far_start = 0;
                         break;
@@ -3059,7 +3059,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         push_word(x);
                         break;
@@ -3069,9 +3069,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             abort(6);
                         }
                         segment_translation(mem8);
-                        x = ld16_mem8_read();
+                        x = ld16_readonly_cpl3();
                         mem8_loc = mem8_loc + 2;
-                        y = ld16_mem8_read();
+                        y = ld16_readonly_cpl3();
                         if (operation == 3) {
                             aux_CALLF(0, y, x, (eip + far - far_start));
                         } else {
@@ -3087,7 +3087,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x1e9: // JMP
-                    x = ld16_mem8_direct();
+                    x = ld16_direct();
                     eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x170: // JO
@@ -3112,7 +3112,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                     goto EXEC_LOOP;
                 case 0x1c2: // RET
-                    y = (ld16_mem8_direct() << 16) >> 16;
+                    y = (ld16_direct() << 16) >> 16;
                     x = read_stack_word();
                     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + y) & SS_mask);
                     eip = x, far = far_start = 0;
@@ -3123,7 +3123,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     eip = x, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x1e8: // CALL
-                    x = ld16_mem8_direct();
+                    x = ld16_direct();
                     push_word((eip + far - far_start));
                     eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                     goto EXEC_LOOP;
@@ -3335,7 +3335,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     case 0x18d: // JNL
                     case 0x18e: // JLE
                     case 0x18f: // JNLE
-                        x = ld16_mem8_direct();
+                        x = ld16_direct();
                         if (can_jump(opcode & 0xf)) {
                             eip = (eip + far - far_start + x) & 0xffff, far = far_start = 0;
                         }
@@ -3361,7 +3361,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         if (can_jump(opcode & 0xf)) {
                             set_lower_word((mem8 >> 3) & 7, x);
@@ -3375,7 +3375,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                         } else {
                             segment_translation(mem8);
-                            x = ld8_mem8_read();
+                            x = ld8_readonly_cpl3();
                         }
                         set_lower_word(reg_idx1, x);
                         goto EXEC_LOOP;
@@ -3387,7 +3387,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                         } else {
                             segment_translation(mem8);
-                            x = ld8_mem8_read();
+                            x = ld8_readonly_cpl3();
                         }
                         set_lower_word(reg_idx1, ((x << 24) >> 24));
                         goto EXEC_LOOP;
@@ -3398,7 +3398,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             y = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            y = ld16_mem8_read();
+                            y = ld16_readonly_cpl3();
                         }
                         aux_IMUL16(regs[reg_idx1], y);
                         set_lower_word(reg_idx1, x);
@@ -3415,9 +3415,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(reg_idx0, y);
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             y = calculate16(x, regs[reg_idx1]);
-                            st16_mem8_write(y);
+                            st16_writable_cpl3(y);
                             set_lower_word(reg_idx1, x);
                         }
                         goto EXEC_LOOP;
@@ -3448,9 +3448,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation(mem8);
                             z = phys_mem8[far++];
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = aux_SHRD_SHLD16(x, y, z);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
                     case 0x1a5: // SHLD
@@ -3464,9 +3464,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(reg_idx0, aux_SHRD_SHLD16(regs[reg_idx0], y, z));
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = aux_SHRD_SHLD16(x, y, z);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
                     case 0x1ba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
@@ -3480,7 +3480,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             } else {
                                 segment_translation(mem8);
                                 y = phys_mem8[far++];
-                                x = ld16_mem8_read();
+                                x = ld16_readonly_cpl3();
                             }
                             aux_BT16(x, y);
                             break;
@@ -3495,9 +3495,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             } else {
                                 segment_translation(mem8);
                                 y = phys_mem8[far++];
-                                x = ld16_mem8_write();
+                                x = ld16_writable_cpl3();
                                 x = aux_BTS_BTR_BTC16(x, y);
-                                st16_mem8_write(x);
+                                st16_writable_cpl3(x);
                             }
                             break;
                         default:
@@ -3512,7 +3512,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation(mem8);
                             mem8_loc = mem8_loc + (((y & 0xffff) >> 4) << 1);
-                            x = ld16_mem8_read();
+                            x = ld16_readonly_cpl3();
                         }
                         aux_BT16(x, y);
                         goto EXEC_LOOP;
@@ -3528,9 +3528,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation(mem8);
                             mem8_loc = mem8_loc + (((y & 0xffff) >> 4) << 1);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             x = aux_BTS_BTR_BTC16(x, y);
-                            st16_mem8_write(x);
+                            st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
                     case 0x1bc: // BSF
@@ -3541,7 +3541,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             y = regs[mem8 & 7];
                         } else {
                             segment_translation(mem8);
-                            y = ld16_mem8_read();
+                            y = ld16_readonly_cpl3();
                         }
                         x = regs[reg_idx1];
                         if (opcode & 1) {
@@ -3566,10 +3566,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             }
                         } else {
                             segment_translation(mem8);
-                            x = ld16_mem8_write();
+                            x = ld16_writable_cpl3();
                             y = calculate16(regs[0], x);
                             if (y == 0) {
-                                st16_mem8_write(regs[reg_idx1]);
+                                st16_writable_cpl3(regs[reg_idx1]);
                             } else {
                                 set_lower_word(0, x);
                             }
