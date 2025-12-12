@@ -55,7 +55,7 @@ class Free86 {
             tlb_hash = tlb_readonly[lat20];
         }
         if (tlb_hash == -1) {
-            page_translation(address, writable, cpl == 3);
+            page_translation(writable, cpl == 3, address);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
             } else {
@@ -354,9 +354,10 @@ class Free86 {
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 
-    void page_translation(int address, int writable, bool user);
+    void page_translation(int writable, bool user);
+    void page_translation(int writable, bool user, int address);
 
-    void segment_translation(int modRM);
+    void segment_translation();
     void convert_offset_to_linear(bool writable);
 
     void set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);

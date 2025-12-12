@@ -1,7 +1,7 @@
 #include "free86.h"
 
 int Free86::_ld8_readonly_cplX() {
-    page_translation(address_operand, 0, 0);
+    page_translation(0, 0);
     tlb_hash = tlb_readonly_cplX[address_operand >> 12];
     return memory8[address_operand ^ tlb_hash];
 }
@@ -41,7 +41,7 @@ int Free86::ld_readonly_cplX() {
 int Free86::_ld8_readonly_cpl3() {
     int byte;
     if (is_protected()) {
-        page_translation(address_operand, 0, cpl == 3);
+        page_translation(0, cpl == 3);
         tlb_hash = tlb_readonly[address_operand >> 12];
         byte = memory8[address_operand ^ tlb_hash];
     } else {
@@ -88,7 +88,7 @@ int Free86::ld_readonly_cpl3() {
 int Free86::_ld8_writable_cpl3() {
     int byte;
     if (is_protected()) {
-        page_translation(address_operand, 1, cpl == 3);
+        page_translation(1, cpl == 3);
         tlb_hash = tlb_writable[address_operand >> 12];
         byte = memory8[address_operand ^ tlb_hash];
     } else {
@@ -133,7 +133,7 @@ int Free86::ld_writable_cpl3() {
                : memory[(address_operand ^ tlb_hash) >> 2];
 }
 void Free86::_st8_writable_cplX(int byte) {
-    page_translation(address_operand, 1, 0);
+    page_translation(1, 0);
     tlb_hash = tlb_writable_cplX[address_operand >> 12];
     memory8[address_operand ^ tlb_hash] = byte;
 }
@@ -179,7 +179,7 @@ void Free86::st_writable_cplX(int dword) {
 }
 void Free86::_st8_writable_cpl3(int byte) {
     if (is_protected()) {
-        page_translation(address_operand, 1, cpl == 3);
+        page_translation(1, cpl == 3);
         tlb_hash = tlb_writable[address_operand >> 12];
         memory8[address_operand ^ tlb_hash] = byte;
     } else {

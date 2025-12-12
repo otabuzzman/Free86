@@ -71,7 +71,7 @@ void Free86::fetch_opcode() {
     // combined check ok because bits 0-11 in `eip_tlb_hash' always 0.
     if (((eip_tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
         if (eip_tlb_hash == -1) {
-            page_translation(eip_linear, 0, cpl == 3);
+            page_translation(0, cpl == 3, eip_linear);
         }
         eip_tlb_hash = tlb_readonly[eip_linear >> 12];
         far = far_start = eip_linear ^ eip_tlb_hash;
@@ -1235,7 +1235,10 @@ void Free86::set_lower_byte(int reg, int byte) {
 void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-void Free86::page_translation(int address, int writable, bool user) {
+void Free86::page_translation(int writable, bool user) {
+    page_translation(writable, user, address_operand);
+}
+void Free86::page_translation(int writable, bool user, int address) {
     int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, ok, error_code;
     if (!is_paging()) {
         pte_RW = 1; // writable
@@ -1292,7 +1295,7 @@ void Free86::page_translation(int address, int writable, bool user) {
         abort(14, error_code);
     }
 }
-void Free86::segment_translation(int modRM) {
+void Free86::segment_translation() {
     int sib, sib_base, sib_index, sreg;
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -3440,7 +3443,7 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     if ((modRM >> 6) == 3) {
         selector = regs[modRM & 7] & 0xffff;
     } else {
-        segment_translation(modRM);
+        segment_translation();
         selector = ld16_readonly_cpl3();
     }
     x = ld_descriptor_flags(selector, is_lsl);
@@ -3528,7 +3531,7 @@ void Free86::aux_ARPL() {
         reg_idx0 = modRM & 7;
         x = regs[reg_idx0] & 0xffff;
     } else {
-        segment_translation(modRM);
+        segment_translation();
         x = ld16_writable_cpl3();
     }
     y = regs[(modRM >> 3) & 7];
@@ -3680,7 +3683,7 @@ void Free86::aux_BOUND16() {
     if ((modRM >> 6) == 3) {
         abort(6);
     }
-    segment_translation(modRM);
+    segment_translation();
     x = (ld16_readonly_cpl3() << 16) >> 16;
     address_operand = address_operand + 2;
     y = (ld16_readonly_cpl3() << 16) >> 16;
@@ -3695,7 +3698,7 @@ void Free86::aux_BOUND() {
     if ((modRM >> 6) == 3) {
         abort(6);
     }
-    segment_translation(modRM);
+    segment_translation();
     x = ld_readonly_cpl3();
     address_operand = address_operand + 4;
     y = ld_readonly_cpl3();
@@ -3826,7 +3829,7 @@ void Free86::ld_full_pointer16(int sreg) {
     if ((modRM >> 3) == 3) {
         ; // abort(6);
     }
-    segment_translation(modRM);
+    segment_translation();
     x = ld16_readonly_cpl3();
     address_operand += 2;
     y = ld16_readonly_cpl3();
@@ -3838,7 +3841,7 @@ void Free86::ld_full_pointer(int sreg) {
     if ((modRM >> 3) == 3) {
         ; // abort(6);
     }
-    segment_translation(modRM);
+    segment_translation();
     x = ld_readonly_cpl3();
     address_operand += 4;
     y = ld16_readonly_cpl3();
