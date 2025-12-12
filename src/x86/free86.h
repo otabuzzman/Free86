@@ -296,7 +296,7 @@ class Free86 {
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
 
-    // sort of address...
+    // linear address...
     uint32_t mem8_loc;
     int mem8; // ...and value
 
