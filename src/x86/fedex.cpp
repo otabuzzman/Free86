@@ -935,12 +935,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 x = regs[opcode & 7];
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4] - 4;
-                    tlb_hash = tlb_writable[mem8_loc >> 12];
-                    if ((tlb_hash | mem8_loc) & 3) {
-                        _st32_writable_cpl3(x);
-                    } else {
-                        phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = x;
-                    }
+                    st32_writable_cpl3(x);
                     regs[4] = mem8_loc;
                 } else {
                     push_dword(x);
