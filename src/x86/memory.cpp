@@ -235,6 +235,26 @@ int Free86::ld16_direct() {
 int Free86::ld32_direct() {
     return ld8_direct() | (ld8_direct() << 8) | (ld8_direct() << 16) | (ld8_direct() << 24);
 }
+int Free86::ld8_direct(int address) {
+    return phys_mem8[address];
+}
+int Free86::ld32_direct(int address) {
+    return phys_mem32[address >> 2];
+}
+void Free86::st8_direct(int address, int byte) {
+    phys_mem8[address] = byte;
+}
+void Free86::st8_direct(int address, std::string data) {
+    auto s = data.c_str();
+    auto l = data.length();
+    for (int i = 0; i < l; i++) {
+        st8_direct(address++, s[i] & 0xff);
+    }
+    st8_direct(address, 0);
+}
+void Free86::st32_direct(int address, int dword) {
+    phys_mem32[address >> 2] = dword;
+}
 void Free86::push_word(int word) {
     int esp = regs[4] - 2;
     mem8_loc = (esp & SS_mask) + SS_base;

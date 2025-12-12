@@ -43,20 +43,9 @@ class Free86 {
 
     uint64_t cycles;
 
-    uint8_t ld8_phys(int address) {
-        return phys_mem8[address];
-    }
-    void st8_phys(int address, uint8_t byte) {
-        phys_mem8[address] = byte;
-    }
-    void st8_phys(int address, std::string data) {
-        auto s = data.c_str();
-        auto l = data.length();
-        for (int i = 0; i < l; i++) {
-            st8_phys(address++, s[i] & 0xff);
-        }
-        st8_phys(address, 0);
-    }
+    int ld8_direct(int address); // read/ write byte(s) at memory address
+    void st8_direct(int address, int byte);
+    void st8_direct(int address, std::string data);
 
     int tlb_lookup(int linear_address, int writable) {
         uint32_t lat20 = linear_address >> 12;
@@ -120,13 +109,6 @@ class Free86 {
     uint8_t *phys_mem8;
     uint16_t *phys_mem16;
     uint32_t *phys_mem32;
-
-    int ld32_phys(int address) {
-        return phys_mem32[address >> 2];
-    }
-    void st32_phys(int address, int dword) {
-        phys_mem32[address >> 2] = dword;
-    }
 
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
@@ -541,6 +523,8 @@ class Free86 {
     int ld8_direct(); // read byte...
     int ld16_direct(); // ...word...
     int ld32_direct(); // ...dword at FAR, update FAR, bypass TLB
+    int ld32_direct(int address); // read/ write dword at memory address
+    void st32_direct(int address, int dword);
 
     void push_word(int word);
     void push_dword(int dword);
