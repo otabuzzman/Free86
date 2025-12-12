@@ -108,7 +108,7 @@ class Free86 {
 
     uint8_t *phys_mem8;
     uint16_t *phys_mem16;
-    uint32_t *phys_mem32;
+    uint32_t *phys_mem;
 
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
@@ -347,10 +347,10 @@ class Free86 {
 
     int ld8_io(int port);
     int ld16_io(int port);
-    int ld32_io(int port);
+    int ld_io(int port);
     void st8_io(int port, int byte);
     void st16_io(int port, int word);
-    void st32_io(int port, int dword);
+    void st_io(int port, int dword);
 
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
@@ -392,24 +392,24 @@ class Free86 {
     void aux_IDIV8(int divisor);
     void aux_DIV16(int divisor);
     void aux_IDIV16(int divisor);
-    int aux_DIV32(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
-    int aux_IDIV32(int dividend_upper, int dividend_lower, int divisor);
+    int aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    int aux_IDIV(int dividend_upper, int dividend_lower, int divisor);
     void aux_MUL8(int multiplicand, int multiplier);
     void aux_IMUL8(int multiplicand, int multiplier);
     void aux_MUL16(int multiplicand, int multiplier);
     void aux_IMUL16(int multiplicand, int multiplier);
-    void aux_MUL32(int multiplicand, int multiplier);
-    void aux_IMUL32(int multiplicand, int multiplier);
+    void aux_MUL(int multiplicand, int multiplier);
+    void aux_IMUL(int multiplicand, int multiplier);
 
-    int multiply32(int multiplicand, int multiplier);
+    int multiply(int multiplicand, int multiplier);
 
     int calculate8(int dst, int src);
     int calculate16(int dst, int src);
-    int calculate32(int dst, int src);
+    int calculate(int dst, int src);
 
     int shift8(int src, int count);
     int shift16(int src, int count);
-    int shift32(uint32_t src, int count);
+    int shift(uint32_t src, int count);
 
     void aux_LDTR(int selector);
     void aux_LTR(int selector);
@@ -451,7 +451,7 @@ class Free86 {
     void aux_ENTER16();
     void aux_ENTER();
     void ld_full_pointer16(int sreg);
-    void ld_full_pointer32(int sreg);
+    void ld_full_pointer(int sreg);
 
     // string.cpp
     void aux_INS16();
@@ -489,42 +489,42 @@ class Free86 {
     int ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
     int _ld16_readonly_cplX();
     int ld16_readonly_cplX();  // ...word
-    int _ld32_readonly_cplX();
-    int ld32_readonly_cplX();  // ...dword
+    int _ld_readonly_cplX();
+    int ld_readonly_cplX();  // ...dword
 
     int _ld8_readonly_cpl3();
     int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
     int _ld16_readonly_cpl3();
     int ld16_readonly_cpl3(); // ...word
-    int _ld32_readonly_cpl3();
-    int ld32_readonly_cpl3(); // ...dword
+    int _ld_readonly_cpl3();
+    int ld_readonly_cpl3(); // ...dword
 
     int _ld8_writable_cpl3();
     int ld8_writable_cpl3(); // from user WR memory: load (return) byte
     int _ld16_writable_cpl3();
     int ld16_writable_cpl3(); // ...word
-    int _ld32_writable_cpl3();
-    int ld32_writable_cpl3(); // ...dword
+    int _ld_writable_cpl3();
+    int ld_writable_cpl3(); // ...dword
 
     void _st8_writable_cplX(int byte);
     void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
     void _st16_writable_cplX(int word);
     void st16_writable_cplX(int word); // ...word
-    void _st32_writable_cplX(int dword);
-    void st32_writable_cplX(int dword); // ...dword
+    void _st_writable_cplX(int dword);
+    void st_writable_cplX(int dword); // ...dword
 
     void _st8_writable_cpl3(int byte);
     void st8_writable_cpl3(int byte); // in user WR memory: store byte
     void _st16_writable_cpl3(int word);
     void st16_writable_cpl3(int word); // ...word
-    void _st32_writable_cpl3(int dword);
-    void st32_writable_cpl3(int dword); // ...dword
+    void _st_writable_cpl3(int dword);
+    void st_writable_cpl3(int dword); // ...dword
 
     int ld8_direct(); // read byte...
     int ld16_direct(); // ...word...
-    int ld32_direct(); // ...dword at FAR, update FAR, bypass TLB
-    int ld32_direct(int address); // read/ write dword at memory address
-    void st32_direct(int address, int dword);
+    int ld_direct(); // ...dword at FAR, update FAR, bypass TLB
+    int ld_direct(int address); // read/ write dword at memory address
+    void st_direct(int address, int dword);
 
     void push_word(int word);
     void push_dword(int dword);
