@@ -131,7 +131,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
                 } else {
                     segment_translation(mem8);
-                    tlb_hash = tlb_write[mem8_loc >> 12];
+                    tlb_hash = tlb_writable[mem8_loc >> 12];
                     if (tlb_hash == -1) {
                         _st8_mem8_write(x);
                     } else {
@@ -146,7 +146,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[mem8 & 7] = x;
                 } else {
                     segment_translation(mem8);
-                    tlb_hash = tlb_write[mem8_loc >> 12];
+                    tlb_hash = tlb_writable[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
                         _st32_mem8_write(x);
                     } else {
@@ -161,7 +161,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                 } else {
                     segment_translation(mem8);
-                    x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                    x = (((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
                              ? _ld8_mem8_read()
                              : phys_mem8[mem8_loc ^ tlb_hash]);
                 }
@@ -175,7 +175,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[mem8 & 7];
                 } else {
                     segment_translation(mem8);
-                    tlb_hash = tlb_read[mem8_loc >> 12];
+                    tlb_hash = tlb_readable[mem8_loc >> 12];
                     x = ((tlb_hash | mem8_loc) & 3
                              ? _ld32_mem8_read()
                              : phys_mem32[(mem8_loc ^ tlb_hash) >> 2]);
@@ -989,7 +989,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 x = regs[opcode & 7];
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4] - 4;
-                    tlb_hash = tlb_write[mem8_loc >> 12];
+                    tlb_hash = tlb_writable[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
                         _st32_mem8_write(x);
                     } else {
@@ -1010,7 +1010,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x5f: // POP DI
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4];
-                    tlb_hash = tlb_read[mem8_loc >> 12];
+                    tlb_hash = tlb_readable[mem8_loc >> 12];
                     if ((tlb_hash | mem8_loc) & 3) {
                         x = _ld32_mem8_read();
                     } else {
@@ -1897,7 +1897,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
                     } else {
                         segment_translation(mem8);
-                        x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                        x = (((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
                                  ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }
@@ -1922,7 +1922,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                     } else {
                         segment_translation(mem8);
-                        x = (((tlb_hash = tlb_read[mem8_loc >> 12]) == -1)
+                        x = (((tlb_hash = tlb_readable[mem8_loc >> 12]) == -1)
                                  ? _ld8_mem8_read()
                                  : phys_mem8[mem8_loc ^ tlb_hash]);
                     }

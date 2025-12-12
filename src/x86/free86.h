@@ -61,16 +61,16 @@ class Free86 {
     int tlb_lookup(int linear_address, int writable) {
         uint32_t lat20 = linear_address >> 12;
         if (writable) {
-            tlb_hash = tlb_write[lat20];
+            tlb_hash = tlb_writable[lat20];
         } else {
-            tlb_hash = tlb_read[lat20];
+            tlb_hash = tlb_readable[lat20];
         }
         if (tlb_hash == -1) {
             page_translation(linear_address, writable, cpl == 3);
             if (writable) {
-                tlb_hash = tlb_write[lat20];
+                tlb_hash = tlb_writable[lat20];
             } else {
-                tlb_hash = tlb_read[lat20];
+                tlb_hash = tlb_readable[lat20];
             }
         }
         return linear_address ^ tlb_hash;
@@ -131,39 +131,39 @@ class Free86 {
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
     int tlb_size = 0x100000; // 1M
-    int *tlb_read_kernel;
-    int *tlb_write_kernel;
-    int *tlb_read_user;
-    int *tlb_write_user;
-    int *tlb_read; // current (user or kernel)
-    int *tlb_write;
+    int *tlb_readonly_cplX;
+    int *tlb_writable_cplX;
+    int *tlb_readable_cpl3;
+    int *tlb_writable_cpl3;
+    int *tlb_readable; // current (user or kernel)
+    int *tlb_writable;
     int tlb_hash;
 
     void tlb_update(uint32_t linear_address /*data*/, int pte /*key*/, int writable, int user) {
         tlb_hash = linear_address ^ pte; // poor man's XOR hash function
         uint32_t lat20 = linear_address >> 12;
-        if (tlb_read_kernel[lat20] == -1) {
+        if (tlb_readonly_cplX[lat20] == -1) {
             if (tlb_pages_count >= 2048) {
                 tlb_flush_all((lat20 - 1) & 0xfffff);
             }
             tlb_pages[tlb_pages_count++] = lat20;
         }
-        tlb_read_kernel[lat20] = tlb_hash;
+        tlb_readonly_cplX[lat20] = tlb_hash;
         if (writable) {
-            tlb_write_kernel[lat20] = tlb_hash;
+            tlb_writable_cplX[lat20] = tlb_hash;
         } else {
-            tlb_write_kernel[lat20] = -1;
+            tlb_writable_cplX[lat20] = -1;
         }
         if (user) {
-            tlb_read_user[lat20] = tlb_hash;
+            tlb_readable_cpl3[lat20] = tlb_hash;
             if (writable) {
-                tlb_write_user[lat20] = tlb_hash;
+                tlb_writable_cpl3[lat20] = tlb_hash;
             } else {
-                tlb_write_user[lat20] = -1;
+                tlb_writable_cpl3[lat20] = -1;
             }
         } else {
-            tlb_read_user[lat20] = -1;
-            tlb_write_user[lat20] = -1;
+            tlb_readable_cpl3[lat20] = -1;
+            tlb_writable_cpl3[lat20] = -1;
         }
     }
     void tlb_flush_page(uint32_t linear_address) {
@@ -190,10 +190,10 @@ class Free86 {
         tlb_pages_count = n;
     }
     void tlb_clear(uint32_t lat20) {
-        tlb_read_kernel[lat20] = -1;
-        tlb_write_kernel[lat20] = -1;
-        tlb_read_user[lat20] = -1;
-        tlb_write_user[lat20] = -1;
+        tlb_readonly_cplX[lat20] = -1;
+        tlb_writable_cplX[lat20] = -1;
+        tlb_readable_cpl3[lat20] = -1;
+        tlb_writable_cpl3[lat20] = -1;
     }
 
 /*
