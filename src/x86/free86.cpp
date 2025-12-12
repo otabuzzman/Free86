@@ -1233,8 +1233,8 @@ bool Free86::is_protected() {
 bool Free86::is_paging() {
     return (cr0 & (1 << 31)) && is_protected();
 }
-void Free86::set_cpl(int ring) {
-    cpl = ring;
+void Free86::set_cpl(int level) {
+    cpl = level;
     if (cpl == 3) {
         tlb_read = tlb_read_user;
         tlb_write = tlb_write_user;
@@ -1629,9 +1629,9 @@ void Free86::convert_offset_to_linear(bool writable) {
     }
     mem8_loc = la;
 }
-void Free86::update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
-    segs[sreg] = {selector, base, limit, flags};
-    update_SSB();
+void Free86::set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
+    segs[sreg] = {selector, base, limit, flags}; // set register
+    update_SSB(); // emulator state variables
 }
 void Free86::set_segment_register(int sreg, int selector) {
     int s;
@@ -1644,7 +1644,7 @@ void Free86::set_segment_register(int sreg, int selector) {
 }
 void Free86::set_segment_register_real__v86(int sreg, int selector) {
     if (eflags & 0x00020000) { // v86 mode
-        update_segment_register(sreg, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
+        set_segment_register(sreg, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
     } else { // real mode
         segs[sreg].selector = selector;
         segs[sreg].base = selector << 4;
@@ -1658,7 +1658,7 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
         if (sreg == 2) {
             abort(13, 0);
         }
-        update_segment_register(sreg, selector, 0, 0, 0);
+        set_segment_register(sreg, selector, 0, 0, 0);
     } else {
         if (selector & 0x4) {
             xdt = ldt;
@@ -1706,7 +1706,7 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
             dte_upper_dword |= 1 << 8;
             st32_mem8_kernel_write(dte_upper_dword);
         }
-        update_segment_register(sreg, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        set_segment_register(sreg, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     }
 }
 int Free86::is_segment_accessible(int selector, bool writable) {
@@ -2782,7 +2782,7 @@ void Free86::aux_JMPF_protected_mode(int selector, int address) {
         if (address > limit) {
             abort(13, selector & 0xfffc);
         }
-        update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit,  dte_upper_dword);
+        set_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit,  dte_upper_dword);
         eip = address, far = far_start = 0;
     } else {
         throw "fatal: unsupported TSS or task gate in JMP";
@@ -2877,7 +2877,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             abort(13, selector & 0xfffc);
         }
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-        update_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit, dte_upper_dword);
+        set_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit, dte_upper_dword);
         eip = address, far = far_start = 0;
     } else {
         descriptor_type = (dte_upper_dword >> 8) & 0x1f;
@@ -2984,7 +2984,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
                 }
             }
             ss = (ss & ~3) | dpl;
-            update_segment_register(2, ss, SS_base, compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+            set_segment_register(2, ss, SS_base, compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         } else {
             esp = start_esp;
             SS_mask = get_addressmask(segs[2].flags);
@@ -3006,7 +3006,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             st16_mem8_kernel_write(return_address);
         }
         selector = (selector & ~3) | dpl;
-        update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        set_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         set_cpl(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
         eip = offset, far = far_start = 0;
@@ -3162,7 +3162,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     }
     esp = esp + return_offset;
     if (rpl == cpl) {
-        update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        set_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
         if (is_operand_size32 == 1) {
             mem8_loc = SS_base + (esp & SS_mask);
@@ -3203,10 +3203,10 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
             if (!(dte_upper_dword & (1 << 15))) {
                 abort(11, ss & 0xfffc);
             }
-            update_segment_register(2, ss, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+            set_segment_register(2, ss, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         }
         zero_segment_register(0, rpl);
-        update_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        set_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         zero_segment_register(3, rpl);
         zero_segment_register(4, rpl);
         zero_segment_register(5, rpl);
@@ -3240,7 +3240,7 @@ void Free86::zero_segment_register(int sreg, int privilege_level) {
     dpl = (dte_upper_dword >> 13) & 3;
     if (!(dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 10))) {
         if (dpl < privilege_level) {
-            update_segment_register(sreg, 0, 0, 0, 0);
+            set_segment_register(sreg, 0, 0, 0, 0);
         }
     }
 }
@@ -3561,16 +3561,16 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     }
     if (is_interlevel) {
         if (eflags & 0x00020000) {
-            update_segment_register(0, 0, 0, 0, 0);
-            update_segment_register(3, 0, 0, 0, 0);
-            update_segment_register(4, 0, 0, 0, 0);
-            update_segment_register(5, 0, 0, 0, 0);
+            set_segment_register(0, 0, 0, 0, 0);
+            set_segment_register(3, 0, 0, 0, 0);
+            set_segment_register(4, 0, 0, 0, 0);
+            set_segment_register(5, 0, 0, 0, 0);
         }
         ss = (ss & ~3) | dpl;
-        update_segment_register(2, ss, SS_base, compile_dte_limit(ss_dte_upper_dword, ss_dte_lower_dword), ss_dte_lower_dword);
+        set_segment_register(2, ss, SS_base, compile_dte_limit(ss_dte_upper_dword, ss_dte_lower_dword), ss_dte_lower_dword);
     }
     selector = (selector & ~3) | dpl;
-    update_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+    set_segment_register(1, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     set_cpl(dpl);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;

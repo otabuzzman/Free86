@@ -361,7 +361,7 @@ class Free86 {
     bool is_real__v86();
     bool is_protected();
     bool is_paging(); // PG && PE set
-    void set_cpl(int ring);
+    void set_cpl(int level);
 
     int ld8_io(int port);
     int ld16_io(int port);
@@ -378,7 +378,7 @@ class Free86 {
     void segment_translation(int modRM);
     void convert_offset_to_linear(bool writable);
 
-    void update_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
+    void set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
     void set_segment_register(int sreg, int selector);
     void set_segment_register_real__v86(int sreg, int selector);
     void set_segment_register_protected(int sreg, int selector);
