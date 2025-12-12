@@ -538,7 +538,9 @@ class Free86 {
     void _st32_writable_cpl3(int dword);
     void st32_writable_cpl3(int dword); // ...dword
 
-    int ld16_direct(); // read word at FAR from memory, bypass TLB
+    int ld8_direct(); // read byte...
+    int ld16_direct(); // ...word...
+    int ld32_direct(); // ...dword at FAR, update FAR, bypass TLB
 
     void push_word(int word);
     void push_dword(int dword);

@@ -38,7 +38,7 @@ int Free86::ld32_readonly_cplX() {
                ? _ld32_readonly_cplX()
                : phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
 }
-nt Free86::_ld8_readonly_cpl3() {
+int Free86::_ld8_readonly_cpl3() {
     int byte;
     if (is_protected()) {
         page_translation(mem8_loc, 0, cpl == 3);
@@ -226,10 +226,16 @@ void Free86::st32_writable_cpl3(int dword) {
         phys_mem32[(mem8_loc ^ tlb_hash) >> 2] = dword;
     }
 }
-int Free86::ld16_direct() {
-    return phys_mem8[far++] | (phys_mem8[far++] << 8);
+int Free86::ld8_direct() {
+    return phys_mem8[far++];
 }
-ivoid Free86::push_word(int word) {
+int Free86::ld16_direct() {
+    return ld8_direct() | (ld8_direct() << 8);
+}
+int Free86::ld32_direct() {
+    return ld8_direct() | (ld8_direct() << 8) | (ld8_direct() << 16) | (ld8_direct() << 24);
+}
+void Free86::push_word(int word) {
     int esp = regs[4] - 2;
     mem8_loc = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(word);

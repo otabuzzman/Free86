@@ -75,7 +75,7 @@ void Free86::fetch_opcode() {
         }
         eip_tlb_hash = tlb_readonly[eip_linear >> 12];
         far = far_start = eip_linear ^ eip_tlb_hash;
-        opcode = phys_mem8[far++];
+        opcode = ld8_direct();
         int page_offset = eip_linear & 0xfff;
         if (page_offset > (4096 - 15)) {
             x = instruction_length(opcode);
@@ -92,7 +92,7 @@ void Free86::fetch_opcode() {
         }
     } else {
         far = far_start = eip_linear ^ eip_tlb_hash;
-        opcode = phys_mem8[far++];
+        opcode = ld8_direct();
     }
 }
 int Free86::instruction_length(int opcode) {
@@ -1333,14 +1333,10 @@ void Free86::segment_translation(int modRM) {
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
-            sib = phys_mem8[far++];
+            sib = ld8_direct();
             sib_base = sib & 7;
             if (sib_base == 5) {
-                mem8_loc = phys_mem8[far] |
-                           (phys_mem8[far + 1] << 8) |
-                           (phys_mem8[far + 2] << 16) |
-                           (phys_mem8[far + 3] << 24);
-                far += 4;
+                mem8_loc = ld32_direct();
             } else {
                 mem8_loc = regs[sib_base];
             }
@@ -1350,8 +1346,8 @@ void Free86::segment_translation(int modRM) {
             }
             break;
         case 0x0c:
-            sib = phys_mem8[far++];
-            mem8_loc = (phys_mem8[far++] << 24) >> 24;
+            sib = ld8_direct();
+            mem8_loc = (ld8_direct() << 24) >> 24;
             sib_base = sib & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             sib_index = (sib >> 3) & 7;
@@ -1360,12 +1356,8 @@ void Free86::segment_translation(int modRM) {
             }
             break;
         case 0x14:
-            sib = phys_mem8[far++];
-            mem8_loc = phys_mem8[far] |
-                       (phys_mem8[far + 1] << 8) |
-                       (phys_mem8[far + 2] << 16) |
-                       (phys_mem8[far + 3] << 24);
-            far += 4;
+            sib = ld8_direct();
+            mem8_loc = ld32_direct();
             sib_base = sib & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             sib_index = (sib >> 3) & 7;
@@ -1374,11 +1366,7 @@ void Free86::segment_translation(int modRM) {
             }
             break;
         case 0x05:
-            mem8_loc = phys_mem8[far] |
-                       (phys_mem8[far + 1] << 8) |
-                       (phys_mem8[far + 2] << 16) |
-                       (phys_mem8[far + 3] << 24);
-            far += 4;
+            mem8_loc = ld32_direct();
             break;
         case 0x00:
         case 0x01:
@@ -1396,7 +1384,7 @@ void Free86::segment_translation(int modRM) {
         case 0x0d:
         case 0x0e:
         case 0x0f:
-            mem8_loc = (phys_mem8[far++] << 24) >> 24;
+            mem8_loc = (ld8_direct() << 24) >> 24;
             sib_base = modRM & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             break;
@@ -1408,11 +1396,7 @@ void Free86::segment_translation(int modRM) {
         case 0x16:
         case 0x17:
         default:
-            mem8_loc = phys_mem8[far] |
-                       (phys_mem8[far + 1] << 8) |
-                       (phys_mem8[far + 2] << 16) |
-                       (phys_mem8[far + 3] << 24);
-            far += 4;
+            mem8_loc = ld32_direct();
             sib_base = modRM & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             break;
@@ -1429,7 +1413,7 @@ void Free86::segment_translation(int modRM) {
                 mem8_loc = 0;
                 break;
             case 1:
-                mem8_loc = (phys_mem8[far++] << 24) >> 24;
+                mem8_loc = (ld8_direct() << 24) >> 24;
                 break;
             default:
                 mem8_loc = ld16_direct();
@@ -1482,14 +1466,10 @@ void Free86::segment_translation(int modRM) {
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
-            sib = phys_mem8[far++];
+            sib = ld8_direct();
             sib_base = sib & 7;
             if (sib_base == 5) {
-                mem8_loc = phys_mem8[far] |
-                           (phys_mem8[far + 1] << 8) |
-                           (phys_mem8[far + 2] << 16) |
-                           (phys_mem8[far + 3] << 24);
-                far += 4;
+                mem8_loc = ld32_direct();
                 sib_base = 0;
             } else {
                 mem8_loc = regs[sib_base];
@@ -1500,8 +1480,8 @@ void Free86::segment_translation(int modRM) {
             }
             break;
         case 0x0c:
-            sib = phys_mem8[far++];
-            mem8_loc = (phys_mem8[far++] << 24) >> 24;
+            sib = ld8_direct();
+            mem8_loc = (ld8_direct() << 24) >> 24;
             sib_base = sib & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             sib_index = (sib >> 3) & 7;
@@ -1510,12 +1490,8 @@ void Free86::segment_translation(int modRM) {
             }
             break;
         case 0x14:
-            sib = phys_mem8[far++];
-            mem8_loc = phys_mem8[far] |
-                       (phys_mem8[far + 1] << 8) |
-                       (phys_mem8[far + 2] << 16) |
-                       (phys_mem8[far + 3] << 24);
-            far += 4;
+            sib = ld8_direct();
+            mem8_loc = ld32_direct();
             sib_base = sib & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             sib_index = (sib >> 3) & 7;
@@ -1524,11 +1500,7 @@ void Free86::segment_translation(int modRM) {
             }
             break;
         case 0x05:
-            mem8_loc = phys_mem8[far] |
-                       (phys_mem8[far + 1] << 8) |
-                       (phys_mem8[far + 2] << 16) |
-                       (phys_mem8[far + 3] << 24);
-            far += 4;
+            mem8_loc = ld32_direct();
             sib_base = 0;
             break;
         case 0x00:
@@ -1547,7 +1519,7 @@ void Free86::segment_translation(int modRM) {
         case 0x0d:
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
-            mem8_loc = (phys_mem8[far++] << 24) >> 24;
+            mem8_loc = (ld8_direct() << 24) >> 24;
             sib_base = modRM & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             break;
@@ -1559,11 +1531,7 @@ void Free86::segment_translation(int modRM) {
         case 0x16:
         case 0x17:
         default:
-            mem8_loc = phys_mem8[far] |
-                       (phys_mem8[far + 1] << 8) |
-                       (phys_mem8[far + 2] << 16) |
-                       (phys_mem8[far + 3] << 24);
-            far += 4;
+            mem8_loc = ld32_direct();
             sib_base = modRM & 7;
             mem8_loc = mem8_loc + regs[sib_base];
             break;
@@ -1588,11 +1556,7 @@ void Free86::convert_offset_to_linear(bool writable) {
         la = ld16_direct() & 0xffff;
         stride = 2; // 16 bit mode
     } else {
-        la = (phys_mem8[far] |
-                   (phys_mem8[far + 1] << 8) |
-                   (phys_mem8[far + 2] << 16) |
-                   (phys_mem8[far + 3] << 24)) & 0xffffffff;
-        far += 4;
+        la = ld32_direct() & 0xffffffff;
         stride = 4; // 32 bit mode
     }
     if (!(opcode & 0x01)) {
@@ -3322,7 +3286,7 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    mem8 = phys_mem8[far++];
+    mem8 = ld8_direct();
     reg_idx1 = (mem8 >> 3) & 7;
     if ((mem8 >> 6) == 3) {
         selector = regs[mem8 & 7] & 0xffff;
@@ -3595,7 +3559,7 @@ void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    mem8 = phys_mem8[far++];
+    mem8 = ld8_direct();
     if ((mem8 >> 6) == 3) {
         reg_idx0 = mem8 & 7;
         x = regs[reg_idx0] & 0xffff;
@@ -3748,7 +3712,7 @@ void Free86::aux_DAS() {
     osm = 24;
 }
 void Free86::aux_BOUND16() {
-    mem8 = phys_mem8[far++];
+    mem8 = ld8_direct();
     if ((mem8 >> 6) == 3) {
         abort(6);
     }
@@ -3763,7 +3727,7 @@ void Free86::aux_BOUND16() {
     }
 }
 void Free86::aux_BOUND() {
-    mem8 = phys_mem8[far++];
+    mem8 = ld8_direct();
     if ((mem8 >> 6) == 3) {
         abort(6);
     }
@@ -3834,7 +3798,7 @@ void Free86::aux_LEAVE() {
 void Free86::aux_ENTER16() {
     int c, l, esp, ebp, exp;
     c = ld16_direct();
-    l = phys_mem8[far++];
+    l = ld8_direct();
     l &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
@@ -3865,7 +3829,7 @@ void Free86::aux_ENTER16() {
 void Free86::aux_ENTER() {
     int c, l, esp, ebp, exp;
     c = ld16_direct();
-    l = phys_mem8[far++];
+    l = ld8_direct();
     l &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
@@ -3894,7 +3858,7 @@ void Free86::aux_ENTER() {
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::ld_full_pointer16(int sreg) {
-    mem8 = phys_mem8[far++];
+    mem8 = ld8_direct();
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
     }
@@ -3906,7 +3870,7 @@ void Free86::ld_full_pointer16(int sreg) {
     set_lower_word((mem8 >> 3) & 7, x);
 }
 void Free86::ld_full_pointer32(int sreg) {
-    mem8 = phys_mem8[far++];
+    mem8 = ld8_direct();
     if ((mem8 >> 3) == 3) {
         ; // abort(6);
     }
