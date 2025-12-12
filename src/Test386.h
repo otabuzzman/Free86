@@ -33,7 +33,7 @@ class Test386 {
     
         printf("load %d bytes at 0x%x\n", size, offset);
         for (int i = 0; i < size; i++) {
-            cpu->st8_phys(offset + i, buffer[i]);
+            cpu->st8_direct(offset + i, buffer[i]);
         }
         fclose(f);
     
@@ -72,7 +72,7 @@ class Test386 {
                     }
                     std::string memory = "[EIP..EIP+" + hex((char) (n - 1)) + "]:";
                     for (int i = 0; i < n; i++) {
-                        memory += " " + hex((char) cpu->ld8_phys(phys8_loc + i));
+                        memory += " " + hex((char) cpu->ld8_direct(phys8_loc + i));
                     }
                     std::cout
                         << "interrupt id " << i.id

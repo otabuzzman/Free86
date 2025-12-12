@@ -41,7 +41,7 @@ int PC::load(std::string path, int offset)
 
     printf("load %d bytes at 0x%x\n", size, offset);
     for (int i = 0; i < size; i++) {
-        cpu->st8_phys(offset + i, buffer[i]);
+        cpu->st8_direct(offset + i, buffer[i]);
     }
     fclose(f);
 
@@ -58,7 +58,7 @@ void PC::setup()
     std::string cmdline = "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1";
 
     // set memory state
-    cpu->st8_phys(cmdline_addr, cmdline);
+    cpu->st8_direct(cmdline_addr, cmdline);
     printf("%s\n", cmdline.c_str());
     // end of set memory state
 

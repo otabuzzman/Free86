@@ -1243,12 +1243,12 @@ void Free86::page_translation(int linear_address, int writable, bool user) {
         tlb_update(linear_address & -4096, linear_address & -4096, pte_RW, pte_US);
     } else { // paging enabled
         pde_address = (cr3 & -4096) + ((linear_address >> 20) & 0xffc);
-        pde = ld32_phys(pde_address);
+        pde = ld32_direct(pde_address);
         if (!(pde & 0x00000001)) { // page not present
             error_code = 0;
         } else {
             pte_address = (pde & -4096) + ((linear_address >> 10) & 0xffc);
-            pte = ld32_phys(pte_address);
+            pte = ld32_direct(pte_address);
             if (!(pte & 0x00000001)) { // page not present
                 error_code = 0;
             } else {
@@ -1261,7 +1261,7 @@ void Free86::page_translation(int linear_address, int writable, bool user) {
                 } else {
                     if (!(pde & 0x00000020)) { // page not accessed
                         pde |= 0x00000020;
-                        st32_phys(pde_address, pde);
+                        st32_direct(pde_address, pde);
                     }
                     ok = writable && !(pte & 0x00000040); // WR request and page not dirty
                     if (ok || !(pte & 0x00000020)) { // previous or page not yet accessed
@@ -1269,7 +1269,7 @@ void Free86::page_translation(int linear_address, int writable, bool user) {
                         if (ok) {
                             pte |= 0x00000040; // set page dirty
                         }
-                        st32_phys(pte_address, pte);
+                        st32_direct(pte_address, pte);
                     }
                     // page dirty and supervisor request and page not RO
                     if ((pte & 0x00000040) && (!user || (pxe & 0x00000002))) {
