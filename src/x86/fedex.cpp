@@ -939,12 +939,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x5f: // POP DI
                 if (x86_64_long_mode) {
                     mem8_loc = regs[4];
-                    tlb_hash = tlb_readonly[mem8_loc >> 12];
-                    if ((tlb_hash | mem8_loc) & 3) {
-                        x = _ld32_readonly_cpl3();
-                    } else {
-                        x = phys_mem32[(mem8_loc ^ tlb_hash) >> 2];
-                    }
+                    ld32_readonly_cpl3();
                     regs[4] = mem8_loc + 4;
                 } else {
                     x = read_stack_dword();
