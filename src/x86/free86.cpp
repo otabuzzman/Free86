@@ -375,11 +375,11 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             address_operand = eip_linear + (n++);
-            mem8 = ld8_readonly_cpl3();
+            modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
-                switch (mem8 >> 6) {
+                switch (modRM >> 6) {
                 case 0:
-                    if ((mem8 & 7) == 6) {
+                    if ((modRM & 7) == 6) {
                         n += 2;
                     }
                     break;
@@ -391,14 +391,14 @@ int Free86::instruction_length(int opcode) {
                     break;
                 }
             } else {
-                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
                         abort(13);
                     }
                     address_operand = eip_linear + (n++);
-                    mem8 = ld8_readonly_cpl3();
-                    if ((mem8 & 7) == 5) {
+                    modRM = ld8_readonly_cpl3();
+                    if ((modRM & 7) == 5) {
                         n += 4;
                     }
                     break;
@@ -466,11 +466,11 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             address_operand = eip_linear + (n++);
-            mem8 = ld8_readonly_cpl3();
+            modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
-                switch (mem8 >> 6) {
+                switch (modRM >> 6) {
                 case 0:
-                    if ((mem8 & 7) == 6) {
+                    if ((modRM & 7) == 6) {
                         n += 2;
                     }
                     break;
@@ -482,14 +482,14 @@ int Free86::instruction_length(int opcode) {
                     break;
                 }
             } else {
-                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
                         abort(13);
                     }
                     address_operand = eip_linear + (n++);
-                    mem8 = ld8_readonly_cpl3();
-                    if ((mem8 & 7) == 5) {
+                    modRM = ld8_readonly_cpl3();
+                    if ((modRM & 7) == 5) {
                         n += 4;
                     }
                     break;
@@ -544,11 +544,11 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             address_operand = eip_linear + (n++);
-            mem8 = ld8_readonly_cpl3();
+            modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
-                switch (mem8 >> 6) {
+                switch (modRM >> 6) {
                 case 0:
-                    if ((mem8 & 7) == 6) {
+                    if ((modRM & 7) == 6) {
                         n += 2;
                     }
                     break;
@@ -560,14 +560,14 @@ int Free86::instruction_length(int opcode) {
                     break;
                 }
             } else {
-                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
                         abort(13);
                     }
                     address_operand = eip_linear + (n++);
-                    mem8 = ld8_readonly_cpl3();
-                    if ((mem8 & 7) == 5) {
+                    modRM = ld8_readonly_cpl3();
+                    if ((modRM & 7) == 5) {
                         n += 4;
                     }
                     break;
@@ -620,11 +620,11 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             address_operand = eip_linear + (n++);
-            mem8 = ld8_readonly_cpl3();
+            modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
-                switch (mem8 >> 6) {
+                switch (modRM >> 6) {
                 case 0:
-                    if ((mem8 & 7) == 6) {
+                    if ((modRM & 7) == 6) {
                         n += 2;
                     }
                     break;
@@ -636,14 +636,14 @@ int Free86::instruction_length(int opcode) {
                     break;
                 }
             } else {
-                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
                         abort(13);
                     }
                     address_operand = eip_linear + (n++);
-                    mem8 = ld8_readonly_cpl3();
-                    if ((mem8 & 7) == 5) {
+                    modRM = ld8_readonly_cpl3();
+                    if ((modRM & 7) == 5) {
                         n += 4;
                     }
                     break;
@@ -686,7 +686,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            operation = (mem8 >> 3) & 7;
+            operation = (modRM >> 3) & 7;
             if (operation == 0) {
                 n++;
                 if (n > 15) {
@@ -699,11 +699,11 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             address_operand = eip_linear + (n++);
-            mem8 = ld8_readonly_cpl3();
+            modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
-                switch (mem8 >> 6) {
+                switch (modRM >> 6) {
                 case 0:
-                    if ((mem8 & 7) == 6) {
+                    if ((modRM & 7) == 6) {
                         n += 2;
                     }
                     break;
@@ -715,14 +715,14 @@ int Free86::instruction_length(int opcode) {
                     break;
                 }
             } else {
-                switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
                 case 0x04:
                     if ((n + 1) > 15) {
                         abort(13);
                     }
                     address_operand = eip_linear + (n++);
-                    mem8 = ld8_readonly_cpl3();
-                    if ((mem8 & 7) == 5) {
+                    modRM = ld8_readonly_cpl3();
+                    if ((modRM & 7) == 5) {
                         n += 4;
                     }
                     break;
@@ -765,7 +765,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            operation = (mem8 >> 3) & 7;
+            operation = (modRM >> 3) & 7;
             if (operation == 0) {
                 n += stride;
                 if (n > 15) {
@@ -904,11 +904,11 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
                 address_operand = eip_linear + (n++);
-                mem8 = ld8_readonly_cpl3();
+                modRM = ld8_readonly_cpl3();
                 if (ipr & 0x0080) {
-                    switch (mem8 >> 6) {
+                    switch (modRM >> 6) {
                     case 0:
-                        if ((mem8 & 7) == 6) {
+                        if ((modRM & 7) == 6) {
                             n += 2;
                         }
                         break;
@@ -920,14 +920,14 @@ int Free86::instruction_length(int opcode) {
                         break;
                     }
                 } else {
-                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
                     case 0x04:
                         if ((n + 1) > 15) {
                             abort(13);
                         }
                         address_operand = eip_linear + (n++);
-                        mem8 = ld8_readonly_cpl3();
-                        if ((mem8 & 7) == 5) {
+                        modRM = ld8_readonly_cpl3();
+                        if ((modRM & 7) == 5) {
                             n += 4;
                         }
                         break;
@@ -978,11 +978,11 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
                 address_operand = eip_linear + (n++);
-                mem8 = ld8_readonly_cpl3();
+                modRM = ld8_readonly_cpl3();
                 if (ipr & 0x0080) {
-                    switch (mem8 >> 6) {
+                    switch (modRM >> 6) {
                     case 0:
-                        if ((mem8 & 7) == 6) {
+                        if ((modRM & 7) == 6) {
                             n += 2;
                         }
                         break;
@@ -994,14 +994,14 @@ int Free86::instruction_length(int opcode) {
                         break;
                     }
                 } else {
-                    switch ((mem8 & 7) | ((mem8 >> 3) & 0x18)) {
+                    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
                     case 0x04:
                         if ((n + 1) > 15) {
                             abort(13);
                         }
                         address_operand = eip_linear + (n++);
-                        mem8 = ld8_readonly_cpl3();
-                        if ((mem8 & 7) == 5) {
+                        modRM = ld8_readonly_cpl3();
+                        if ((modRM & 7) == 5) {
                             n += 4;
                         }
                         break;
@@ -3435,12 +3435,12 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    mem8 = ld8_direct();
-    reg_idx1 = (mem8 >> 3) & 7;
-    if ((mem8 >> 6) == 3) {
-        selector = regs[mem8 & 7] & 0xffff;
+    modRM = ld8_direct();
+    reg_idx1 = (modRM >> 3) & 7;
+    if ((modRM >> 6) == 3) {
+        selector = regs[modRM & 7] & 0xffff;
     } else {
-        segment_translation(mem8);
+        segment_translation(modRM);
         selector = ld16_readonly_cpl3();
     }
     x = ld_descriptor_flags(selector, is_lsl);
@@ -3523,19 +3523,19 @@ void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    mem8 = ld8_direct();
-    if ((mem8 >> 6) == 3) {
-        reg_idx0 = mem8 & 7;
+    modRM = ld8_direct();
+    if ((modRM >> 6) == 3) {
+        reg_idx0 = modRM & 7;
         x = regs[reg_idx0] & 0xffff;
     } else {
-        segment_translation(mem8);
+        segment_translation(modRM);
         x = ld16_writable_cpl3();
     }
-    y = regs[(mem8 >> 3) & 7];
+    y = regs[(modRM >> 3) & 7];
     osm_src = compile_eflags();
     if ((x & 3) < (y & 3)) {
         x = (x & ~3) | (y & 3);
-        if ((mem8 >> 6) == 3) {
+        if ((modRM >> 6) == 3) {
             set_lower_word(reg_idx0, x);
         } else {
             st16_writable_cpl3(x);
@@ -3676,30 +3676,30 @@ void Free86::aux_DAS() {
     osm = 24;
 }
 void Free86::aux_BOUND16() {
-    mem8 = ld8_direct();
-    if ((mem8 >> 6) == 3) {
+    modRM = ld8_direct();
+    if ((modRM >> 6) == 3) {
         abort(6);
     }
-    segment_translation(mem8);
+    segment_translation(modRM);
     x = (ld16_readonly_cpl3() << 16) >> 16;
     address_operand = address_operand + 2;
     y = (ld16_readonly_cpl3() << 16) >> 16;
-    reg_idx1 = (mem8 >> 3) & 7;
+    reg_idx1 = (modRM >> 3) & 7;
     z = (regs[reg_idx1] << 16) >> 16;
     if (z < x || z > y) {
         abort(5);
     }
 }
 void Free86::aux_BOUND() {
-    mem8 = ld8_direct();
-    if ((mem8 >> 6) == 3) {
+    modRM = ld8_direct();
+    if ((modRM >> 6) == 3) {
         abort(6);
     }
-    segment_translation(mem8);
+    segment_translation(modRM);
     x = ld_readonly_cpl3();
     address_operand = address_operand + 4;
     y = ld_readonly_cpl3();
-    reg_idx1 = (mem8 >> 3) & 7;
+    reg_idx1 = (modRM >> 3) & 7;
     z = regs[reg_idx1];
     if (z < x || z > y) {
         abort(5);
@@ -3822,26 +3822,26 @@ void Free86::aux_ENTER() {
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::ld_full_pointer16(int sreg) {
-    mem8 = ld8_direct();
-    if ((mem8 >> 3) == 3) {
+    modRM = ld8_direct();
+    if ((modRM >> 3) == 3) {
         ; // abort(6);
     }
-    segment_translation(mem8);
+    segment_translation(modRM);
     x = ld16_readonly_cpl3();
     address_operand += 2;
     y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
-    set_lower_word((mem8 >> 3) & 7, x);
+    set_lower_word((modRM >> 3) & 7, x);
 }
 void Free86::ld_full_pointer(int sreg) {
-    mem8 = ld8_direct();
-    if ((mem8 >> 3) == 3) {
+    modRM = ld8_direct();
+    if ((modRM >> 3) == 3) {
         ; // abort(6);
     }
-    segment_translation(mem8);
+    segment_translation(modRM);
     x = ld_readonly_cpl3();
     address_operand += 4;
     y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
-    regs[(mem8 >> 3) & 7] = x;
+    regs[(modRM >> 3) & 7] = x;
 }

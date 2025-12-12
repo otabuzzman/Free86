@@ -296,8 +296,8 @@ class Free86 {
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
 
-    uint32_t address_operand; // linear, either immediate or calculated
-    int mem8; // ...and value
+    uint32_t address_operand; // either immediate or calculated
+    int modRM, reg, rM;
 
     // clang-format off
     const std::vector<int> parity_LUT = {
