@@ -296,7 +296,7 @@ class Free86 {
     int reg_idx0, reg_idx1; // register indices (0-7)
     int x, y, z, v;         // anything else
 
-    // linear byte address...
+    // sort of address...
     uint32_t mem8_loc;
     int mem8; // ...and value
 
@@ -490,35 +490,35 @@ class Free86 {
     int _ld16_readonly_cplX();
     int ld16_readonly_cplX();  // ...word
     int _ld_readonly_cplX();
-    int ld_readonly_cplX();  // ...dword
+    int ld_readonly_cplX();  // ...dword from current linear address
 
     int _ld8_readonly_cpl3();
     int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
     int _ld16_readonly_cpl3();
     int ld16_readonly_cpl3(); // ...word
     int _ld_readonly_cpl3();
-    int ld_readonly_cpl3(); // ...dword
+    int ld_readonly_cpl3(); // ...dword from current linear address
 
     int _ld8_writable_cpl3();
     int ld8_writable_cpl3(); // from user WR memory: load (return) byte
     int _ld16_writable_cpl3();
     int ld16_writable_cpl3(); // ...word
     int _ld_writable_cpl3();
-    int ld_writable_cpl3(); // ...dword
+    int ld_writable_cpl3(); // ...dword from current linear address
 
     void _st8_writable_cplX(int byte);
     void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
     void _st16_writable_cplX(int word);
     void st16_writable_cplX(int word); // ...word
     void _st_writable_cplX(int dword);
-    void st_writable_cplX(int dword); // ...dword
+    void st_writable_cplX(int dword); // ...dword at current linear address
 
     void _st8_writable_cpl3(int byte);
     void st8_writable_cpl3(int byte); // in user WR memory: store byte
     void _st16_writable_cpl3(int word);
     void st16_writable_cpl3(int word); // ...word
     void _st_writable_cpl3(int dword);
-    void st_writable_cpl3(int dword); // ...dword
+    void st_writable_cpl3(int dword); // ...dword at current linear address
 
     int ld8_direct(); // read byte...
     int ld16_direct(); // ...word...
