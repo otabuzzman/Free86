@@ -1000,7 +1000,7 @@ int Free86::instruction_length(int opcode) {
                             abort(13);
                         }
                         mem8_loc = eip_linear + (n++);
-                        mem8 = (ld8_readonly_cpl3();
+                        mem8 = ld8_readonly_cpl3();
                         if ((mem8 & 7) == 5) {
                             n += 4;
                         }

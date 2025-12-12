@@ -127,12 +127,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[reg_idx0 & 3] = (regs[reg_idx0 & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
                 } else {
                     segment_translation(mem8);
-                    tlb_hash = tlb_writable[mem8_loc >> 12];
-                    if (tlb_hash == -1) {
-                        _st8_writable_cpl3(x);
-                    } else {
-                        phys_mem8[mem8_loc ^ tlb_hash] = x;
-                    }
+                    st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0x89: // MOV
