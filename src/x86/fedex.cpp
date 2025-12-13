@@ -150,7 +150,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = ld8_readonly_cpl3();
                 }
                 reg = (modRM >> 3) & 7;
-                tlb_hash = (reg_idx1 & 4) << 1;
+                tlb_hash = (reg & 4) << 1;
                 regs[reg & 3] = (regs[reg & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
                 goto EXEC_LOOP;
             case 0x8b: // MOV
@@ -244,9 +244,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation();
                     x = ld8_writable_cpl3();
-                    st8_writable_cpl3((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                    st8_writable_cpl3((regs[reg & 3] >> ((reg & 4) << 1)));
                 }
-                set_lower_byte(reg_idx1, x);
+                set_lower_byte(reg, x);
                 goto EXEC_LOOP;
             case 0x87: // XCHG
                 modRM = ld8_direct();
@@ -260,7 +260,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = ld_writable_cpl3();
                     st_writable_cpl3(regs[reg]);
                 }
-                regs[reg_idx1] = x;
+                regs[reg] = x;
                 goto EXEC_LOOP;
             case 0x8e: // MOV
                 modRM = ld8_direct();
@@ -274,7 +274,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     x = ld16_readonly_cpl3();
                 }
-                set_segment_register(reg_idx1, x);
+                set_segment_register(reg, x);
                 goto EXEC_LOOP;
             case 0x8c: // MOV
                 modRM = ld8_direct();
@@ -1797,7 +1797,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         x = ld8_readonly_cpl3();
                     }
-                    regs[reg_idx1] = x;
+                    regs[reg] = x;
                     goto EXEC_LOOP;
                 case 0xb7: // MOVZX
                     modRM = ld8_direct();
@@ -1808,7 +1808,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         x = ld16_readonly_cpl3();
                     }
-                    regs[reg_idx1] = x;
+                    regs[reg] = x;
                     goto EXEC_LOOP;
                 case 0xbe: // MOVSX
                     modRM = ld8_direct();
@@ -1820,7 +1820,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         x = ld8_readonly_cpl3();
                     }
-                    regs[reg_idx1] = (x << 24) >> 24;
+                    regs[reg] = (x << 24) >> 24;
                     goto EXEC_LOOP;
                 case 0xbf: // MOVSX
                     modRM = ld8_direct();
@@ -1831,7 +1831,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         x = ld16_readonly_cpl3();
                     }
-                    regs[reg_idx1] = (x << 16) >> 16;
+                    regs[reg] = (x << 16) >> 16;
                     goto EXEC_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     if (!is_protected() || (eflags & 0x00020000)) {
@@ -2142,9 +2142,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         y = ld_readonly_cpl3();
                     }
                     if (opcode & 1) {
-                        regs[reg_idx1] = aux_BSR(regs[reg_idx1], y);
+                        regs[reg] = aux_BSR(regs[reg], y);
                     } else {
-                        regs[reg_idx1] = aux_BSF(regs[reg_idx1], y);
+                        regs[reg] = aux_BSF(regs[reg], y);
                     }
                     goto EXEC_LOOP;
                 case 0xaf: // IMUL
@@ -2156,8 +2156,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         y = ld_readonly_cpl3();
                     }
-                    aux_IMUL(regs[reg_idx1], y);
-                    regs[reg_idx1] = x;
+                    aux_IMUL(regs[reg], y);
+                    regs[reg] = x;
                     goto EXEC_LOOP;
                 case 0x31: // RDTSC (80486)
                     if ((cr4 & (1 << 2)) && cpl != 0) {
@@ -2182,9 +2182,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         x = ld8_writable_cpl3();
-                        y = calculate8(x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                        y = calculate8(x, (regs[reg & 3] >> ((reg & 4) << 1)));
                         st8_writable_cpl3(y);
-                        set_lower_byte(reg_idx1, x);
+                        set_lower_byte(reg, x);
                     }
                     goto EXEC_LOOP;
                 case 0xc1: // XADD (80486)
@@ -2202,7 +2202,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = ld_writable_cpl3();
                         y = calculate(x, regs[reg]);
                         st_writable_cpl3(y);
-                        regs[reg_idx1] = x;
+                        regs[reg] = x;
                     }
                     goto EXEC_LOOP;
                 case 0xb0: // CMPXCHG (80486)
@@ -2214,7 +2214,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                         y = calculate8(regs[0], x);
                         if (y == 0) {
-                            set_lower_byte(reg_idx0, (regs[reg & 3] >> ((reg_idx1 & 4) << 1)));
+                            set_lower_byte(reg_idx0, (regs[reg & 3] >> ((reg & 4) << 1)));
                         } else {
                             set_lower_byte(0, x);
                         }
@@ -2518,7 +2518,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = ld16_writable_cpl3();
                         st16_writable_cpl3(regs[reg]);
                     }
-                    set_lower_word(reg_idx1, x);
+                    set_lower_word(reg, x);
                     goto EXEC_LOOP;
                 case 0x1c4: // LES
                     ld_full_pointer16(0);
