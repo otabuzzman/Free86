@@ -119,8 +119,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x88: // MOV
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
-                x = regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1);
+                reg = (modRM >> 3) & 7;
+                x = regs[reg & 3] >> ((reg & 4) << 1);
                 if ((modRM >> 6) == 3) {
                     reg_idx0 = modRM & 7;
                     tlb_hash = (reg_idx0 & 4) << 1;
@@ -149,9 +149,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     x = ld8_readonly_cpl3();
                 }
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 tlb_hash = (reg_idx1 & 4) << 1;
-                regs[reg_idx1 & 3] = (regs[reg_idx1 & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
+                regs[reg & 3] = (regs[reg & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
                 goto EXEC_LOOP;
             case 0x8b: // MOV
                 modRM = ld8_direct();
@@ -236,11 +236,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x86: // XCHG
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     reg_idx0 = modRM & 7;
                     x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
-                    set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                    set_lower_byte(reg_idx0, (regs[reg & 3] >> ((reg & 4) << 1)));
                 } else {
                     segment_translation();
                     x = ld8_writable_cpl3();
@@ -250,22 +250,22 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x87: // XCHG
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     reg_idx0 = modRM & 7;
                     x = regs[reg_idx0];
-                    regs[reg_idx0] = regs[reg_idx1];
+                    regs[reg_idx0] = regs[reg];
                 } else {
                     segment_translation();
                     x = ld_writable_cpl3();
-                    st_writable_cpl3(regs[reg_idx1]);
+                    st_writable_cpl3(regs[reg]);
                 }
                 regs[reg_idx1] = x;
                 goto EXEC_LOOP;
             case 0x8e: // MOV
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
-                if (reg_idx1 >= 6 || reg_idx1 == 1) {
+                reg = (modRM >> 3) & 7;
+                if (reg >= 6 || reg == 1) {
                     abort(6);
                 }
                 if ((modRM >> 6) == 3) {
@@ -278,11 +278,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x8c: // MOV
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
-                if (reg_idx1 >= 6) {
+                reg = (modRM >> 3) & 7;
+                if (reg >= 6) {
                     abort(6);
                 }
-                x = segs[reg_idx1].selector;
+                x = segs[reg].selector;
                 if ((modRM >> 6) == 3) {
                     if (((ipr >> 8) & 1) ^ 1) {
                         regs[modRM & 7] = x;
@@ -310,8 +310,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x38: // CMP
                 modRM = ld8_direct();
                 operation = opcode >> 3;
-                reg_idx1 = (modRM >> 3) & 7;
-                y = regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1);
+                reg = (modRM >> 3) & 7;
+                y = regs[reg & 3] >> ((reg & 4) << 1);
                 if ((modRM >> 6) == 3) {
                     reg_idx0 = modRM & 7;
                     set_lower_byte(reg_idx0, calculate8((regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)), y));
@@ -390,7 +390,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x3a: // CMP
                 modRM = ld8_direct();
                 operation = opcode >> 3;
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     reg_idx0 = modRM & 7;
                     y = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
@@ -398,11 +398,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     y = ld8_readonly_cpl3();
                 }
-                set_lower_byte(reg_idx1, calculate8((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)), y));
+                set_lower_byte(reg, calculate8((regs[reg & 3] >> ((reg & 4) << 1)), y));
                 goto EXEC_LOOP;
             case 0x03: // ADD
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     y = regs[modRM & 7];
                 } else {
@@ -410,7 +410,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = ld_readonly_cpl3();
                 }
                 osm_src = y;
-                osm_dst = regs[reg_idx1] = regs[reg_idx1] + osm_src;
+                osm_dst = regs[reg] = regs[reg] + osm_src;
                 osm = 2;
                 goto EXEC_LOOP;
             case 0x0b: // OR
@@ -421,19 +421,19 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x33: // XOR
                 modRM = ld8_direct();
                 operation = opcode >> 3;
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     y = regs[modRM & 7];
                 } else {
                     segment_translation();
                     y = ld_readonly_cpl3();
                 }
-                regs[reg_idx1] = calculate(regs[reg_idx1], y);
+                regs[reg] = calculate(regs[reg], y);
                 goto EXEC_LOOP;
             case 0x3b: // CMP
                 modRM = ld8_direct();
                 operation = opcode >> 3;
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     y = regs[modRM & 7];
                 } else {
@@ -441,7 +441,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y = ld_readonly_cpl3();
                 }
                 osm_src = y;
-                osm_dst = regs[reg_idx1] - osm_src;
+                osm_dst = regs[reg] - osm_src;
                 osm = 8;
                 goto EXEC_LOOP;
             case 0x04: // ADD
@@ -593,7 +593,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x6b: // IMUL
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     y = regs[modRM & 7];
                 } else {
@@ -602,11 +602,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 z = (ld8_direct() << 24) >> 24;
                 aux_IMUL(y, z);
-                regs[reg_idx1] = x;
+                regs[reg] = x;
                 goto EXEC_LOOP;
             case 0x69: // IMUL
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
                     y = regs[modRM & 7];
                 } else {
@@ -615,7 +615,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 z = ld_direct();
                 aux_IMUL(y, z);
-                regs[reg_idx1] = x;
+                regs[reg] = x;
                 goto EXEC_LOOP;
             case 0x84: // TEST
                 modRM = ld8_direct();
@@ -626,8 +626,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     x = ld8_readonly_cpl3();
                 }
-                reg_idx1 = (modRM >> 3) & 7;
-                y = regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1);
+                reg = (modRM >> 3) & 7;
+                y = regs[reg & 3] >> ((reg & 4) << 1);
                 osm_dst = ((x & y) << 24) >> 24;
                 osm = 12;
                 goto EXEC_LOOP;
@@ -1590,7 +1590,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     abort(7);
                 }
                 modRM = ld8_direct();
-                reg_idx1 = (modRM >> 3) & 7;
+                reg = (modRM >> 3) & 7;
                 reg_idx0 = modRM & 7;
                 operation = ((opcode & 7) << 3) | ((modRM >> 3) & 7);
                 set_lower_word(0, 0xffff);
@@ -1789,7 +1789,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xb6: // MOVZX
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         reg_idx0 = modRM & 7;
                         x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
@@ -1801,7 +1801,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xb7: // MOVZX
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         x = regs[modRM & 7] & 0xffff;
                     } else {
@@ -1812,7 +1812,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xbe: // MOVSX
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         reg_idx0 = modRM & 7;
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
@@ -1824,7 +1824,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xbf: // MOVSX
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         x = regs[modRM & 7];
                     } else {
@@ -1935,8 +1935,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if ((modRM >> 6) != 3) {
                         abort(6);
                     }
-                    reg_idx1 = (modRM >> 3) & 7;
-                    switch (reg_idx1) {
+                    reg = (modRM >> 3) & 7;
+                    switch (reg) {
                     case 0:
                         x = cr0;
                         break;
@@ -1962,9 +1962,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if ((modRM >> 6) != 3) {
                         abort(6);
                     }
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     x = regs[modRM & 7];
-                    switch (reg_idx1) {
+                    switch (reg) {
                     case 0:
                         set_CR0(x);
                         break;
@@ -1995,9 +1995,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if ((modRM >> 6) != 3) {
                         abort(6);
                     }
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     x = regs[modRM & 7];
-                    if (reg_idx1 == 4 || reg_idx1 == 5) {
+                    if (reg == 4 || reg == 5) {
                         abort(6);
                     }
                     goto EXEC_LOOP;
@@ -2134,7 +2134,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0xbc: // BSF
                 case 0xbd: // BSR
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         y = regs[modRM & 7];
                     } else {
@@ -2149,7 +2149,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xaf: // IMUL
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         y = regs[modRM & 7];
                     } else {
@@ -2172,12 +2172,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0xc0: // XADD (80486)
                     operation = 0;
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         reg_idx0 = modRM & 7;
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
-                        y = calculate8(x, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
-                        set_lower_byte(reg_idx1, x);
+                        y = calculate8(x, (regs[reg & 3] >> ((reg & 4) << 1)));
+                        set_lower_byte(reg, x);
                         set_lower_byte(reg_idx0, y);
                     } else {
                         segment_translation();
@@ -2190,17 +2190,17 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0xc1: // XADD (80486)
                     operation = 0;
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         reg_idx0 = modRM & 7;
                         x = regs[reg_idx0];
-                        y = calculate(x, regs[reg_idx1]);
-                        regs[reg_idx1] = x;
+                        y = calculate(x, regs[reg]);
+                        regs[reg] = x;
                         regs[reg_idx0] = y;
                     } else {
                         segment_translation();
                         x = ld_writable_cpl3();
-                        y = calculate(x, regs[reg_idx1]);
+                        y = calculate(x, regs[reg]);
                         st_writable_cpl3(y);
                         regs[reg_idx1] = x;
                     }
@@ -2208,13 +2208,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0xb0: // CMPXCHG (80486)
                     operation = 5;
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         reg_idx0 = modRM & 7;
                         x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
                         y = calculate8(regs[0], x);
                         if (y == 0) {
-                            set_lower_byte(reg_idx0, (regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                            set_lower_byte(reg_idx0, (regs[reg & 3] >> ((reg_idx1 & 4) << 1)));
                         } else {
                             set_lower_byte(0, x);
                         }
@@ -2223,7 +2223,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = ld8_writable_cpl3();
                         y = calculate8(regs[0], x);
                         if (y == 0) {
-                            st8_writable_cpl3((regs[reg_idx1 & 3] >> ((reg_idx1 & 4) << 1)));
+                            st8_writable_cpl3((regs[reg & 3] >> ((reg & 4) << 1)));
                         } else {
                             set_lower_byte(0, x);
                         }
@@ -2232,13 +2232,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0xb1: // CMPXCHG (80486)
                     operation = 5;
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         reg_idx0 = modRM & 7;
                         x = regs[reg_idx0];
                         y = calculate(regs[0], x);
                         if (y == 0) {
-                            regs[reg_idx0] = regs[reg_idx1];
+                            regs[reg_idx0] = regs[reg];
                         } else {
                             regs[0] = x;
                         }
@@ -2247,7 +2247,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = ld_writable_cpl3();
                         y = calculate(regs[0], x);
                         if (y == 0) {
-                            st_writable_cpl3(regs[reg_idx1]);
+                            st_writable_cpl3(regs[reg]);
                         } else {
                             regs[0] = x;
                         }
@@ -2508,15 +2508,15 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0x187: // XCHG
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         reg_idx0 = modRM & 7;
                         x = regs[reg_idx0];
-                        set_lower_word(reg_idx0, regs[reg_idx1]);
+                        set_lower_word(reg_idx0, regs[reg]);
                     } else {
                         segment_translation();
                         x = ld16_writable_cpl3();
-                        st16_writable_cpl3(regs[reg_idx1]);
+                        st16_writable_cpl3(regs[reg]);
                     }
                     set_lower_word(reg_idx1, x);
                     goto EXEC_LOOP;
@@ -2562,14 +2562,14 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x13b: // CMP
                     modRM = ld8_direct();
                     operation = (opcode >> 3) & 7;
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         y = regs[modRM & 7];
                     } else {
                         segment_translation();
                         y = ld16_readonly_cpl3();
                     }
-                    set_lower_word(reg_idx1, calculate16(regs[reg_idx1], y));
+                    set_lower_word(reg, calculate16(regs[reg], y));
                     goto EXEC_LOOP;
                 case 0x105: // ADD
                 case 0x10d: // OR
@@ -2648,7 +2648,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0x16b: // IMUL
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         y = regs[modRM & 7];
                     } else {
@@ -2657,11 +2657,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                     z = (ld8_direct() << 24) >> 24;
                     aux_IMUL16(y, z);
-                    set_lower_word(reg_idx1, x);
+                    set_lower_word(reg, x);
                     goto EXEC_LOOP;
                 case 0x169: // IMUL
                     modRM = ld8_direct();
-                    reg_idx1 = (modRM >> 3) & 7;
+                    reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         y = regs[modRM & 7];
                     } else {
@@ -2670,7 +2670,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                     z = ld16_direct();
                     aux_IMUL16(y, z);
-                    set_lower_word(reg_idx1, x);
+                    set_lower_word(reg, x);
                     goto EXEC_LOOP;
                 case 0x185: // TEST
                     modRM = ld8_direct();
@@ -3263,7 +3263,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         goto EXEC_LOOP;
                     case 0x1b6: // MOVZX
                         modRM = ld8_direct();
-                        reg_idx1 = (modRM >> 3) & 7;
+                        reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
                             reg_idx0 = modRM & 7;
                             x = (regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1)) & 0xff;
@@ -3271,11 +3271,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             segment_translation();
                             x = ld8_readonly_cpl3();
                         }
-                        set_lower_word(reg_idx1, x);
+                        set_lower_word(reg, x);
                         goto EXEC_LOOP;
                     case 0x1be: // MOVSX
                         modRM = ld8_direct();
-                        reg_idx1 = (modRM >> 3) & 7;
+                        reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
                             reg_idx0 = modRM & 7;
                             x = regs[reg_idx0 & 3] >> ((reg_idx0 & 4) << 1);
@@ -3283,36 +3283,36 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             segment_translation();
                             x = ld8_readonly_cpl3();
                         }
-                        set_lower_word(reg_idx1, ((x << 24) >> 24));
+                        set_lower_word(reg, ((x << 24) >> 24));
                         goto EXEC_LOOP;
                     case 0x1af: // IMUL
                         modRM = ld8_direct();
-                        reg_idx1 = (modRM >> 3) & 7;
+                        reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
                             y = regs[modRM & 7];
                         } else {
                             segment_translation();
                             y = ld16_readonly_cpl3();
                         }
-                        aux_IMUL16(regs[reg_idx1], y);
-                        set_lower_word(reg_idx1, x);
+                        aux_IMUL16(regs[reg], y);
+                        set_lower_word(reg, x);
                         goto EXEC_LOOP;
                     case 0x1c1: // XADD (80486)
                         operation = 0;
                         modRM = ld8_direct();
-                        reg_idx1 = (modRM >> 3) & 7;
+                        reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
                             reg_idx0 = modRM & 7;
                             x = regs[reg_idx0];
-                            y = calculate16(x, regs[reg_idx1]);
-                            set_lower_word(reg_idx1, x);
+                            y = calculate16(x, regs[reg]);
+                            set_lower_word(reg, x);
                             set_lower_word(reg_idx0, y);
                         } else {
                             segment_translation();
                             x = ld16_writable_cpl3();
-                            y = calculate16(x, regs[reg_idx1]);
+                            y = calculate16(x, regs[reg]);
                             st16_writable_cpl3(y);
-                            set_lower_word(reg_idx1, x);
+                            set_lower_word(reg, x);
                         }
                         goto EXEC_LOOP;
                     case 0x1a0: // PUSH FS
@@ -3430,31 +3430,31 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     case 0x1bc: // BSF
                     case 0x1bd: // BSR
                         modRM = ld8_direct();
-                        reg_idx1 = (modRM >> 3) & 7;
+                        reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
                             y = regs[modRM & 7];
                         } else {
                             segment_translation();
                             y = ld16_readonly_cpl3();
                         }
-                        x = regs[reg_idx1];
+                        x = regs[reg];
                         if (opcode & 1) {
                             x = aux_BSR16(x, y);
                         } else {
                             x = aux_BSF16(x, y);
                         }
-                        set_lower_word(reg_idx1, x);
+                        set_lower_word(reg, x);
                         goto EXEC_LOOP;
                     case 0x1b1: // CMPXCHG (40486)
                         operation = 5;
                         modRM = ld8_direct();
-                        reg_idx1 = (modRM >> 3) & 7;
+                        reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
                             reg_idx0 = modRM & 7;
                             x = regs[reg_idx0];
                             y = calculate16(regs[0], x);
                             if (y == 0) {
-                                set_lower_word(reg_idx0, regs[reg_idx1]);
+                                set_lower_word(reg_idx0, regs[reg]);
                             } else {
                                 set_lower_word(0, x);
                             }
@@ -3463,7 +3463,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = ld16_writable_cpl3();
                             y = calculate16(regs[0], x);
                             if (y == 0) {
-                                st16_writable_cpl3(regs[reg_idx1]);
+                                st16_writable_cpl3(regs[reg]);
                             } else {
                                 set_lower_word(0, x);
                             }

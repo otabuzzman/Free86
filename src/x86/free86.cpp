@@ -3439,7 +3439,7 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
         abort(6);
     }
     modRM = ld8_direct();
-    reg_idx1 = (modRM >> 3) & 7;
+    reg = (modRM >> 3) & 7;
     if ((modRM >> 6) == 3) {
         selector = regs[modRM & 7] & 0xffff;
     } else {
@@ -3453,9 +3453,9 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     } else {
         osm_src |= 0x0040;
         if (is_operand_size32) {
-            regs[reg_idx1] = x;
+            regs[reg] = x;
         } else {
-            set_lower_word(reg_idx1, x);
+            set_lower_word(reg, x);
         }
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -3534,10 +3534,10 @@ void Free86::aux_ARPL() {
         segment_translation();
         x = ld16_writable_cpl3();
     }
-    y = regs[(modRM >> 3) & 7];
+    reg = regs[(modRM >> 3) & 7];
     osm_src = compile_eflags();
-    if ((x & 3) < (y & 3)) {
-        x = (x & ~3) | (y & 3);
+    if ((x & 3) < (reg & 3)) {
+        x = (x & ~3) | (reg & 3);
         if ((modRM >> 6) == 3) {
             set_lower_word(reg_idx0, x);
         } else {
@@ -3687,8 +3687,8 @@ void Free86::aux_BOUND16() {
     x = (ld16_readonly_cpl3() << 16) >> 16;
     address_operand = address_operand + 2;
     y = (ld16_readonly_cpl3() << 16) >> 16;
-    reg_idx1 = (modRM >> 3) & 7;
-    z = (regs[reg_idx1] << 16) >> 16;
+    reg = (modRM >> 3) & 7;
+    z = (regs[reg] << 16) >> 16;
     if (z < x || z > y) {
         abort(5);
     }
@@ -3702,8 +3702,8 @@ void Free86::aux_BOUND() {
     x = ld_readonly_cpl3();
     address_operand = address_operand + 4;
     y = ld_readonly_cpl3();
-    reg_idx1 = (modRM >> 3) & 7;
-    z = regs[reg_idx1];
+    reg = (modRM >> 3) & 7;
+    z = regs[reg];
     if (z < x || z > y) {
         abort(5);
     }
