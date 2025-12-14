@@ -293,11 +293,11 @@ class Free86 {
 
     // auxiliary variables for inter-method exchange
     int operation; // bits 5..3 of opcode or modR/M byte
-    int reg_idx1;
     int x, y, z, v;
 
     uint32_t address_operand; // either immediate or calculated
-    int modRM, reg, rM;
+    int modRM, reg, rM; // mod field (modRM >> 6) extracted inline
+    int sib, base, index; // scale field (sib >> 6) extracted inline
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -450,8 +450,8 @@ class Free86 {
     void aux_LEAVE();
     void aux_ENTER16();
     void aux_ENTER();
-    void ld_full_pointer16(int sreg);
-    void ld_full_pointer(int sreg);
+    void ld_far_pointer16(int sreg);
+    void ld_far_pointer(int sreg);
 
     // string.cpp
     void aux_INS16();

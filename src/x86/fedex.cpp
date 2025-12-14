@@ -1,7 +1,7 @@
 #include "free86.h"
 
 void Free86::fetch_decode_execute(uint64_t cycles) {
-    int hL; // H (0x80) or L (0x00) byte selector
+    int sreg, hL; // H (0x80) or L (0x00) byte selector
     if (halted) {
         if (get_irq() != 0 && (eflags & 0x00000200)) {
             halted = 0;
@@ -190,13 +190,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (ipr & 0x0080) {
                     address_operand &= 0xffff;
                 }
-                reg_idx1 = ipr & 0x000f;
-                if (reg_idx1 == 0) {
-                    reg_idx1 = 3;
+                sreg = ipr & 0x000f;
+                if (sreg == 0) {
+                    sreg = 3;
                 } else {
-                    reg_idx1--;
+                    sreg--;
                 }
-                address_operand = address_operand + segs[reg_idx1].base;
+                address_operand = address_operand + segs[sreg].base;
                 x = ld8_readonly_cpl3();
                 set_lower_byte(0, x);
                 goto EXEC_LOOP;
@@ -295,10 +295,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 goto EXEC_LOOP;
             case 0xc4: // LES
-                ld_full_pointer(0);
+                ld_far_pointer(0);
                 goto EXEC_LOOP;
             case 0xc5: // LDS
-                ld_full_pointer(3);
+                ld_far_pointer(3);
                 goto EXEC_LOOP;
             case 0x00: // ADD
             case 0x08: // OR
@@ -2004,7 +2004,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0xb2: // LSS
                 case 0xb4: // LFS
                 case 0xb5: // LGS
-                    ld_full_pointer(opcode & 7);
+                    ld_far_pointer(opcode & 7);
                     goto EXEC_LOOP;
                 case 0xa2: // CPUID (80486)
                     aux_CPUID();
@@ -2521,10 +2521,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     set_lower_word(reg, x);
                     goto EXEC_LOOP;
                 case 0x1c4: // LES
-                    ld_full_pointer16(0);
+                    ld_far_pointer16(0);
                     goto EXEC_LOOP;
                 case 0x1c5: // LDS
-                    ld_full_pointer16(3);
+                    ld_far_pointer16(3);
                     goto EXEC_LOOP;
                 case 0x101: // ADD
                 case 0x109: // OR
@@ -3328,7 +3328,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     case 0x1b2: // LSS
                     case 0x1b4: // LFS
                     case 0x1b5: // LGS
-                        ld_full_pointer16(opcode & 7);
+                        ld_far_pointer16(opcode & 7);
                         goto EXEC_LOOP;
                     case 0x1a4: // SHLD
                     case 0x1ac: // SHRD

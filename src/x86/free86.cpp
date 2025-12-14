@@ -1296,40 +1296,40 @@ void Free86::page_translation(int writable, bool user, int address) {
     }
 }
 void Free86::segment_translation() {
-    int sib, sib_base, sib_index, sreg;
+    int sreg, sreg_default; // if no DS override prefix
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
             sib = ld8_direct();
-            sib_base = sib & 7;
-            if (sib_base == 5) {
+            base = sib & 7;
+            if (base == 5) {
                 address_operand = ld_direct();
             } else {
-                address_operand = regs[sib_base];
+                address_operand = regs[base];
             }
-            sib_index = (sib >> 3) & 7;
-            if (sib_index != 4) {
-                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
+            index = (sib >> 3) & 7;
+            if (index != 4) {
+                address_operand = address_operand + (regs[index] << (sib >> 6));
             }
             break;
         case 0x0c:
             sib = ld8_direct();
             address_operand = (ld8_direct() << 24) >> 24;
-            sib_base = sib & 7;
-            address_operand = address_operand + regs[sib_base];
-            sib_index = (sib >> 3) & 7;
-            if (sib_index != 4) {
-                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
+            base = sib & 7;
+            address_operand = address_operand + regs[base];
+            index = (sib >> 3) & 7;
+            if (index != 4) {
+                address_operand = address_operand + (regs[index] << (sib >> 6));
             }
             break;
         case 0x14:
             sib = ld8_direct();
             address_operand = ld_direct();
-            sib_base = sib & 7;
-            address_operand = address_operand + regs[sib_base];
-            sib_index = (sib >> 3) & 7;
-            if (sib_index != 4) {
-                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
+            base = sib & 7;
+            address_operand = address_operand + regs[base];
+            index = (sib >> 3) & 7;
+            if (index != 4) {
+                address_operand = address_operand + (regs[index] << (sib >> 6));
             }
             break;
         case 0x05:
@@ -1341,8 +1341,8 @@ void Free86::segment_translation() {
         case 0x03:
         case 0x06:
         case 0x07:
-            sib_base = modRM & 7;
-            address_operand = regs[sib_base];
+            base = modRM & 7;
+            address_operand = regs[base];
             break;
         case 0x08:
         case 0x09:
@@ -1352,8 +1352,8 @@ void Free86::segment_translation() {
         case 0x0e:
         case 0x0f:
             address_operand = (ld8_direct() << 24) >> 24;
-            sib_base = modRM & 7;
-            address_operand = address_operand + regs[sib_base];
+            base = modRM & 7;
+            address_operand = address_operand + regs[base];
             break;
         case 0x10:
         case 0x11:
@@ -1364,16 +1364,15 @@ void Free86::segment_translation() {
         case 0x17:
         default:
             address_operand = ld_direct();
-            sib_base = modRM & 7;
-            address_operand = address_operand + regs[sib_base];
+            base = modRM & 7;
+            address_operand = address_operand + regs[base];
             break;
         }
         return;
     } else if (ipr & 0x0080) {
-        int _sreg; // if no data segement override prefix
         if ((modRM & 0xc7) == 0x06) {
             address_operand = ld16_direct();
-            _sreg = 3;
+            sreg_default = 3;
         } else {
             switch (modRM >> 6) {
             case 0:
@@ -1389,42 +1388,42 @@ void Free86::segment_translation() {
             switch (modRM & 7) {
             case 0:
                 address_operand = (address_operand + regs[3] + regs[6]) & 0xffff;
-                _sreg = 3;
+                sreg_default = 3;
                 break;
             case 1:
                 address_operand = (address_operand + regs[3] + regs[7]) & 0xffff;
-                _sreg = 3;
+                sreg_default = 3;
                 break;
             case 2:
                 address_operand = (address_operand + regs[5] + regs[6]) & 0xffff;
-                _sreg = 2;
+                sreg_default = 2;
                 break;
             case 3:
                 address_operand = (address_operand + regs[5] + regs[7]) & 0xffff;
-                _sreg = 2;
+                sreg_default = 2;
                 break;
             case 4:
                 address_operand = (address_operand + regs[6]) & 0xffff;
-                _sreg = 3;
+                sreg_default = 3;
                 break;
             case 5:
                 address_operand = (address_operand + regs[7]) & 0xffff;
-                _sreg = 3;
+                sreg_default = 3;
                 break;
             case 6:
                 address_operand = (address_operand + regs[5]) & 0xffff;
-                _sreg = 2;
+                sreg_default = 2;
                 break;
             case 7:
             default:
                 address_operand = (address_operand + regs[3]) & 0xffff;
-                _sreg = 3;
+                sreg_default = 3;
                 break;
             }
         }
         sreg = ipr & 0x000f;
         if (sreg == 0) {
-            sreg = _sreg;
+            sreg = sreg_default;
         } else {
             sreg--;
         }
@@ -1434,41 +1433,41 @@ void Free86::segment_translation() {
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
             sib = ld8_direct();
-            sib_base = sib & 7;
-            if (sib_base == 5) {
+            base = sib & 7;
+            if (base == 5) {
                 address_operand = ld_direct();
-                sib_base = 0;
+                base = 0;
             } else {
-                address_operand = regs[sib_base];
+                address_operand = regs[base];
             }
-            sib_index = (sib >> 3) & 7;
-            if (sib_index != 4) {
-                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
+            index = (sib >> 3) & 7;
+            if (index != 4) {
+                address_operand = address_operand + (regs[index] << (sib >> 6));
             }
             break;
         case 0x0c:
             sib = ld8_direct();
             address_operand = (ld8_direct() << 24) >> 24;
-            sib_base = sib & 7;
-            address_operand = address_operand + regs[sib_base];
-            sib_index = (sib >> 3) & 7;
-            if (sib_index != 4) {
-                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
+            base = sib & 7;
+            address_operand = address_operand + regs[base];
+            index = (sib >> 3) & 7;
+            if (index != 4) {
+                address_operand = address_operand + (regs[index] << (sib >> 6));
             }
             break;
         case 0x14:
             sib = ld8_direct();
             address_operand = ld_direct();
-            sib_base = sib & 7;
-            address_operand = address_operand + regs[sib_base];
-            sib_index = (sib >> 3) & 7;
-            if (sib_index != 4) {
-                address_operand = address_operand + (regs[sib_index] << (sib >> 6));
+            base = sib & 7;
+            address_operand = address_operand + regs[base];
+            index = (sib >> 3) & 7;
+            if (index != 4) {
+                address_operand = address_operand + (regs[index] << (sib >> 6));
             }
             break;
         case 0x05:
             address_operand = ld_direct();
-            sib_base = 0;
+            base = 0;
             break;
         case 0x00:
         case 0x01:
@@ -1476,8 +1475,8 @@ void Free86::segment_translation() {
         case 0x03:
         case 0x06:
         case 0x07:
-            sib_base = modRM & 7;
-            address_operand = regs[sib_base];
+            base = modRM & 7;
+            address_operand = regs[base];
             break;
         case 0x08:
         case 0x09:
@@ -1487,8 +1486,8 @@ void Free86::segment_translation() {
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
             address_operand = (ld8_direct() << 24) >> 24;
-            sib_base = modRM & 7;
-            address_operand = address_operand + regs[sib_base];
+            base = modRM & 7;
+            address_operand = address_operand + regs[base];
             break;
         case 0x10:
         case 0x11:
@@ -1499,13 +1498,13 @@ void Free86::segment_translation() {
         case 0x17:
         default:
             address_operand = ld_direct();
-            sib_base = modRM & 7;
-            address_operand = address_operand + regs[sib_base];
+            base = modRM & 7;
+            address_operand = address_operand + regs[base];
             break;
         }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
-            if (sib_base == 4 || sib_base == 5) {
+            if (base == 4 || base == 5) {
                 sreg = 2;
             } else {
                 sreg = 3;
@@ -3824,7 +3823,7 @@ void Free86::aux_ENTER() {
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::ld_full_pointer16(int sreg) {
+void Free86::ld_far_pointer16(int sreg) {
     modRM = ld8_direct();
     if ((modRM >> 3) == 3) {
         ; // abort(6);
@@ -3836,7 +3835,7 @@ void Free86::ld_full_pointer16(int sreg) {
     set_segment_register(sreg, y);
     set_lower_word((modRM >> 3) & 7, x);
 }
-void Free86::ld_full_pointer(int sreg) {
+void Free86::ld_far_pointer(int sreg) {
     modRM = ld8_direct();
     if ((modRM >> 3) == 3) {
         ; // abort(6);
