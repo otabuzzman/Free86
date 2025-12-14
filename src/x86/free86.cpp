@@ -82,7 +82,7 @@ void Free86::fetch_opcode() {
             if ((page_offset + x) > 4096) { // instruction extends page boundary
                 far = far_start = memory_size;
                 for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
-                    address_operand = eip_linear + y;
+                    lax = eip_linear + y;
                     memory8[far + y] = ld8_readonly_cpl3();
                 }
                 far++;
@@ -124,7 +124,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             break;
         case 0x67: // address-size override prefix
@@ -136,7 +136,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             break;
         case 0x91: // XCHG C
@@ -374,7 +374,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (modRM >> 6) {
@@ -396,7 +396,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    address_operand = eip_linear + (n++);
+                    lax = eip_linear + (n++);
                     modRM = ld8_readonly_cpl3();
                     if ((modRM & 7) == 5) {
                         n += 4;
@@ -465,7 +465,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (modRM >> 6) {
@@ -487,7 +487,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    address_operand = eip_linear + (n++);
+                    lax = eip_linear + (n++);
                     modRM = ld8_readonly_cpl3();
                     if ((modRM & 7) == 5) {
                         n += 4;
@@ -543,7 +543,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (modRM >> 6) {
@@ -565,7 +565,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    address_operand = eip_linear + (n++);
+                    lax = eip_linear + (n++);
                     modRM = ld8_readonly_cpl3();
                     if ((modRM & 7) == 5) {
                         n += 4;
@@ -619,7 +619,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (modRM >> 6) {
@@ -641,7 +641,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    address_operand = eip_linear + (n++);
+                    lax = eip_linear + (n++);
                     modRM = ld8_readonly_cpl3();
                     if ((modRM & 7) == 5) {
                         n += 4;
@@ -698,7 +698,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
             if (ipr & 0x0080) {
                 switch (modRM >> 6) {
@@ -720,7 +720,7 @@ int Free86::instruction_length(int opcode) {
                     if ((n + 1) > 15) {
                         abort(13);
                     }
-                    address_operand = eip_linear + (n++);
+                    lax = eip_linear + (n++);
                     modRM = ld8_readonly_cpl3();
                     if ((modRM & 7) == 5) {
                         n += 4;
@@ -801,7 +801,7 @@ int Free86::instruction_length(int opcode) {
             if ((n + 1) > 15) {
                 abort(13);
             }
-            address_operand = eip_linear + (n++);
+            lax = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             switch (opcode) {
             case 0x06: // CLTS
@@ -903,7 +903,7 @@ int Free86::instruction_length(int opcode) {
                 if ((n + 1) > 15) {
                     abort(13);
                 }
-                address_operand = eip_linear + (n++);
+                lax = eip_linear + (n++);
                 modRM = ld8_readonly_cpl3();
                 if (ipr & 0x0080) {
                     switch (modRM >> 6) {
@@ -925,7 +925,7 @@ int Free86::instruction_length(int opcode) {
                         if ((n + 1) > 15) {
                             abort(13);
                         }
-                        address_operand = eip_linear + (n++);
+                        lax = eip_linear + (n++);
                         modRM = ld8_readonly_cpl3();
                         if ((modRM & 7) == 5) {
                             n += 4;
@@ -977,7 +977,7 @@ int Free86::instruction_length(int opcode) {
                 if ((n + 1) > 15) {
                     abort(13);
                 }
-                address_operand = eip_linear + (n++);
+                lax = eip_linear + (n++);
                 modRM = ld8_readonly_cpl3();
                 if (ipr & 0x0080) {
                     switch (modRM >> 6) {
@@ -999,7 +999,7 @@ int Free86::instruction_length(int opcode) {
                         if ((n + 1) > 15) {
                             abort(13);
                         }
-                        address_operand = eip_linear + (n++);
+                        lax = eip_linear + (n++);
                         modRM = ld8_readonly_cpl3();
                         if ((modRM & 7) == 5) {
                             n += 4;
@@ -1236,7 +1236,7 @@ void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
 void Free86::page_translation(int writable, bool user) {
-    page_translation(writable, user, address_operand);
+    page_translation(writable, user, lax);
 }
 void Free86::page_translation(int writable, bool user, int address) {
     int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, ok, error_code;
@@ -1303,37 +1303,37 @@ void Free86::segment_translation() {
             sib = ld8_direct();
             base = sib & 7;
             if (base == 5) {
-                address_operand = ld_direct();
+                lax = ld_direct();
             } else {
-                address_operand = regs[base];
+                lax = regs[base];
             }
             index = (sib >> 3) & 7;
             if (index != 4) {
-                address_operand = address_operand + (regs[index] << (sib >> 6));
+                lax = lax + (regs[index] << (sib >> 6));
             }
             break;
         case 0x0c:
             sib = ld8_direct();
-            address_operand = (ld8_direct() << 24) >> 24;
+            lax = (ld8_direct() << 24) >> 24;
             base = sib & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             index = (sib >> 3) & 7;
             if (index != 4) {
-                address_operand = address_operand + (regs[index] << (sib >> 6));
+                lax = lax + (regs[index] << (sib >> 6));
             }
             break;
         case 0x14:
             sib = ld8_direct();
-            address_operand = ld_direct();
+            lax = ld_direct();
             base = sib & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             index = (sib >> 3) & 7;
             if (index != 4) {
-                address_operand = address_operand + (regs[index] << (sib >> 6));
+                lax = lax + (regs[index] << (sib >> 6));
             }
             break;
         case 0x05:
-            address_operand = ld_direct();
+            lax = ld_direct();
             break;
         case 0x00:
         case 0x01:
@@ -1342,7 +1342,7 @@ void Free86::segment_translation() {
         case 0x06:
         case 0x07:
             base = modRM & 7;
-            address_operand = regs[base];
+            lax = regs[base];
             break;
         case 0x08:
         case 0x09:
@@ -1351,9 +1351,9 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f:
-            address_operand = (ld8_direct() << 24) >> 24;
+            lax = (ld8_direct() << 24) >> 24;
             base = modRM & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             break;
         case 0x10:
         case 0x11:
@@ -1363,60 +1363,60 @@ void Free86::segment_translation() {
         case 0x16:
         case 0x17:
         default:
-            address_operand = ld_direct();
+            lax = ld_direct();
             base = modRM & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             break;
         }
         return;
     } else if (ipr & 0x0080) {
         if ((modRM & 0xc7) == 0x06) {
-            address_operand = ld16_direct();
+            lax = ld16_direct();
             sreg_default = 3;
         } else {
             switch (modRM >> 6) {
             case 0:
-                address_operand = 0;
+                lax = 0;
                 break;
             case 1:
-                address_operand = (ld8_direct() << 24) >> 24;
+                lax = (ld8_direct() << 24) >> 24;
                 break;
             default:
-                address_operand = ld16_direct();
+                lax = ld16_direct();
                 break;
             }
             switch (modRM & 7) {
             case 0:
-                address_operand = (address_operand + regs[3] + regs[6]) & 0xffff;
+                lax = (lax + regs[3] + regs[6]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 1:
-                address_operand = (address_operand + regs[3] + regs[7]) & 0xffff;
+                lax = (lax + regs[3] + regs[7]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 2:
-                address_operand = (address_operand + regs[5] + regs[6]) & 0xffff;
+                lax = (lax + regs[5] + regs[6]) & 0xffff;
                 sreg_default = 2;
                 break;
             case 3:
-                address_operand = (address_operand + regs[5] + regs[7]) & 0xffff;
+                lax = (lax + regs[5] + regs[7]) & 0xffff;
                 sreg_default = 2;
                 break;
             case 4:
-                address_operand = (address_operand + regs[6]) & 0xffff;
+                lax = (lax + regs[6]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 5:
-                address_operand = (address_operand + regs[7]) & 0xffff;
+                lax = (lax + regs[7]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 6:
-                address_operand = (address_operand + regs[5]) & 0xffff;
+                lax = (lax + regs[5]) & 0xffff;
                 sreg_default = 2;
                 break;
             case 7:
             default:
-                address_operand = (address_operand + regs[3]) & 0xffff;
+                lax = (lax + regs[3]) & 0xffff;
                 sreg_default = 3;
                 break;
             }
@@ -1427,7 +1427,7 @@ void Free86::segment_translation() {
         } else {
             sreg--;
         }
-        address_operand = address_operand + segs[sreg].base;
+        lax = lax + segs[sreg].base;
         return;
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -1435,38 +1435,38 @@ void Free86::segment_translation() {
             sib = ld8_direct();
             base = sib & 7;
             if (base == 5) {
-                address_operand = ld_direct();
+                lax = ld_direct();
                 base = 0;
             } else {
-                address_operand = regs[base];
+                lax = regs[base];
             }
             index = (sib >> 3) & 7;
             if (index != 4) {
-                address_operand = address_operand + (regs[index] << (sib >> 6));
+                lax = lax + (regs[index] << (sib >> 6));
             }
             break;
         case 0x0c:
             sib = ld8_direct();
-            address_operand = (ld8_direct() << 24) >> 24;
+            lax = (ld8_direct() << 24) >> 24;
             base = sib & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             index = (sib >> 3) & 7;
             if (index != 4) {
-                address_operand = address_operand + (regs[index] << (sib >> 6));
+                lax = lax + (regs[index] << (sib >> 6));
             }
             break;
         case 0x14:
             sib = ld8_direct();
-            address_operand = ld_direct();
+            lax = ld_direct();
             base = sib & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             index = (sib >> 3) & 7;
             if (index != 4) {
-                address_operand = address_operand + (regs[index] << (sib >> 6));
+                lax = lax + (regs[index] << (sib >> 6));
             }
             break;
         case 0x05:
-            address_operand = ld_direct();
+            lax = ld_direct();
             base = 0;
             break;
         case 0x00:
@@ -1476,7 +1476,7 @@ void Free86::segment_translation() {
         case 0x06:
         case 0x07:
             base = modRM & 7;
-            address_operand = regs[base];
+            lax = regs[base];
             break;
         case 0x08:
         case 0x09:
@@ -1485,9 +1485,9 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
-            address_operand = (ld8_direct() << 24) >> 24;
+            lax = (ld8_direct() << 24) >> 24;
             base = modRM & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             break;
         case 0x10:
         case 0x11:
@@ -1497,9 +1497,9 @@ void Free86::segment_translation() {
         case 0x16:
         case 0x17:
         default:
-            address_operand = ld_direct();
+            lax = ld_direct();
             base = modRM & 7;
-            address_operand = address_operand + regs[base];
+            lax = lax + regs[base];
             break;
         }
     sreg = ipr & 0x000f;
@@ -1512,7 +1512,7 @@ void Free86::segment_translation() {
     } else {
             sreg--;
         }
-    address_operand = address_operand + segs[sreg].base;
+    lax = lax + segs[sreg].base;
     return;
 }
 void Free86::offset_to_linear(bool writable) {
@@ -1557,7 +1557,7 @@ void Free86::offset_to_linear(bool writable) {
             abort(13, 0); // #GP(0)
         }
     }
-    address_operand = la;
+    lax = la;
 }
 void Free86::set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[sreg] = {selector, base, limit, flags}; // set register
@@ -1599,9 +1599,9 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
         if ((selector_index + 7) > xdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        address_operand = xdt.base + selector_index;
+        lax = xdt.base + selector_index;
         dte_lower_dword = ld_readonly_cplX();
-        address_operand += 4;
+        lax += 4;
         dte_upper_dword = ld_readonly_cplX();
         if (!(dte_upper_dword & (1 << 12))) {
             abort(13, selector & 0xfffc);
@@ -1690,9 +1690,9 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     if ((index + 7) > xdt.limit) {
         return;
     }
-    address_operand = xdt.base + index;
+    lax = xdt.base + index;
     dte_lower_dword = ld_readonly_cplX();
-    address_operand += 4;
+    lax += 4;
     dte_upper_dword = ld_readonly_cplX();
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
@@ -1711,13 +1711,13 @@ void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_leve
     if (offset + (4 << is_386) - 1 > tr.limit) {
         abort(10, tr.selector & 0xfffc);
     }
-    address_operand = tr.base + offset;
+    lax = tr.base + offset;
     if (is_386 == 0) {
         dte_upper_dword = ld16_readonly_cplX(); // privileged SP
-        address_operand += 2;
+        lax += 2;
     } else {
         dte_upper_dword = ld_readonly_cplX(); // privileged ESP
-        address_operand += 4;
+        lax += 4;
     }
     dte_lower_dword = ld16_readonly_cplX(); // privileged SS
     descriptor_table_entry[0] = dte_lower_dword;
@@ -2616,9 +2616,9 @@ void Free86::aux_LDTR(int selector) {
         if ((index + 7) > gdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        address_operand = gdt.base + index;
+        lax = gdt.base + index;
         dte_lower_dword = ld_readonly_cplX();
-        address_operand += 4;
+        lax += 4;
         dte_upper_dword = ld_readonly_cplX();
         if ((dte_upper_dword & (1 << 12)) || ((dte_upper_dword >> 8) & 0xf) != 2) {
             abort(13, selector & 0xfffc);
@@ -2645,9 +2645,9 @@ void Free86::aux_LTR(int selector) {
         if ((index + 7) > gdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        address_operand = gdt.base + index;
+        lax = gdt.base + index;
         dte_lower_dword = ld_readonly_cplX();
-        address_operand += 4;
+        lax += 4;
         dte_upper_dword = ld_readonly_cplX();
         descriptor_type = (dte_upper_dword >> 8) & 0xf;
         if ((dte_upper_dword & (1 << 12)) || (descriptor_type != 1 && descriptor_type != 9)) {
@@ -2729,17 +2729,17 @@ void Free86::aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int 
     int esp = regs[4];
     if (is_operand_size32) {
         esp = esp - 4;
-        address_operand = (esp & SS_mask) + SS_base;
+        lax = (esp & SS_mask) + SS_base;
         st_writable_cpl3(segs[1].selector);
         esp = esp - 4;
-        address_operand = (esp & SS_mask) + SS_base;
+        lax = (esp & SS_mask) + SS_base;
         st_writable_cpl3(return_address);
     } else {
         esp = esp - 2;
-        address_operand = (esp & SS_mask) + SS_base;
+        lax = (esp & SS_mask) + SS_base;
         st16_writable_cpl3(segs[1].selector);
         esp = esp - 2;
-        address_operand = (esp & SS_mask) + SS_base;
+        lax = (esp & SS_mask) + SS_base;
         st16_writable_cpl3(return_address);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -2789,17 +2789,17 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         SS_base = segs[2].base;
         if (is_operand_size32) {
             esp = esp - 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[1].selector);
             esp = esp - 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st_writable_cplX(return_address);
         } else {
             esp = esp - 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(return_address);
         }
         int limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
@@ -2886,29 +2886,29 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             SS_base = compile_dte_base(dte_lower_dword, dte_upper_dword);
             if (is_operand_size32) {
                 esp = esp - 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[2].selector);
                 esp = esp - 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(start_esp);
                 for (int i = count - 1; i >= 0; i--) {
                     // x = Xe(Ve + ((start_esp + i * 4) & Ue));
                     esp = esp - 4;
-                    address_operand = SS_base + (esp & SS_mask);
+                    lax = SS_base + (esp & SS_mask);
                     st_writable_cplX(0);
                     // st_writable_cplX(x);
                 }
             } else {
                 esp = esp - 2;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[2].selector);
                 esp = esp - 2;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(start_esp);
                 for (int i = count - 1; i >= 0; i--) {
                     // x = Ye(Ve + ((start_esp + i * 2) & Ue));
                     esp = esp - 2;
-                    address_operand = SS_base + (esp & SS_mask);
+                    lax = SS_base + (esp & SS_mask);
                     st16_writable_cplX(0);
                     // st16_writable_cplX(x);
                 }
@@ -2922,17 +2922,17 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         }
         if (is_operand_size32) {
             esp = esp - 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[1].selector);
             esp = esp - 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st_writable_cplX(return_address);
         } else {
             esp = esp - 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(return_address);
         }
         selector = (selector & ~3) | dpl;
@@ -2948,27 +2948,27 @@ void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int ret
     SS_base = segs[2].base;
     SS_mask = 0xffff;
     if (is_operand_size32 == 1) {
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         stack_eip = ld_readonly_cplX();
         esp = esp + 4;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         cs = ld_readonly_cplX();
         esp = esp + 4;
         cs &= 0xffff;
         if (is_iret) {
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             stack_eflags = ld_readonly_cplX();
             esp = esp + 4;
         }
     } else {
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         stack_eip = ld16_readonly_cplX();
         esp = esp + 2;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             stack_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
@@ -2999,35 +2999,35 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     SS_base = segs[2].base;
     SS_mask = get_addressmask(segs[2].flags);
     if (is_operand_size32 == 1) {
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         stack_eip = ld_readonly_cplX();
         esp = esp + 4;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         cs = ld_readonly_cplX();
         esp = esp + 4;
         cs &= 0xffff;
         if (is_iret) {
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             stack_eflags = ld_readonly_cplX();
             esp = esp + 4;
             if (stack_eflags & 0x00020000) {
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 stack_esp = ld_readonly_cplX();
                 esp = esp + 4;
                 // pop segment selectors from stack
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 ss = ld_readonly_cplX();
                 esp = esp + 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 es = ld_readonly_cplX();
                 esp = esp + 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 ds = ld_readonly_cplX();
                 esp = esp + 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 fs = ld_readonly_cplX();
                 esp = esp + 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 gs = ld_readonly_cplX();
                 esp = esp + 4;
                 // clang-format off
@@ -3049,14 +3049,14 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
             }
         }
     } else {
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         stack_eip = ld16_readonly_cplX();
         esp = esp + 2;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             stack_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
@@ -3095,18 +3095,18 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
         set_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
         if (is_operand_size32 == 1) {
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             stack_esp = ld_readonly_cplX();
             esp = esp + 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             ss = ld_readonly_cplX();
             esp = esp + 4;
             ss &= 0xffff;
         } else {
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             stack_esp = ld16_readonly_cplX();
             esp = esp + 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             ss = ld16_readonly_cplX();
             esp = esp + 2;
         }
@@ -3193,19 +3193,19 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     if (id * 4 + 3 > idt.limit) {
         abort(13, id * 8 + 2);
     }
-    address_operand = idt.base + (id << 2);
+    lax = idt.base + (id << 2);
     offset = ld16_readonly_cplX();
-    address_operand = address_operand + 2;
+    lax = lax + 2;
     selector = ld16_readonly_cplX();
     esp = regs[4];
     esp = esp - 2;
-    address_operand = (esp & SS_mask) + SS_base;
+    lax = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(get_EFLAGS());
     esp = esp - 2;
-    address_operand = (esp & SS_mask) + SS_base;
+    lax = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(segs[1].selector);
     esp = esp - 2;
-    address_operand = (esp & SS_mask) + SS_base;
+    lax = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(is_sw ? return_address : eip);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
@@ -3234,9 +3234,9 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     if (id * 8 + 7 > idt.limit) {
         abort(13, id * 8 + 2);
     }
-    address_operand = idt.base + id * 8;
+    lax = idt.base + id * 8;
     dte_lower_dword = ld_readonly_cplX();
-    address_operand += 4;
+    lax += 4;
     dte_upper_dword = ld_readonly_cplX();
     descriptor_type = (dte_upper_dword >> 8) & 0x1f;
     switch (descriptor_type) {
@@ -3324,74 +3324,74 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         if (is_interlevel) {
             if (eflags & 0x00020000) {
                 esp = esp - 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[5].selector);
                 esp = esp - 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[4].selector);
                 esp = esp - 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[3].selector);
                 esp = esp - 4;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[0].selector);
             }
             esp = esp - 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[2].selector);
             esp = esp - 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st_writable_cplX(regs[4]);
         }
         esp = esp - 4;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         st_writable_cplX(get_EFLAGS());
         esp = esp - 4;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         st_writable_cplX(segs[1].selector);
         esp = esp - 4;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         st_writable_cplX(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 4;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st_writable_cplX(error_code);
         }
     } else {
         if (is_interlevel) {
             if (eflags & 0x00020000) {
                 esp = esp - 2;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[5].selector);
                 esp = esp - 2;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[4].selector);
                 esp = esp - 2;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[3].selector);
                 esp = esp - 2;
-                address_operand = SS_base + (esp & SS_mask);
+                lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(segs[0].selector);
             }
             esp = esp - 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[2].selector);
             esp = esp - 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(regs[4]);
         }
         esp = esp - 2;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         st16_writable_cplX(get_EFLAGS());
         esp = esp - 2;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         st16_writable_cplX(segs[1].selector);
         esp = esp - 2;
-        address_operand = SS_base + (esp & SS_mask);
+        lax = SS_base + (esp & SS_mask);
         st16_writable_cplX(is_sw ? return_address : eip);
         if (st_error_code) {
             esp = esp - 2;
-            address_operand = SS_base + (esp & SS_mask);
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(error_code);
         }
     }
@@ -3684,7 +3684,7 @@ void Free86::aux_BOUND16() {
     }
     segment_translation();
     x = (ld16_readonly_cpl3() << 16) >> 16;
-    address_operand = address_operand + 2;
+    lax = lax + 2;
     y = (ld16_readonly_cpl3() << 16) >> 16;
     reg = (modRM >> 3) & 7;
     z = (regs[reg] << 16) >> 16;
@@ -3699,7 +3699,7 @@ void Free86::aux_BOUND() {
     }
     segment_translation();
     x = ld_readonly_cpl3();
-    address_operand = address_operand + 4;
+    lax = lax + 4;
     y = ld_readonly_cpl3();
     reg = (modRM >> 3) & 7;
     z = regs[reg];
@@ -3709,54 +3709,54 @@ void Free86::aux_BOUND() {
 }
 void Free86::aux_PUSHA16() {
     y = regs[4] - 16;
-    address_operand = (y & SS_mask) + SS_base;
+    lax = (y & SS_mask) + SS_base;
     for (int reg = 7; reg >= 0; reg--) {
         x = regs[reg];
         st16_writable_cpl3(x);
-        address_operand = address_operand + 2;
+        lax = lax + 2;
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void Free86::aux_PUSHA() {
     y = regs[4] - 32;
-    address_operand = (y & SS_mask) + SS_base;
+    lax = (y & SS_mask) + SS_base;
     for (int reg = 7; reg >= 0; reg--) {
         x = regs[reg];
         st_writable_cpl3(x);
-        address_operand = address_operand + 4;
+        lax = lax + 4;
     }
     regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
 }
 void Free86::aux_POPA16() {
-    address_operand = (regs[4] & SS_mask) + SS_base;
+    lax = (regs[4] & SS_mask) + SS_base;
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             set_lower_word(reg, ld16_readonly_cpl3());
         }
-        address_operand = address_operand + 2;
+        lax = lax + 2;
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 16) & SS_mask);
 }
 void Free86::aux_POPA() {
-    address_operand = (regs[4] & SS_mask) + SS_base;
+    lax = (regs[4] & SS_mask) + SS_base;
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             regs[reg] = ld_readonly_cpl3();
         }
-        address_operand = address_operand + 4;
+        lax = lax + 4;
     }
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
 void Free86::aux_LEAVE16() {
     y = regs[5];
-    address_operand = (y & SS_mask) + SS_base;
+    lax = (y & SS_mask) + SS_base;
     x = ld16_readonly_cpl3();
     set_lower_word(5, x);
     regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
 }
 void Free86::aux_LEAVE() {
     y = regs[5];
-    address_operand = (y & SS_mask) + SS_base;
+    lax = (y & SS_mask) + SS_base;
     x = ld_readonly_cpl3();
     regs[5] = x;
     regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
@@ -3769,25 +3769,25 @@ void Free86::aux_ENTER16() {
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 2;
-    address_operand = (esp & SS_mask) + SS_base;
+    lax = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(ebp);
     exp = esp;
     if (l != 0) {
         while (l > 1) {
             ebp = ebp - 2;
-            address_operand = (ebp & SS_mask) + SS_base;
+            lax = (ebp & SS_mask) + SS_base;
             x = ld16_readonly_cpl3();
             esp = esp - 2;
-            address_operand = (esp & SS_mask) + SS_base;
+            lax = (esp & SS_mask) + SS_base;
             st16_writable_cpl3(x);
             l--;
         }
         esp = esp - 2;
-        address_operand = (esp & SS_mask) + SS_base;
+        lax = (esp & SS_mask) + SS_base;
         st16_writable_cpl3(exp);
     }
     esp = esp - c;
-    address_operand = (esp & SS_mask) + SS_base;
+    lax = (esp & SS_mask) + SS_base;
     ld16_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -3800,25 +3800,25 @@ void Free86::aux_ENTER() {
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 4;
-    address_operand = (esp & SS_mask) + SS_base;
+    lax = (esp & SS_mask) + SS_base;
     st_writable_cpl3(ebp);
     exp = (ebp & ~SS_mask) | (esp & SS_mask);
     if (l != 0) {
         while (l > 1) {
             ebp = ebp - 4;
-            address_operand = (ebp & SS_mask) + SS_base;
+            lax = (ebp & SS_mask) + SS_base;
             x = ld_readonly_cpl3();
             esp = esp - 4;
-            address_operand = (esp & SS_mask) + SS_base;
+            lax = (esp & SS_mask) + SS_base;
             st_writable_cpl3(x);
             l--;
         }
         esp = esp - 4;
-        address_operand = (esp & SS_mask) + SS_base;
+        lax = (esp & SS_mask) + SS_base;
         st_writable_cpl3(exp);
     }
     esp = esp - c;
-    address_operand = (esp & SS_mask) + SS_base;
+    lax = (esp & SS_mask) + SS_base;
     ld_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -3830,7 +3830,7 @@ void Free86::ld_far_pointer16(int sreg) {
     }
     segment_translation();
     x = ld16_readonly_cpl3();
-    address_operand += 2;
+    lax += 2;
     y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
     set_lower_word((modRM >> 3) & 7, x);
@@ -3842,7 +3842,7 @@ void Free86::ld_far_pointer(int sreg) {
     }
     segment_translation();
     x = ld_readonly_cpl3();
-    address_operand += 4;
+    lax += 4;
     y = ld16_readonly_cpl3();
     set_segment_register(sreg, y);
     regs[(modRM >> 3) & 7] = x;

@@ -47,22 +47,22 @@ class Free86 {
     void st8_direct(int address, int byte);
     void st8_direct(int address, std::string data);
 
-    int tlb_lookup(int address, int writable) {
-        uint32_t lat20 = address >> 12; // PDE and PTE indices
+    int tlb_lookup(int linear, int writable) {
+        uint32_t lat20 = linear >> 12; // PDE and PTE indices
         if (writable) {
             tlb_hash = tlb_writable[lat20];
         } else {
             tlb_hash = tlb_readonly[lat20];
         }
         if (tlb_hash == -1) {
-            page_translation(writable, cpl == 3, address);
+            page_translation(writable, cpl == 3, linear);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
             } else {
                 tlb_hash = tlb_readonly[lat20];
             }
         }
-        return address ^ tlb_hash;
+        return linear ^ tlb_hash;
     }
 
     virtual int get_irq() = 0;
@@ -121,9 +121,9 @@ class Free86 {
     int *tlb_writable;
     int tlb_hash;
 
-    void tlb_update(uint32_t address /*data*/, int pte /*key*/, int writable, int user) {
-        tlb_hash = address ^ pte; // poor man's XOR hash function
-        uint32_t lat20 = address >> 12;
+    void tlb_update(uint32_t linear /*data*/, int pte /*key*/, int writable, int user) {
+        tlb_hash = linear ^ pte; // poor man's XOR hash function
+        uint32_t lat20 = linear >> 12;
         if (tlb_readonly_cplX[lat20] == -1) {
             if (tlb_pages_count >= 2048) {
                 tlb_flush_all((lat20 - 1) & 0xfffff);
@@ -148,8 +148,8 @@ class Free86 {
             tlb_writable_cpl3[lat20] = -1;
         }
     }
-    void tlb_flush_page(uint32_t address) {
-        uint32_t lat20 = address >> 12;
+    void tlb_flush_page(uint32_t linear) {
+        uint32_t lat20 = linear >> 12;
         tlb_clear(lat20);
     }
     void tlb_flush_all() {
@@ -295,7 +295,7 @@ class Free86 {
     int operation; // bits 5..3 of opcode or modR/M byte
     int x, y, z, v;
 
-    uint32_t address_operand; // either immediate or calculated
+    uint32_t lax; // linear address exchange register
     int modRM, reg, rM;   // mod field (modRM >> 6) inline
     int sib, base, index; // scale field (sib >> 6) inline
 
