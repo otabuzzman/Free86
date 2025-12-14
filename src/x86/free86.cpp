@@ -3528,8 +3528,8 @@ void Free86::aux_ARPL() {
     }
     modRM = ld8_direct();
     if ((modRM >> 6) == 3) {
-        reg_idx0 = modRM & 7;
-        x = regs[reg_idx0] & 0xffff;
+        rM = modRM & 7;
+        x = regs[rM] & 0xffff;
     } else {
         segment_translation();
         x = ld16_writable_cpl3();
@@ -3539,7 +3539,7 @@ void Free86::aux_ARPL() {
     if ((x & 3) < (reg & 3)) {
         x = (x & ~3) | (reg & 3);
         if ((modRM >> 6) == 3) {
-            set_lower_word(reg_idx0, x);
+            set_lower_word(rM, x);
         } else {
             st16_writable_cpl3(x);
         }
@@ -3711,8 +3711,8 @@ void Free86::aux_BOUND() {
 void Free86::aux_PUSHA16() {
     y = regs[4] - 16;
     address_operand = (y & SS_mask) + SS_base;
-    for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
-        x = regs[reg_idx1];
+    for (int reg = 7; reg >= 0; reg--) {
+        x = regs[reg];
         st16_writable_cpl3(x);
         address_operand = address_operand + 2;
     }
@@ -3721,8 +3721,8 @@ void Free86::aux_PUSHA16() {
 void Free86::aux_PUSHA() {
     y = regs[4] - 32;
     address_operand = (y & SS_mask) + SS_base;
-    for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
-        x = regs[reg_idx1];
+    for (int reg = 7; reg >= 0; reg--) {
+        x = regs[reg];
         st_writable_cpl3(x);
         address_operand = address_operand + 4;
     }
@@ -3730,9 +3730,9 @@ void Free86::aux_PUSHA() {
 }
 void Free86::aux_POPA16() {
     address_operand = (regs[4] & SS_mask) + SS_base;
-    for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
-        if (reg_idx1 != 4) {
-            set_lower_word(reg_idx1, ld16_readonly_cpl3());
+    for (int reg = 7; reg >= 0; reg--) {
+        if (reg != 4) {
+            set_lower_word(reg, ld16_readonly_cpl3());
         }
         address_operand = address_operand + 2;
     }
@@ -3740,9 +3740,9 @@ void Free86::aux_POPA16() {
 }
 void Free86::aux_POPA() {
     address_operand = (regs[4] & SS_mask) + SS_base;
-    for (reg_idx1 = 7; reg_idx1 >= 0; reg_idx1--) {
-        if (reg_idx1 != 4) {
-            regs[reg_idx1] = ld_readonly_cpl3();
+    for (int reg = 7; reg >= 0; reg--) {
+        if (reg != 4) {
+            regs[reg] = ld_readonly_cpl3();
         }
         address_operand = address_operand + 4;
     }
