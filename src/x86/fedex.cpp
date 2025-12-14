@@ -1,6 +1,7 @@
 #include "free86.h"
 
 void Free86::fetch_decode_execute(uint64_t cycles) {
+    int hL; // H (0x80) or L (0x00) byte selector
     if (halted) {
         if (get_irq() != 0 && (eflags & 0x00000200)) {
             halted = 0;
@@ -103,8 +104,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xb7: // MOV BH
                 x = ld8_direct();
                 opcode &= 7;
-                tlb_hash = (opcode & 4) << 1;
-                regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
+                hL = (opcode & 4) << 1;
+                regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << hL)) | ((x & 0xff) << hL);
                 goto EXEC_LOOP;
             case 0xb8: // MOV A
             case 0xb9: // MOV C
@@ -123,8 +124,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 x = regs[reg & 3] >> ((reg & 4) << 1);
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
-                    tlb_hash = (rM & 4) << 1;
-                    regs[rM & 3] = (regs[rM & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
+                    hL = (rM & 4) << 1;
+                    regs[rM & 3] = (regs[rM & 3] & ~(0xff << hL)) | ((x & 0xff) << hL);
                 } else {
                     segment_translation();
                     st8_writable_cpl3(x);
@@ -150,8 +151,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = ld8_readonly_cpl3();
                 }
                 reg = (modRM >> 3) & 7;
-                tlb_hash = (reg & 4) << 1;
-                regs[reg & 3] = (regs[reg & 3] & ~(0xff << tlb_hash)) | ((x & 0xff) << tlb_hash);
+                hL = (reg & 4) << 1;
+                regs[reg & 3] = (regs[reg & 3] & ~(0xff << hL)) | ((x & 0xff) << hL);
                 goto EXEC_LOOP;
             case 0x8b: // MOV
                 modRM = ld8_direct();
@@ -159,7 +160,6 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[modRM & 7];
                 } else {
                     segment_translation();
-                    tlb_hash = tlb_readonly[address_operand >> 12];
                     x = ld_readonly_cpl3();
                 }
                 regs[(modRM >> 3) & 7] = x;

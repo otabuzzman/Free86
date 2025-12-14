@@ -293,8 +293,8 @@ class Free86 {
 
     // auxiliary variables for inter-method exchange
     int operation; // bits 5..3 of opcode or modR/M byte
-    int reg_idx0, reg_idx1; // register indices (0-7)
-    int x, y, z, v;         // anything else
+    int reg_idx1;
+    int x, y, z, v;
 
     uint32_t address_operand; // either immediate or calculated
     int modRM, reg, rM;
