@@ -1515,7 +1515,7 @@ void Free86::segment_translation() {
     address_operand = address_operand + segs[sreg].base;
     return;
 }
-void Free86::convert_offset_to_linear(bool writable) {
+void Free86::offset_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {

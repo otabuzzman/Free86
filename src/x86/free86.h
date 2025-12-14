@@ -48,7 +48,7 @@ class Free86 {
     void st8_direct(int address, std::string data);
 
     int tlb_lookup(int address, int writable) {
-        uint32_t lat20 = address >> 12;
+        uint32_t lat20 = address >> 12; // PDE and PTE indices
         if (writable) {
             tlb_hash = tlb_writable[lat20];
         } else {
@@ -296,8 +296,8 @@ class Free86 {
     int x, y, z, v;
 
     uint32_t address_operand; // either immediate or calculated
-    int modRM, reg, rM; // mod field (modRM >> 6) extracted inline
-    int sib, base, index; // scale field (sib >> 6) extracted inline
+    int modRM, reg, rM;   // mod field (modRM >> 6) inline
+    int sib, base, index; // scale field (sib >> 6) inline
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -358,7 +358,7 @@ class Free86 {
     void page_translation(int writable, bool user, int address);
 
     void segment_translation();
-    void convert_offset_to_linear(bool writable);
+    void offset_to_linear(bool writable);
 
     void set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
     void set_segment_register(int sreg, int selector);
