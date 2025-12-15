@@ -2736,8 +2736,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             rm = ld16_readonly_cpl3();
                         }
                         aux_MUL16(regs[0], rm);
-                        set_lower_word(0, rm);
-                        set_lower_word(2, rm >> 16);
+                        set_lower_word(0, x);
+                        set_lower_word(2, x >> 16);
                         break;
                     case 5:
                         if ((modRM >> 6) == 3) {
@@ -2747,8 +2747,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             rm = ld16_readonly_cpl3();
                         }
                         aux_IMUL16(regs[0], rm);
-                        set_lower_word(0, rm);
-                        set_lower_word(2, rm >> 16);
+                        set_lower_word(0, x);
+                        set_lower_word(2, x >> 16);
                         break;
                     case 6:
                         if ((modRM >> 6) == 3) {
