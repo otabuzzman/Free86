@@ -784,7 +784,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_MUL(regs[0], rm);
-                    regs[0] = rm;
+                    regs[0] = x;
                     regs[2] = v;
                     break;
                 case 5:
@@ -795,7 +795,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_IMUL(regs[0], rm);
-                    regs[0] = rm;
+                    regs[0] = x;
                     regs[2] = v;
                     break;
                 case 6:
