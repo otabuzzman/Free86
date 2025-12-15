@@ -3536,7 +3536,7 @@ void Free86::aux_ARPL() {
     r = regs[(modRM >> 3) & 7];
     osm_src = compile_eflags();
     if ((rm & 3) < (r & 3)) {
-        x = (rm & ~3) | (reg & 3);
+        x = (rm & ~3) | (r & 3);
         if ((modRM >> 6) == 3) {
             set_lower_word(rM, x);
         } else {

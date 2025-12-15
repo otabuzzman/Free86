@@ -925,7 +925,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     st_writable_cpl3(r);
                     regs[4] = lax;
                 } else {
-                    push_dword(x);
+                    push_dword(r);
                 }
                 goto EXEC_LOOP;
             case 0x58: // POP A
@@ -2498,8 +2498,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x196: // XCHG SI
                 case 0x197: // XCHG DI
                     reg = opcode & 7;
+                    x = regs[0];
                     set_lower_word(0, regs[reg]);
-                    set_lower_word(reg, regs[0]);
+                    set_lower_word(reg, x);
                     goto EXEC_LOOP;
                 case 0x187: // XCHG
                     modRM = ld8_direct();
