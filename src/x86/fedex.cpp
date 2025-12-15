@@ -919,13 +919,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x55: // PUSH BP
             case 0x56: // PUSH SI
             case 0x57: // PUSH DI
-                r = regs[opcode & 7];
+                x = regs[opcode & 7];
                 if (x86_64_long_mode) {
                     lax = regs[4] - 4;
-                    st_writable_cpl3(r);
+                    st_writable_cpl3(x);
                     regs[4] = lax;
                 } else {
-                    push_dword(r);
+                    push_dword(x);
                 }
                 goto EXEC_LOOP;
             case 0x58: // POP A
@@ -2197,7 +2197,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         m = ld_writable_cpl3();
-                        x = calculate(x, regs[reg]);
+                        x = calculate(m, regs[reg]);
                         st_writable_cpl3(x);
                         regs[reg] = m;
                     }
