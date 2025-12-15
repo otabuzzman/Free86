@@ -3528,15 +3528,15 @@ void Free86::aux_ARPL() {
     modRM = ld8_direct();
     if ((modRM >> 6) == 3) {
         rM = modRM & 7;
-        x = regs[rM] & 0xffff;
+        rm = regs[rM] & 0xffff;
     } else {
         segment_translation();
-        x = ld16_writable_cpl3();
+        rm = ld16_writable_cpl3();
     }
-    reg = regs[(modRM >> 3) & 7];
+    r = regs[(modRM >> 3) & 7];
     osm_src = compile_eflags();
-    if ((x & 3) < (reg & 3)) {
-        x = (x & ~3) | (reg & 3);
+    if ((rm & 3) < (r & 3)) {
+        x = (rm & ~3) | (reg & 3);
         if ((modRM >> 6) == 3) {
             set_lower_word(rM, x);
         } else {
@@ -3687,8 +3687,8 @@ void Free86::aux_BOUND16() {
     lax = lax + 2;
     y = (ld16_readonly_cpl3() << 16) >> 16;
     reg = (modRM >> 3) & 7;
-    z = (regs[reg] << 16) >> 16;
-    if (z < x || z > y) {
+    r = (regs[reg] << 16) >> 16;
+    if (r < x || r > y) {
         abort(5);
     }
 }
@@ -3702,30 +3702,28 @@ void Free86::aux_BOUND() {
     lax = lax + 4;
     y = ld_readonly_cpl3();
     reg = (modRM >> 3) & 7;
-    z = regs[reg];
-    if (z < x || z > y) {
+    r = regs[reg];
+    if (r < x || r > y) {
         abort(5);
     }
 }
 void Free86::aux_PUSHA16() {
-    y = regs[4] - 16;
-    lax = (y & SS_mask) + SS_base;
+    lax = ((regs[4] - 16) & SS_mask) + SS_base;
     for (int reg = 7; reg >= 0; reg--) {
-        x = regs[reg];
-        st16_writable_cpl3(x);
+        r = regs[reg];
+        st16_writable_cpl3(r);
         lax = lax + 2;
     }
-    regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] - 16) & SS_mask);
 }
 void Free86::aux_PUSHA() {
-    y = regs[4] - 32;
-    lax = (y & SS_mask) + SS_base;
+    lax = ((regs[4] - 32) & SS_mask) + SS_base;
     for (int reg = 7; reg >= 0; reg--) {
-        x = regs[reg];
-        st_writable_cpl3(x);
+        r = regs[reg];
+        st_writable_cpl3(r);
         lax = lax + 4;
     }
-    regs[4] = (regs[4] & ~SS_mask) | (y & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] - 32) & SS_mask);
 }
 void Free86::aux_POPA16() {
     lax = (regs[4] & SS_mask) + SS_base;
@@ -3748,18 +3746,18 @@ void Free86::aux_POPA() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
 void Free86::aux_LEAVE16() {
-    y = regs[5];
-    lax = (y & SS_mask) + SS_base;
-    x = ld16_readonly_cpl3();
-    set_lower_word(5, x);
-    regs[4] = (regs[4] & ~SS_mask) | ((y + 2) & SS_mask);
+    int ebp;
+    ebp = regs[5];
+    lax = (ebp & SS_mask) + SS_base;
+    set_lower_word(5, ld16_readonly_cpl3());
+    regs[4] = (regs[4] & ~SS_mask) | ((ebp + 2) & SS_mask);
 }
 void Free86::aux_LEAVE() {
-    y = regs[5];
-    lax = (y & SS_mask) + SS_base;
-    x = ld_readonly_cpl3();
-    regs[5] = x;
-    regs[4] = (regs[4] & ~SS_mask) | ((y + 4) & SS_mask);
+    int ebp;
+    ebp = regs[5];
+    lax = (ebp & SS_mask) + SS_base;
+    regs[5] = ld_readonly_cpl3();
+    regs[4] = (regs[4] & ~SS_mask) | ((ebp + 4) & SS_mask);
 }
 void Free86::aux_ENTER16() {
     int c, l, esp, ebp, exp;
