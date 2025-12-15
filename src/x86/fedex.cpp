@@ -2242,7 +2242,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         m = ld_writable_cpl3();
-                        x = calculate(regs[0], x);
+                        x = calculate(regs[0], m);
                         if (x == 0) {
                             st_writable_cpl3(regs[reg]);
                         } else {
@@ -3446,8 +3446,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         if ((modRM >> 6) == 3) {
                             rM = modRM & 7;
                             r = regs[rM];
-                            y = calculate16(regs[0], r);
-                            if (y == 0) {
+                            x = calculate16(regs[0], r);
+                            if (x == 0) {
                                 set_lower_word(rM, regs[reg]);
                             } else {
                                 set_lower_word(0, r);
@@ -3455,11 +3455,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation();
                             m = ld16_writable_cpl3();
-                            y = calculate16(regs[0], m);
-                            if (y == 0) {
+                            x = calculate16(regs[0], m);
+                            if (x == 0) {
                                 st16_writable_cpl3(regs[reg]);
                             } else {
-                                set_lower_word(0, x);
+                                set_lower_word(0, m);
                             }
                         }
                         goto EXEC_LOOP;
