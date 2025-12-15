@@ -1296,7 +1296,7 @@ void Free86::page_translation(int writable, bool user, int address) {
     }
 }
 void Free86::segment_translation() {
-    int sreg, sreg_default; // if no DS override prefix
+    int sreg, sreg_default; // no DS override prefix
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:

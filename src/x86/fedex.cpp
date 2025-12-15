@@ -133,12 +133,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x89: // MOV
                 modRM = ld8_direct();
-                x = regs[(modRM >> 3) & 7];
+                r = regs[(modRM >> 3) & 7];
                 if ((modRM >> 6) == 3) {
-                    regs[modRM & 7] = x;
+                    regs[modRM & 7] = r;
                 } else {
                     segment_translation();
-                    st_writable_cpl3(x);
+                    st_writable_cpl3(r);
                 }
                 goto EXEC_LOOP;
             case 0x8a: // MOV
@@ -329,16 +329,16 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0x01: // ADD
                 modRM = ld8_direct();
-                y = regs[(modRM >> 3) & 7];
+                r = regs[(modRM >> 3) & 7];
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
-                    osm_src = y;
+                    osm_src = r;
                     osm_dst = regs[rM] = regs[rM] + osm_src;
                     osm = 2;
                 } else {
                     segment_translation();
                     x = ld_writable_cpl3();
-                    osm_src = y;
+                    osm_src = r;
                     osm_dst = x = x + osm_src;
                     osm = 2;
                     st_writable_cpl3(x);
@@ -352,30 +352,30 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x31: // XOR
                 modRM = ld8_direct();
                 operation = opcode >> 3;
-                y = regs[(modRM >> 3) & 7];
+                r = regs[(modRM >> 3) & 7];
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
-                    regs[rM] = calculate(regs[rM], y);
+                    regs[rM] = calculate(regs[rM], r);
                 } else {
                     segment_translation();
                     x = ld_writable_cpl3();
-                    x = calculate(x, y);
+                    x = calculate(x, r);
                     st_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0x39: // CMP
                 modRM = ld8_direct();
                 operation = opcode >> 3;
-                y = regs[(modRM >> 3) & 7];
+                r = regs[(modRM >> 3) & 7];
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
-                    osm_src = y;
+                    osm_src = r;
                     osm_dst = regs[rM] - osm_src;
                     osm = 8;
                 } else {
                     segment_translation();
                     x = ld_readonly_cpl3();
-                    osm_src = y;
+                    osm_src = r;
                     osm_dst = x - osm_src;
                     osm = 8;
                 }
@@ -613,8 +613,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     rm = ld_readonly_cpl3();
                 }
-                z = ld_direct();
-                aux_IMUL(rm, z);
+                imm = ld_direct();
+                aux_IMUL(rm, imm);
                 regs[reg] = x;
                 goto EXEC_LOOP;
             case 0x84: // TEST
@@ -639,8 +639,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     rm = ld_readonly_cpl3();
                 }
-                y = regs[(modRM >> 3) & 7];
-                osm_dst = rm & y;
+                r = regs[(modRM >> 3) & 7];
+                osm_dst = rm & r;
                 osm = 14;
                 goto EXEC_LOOP;
             case 0xa8: // TEST
@@ -2011,59 +2011,59 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xa4: // SHLD
                     modRM = ld8_direct();
-                    y = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     if ((modRM >> 6) == 3) {
-                        z = ld8_direct();
+                        imm = ld8_direct();
                         rM = modRM & 7;
-                        regs[rM] = aux_SHLD(regs[rM], y, z);
+                        regs[rM] = aux_SHLD(regs[rM], r, imm);
                     } else {
                         segment_translation();
-                        z = ld8_direct();
-                        x = ld_writable_cpl3();
-                        x = aux_SHLD(x, y, z);
+                        imm = ld8_direct();
+                        m = ld_writable_cpl3();
+                        x = aux_SHLD(m, r, imm);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xa5: // SHLD
                     modRM = ld8_direct();
-                    y = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     z = regs[1];
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        regs[rM] = aux_SHLD(regs[rM], y, z);
+                        regs[rM] = aux_SHLD(regs[rM], r, z);
                     } else {
                         segment_translation();
                         x = ld_writable_cpl3();
-                        x = aux_SHLD(x, y, z);
+                        x = aux_SHLD(x, r, z);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xac: // SHRD
                     modRM = ld8_direct();
-                    y = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     if ((modRM >> 6) == 3) {
-                        z = ld8_direct();
+                        imm = ld8_direct();
                         rM = modRM & 7;
-                        regs[rM] = aux_SHRD(regs[rM], y, z);
+                        regs[rM] = aux_SHRD(regs[rM], r, imm);
                     } else {
                         segment_translation();
-                        z = ld8_direct();
-                        x = ld_writable_cpl3();
-                        x = aux_SHRD(x, y, z);
+                        imm = ld8_direct();
+                        m = ld_writable_cpl3();
+                        x = aux_SHRD(m, r, imm);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0xad: // SHRD
                     modRM = ld8_direct();
-                    y = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     z = regs[1];
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        regs[rM] = aux_SHRD(regs[rM], y, z);
+                        regs[rM] = aux_SHRD(regs[rM], r, z);
                     } else {
                         segment_translation();
                         x = ld_writable_cpl3();
-                        x = aux_SHRD(x, y, z);
+                        x = aux_SHRD(x, r, z);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2104,30 +2104,30 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xa3: // BT
                     modRM = ld8_direct();
-                    y = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
                         segment_translation();
-                        lax = lax + ((y >> 5) << 2);
+                        lax = lax + ((r >> 5) << 2);
                         rm = ld_readonly_cpl3();
                     }
-                    aux_BT(rm, y);
+                    aux_BT(rm, r);
                     goto EXEC_LOOP;
                 case 0xab: // BTS
                 case 0xb3: // BTR
                 case 0xbb: // BTC
                     modRM = ld8_direct();
-                    y = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     operation = (opcode >> 3) & 3;
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        regs[rM] = aux_BTS_BTR_BTC(regs[rM], y);
+                        regs[rM] = aux_BTS_BTR_BTC(regs[rM], r);
                     } else {
                         segment_translation();
-                        lax = lax + ((y >> 5) << 2);
+                        lax = lax + ((r >> 5) << 2);
                         x = ld_writable_cpl3();
-                        x = aux_BTS_BTR_BTC(x, y);
+                        x = aux_BTS_BTR_BTC(x, r);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2446,12 +2446,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 switch (opcode) {
                 case 0x189: // MOV
                     modRM = ld8_direct();
-                    x = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     if ((modRM >> 6) == 3) {
-                        set_lower_word(modRM & 7, x);
+                        set_lower_word(modRM & 7, r);
                     } else {
                         segment_translation();
-                        st16_writable_cpl3(x);
+                        st16_writable_cpl3(r);
                     }
                     goto EXEC_LOOP;
                 case 0x18b: // MOV
@@ -2536,19 +2536,19 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x139: // CMP
                     modRM = ld8_direct();
                     operation = (opcode >> 3) & 7;
-                    y = regs[(modRM >> 3) & 7];
+                    r = regs[(modRM >> 3) & 7];
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        set_lower_word(rM, calculate16(regs[rM], y));
+                        set_lower_word(rM, calculate16(regs[rM], r));
                     } else {
                         segment_translation();
                         if (operation != 7) {
                             x = ld16_writable_cpl3();
-                            x = calculate16(x, y);
+                            x = calculate16(x, ry);
                             st16_writable_cpl3(x);
                         } else {
                             x = ld16_readonly_cpl3();
-                            calculate16(x, y);
+                            calculate16(x, r);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2668,8 +2668,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         rm = ld16_readonly_cpl3();
                     }
-                    z = ld16_direct();
-                    aux_IMUL16(rm, z);
+                    imm = ld16_direct();
+                    aux_IMUL16(rm, imm);
                     set_lower_word(reg, x);
                     goto EXEC_LOOP;
                 case 0x185: // TEST
@@ -2680,8 +2680,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         rm = ld16_readonly_cpl3();
                     }
-                    y = regs[(modRM >> 3) & 7];
-                    osm_dst = ((rm & y) << 16) >> 16;
+                    r = regs[(modRM >> 3) & 7];
+                    osm_dst = ((rm & r) << 16) >> 16;
                     osm = 13;
                     goto EXEC_LOOP;
                 case 0x1a9: // TEST
@@ -3333,34 +3333,33 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     case 0x1a4: // SHLD
                     case 0x1ac: // SHRD
                         modRM = ld8_direct();
-                        y = regs[(modRM >> 3) & 7];
+                        r = regs[(modRM >> 3) & 7];
                         operation = (opcode >> 3) & 1;
                         if ((modRM >> 6) == 3) {
-                            z = ld8_direct();
+                            imm = ld8_direct();
                             rM = modRM & 7;
-                            set_lower_word(rM, aux_SHRD16_SHLD16(regs[rM], y, z));
+                            set_lower_word(rM, aux_SHRD16_SHLD16(regs[rM], r, imm));
                         } else {
                             segment_translation();
-                            z = ld8_direct();
-                            x = ld16_writable_cpl3();
-                            x = aux_SHRD16_SHLD16(x, y, z);
+                            imm = ld8_direct();
+                            m = ld16_writable_cpl3();
+                            x = aux_SHRD16_SHLD16(m, r, imm);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
                     case 0x1a5: // SHLD
                     case 0x1ad: // SHRD
                         modRM = ld8_direct();
-                        y = regs[(modRM >> 3) & 7];
-                        z = regs[1];
+                        r = regs[(modRM >> 3) & 7];
                         operation = (opcode >> 3) & 1;
                         if ((modRM >> 6) == 3) {
                             rM = modRM & 7;
-                            set_lower_word(rM, aux_SHRD16_SHLD16(regs[rM], y, z));
+                            set_lower_word(rM, aux_SHRD16_SHLD16(regs[rM], r, regs[1]));
                         } else {
                             segment_translation();
-                            x = ld16_writable_cpl3();
-                            x = aux_SHRD16_SHLD16(x, y, z);
-                            st16_writable_cpl3(x);
+                            m = ld16_writable_cpl3();
+                            m = aux_SHRD16_SHLD16(m, r, regs[1]);
+                            st16_writable_cpl3(m);
                         }
                         goto EXEC_LOOP;
                     case 0x1ba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
@@ -3400,30 +3399,30 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         goto EXEC_LOOP;
                     case 0x1a3: // BT
                         modRM = ld8_direct();
-                        y = regs[(modRM >> 3) & 7];
+                        r = regs[(modRM >> 3) & 7];
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7];
                         } else {
                             segment_translation();
-                            lax = lax + (((y & 0xffff) >> 4) << 1);
+                            lax = lax + (((r & 0xffff) >> 4) << 1);
                             rm = ld16_readonly_cpl3();
                         }
-                        aux_BT16(rm, y);
+                        aux_BT16(rm, r);
                         goto EXEC_LOOP;
                     case 0x1ab: // BTS
                     case 0x1b3: // BTR
                     case 0x1bb: // BTC
                         modRM = ld8_direct();
-                        y = regs[(modRM >> 3) & 7];
+                        r = regs[(modRM >> 3) & 7];
                         operation = (opcode >> 3) & 3;
                         if ((modRM >> 6) == 3) {
                             rM = modRM & 7;
-                            set_lower_word(rM, aux_BTS16_BTR16_BTC16(regs[rM], y));
+                            set_lower_word(rM, aux_BTS16_BTR16_BTC16(regs[rM], r));
                         } else {
                             segment_translation();
-                            lax = lax + (((y & 0xffff) >> 4) << 1);
+                            lax = lax + (((r & 0xffff) >> 4) << 1);
                             x = ld16_writable_cpl3();
-                            x = aux_BTS16_BTR16_BTC16(x, y);
+                            x = aux_BTS16_BTR16_BTC16(x, r);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;

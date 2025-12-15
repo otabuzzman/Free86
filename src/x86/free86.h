@@ -298,7 +298,8 @@ class Free86 {
     uint32_t lax; // linear address exchange register
     int modRM, reg, rM;   // mod field (modRM >> 6) inline
     int sib, base, index; // scale field (sib >> 6) inline
-    int rm; // register or memory operand
+    int r, m, rm; // discrete/ combined register or memory operands
+    int imm; // immediate operand
 
     // clang-format off
     const std::vector<int> parity_LUT = {
