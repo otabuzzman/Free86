@@ -1210,12 +1210,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0xea: // JMPF
                 if (((ipr >> 8) & 1) ^ 1) {
-                    imm = ld_direct();
+                    x = ld_direct();
                 } else {
-                    imm = ld16_direct();
+                    x = ld16_direct();
                 }
-                imm = ld16_direct();
-                aux_JMPF(imm, imm);
+                y = ld16_direct();
+                aux_JMPF(y, x);
                 goto EXEC_LOOP;
             case 0x70: // JO
                 if (is_OF()) {
@@ -1605,7 +1605,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
                     abort(13);
-                }imm
+                }
                 imm = ld8_direct();
                 set_lower_byte(0, ld8_io(imm));
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
