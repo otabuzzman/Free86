@@ -2085,8 +2085,9 @@ void Free86::aux_MUL16(int multiplicand, int multiplier) {
     osm = 22;
 }
 void Free86::aux_MUL(int multiplicand, int multiplier) {
-    osm_dst = x = multiply(multiplicand, multiplier);
-    osm_src = v;
+    multiply(multiplicand, multiplier);
+    osm_dst = x;
+    osm_src = y;
     osm = 23;
 }
 void Free86::aux_IMUL8(int multiplicand, int multiplier) {
@@ -2108,7 +2109,7 @@ void Free86::aux_IMUL16(int multiplicand, int multiplier) {
     osm = 22;
 }
 void Free86::aux_IMUL(int multiplicand, int multiplier) {
-    int md, mr, s, r;
+    int md, mr, s;
     md = multiplicand;
     mr = multiplier;
     s = 0;
@@ -2120,49 +2121,46 @@ void Free86::aux_IMUL(int multiplicand, int multiplier) {
         mr = -mr;
         s ^= 1;
     }
-    r = multiply(md, mr);
+    multiply(md, mr);
     if (s) {
-        v = ~v;
-        r = -r;
-        if (r == 0) {
-            v = v + 1;
+        y = ~y;
+        x = -x;
+        if (x == 0) {
+            y = y + 1;
         }
     }
-    osm_dst = x = r;
-    osm_src = v - (r >> 31);
+    osm_dst = x;
+    osm_src = y - (x >> 31);
     osm = 23;
 }
-int Free86::multiply(int multiplicand, int multiplier) {
-    uint32_t md_lower, md_upper, mr_lower, mr_upper, m;
-    uint64_t r = (uint64_t) multiplicand * (uint32_t) multiplier;
-    if (r <= 0xffffffff) {
-        v = 0;
-        r &= -1;
+void Free86::multiply(int multiplicand, int multiplier) {
+    uint32_t md_lower, md_upper, mr_lower, mr_upper;
+    uint64_t x = (uint64_t) multiplicand * (uint32_t) multiplier;
+    if (x <= 0xffffffff) {
+        y = 0;
     } else {
         md_lower = multiplicand & 0xffff;
         md_upper = (uint32_t) multiplicand >> 16;
         mr_lower = multiplier & 0xffff;
         mr_upper = (uint32_t) multiplier >> 16;
-        r = md_lower * mr_lower;
-        v = md_upper * mr_upper;
-        m = md_lower * mr_upper;
-        r += (m & 0xffff) << 16;
-        v += m >> 16;
-        if (r >= 4294967296) {
-            r -= 4294967296;
-            v++;
+        x = md_lower * mr_lower;
+        y = md_upper * mr_upper;
+        z = md_lower * mr_upper;
+        x += (z & 0xffff) << 16;
+        y += z >> 16;
+        if (x >= 4294967296) {
+            x -= 4294967296;
+            y++;
         }
-        m = md_upper * mr_lower;
-        r += (m & 0xffff) << 16;
-        v += m >> 16;
-        if (r >= 4294967296) {
-            r -= 4294967296;
-            v++;
+        z = md_upper * mr_lower;
+        x += (z & 0xffff) << 16;
+        y += z >> 16;
+        if (x >= 4294967296) {
+            x -= 4294967296;
+            y++;
         }
-        r &= -1;
-        v &= -1;
     }
-    return r;
+    this->x = x;
 }
 int Free86::calculate8(int dst, int src) {
     int r, cf;

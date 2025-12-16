@@ -402,8 +402,7 @@ class Free86 {
     void aux_IMUL8(int multiplicand, int multiplier);
     void aux_IMUL16(int multiplicand, int multiplier);
     void aux_IMUL(int multiplicand, int multiplier);
-
-    int multiply(int multiplicand, int multiplier);
+    void multiply(int multiplicand, int multiplier);
 
     int calculate8(int dst, int src);
     int calculate16(int dst, int src);
