@@ -1031,7 +1031,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     y |= 0x00000200 | 0x00003000;
                 } else {
                     if (cpl <= iopl) {
-                        z |= 0x00000200;
+                        y |= 0x00000200;
                     }
                 }
                 set_EFLAGS(m, y & x);

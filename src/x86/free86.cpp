@@ -3480,15 +3480,15 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
     } else {
         descriptor_type = (dte_upper_dword >> 8) & 0xf;
         switch (descriptor_type) {
-        case 1:
-        case 2:
-        case 3:
-        case 9:
-        case 11:
+        case 1: // data, RO, accessed
+        case 2: // data, RW
+        case 3: // data, RW, accessed
+        case 9: // code, X, accessed
+        case 11: // code, RX, accessed
             break;
-        case 4:
-        case 5:
-        case 12:
+        case 4: // data, RO, expand-down
+        case 5: // data, RO, expand-down, accessed
+        case 12: // code, X, conforming
             if (is_lsl) {
                 return -1;
             }
@@ -3680,12 +3680,12 @@ void Free86::aux_BOUND16() {
         abort(6);
     }
     segment_translation();
-    x = (ld16_readonly_cpl3() << 16) >> 16;
+    m16 = (ld16_readonly_cpl3() << 16) >> 16;
     lax = lax + 2;
-    y = (ld16_readonly_cpl3() << 16) >> 16;
+    imm16 = (ld16_readonly_cpl3() << 16) >> 16;
     reg = (modRM >> 3) & 7;
     r = (regs[reg] << 16) >> 16;
-    if (r < x || r > y) {
+    if (r < m16 || r > imm16) {
         abort(5);
     }
 }
@@ -3695,12 +3695,12 @@ void Free86::aux_BOUND() {
         abort(6);
     }
     segment_translation();
-    x = ld_readonly_cpl3();
+    m = ld_readonly_cpl3();
     lax = lax + 4;
-    y = ld_readonly_cpl3();
+    imm = ld_readonly_cpl3();
     reg = (modRM >> 3) & 7;
     r = regs[reg];
-    if (r < x || r > y) {
+    if (r < m || r > imm) {
         abort(5);
     }
 }
@@ -3771,10 +3771,10 @@ void Free86::aux_ENTER16() {
         while (l > 1) {
             ebp = ebp - 2;
             lax = (ebp & SS_mask) + SS_base;
-            x = ld16_readonly_cpl3();
+            m16 = ld16_readonly_cpl3();
             esp = esp - 2;
             lax = (esp & SS_mask) + SS_base;
-            st16_writable_cpl3(x);
+            st16_writable_cpl3(m16);
             l--;
         }
         esp = esp - 2;
@@ -3802,10 +3802,10 @@ void Free86::aux_ENTER() {
         while (l > 1) {
             ebp = ebp - 4;
             lax = (ebp & SS_mask) + SS_base;
-            x = ld_readonly_cpl3();
+            m = ld_readonly_cpl3();
             esp = esp - 4;
             lax = (esp & SS_mask) + SS_base;
-            st_writable_cpl3(x);
+            st_writable_cpl3(m);
             l--;
         }
         esp = esp - 4;
@@ -3824,11 +3824,11 @@ void Free86::ld_far_pointer16(int sreg) {
         ; // abort(6);
     }
     segment_translation();
-    x = ld16_readonly_cpl3();
+    imm = ld16_readonly_cpl3();
     lax += 2;
-    y = ld16_readonly_cpl3();
-    set_segment_register(sreg, y);
-    set_lower_word((modRM >> 3) & 7, x);
+    imm16 = ld16_readonly_cpl3();
+    set_segment_register(sreg, imm16);
+    set_lower_word((modRM >> 3) & 7, imm);
 }
 void Free86::ld_far_pointer(int sreg) {
     modRM = ld8_direct();
@@ -3836,9 +3836,9 @@ void Free86::ld_far_pointer(int sreg) {
         ; // abort(6);
     }
     segment_translation();
-    x = ld_readonly_cpl3();
+    imm = ld_readonly_cpl3();
     lax += 4;
-    y = ld16_readonly_cpl3();
-    set_segment_register(sreg, y);
-    regs[(modRM >> 3) & 7] = x;
+    imm16 = ld16_readonly_cpl3();
+    set_segment_register(sreg, imm16);
+    regs[(modRM >> 3) & 7] = imm;
 }
