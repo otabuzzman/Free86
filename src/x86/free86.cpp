@@ -2134,7 +2134,7 @@ void Free86::aux_IMUL(int multiplicand, int multiplier) {
     osm = 23;
 }
 void Free86::multiply(int multiplicand, int multiplier) {
-    uint32_t md_lower, md_upper, mr_lower, mr_upper;
+    uint32_t md_lower, md_upper, mr_lower, mr_upper, z;
     uint64_t x = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (x <= 0xffffffff) {
         y = 0;

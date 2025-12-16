@@ -783,7 +783,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                     aux_MUL(regs[0], rm);
                     regs[0] = x;
-                    regs[2] = v;
+                    regs[2] = y;
                     break;
                 case 5:
                     if ((modRM >> 6) == 3) {
@@ -794,7 +794,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                     aux_IMUL(regs[0], rm);
                     regs[0] = x;
-                    regs[2] = v;
+                    regs[2] = y;
                     break;
                 case 6:
                     if ((modRM >> 6) == 3) {
