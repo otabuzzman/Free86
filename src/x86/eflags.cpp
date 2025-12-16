@@ -1,52 +1,52 @@
 #include "free86.h"
 
 bool Free86::is_CF() {
-    bool r = false;
-    int _osm;
-    uint32_t _osm_dst;
-    if (osm >= 25) {
-        _osm = ocm_preserved;
-        _osm_dst = ocm_dst_preserved;
+    bool r;
+    int osm;
+    uint32_t osm_dst;
+    if (this->osm >= 25) {
+        osm = ocm_preserved;
+        osm_dst = ocm_dst_preserved;
     } else {
-        _osm = osm;
-        _osm_dst = osm_dst;
+        osm = this->osm;
+        osm_dst = this->osm_dst;
     }
-    switch (_osm % 25) {
+    switch (osm % 25) {
     case 0:
-        r = (_osm_dst & 0xff) < (osm_src & 0xff);
+        r = (osm_dst & 0xff) < (osm_src & 0xff);
         break;
     case 1:
-        r = (_osm_dst & 0xffff) < (osm_src & 0xffff);
+        r = (osm_dst & 0xffff) < (osm_src & 0xffff);
         break;
     case 2:
-        r = _osm_dst < osm_src;
+        r = osm_dst < osm_src;
         break;
     case 3:
-        r = (_osm_dst & 0xff) <= (osm_src & 0xff);
+        r = (osm_dst & 0xff) <= (osm_src & 0xff);
         break;
     case 4:
-        r = (_osm_dst & 0xffff) <= (osm_src & 0xffff);
+        r = (osm_dst & 0xffff) <= (osm_src & 0xffff);
         break;
     case 5:
-        r = _osm_dst <= osm_src;
+        r = osm_dst <= osm_src;
         break;
     case 6:
-        r = ((_osm_dst + osm_src) & 0xff) < (osm_src & 0xff);
+        r = ((osm_dst + osm_src) & 0xff) < (osm_src & 0xff);
         break;
     case 7:
-        r = ((_osm_dst + osm_src) & 0xffff) < (osm_src & 0xffff);
+        r = ((osm_dst + osm_src) & 0xffff) < (osm_src & 0xffff);
         break;
     case 8:
-        r = (_osm_dst + osm_src) < osm_src;
+        r = (osm_dst + osm_src) < osm_src;
         break;
     case 9:
-        r = ((_osm_dst + osm_src + 1) & 0xff) <= (osm_src & 0xff);
+        r = ((osm_dst + osm_src + 1) & 0xff) <= (osm_src & 0xff);
         break;
     case 10:
-        r = ((_osm_dst + osm_src + 1) & 0xffff) <= (osm_src & 0xffff);
+        r = ((osm_dst + osm_src + 1) & 0xffff) <= (osm_src & 0xffff);
         break;
     case 11:
-        r = ((_osm_dst + osm_src + 1) <= osm_src);
+        r = ((osm_dst + osm_src + 1) <= osm_src);
         break;
     case 12:
     case 13:
@@ -75,6 +75,9 @@ bool Free86::is_CF() {
     case 24:
         r = osm_src & 1;
         break;
+    default:
+        r = false;
+        break;
     }
     return r;
 }
@@ -86,7 +89,7 @@ int Free86::is_PF() {
     }
 }
 int Free86::is_AF() {
-    int x, r = 0;
+    int r;
     switch (osm % 0x1f) {
     case 0:
     case 1:
@@ -141,12 +144,14 @@ int Free86::is_AF() {
     case 30:
         r = (osm_dst ^ (osm_dst + 1)) & 0x10;
         break;
+    default:
+        r = 0;
+        break;
     }
     return r;
 }
 bool Free86::is_OF() {
-    bool r = false;
-    int x;
+    bool r;
     switch (osm % 0x1f) {
     case 0:
         x = osm_dst - osm_src;
@@ -239,6 +244,9 @@ bool Free86::is_OF() {
     case 30:
         r = osm_dst == 0x7fffffff;
         break;
+    default:
+        r = false;
+        break;
     }
     return r;
 }
@@ -251,10 +259,9 @@ bool Free86::is_BE() { // `below' for signed comparison, PM p. 317
     case 7:
         r = ((osm_dst + osm_src) & 0xffff) <= (osm_src & 0xffff);
         break;
-    case 8: {
-        uint32_t val = osm_dst + osm_src;
-        r = val <= osm_src;
-    } break;
+    case 8:
+        r = ((uint32_t) osm_dst + osm_src) <= osm_src;
+        break;
     case 24:
         r = (osm_src & (0x0040 | 0x0001)) != 0;
         break;
@@ -329,7 +336,7 @@ int Free86::is_LT() {
     return r;
 }
 int Free86::can_jump(int condition) {
-    bool r = false;
+    bool r;
     switch ((condition >> 1) & 7) {
     case 0:
         r = is_OF();
@@ -354,6 +361,9 @@ int Free86::can_jump(int condition) {
         break;
     case 7:
         r = is_LE();
+        break;
+    default:
+        r = false;
         break;
     }
     return r ^ (condition & 1);
