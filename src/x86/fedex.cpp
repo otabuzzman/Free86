@@ -1574,7 +1574,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto OUTER_LOOP;
                 }
                 goto EXEC_LOOP;
-            case 0xd8: // ESC (80387)
+            case 0xd8: // ESC (80387) 11011XXX
             case 0xd9: // ESC (80387)
             case 0xda: // ESC (80387)
             case 0xdb: // ESC (80387)
@@ -2540,8 +2540,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = calculate16(m, r);
                             st16_writable_cpl3(x);
                         } else {
-                            x = ld16_readonly_cpl3();
-                            calculate16(x, r);
+                            m = ld16_readonly_cpl3();
+                            calculate16(m, r);
                         }
                     }
                     goto EXEC_LOOP;
