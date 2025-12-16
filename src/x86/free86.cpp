@@ -1977,30 +1977,30 @@ void Free86::aux_DIV16(int divisor) {
 }
 int Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
-    uint32_t du, dl;
-    int nd;
-    du = dividend_upper;
-    dl = dividend_lower;
-    if (du >= divisor) {
+    uint32_t dd_upper, dd_lower;
+    int dd_sign;
+    dd_upper = dividend_upper;
+    dd_lower = dividend_lower;
+    if (dd_upper >= divisor) {
         abort(0);
     }
-    if (du <= 0x200000) {
-        a = du * 4294967296 + dl;
-        v = a % divisor;
-        return a / divisor;
+    if (dd_upper <= 0x200000) {
+        a = dd_upper * 4294967296 + dd_lower;
+        y = a % divisor;
+        x = a / divisor;
     } else {
         for (int i = 0; i < 32; i++) {
-            nd = du >> 31;
-            du = (du << 1) | (dl >> 31);
-            if (nd || (du >= divisor)) {
-                du = du - divisor;
-                dl = (dl << 1) | 1;
+            dd_sign = dd_upper >> 31;
+            dd_upper = (dd_upper << 1) | (dd_lower >> 31);
+            if (dd_sign || (dd_upper >= divisor)) {
+                dd_upper = dd_upper - divisor;
+                dd_lower = (dd_lower << 1) | 1;
             } else {
-                dl = dl << 1;
+                dd_lower = dd_lower << 1;
             }
         }
-        v = du;
-        return dl;
+        y = dd_upper;
+        x = dd_lower;
     }
 }
 void Free86::aux_IDIV8(int divisor) {
@@ -2032,42 +2032,41 @@ void Free86::aux_IDIV16(int divisor) {
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-int Free86::aux_IDIV(int dividend_upper, int dividend_lower, int divisor) {
-    int du, dl, ndd, ndr, q;
-    du = dividend_upper;
-    dl = dividend_lower;
-    if (du < 0) {
-        ndd = 1;
-        du = ~du;
-        dl = -dl;
-        if (dl == 0) {
-            du = du + 1;
+void Free86::aux_IDIV(int dividend_upper, int dividend_lower, int divisor) {
+    int dd_upper, dd_lower, dd_sign, dr_sign;
+    dd_upper = dividend_upper;
+    dd_lower = dividend_lower;
+    if (dd_upper < 0) {
+        dd_sign = 1;
+        dd_upper = ~dd_upper;
+        dd_lower = -dd_lower;
+        if (dd_lower == 0) {
+            dd_upper = dd_upper + 1;
         }
     } else {
-        ndd = 0;
+        dd_sign = 0;
     }
     if (divisor < 0) {
         divisor = -divisor;
-        ndr = 1;
+        dr_sign = 1;
     } else {
-        ndr = 0;
+        dr_sign = 0;
     }
-    q = aux_DIV(du, dl, divisor);
-    ndr ^= ndd;
-    if (ndr) {
-        if (q > 0x80000000) {
+    aux_DIV(dd_upper, dd_lower, divisor);
+    dr_sign ^= dd_sign;
+    if (dr_sign) {
+        if (x > 0x80000000) {
             abort(0);
         }
-        q = -q;
+        x = -x;
     } else {
-        if (q >= 0x80000000) {
+        if (x >= 0x80000000) {
             abort(0);
         }
     }
-    if (ndd) {
-        v = -v;
+    if (dd_sign) {
+        y = -y;
     }
-    return q;
 }
 void Free86::aux_MUL8(int multiplicand, int multiplier) {
     int md, mr;

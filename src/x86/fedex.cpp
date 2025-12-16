@@ -803,8 +803,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    regs[0] = aux_DIV(regs[2], regs[0], rm);
-                    regs[2] = v;
+                    aux_DIV(regs[2], regs[0], rm);
+                    regs[0] = x;
+                    regs[2] = y;
                     break;
                 case 7:
                     if ((modRM >> 6) == 3) {
@@ -813,8 +814,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    regs[0] = aux_IDIV(regs[2], regs[0], rm);
-                    regs[2] = v;
+                    aux_IDIV(regs[2], regs[0], rm);
+                    regs[0] = x;
+                    regs[2] = y;
                     break;
                 default:
                     abort(6);

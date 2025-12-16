@@ -392,10 +392,10 @@ class Free86 {
     int aux_BSR(int dst, int src);
     void aux_DIV8(int divisor);
     void aux_DIV16(int divisor);
-    int aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    void aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
     void aux_IDIV8(int divisor);
     void aux_IDIV16(int divisor);
-    int aux_IDIV(int dividend_upper, int dividend_lower, int divisor);
+    void aux_IDIV(int dividend_upper, int dividend_lower, int divisor);
     void aux_MUL8(int multiplicand, int multiplier);
     void aux_MUL16(int multiplicand, int multiplier);
     void aux_MUL(int multiplicand, int multiplier);
