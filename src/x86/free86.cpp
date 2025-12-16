@@ -1975,7 +1975,7 @@ void Free86::aux_DIV16(int divisor) {
     set_lower_word(0, q);
     set_lower_word(2, r);
 }
-int Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
+void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
     uint32_t dd_upper, dd_lower;
     int dd_sign;
