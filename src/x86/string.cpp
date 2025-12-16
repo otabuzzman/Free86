@@ -1,7 +1,7 @@
 #include "free86.h"
 
 void Free86::aux_INSB() {
-    int address_size_mask, ecx, edx, edi;
+    int ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -34,7 +34,7 @@ void Free86::aux_INSB() {
     }
 }
 void Free86::aux_OUTSB() {
-    int address_size_mask, ecx, edx, esi, sreg;
+    int ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -73,7 +73,7 @@ void Free86::aux_OUTSB() {
     }
 }
 void Free86::aux_MOVSB() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -112,7 +112,7 @@ void Free86::aux_MOVSB() {
     }
 }
 void Free86::aux_STOSB() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -137,7 +137,7 @@ void Free86::aux_STOSB() {
     }
 }
 void Free86::aux_CMPSB() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -188,7 +188,7 @@ void Free86::aux_CMPSB() {
     }
 }
 void Free86::aux_LODSB() {
-    int address_size_mask, ecx, esi, sreg;
+    int ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -221,7 +221,7 @@ void Free86::aux_LODSB() {
     }
 }
 void Free86::aux_SCASB() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -258,7 +258,7 @@ void Free86::aux_SCASB() {
     }
 }
 void Free86::aux_INSW() {
-    int address_size_mask, ecx, edx, edi;
+    int ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -291,7 +291,7 @@ void Free86::aux_INSW() {
     }
 }
 void Free86::aux_OUTSW() {
-    int address_size_mask, ecx, edx, esi, sreg;
+    int ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -330,7 +330,7 @@ void Free86::aux_OUTSW() {
     }
 }
 void Free86::aux_MOVSW() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -369,7 +369,7 @@ void Free86::aux_MOVSW() {
     }
 }
 void Free86::aux_STOSW() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -394,7 +394,7 @@ void Free86::aux_STOSW() {
     }
 }
 void Free86::aux_CMPSW() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -445,7 +445,7 @@ void Free86::aux_CMPSW() {
     }
 }
 void Free86::aux_LODSW() {
-    int address_size_mask, ecx, esi, sreg;
+    int ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -478,7 +478,7 @@ void Free86::aux_LODSW() {
     }
 }
 void Free86::aux_SCASW() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -515,7 +515,7 @@ void Free86::aux_SCASW() {
     }
 }
 void Free86::aux_INS16() {
-    int address_size_mask, ecx, edx, edi;
+    int ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -548,7 +548,7 @@ void Free86::aux_INS16() {
     }
 }
 void Free86::aux_OUTS16() {
-    int address_size_mask, ecx, edx, esi, sreg;
+    int ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -587,7 +587,7 @@ void Free86::aux_OUTS16() {
     }
 }
 void Free86::aux_MOVS16() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -626,7 +626,7 @@ void Free86::aux_MOVS16() {
     }
 }
 void Free86::aux_STOS16() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -651,7 +651,7 @@ void Free86::aux_STOS16() {
     }
 }
 void Free86::aux_CMPS16() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -702,7 +702,7 @@ void Free86::aux_CMPS16() {
     }
 }
 void Free86::aux_LODS16() {
-    int address_size_mask, ecx, esi, sreg;
+    int ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -735,7 +735,7 @@ void Free86::aux_LODS16() {
     }
 }
 void Free86::aux_SCAS16() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -772,7 +772,7 @@ void Free86::aux_SCAS16() {
     }
 }
 void Free86::aux_INSD() {
-    int address_size_mask, ecx, edx, edi;
+    int ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -805,7 +805,7 @@ void Free86::aux_INSD() {
     }
 }
 void Free86::aux_OUTSD() {
-    int address_size_mask, ecx, edx, esi, sreg;
+    int ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -844,7 +844,7 @@ void Free86::aux_OUTSD() {
     }
 }
 void Free86::aux_MOVSD() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -883,7 +883,7 @@ void Free86::aux_MOVSD() {
     }
 }
 void Free86::aux_STOSD() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -908,7 +908,7 @@ void Free86::aux_STOSD() {
     }
 }
 void Free86::aux_CMPSD() {
-    int address_size_mask, ecx, edi, esi, sreg, la;
+    int ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -959,7 +959,7 @@ void Free86::aux_CMPSD() {
     }
 }
 void Free86::aux_LODSD() {
-    int address_size_mask, ecx, esi, sreg;
+    int ecx, esi, sreg;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {
@@ -992,7 +992,7 @@ void Free86::aux_LODSD() {
     }
 }
 void Free86::aux_SCASD() {
-    int address_size_mask, ecx, edi;
+    int ecx, edi;
     if (ipr & 0x0080) {
         address_size_mask = 0xffff;
     } else {

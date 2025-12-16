@@ -293,7 +293,7 @@ class Free86 {
 
     // auxiliary variables for inter-method exchange
     int operation; // bits 5..3 of opcode or modR/M byte
-    int x, y, z, v;
+    int x, y, z, address_size_mask; // 16 or 32 bit mask
 
     uint32_t lax; // linear address exchange register
     int modRM, reg, rM;   // mod field (modRM >> 6) inline
