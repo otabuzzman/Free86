@@ -653,11 +653,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 osm_dst = regs[0] & imm;
                 osm = 14;
                 goto EXEC_LOOP;
-            case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, // IDIV AL/X)
+            case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 modRM = ld8_direct();
                 operation = (modRM >> 3) & 7;
                 switch (operation) {
-                case 0:
+                case 0: // TEST
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         rm = regs[rM & 3] >> ((rM & 4) << 1);
@@ -669,7 +669,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm_dst = ((rm & imm) << 24) >> 24;
                     osm = 12;
                     break;
-                case 2:
+                case 2: // NOT
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         set_lower_byte(rM, ~(regs[rM & 3] >> ((rM & 4) << 1)));
@@ -679,7 +679,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st8_writable_cpl3(~m);
                     }
                     break;
-                case 3:
+                case 3: // NEG
                     operation = 5;
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
@@ -691,7 +691,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st8_writable_cpl3(x);
                     }
                     break;
-                case 4:
+                case 4: // MUL AL/X
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         rm = regs[rM & 3] >> ((rM & 4) << 1);
@@ -702,7 +702,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     aux_MUL8(regs[0], rm);
                     set_lower_word(0, x);
                     break;
-                case 5:
+                case 5: // IMUL AL/X
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         rm = regs[rM & 3] >> ((rM & 4) << 1);
@@ -713,7 +713,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     aux_IMUL8(regs[0], rm);
                     set_lower_word(0, x);
                     break;
-                case 6:
+                case 6: // DIV AL/X
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         rm = regs[rM & 3] >> ((rM & 4) << 1);
@@ -723,7 +723,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                     aux_DIV8(rm);
                     break;
-                case 7:
+                case 7: // IDIV AL/X
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         rm = regs[rM & 3] >> ((rM & 4) << 1);
@@ -741,7 +741,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 modRM = ld8_direct();
                 operation = (modRM >> 3) & 7;
                 switch (operation) {
-                case 0:
+                case 0: // TEST
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
@@ -752,7 +752,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm_dst = rm & imm;
                     osm = 14;
                     break;
-                case 2:
+                case 2: // NOT
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         regs[rM] = ~regs[rM];
@@ -762,7 +762,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st_writable_cpl3(~m);
                     }
                     break;
-                case 3:
+                case 3: // NEG
                     operation = 5;
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
@@ -774,7 +774,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st_writable_cpl3(x);
                     }
                     break;
-                case 4:
+                case 4: // MUL AL/X
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
@@ -785,7 +785,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[0] = x;
                     regs[2] = y;
                     break;
-                case 5:
+                case 5: // IMUL AL/X
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
@@ -796,7 +796,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[0] = x;
                     regs[2] = y;
                     break;
-                case 6:
+                case 6: // DIV AL/X
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
@@ -807,7 +807,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[0] = x;
                     regs[2] = y;
                     break;
-                case 7:
+                case 7: // IDIV AL/X
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
@@ -918,13 +918,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x55: // PUSH BP
             case 0x56: // PUSH SI
             case 0x57: // PUSH DI
-                x = regs[opcode & 7];
+                r = regs[opcode & 7];
                 if (x86_64_long_mode) {
                     lax = regs[4] - 4;
-                    st_writable_cpl3(x);
+                    st_writable_cpl3(r);
                     regs[4] = lax;
                 } else {
-                    push_dword(x);
+                    push_dword(r);
                 }
                 goto EXEC_LOOP;
             case 0x58: // POP A
@@ -937,13 +937,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x5f: // POP DI
                 if (x86_64_long_mode) {
                     lax = regs[4];
-                    x = ld_readonly_cpl3();
+                    m = ld_readonly_cpl3();
                     regs[4] = lax + 4;
                 } else {
-                    x = read_stack_dword();
+                    m = read_stack_dword();
                     pop_dword();
                 }
-                regs[opcode & 7] = x;
+                regs[opcode & 7] = m;
                 goto EXEC_LOOP;
             case 0x60: // PUSHA
                 aux_PUSHA();
@@ -954,18 +954,18 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x8f: // POP
                 modRM = ld8_direct();
                 if ((modRM >> 6) == 3) {
-                    x = read_stack_dword();
+                    m = read_stack_dword();
                     pop_dword();
-                    regs[modRM & 7] = x;
+                    regs[modRM & 7] = m;
                 } else {
-                    x = read_stack_dword();
-                    y = regs[4];
+                    m = read_stack_dword();
+                    x = regs[4];
                     pop_dword();
-                    z = regs[4];
+                    y = regs[4];
                     segment_translation();
+                    regs[4] = x;
+                    st_writable_cpl3(m);
                     regs[4] = y;
-                    st_writable_cpl3(x);
-                    regs[4] = z;
                 }
                 goto EXEC_LOOP;
             case 0x68: // PUSH
@@ -994,8 +994,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xc9: // LEAVE
                 if (x86_64_long_mode) {
                     lax = regs[5];
-                    x = ld_readonly_cpl3();
-                    regs[5] = x;
+                    regs[5] = ld_readonly_cpl3();
                     regs[4] = lax + 4;
                 } else {
                     aux_LEAVE();
@@ -1019,23 +1018,23 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     abort(13);
                 }
                 if (((ipr >> 8) & 1) ^ 1) {
-                    x = read_stack_dword();
+                    m = read_stack_dword();
                     pop_dword();
-                    y = -1;
+                    x = -1;
                 } else {
-                    x = read_stack_word();
+                    m = read_stack_word();
                     pop_word();
-                    y = 0xffff;
+                    x = 0xffff;
                 }
-                z = 0x00000100 | 0x00004000 | 0x00040000 | 0x00200000;
+                y = 0x00000100 | 0x00004000 | 0x00040000 | 0x00200000;
                 if (cpl == 0) {
-                    z |= 0x00000200 | 0x00003000;
+                    y |= 0x00000200 | 0x00003000;
                 } else {
                     if (cpl <= iopl) {
                         z |= 0x00000200;
                     }
                 }
-                set_EFLAGS(x, z & y);
+                set_EFLAGS(m, y & x);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1049,9 +1048,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x07: // POP
             case 0x17: // POP
             case 0x1f: // POP
-                x = read_stack_dword() & 0xffff;
+                m = read_stack_dword() & 0xffff;
                 pop_dword();
-                set_segment_register(opcode >> 3, x);
+                set_segment_register(opcode >> 3, m);
                 goto EXEC_LOOP;
             case 0x8d: // LEA
                 modRM = ld8_direct();
@@ -1066,7 +1065,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 modRM = ld8_direct();
                 operation = (modRM >> 3) & 7;
                 switch (operation) {
-                case 0:
+                case 0: // INC
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         set_lower_byte(rM, aux_INC8((regs[rM & 3] >> ((rM & 4) << 1))));
@@ -1077,7 +1076,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st8_writable_cpl3(x);
                     }
                     break;
-                case 1:
+                case 1: // DEC
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
                         set_lower_byte(rM, aux_DEC8((regs[rM & 3] >> ((rM & 4) << 1))));
@@ -1185,13 +1184,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         abort(6);
                     }
                     segment_translation();
-                    x = ld_readonly_cpl3();
+                    m = ld_readonly_cpl3();
                     lax = lax + 4;
-                    y = ld16_readonly_cpl3();
+                    m16 = ld16_readonly_cpl3();
                     if (operation == 3) {
-                        aux_CALLF(1, y, x, (eip + far - far_start));
+                        aux_CALLF(1, m16, m, (eip + far - far_start));
                     } else {
-                        aux_JMPF(y, x);
+                        aux_JMPF(m16, m);
                     }
                     break;
                 default:
@@ -1208,12 +1207,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0xea: // JMPF
                 if (((ipr >> 8) & 1) ^ 1) {
-                    x = ld_direct();
+                    imm = ld_direct();
                 } else {
-                    x = ld16_direct();
+                    imm = ld16_direct();
                 }
-                y = ld16_direct();
-                aux_JMPF(y, x);
+                imm16 = ld16_direct();
+                aux_JMPF(imm16, imm);
                 goto EXEC_LOOP;
             case 0x70: // JO
                 if (is_OF()) {
@@ -1348,17 +1347,17 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xe2: // LOOP
                 imm = (ld8_direct() << 24) >> 24;
                 address_size_mask = (ipr & 0x0080) ? 0xffff : -1;
-                y = (regs[1] - 1) & address_size_mask;
-                regs[1] = (regs[1] & ~address_size_mask) | y;
+                x = (regs[1] - 1) & address_size_mask;
+                regs[1] = (regs[1] & ~address_size_mask) | x;
                 opcode &= 3;
                 if (opcode == 0) {
-                    z = !(osm_dst == 0);
+                    y = !(osm_dst == 0);
                 } else if (opcode == 1) {
-                    z = osm_dst == 0;
+                    y = osm_dst == 0;
                 } else {
-                    z = 1;
+                    y = 1;
                 }
-                if (y && z) {
+                if (x && y) {
                     if (ipr & 0x0100) {
                         eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
                     } else {
@@ -1379,42 +1378,42 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0xc2: // RET
                 imm = (ld16_direct() << 16) >> 16;
-                x = read_stack_dword();
+                m = read_stack_dword();
                 regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + imm) & SS_mask);
-                eip = x, far = far_start = 0;
+                eip = m, far = far_start = 0;
                 goto EXEC_LOOP;
             case 0xc3: // RET
                 if (x86_64_long_mode) {
                     lax = regs[4];
-                    x = ld_readonly_cpl3();
+                    m = ld_readonly_cpl3();
                     regs[4] = regs[4] + 4;
                 } else {
-                    x = read_stack_dword();
+                    m = read_stack_dword();
                     pop_dword();
                 }
-                eip = x, far = far_start = 0;
+                eip = m, far = far_start = 0;
                 goto EXEC_LOOP;
             case 0xe8: // CALL
                 imm = ld_direct();
-                y = eip + far - far_start;
+                x = eip + far - far_start;
                 if (x86_64_long_mode) {
                     lax = regs[4] - 4;
-                    st_writable_cpl3(y);
+                    st_writable_cpl3(x);
                     regs[4] = lax;
                 } else {
-                    push_dword(y);
+                    push_dword(x);
                 }
                 far = far + imm;
                 goto EXEC_LOOP;
             case 0x9a: // CALLF
-                z = ((ipr >> 8) & 1) ^ 1;
-                if (z) {
-                    x = ld_direct();
+                x = ((ipr >> 8) & 1) ^ 1;
+                if (x) {
+                    imm = ld_direct();
                 } else {
-                    x = ld16_direct();
+                    imm = ld16_direct();
                 }
-                y = ld16_direct();
-                aux_CALLF(z, y, x, (eip + far - far_start));
+                imm16 = ld16_direct();
+                aux_CALLF(x, imm16, imm, (eip + far - far_start));
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1441,21 +1440,21 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0x90: // NOP
                 goto EXEC_LOOP;
             case 0xcc: // INT
-                y = eip + far - far_start;
-                raise_interrupt(3, 0, 0, 1, y);
+                x = eip + far - far_start;
+                raise_interrupt(3, 0, 0, 1, x);
                 goto EXEC_LOOP;
             case 0xcd: // INT
                 imm = ld8_direct();
                 if ((eflags & 0x00020000) && ((eflags >> 12) & 3) != 3) {
                     abort(13);
                 }
-                y = eip + far - far_start;
-                raise_interrupt(imm, 0, 0, 1, y);
+                x = eip + far - far_start;
+                raise_interrupt(imm, 0, 0, 1, x);
                 goto EXEC_LOOP;
             case 0xce: // INTO
                 if (is_OF()) {
-                    y = eip + far - far_start;
-                    raise_interrupt(4, 0, 0, 1, y);
+                    x = eip + far - far_start;
+                    raise_interrupt(4, 0, 0, 1, x);
                 }
                 goto EXEC_LOOP;
             case 0x62: // BOUND
@@ -1830,8 +1829,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     modRM = ld8_direct();
                     operation = (modRM >> 3) & 7;
                     switch (operation) {
-                    case 0: // SLDT Store Local Descriptor Table Register
-                    case 1: // STR Store Task Register
+                    case 0: // SLDT
+                    case 1: // STR
                         if (operation == 0) {
                             x = ldt.selector;
                         } else {
@@ -1844,8 +1843,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             st16_writable_cpl3(x);
                         }
                         break;
-                    case 2: // LDTR Load Local Descriptor Table Register
-                    case 3: // LTR Load Task Register
+                    case 2: // LDTR
+                    case 3: // LTR
                         if (cpl != 0) {
                             abort(13);
                         }
@@ -1861,8 +1860,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             aux_LTR(rm);
                         }
                         break;
-                    case 4: // VERR Verify a Segment for Reading
-                    case 5: // VERW Verify a Segment for Writing
+                    case 4: // VERR
+                    case 5: // VERW
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7] & 0xffff;
                         } else {
@@ -1879,8 +1878,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     modRM = ld8_direct();
                     operation = (modRM >> 3) & 7;
                     switch (operation) {
-                    case 2:
-                    case 3:
+                    case 2: // LGDT
+                    case 3: // LIDT
                         if ((modRM >> 6) == 3) {
                             abort(6);
                         }
@@ -1888,18 +1887,18 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             abort(13);
                         }
                         segment_translation();
-                        x = ld16_readonly_cpl3();
+                        m16 = ld16_readonly_cpl3();
                         lax += 2;
-                        y = ld_readonly_cpl3();
+                        m = ld_readonly_cpl3();
                         if (operation == 2) {
-                            gdt.base = y;
-                            gdt.limit = x;
+                            gdt.base = m;
+                            gdt.limit = m16;
                         } else {
-                            idt.base = y;
-                            idt.limit = x;
+                            idt.base = m;
+                            idt.limit = m16;
                         }
                         break;
-                    case 7:
+                    case 7: // INVLPG (80486)
                         if (cpl != 0) {
                             abort(13);
                         }
@@ -2247,9 +2246,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0xa1: // POP FS
                 case 0xa9: // POP GS
-                    x = read_stack_dword() & 0xffff;
+                    m = read_stack_dword() & 0xffff;
                     pop_dword();
-                    set_segment_register((opcode >> 3) & 7, x);
+                    set_segment_register((opcode >> 3) & 7, m);
                     goto EXEC_LOOP;
                 case 0xc8: // -
                 case 0xc9: // -
@@ -2679,7 +2678,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     modRM = ld8_direct();
                     operation = (modRM >> 3) & 7;
                     switch (operation) {
-                    case 0:
+                    case 0: // TEST
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7];
                         } else {
@@ -2690,7 +2689,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         osm_dst = ((rm & imm) << 16) >> 16;
                         osm = 13;
                         break;
-                    case 2:
+                    case 2: // NOT
                         if ((modRM >> 6) == 3) {
                             rM = modRM & 7;
                             set_lower_word(rM, ~regs[rM]);
@@ -2700,7 +2699,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             st16_writable_cpl3(~m);
                         }
                         break;
-                    case 3:
+                    case 3: // NEG
                         operation = 5;
                         if ((modRM >> 6) == 3) {
                             rM = modRM & 7;
@@ -2713,7 +2712,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             st16_writable_cpl3(x);
                         }
                         break;
-                    case 4:
+                    case 4: // MUL AL/X
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7];
                         } else {
@@ -2724,7 +2723,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_word(0, x);
                         set_lower_word(2, x >> 16);
                         break;
-                    case 5:
+                    case 5: // IMUL AL/X
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7];
                         } else {
@@ -2735,7 +2734,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_word(0, x);
                         set_lower_word(2, x >> 16);
                         break;
-                    case 6:
+                    case 6: // DIV AL/X
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7];
                         } else {
@@ -2744,7 +2743,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                         aux_DIV16(rm);
                         break;
-                    case 7:
+                    case 7: // IDIV AL/X
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7];
                         } else {
@@ -2825,9 +2824,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x15d: // POP BP
                 case 0x15e: // POP SI
                 case 0x15f: // POP DI
-                    x = read_stack_word();
+                    m = read_stack_word();
                     pop_word();
-                    set_lower_word(opcode & 7, x);
+                    set_lower_word(opcode & 7, m);
                     goto EXEC_LOOP;
                 case 0x160: // PUSHA
                     aux_PUSHA16();
@@ -2838,18 +2837,18 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x18f: // POP
                     modRM = ld8_direct();
                     if ((modRM >> 6) == 3) {
-                        x = read_stack_word();
+                        m = read_stack_word();
                         pop_word();
                         set_lower_word(modRM & 7, x);
                     } else {
-                        x = read_stack_word();
-                        y = regs[4];
+                        m = read_stack_word();
+                        x = regs[4];
                         pop_word();
-                        z = regs[4];
+                        y = regs[4];
                         segment_translation();
+                        regs[4] = x;
+                        st16_writable_cpl3(m);
                         regs[4] = y;
-                        st16_writable_cpl3(x);
-                        regs[4] = z;
                     }
                     goto EXEC_LOOP;
                 case 0x168: // PUSH
@@ -2875,9 +2874,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x107: // POP
                 case 0x117: // POP
                 case 0x11f: // POP
-                    x = read_stack_word();
+                    m = read_stack_word();
                     pop_word();
-                    set_segment_register((opcode >> 3) & 3, x);
+                    set_segment_register((opcode >> 3) & 3, m);
                     goto EXEC_LOOP;
                 case 0x18d: // LEA
                     modRM = ld8_direct();
@@ -2892,7 +2891,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     modRM = ld8_direct();
                     operation = (modRM >> 3) & 7;
                     switch (operation) {
-                    case 0:
+                    case 0: // INC
                         if ((modRM >> 6) == 3) {
                             rM = modRM & 7;
                             set_lower_word(rM, aux_INC16(regs[rM]));
@@ -2903,7 +2902,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             st16_writable_cpl3(x);
                         }
                         break;
-                    case 1:
+                    case 1: // DEC
                         if ((modRM >> 6) == 3) {
                             rM = modRM & 7;
                             set_lower_word(rM, aux_DEC16(regs[rM]));
@@ -2914,7 +2913,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             st16_writable_cpl3(x);
                         }
                         break;
-                    case 2:
+                    case 2: // CALL
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7] & 0xffff;
                         } else {
@@ -2924,7 +2923,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         push_word((eip + far - far_start));
                         eip = rm, far = far_start = 0;
                         break;
-                    case 4:
+                    case 4: // JMP
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7] & 0xffff;
                         } else {
@@ -2933,7 +2932,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                         eip = rm, far = far_start = 0;
                         break;
-                    case 6:
+                    case 6: // PUSH
                         if ((modRM >> 6) == 3) {
                             rm = regs[modRM & 7];
                         } else {
@@ -2942,19 +2941,19 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                         push_word(rm);
                         break;
-                    case 3:
-                    case 5:
+                    case 3: // CALL
+                    case 5: // JMP
                         if ((modRM >> 6) == 3) {
                             abort(6);
                         }
                         segment_translation();
-                        x = ld16_readonly_cpl3();
+                        m = ld16_readonly_cpl3();
                         lax = lax + 2;
-                        y = ld16_readonly_cpl3();
+                        m16 = ld16_readonly_cpl3();
                         if (operation == 3) {
-                            aux_CALLF(0, y, x, (eip + far - far_start));
+                            aux_CALLF(0, m16, m, (eip + far - far_start));
                         } else {
-                            aux_JMPF(y, x);
+                            aux_JMPF(m16, m);
                         }
                         break;
                     default:
@@ -2992,14 +2991,14 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     goto EXEC_LOOP;
                 case 0x1c2: // RET
                     imm = (ld16_direct() << 16) >> 16;
-                    x = read_stack_word();
+                    m = read_stack_word();
                     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + imm) & SS_mask);
-                    eip = x, far = far_start = 0;
+                    eip = m, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x1c3: // RET
-                    x = read_stack_word();
+                    m = read_stack_word();
                     pop_word();
-                    eip = x, far = far_start = 0;
+                    eip = m, far = far_start = 0;
                     goto EXEC_LOOP;
                 case 0x1e8: // CALL
                     imm = ld16_direct();
@@ -3306,9 +3305,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         goto EXEC_LOOP;
                     case 0x1a1: // POP FS
                     case 0x1a9: // POP GS
-                        x = read_stack_word();
+                        m = read_stack_word();
                         pop_word();
-                        set_segment_register((opcode >> 3) & 7, x);
+                        set_segment_register((opcode >> 3) & 7, m);
                         goto EXEC_LOOP;
                     case 0x1b2: // LSS
                     case 0x1b4: // LFS
