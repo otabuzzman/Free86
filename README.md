@@ -1,6 +1,12 @@
 # Free86
 
-An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok. Missing features include segment limit and rights checks, task gates, and 16 bit interrupt and trap gates. However, there are also some additional 80486 functions, including the CPUID and RDTSC instructions. Therefore, the name was chosen which sounds like a _three_ when pronounced, but also reflects the freedom of implementation.
+An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok. However, there are also some additional 80486 functions required by Linos, including the XADD, CPUID, and RDTSC instructions. Therefore, the name was chosen which sounds like a _three_ when pronounced, but also reflects the freedom of implementation.
+
+**Missing features**
+- Full segment limit and rights checks
+- Full lock prefix not allowed checks
+- Task gates, and 16 bit interrupt and trap gates
+- Test and debug register handling
 
 **Branches**
 - `master`: the original repository fixed for Visual Studio Code
