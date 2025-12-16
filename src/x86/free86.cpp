@@ -3553,14 +3553,14 @@ void Free86::aux_CPUID() {
     switch (regs[0]) {
     case 0: // vendor ID
         regs[0] = 1;
-        regs[3] = 0x756e6547;
-        regs[2] = 0x49656e69;
-        regs[1] = 0x6c65746e;
+        regs[3] = 0x756e6547; // "uneG"
+        regs[2] = 0x49656e69; // "Ieni"
+        regs[1] = 0x6c65746e; // "letn"
         break;
-    case 1: // processor info and feature flags
-    default:
-        regs[0] = (5 << 8) | (4 << 4) | 3; // family | model | stepping
-        regs[3] = 8 << 8;
+    case 1:  // processor info and feature flags
+    default: // https://datasheets.chipdb.org/Intel/x86/CPUID/24161821.pdf
+        regs[0] = (5 << 8) | (4 << 4) | 3; // type | family | model | stepping
+        regs[3] = 8 << 8;                  //   00     0101    0100       0011
         regs[1] = 0;
         regs[2] = 1 << 4;
         break;
