@@ -759,8 +759,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[rM] = ~regs[rM];
                     } else {
                         segment_translation();
-                        m = ~ld_writable_cpl3();
-                        st_writable_cpl3(m);
+                        m = ld_writable_cpl3();
+                        st_writable_cpl3(~m);
                     }
                     break;
                 case 3:
@@ -880,28 +880,26 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xd2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
                 modRM = ld8_direct();
                 operation = (modRM >> 3) & 7;
-                r = regs[1] & 0xff;
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
-                    set_lower_byte(rM, shift8((regs[rM & 3] >> ((rM & 4) << 1)), r));
+                    set_lower_byte(rM, shift8((regs[rM & 3] >> ((rM & 4) << 1)), regs[1] & 0xff));
                 } else {
                     segment_translation();
                     m = ld8_writable_cpl3();
-                    x = shift8(m, r);
+                    x = shift8(m, regs[1] & 0xff);
                     st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
             case 0xd3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
                 modRM = ld8_direct();
                 operation = (modRM >> 3) & 7;
-                r = regs[1] & 0xff;
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
-                    regs[rM] = shift(regs[rM], r);
+                    regs[rM] = shift(regs[rM], regs[1] & 0xff);
                 } else {
                     segment_translation();
                     m = ld_writable_cpl3();
-                    x = shift(m, r);
+                    x = shift(m, regs[1] & 0xff);
                     st_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -3353,8 +3351,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation();
                             m = ld16_writable_cpl3();
-                            m = aux_SHRD16_SHLD16(m, r, regs[1]);
-                            st16_writable_cpl3(m);
+                            x = aux_SHRD16_SHLD16(m, r, regs[1]);
+                            st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
                     case 0x1ba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
