@@ -1782,58 +1782,58 @@ int Free86::aux_DEC16(int data) {
     return osm_dst;
 }
 int Free86::aux_SHRD16_SHLD16(int dst, int src, int count) {
-    int d, s, c;
-    d = dst;
+    int c, s, r;
+    r = dst;
     c = count & 0x1f;
     if (c) {
         if (operation == 0) { // SHLD
             s = src & 0xffff;
-            x = s | (d << 16);
+            x = s | (r << 16);
             osm_src = x >> (32 - c);
             x = x << c;
             if (c > 16) {
                 x |= s << (c - 16);
             }
-            osm_dst = d = x >> 16;
+            osm_dst = r = x >> 16;
             osm = 19;
         } else { // SHRD
-            x = (d & 0xffff) | (src << 16);
+            x = (r & 0xffff) | (src << 16);
             osm_src = x >> (c - 1);
             x = x >> c;
             if (c > 16) {
                 x |= src << (32 - c);
             }
-            osm_dst = d = (x << 16) >> 16;
+            osm_dst = r = (x << 16) >> 16;
             osm = 19;
         }
     }
-    return d;
+    return r;
 }
 int Free86::aux_SHRD(int dst, int src, int count) {
-    int d, c;
-    d = dst;
+    int r, c;
+    r = dst;
     c = count & 0x1f;
     if (c) {
-        osm_src = d >> (c - 1);
-        uint32_t lval = (uint32_t) d >> c;
+        osm_src = r >> (c - 1);
+        uint32_t lval = (uint32_t) r >> c;
         uint32_t rval = (uint32_t) src << (32 - c);
-        osm_dst = d = lval | rval;
+        osm_dst = r = lval | rval;
         osm = 20;
     }
-    return d;
+    return r;
 }
 int Free86::aux_SHLD(int dst, int src, int count) {
-    int d, c;
-    d = dst;
+    int c, r;
+    r = dst;
     c = count & 0x1f;
     if (c) {
-        osm_src = d << (c - 1);
-        uint32_t lval = d << c;
+        osm_src = r << (c - 1);
+        uint32_t lval = r << c;
         uint32_t rval = (uint32_t) src >> (32 - c);
-        osm_dst = d = lval | rval;
+        osm_dst = r = lval | rval;
         osm = 17;
     }
-    return d;
+    return r;
 }
 void Free86::aux_BT16(int base, int offset) {
     osm_src = base >> (offset & 0xf);
@@ -1884,13 +1884,13 @@ int Free86::aux_BTS_BTR_BTC(int base, int offset) {
     return r;
 }
 int Free86::aux_BSF16(int dst, int src) {
-    int d, s;
-    d = dst;
+    int s, r;
+    r = dst;
     s = src & 0xffff;
     if (s) {
-        d = 0;
+        r = 0;
         while ((s & 1) == 0) {
-            d++;
+            r++;
             s >>= 1;
         }
         osm_dst = 1;
@@ -1898,16 +1898,16 @@ int Free86::aux_BSF16(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return d;
+    return r;
 }
 int Free86::aux_BSF(int dst, int src) {
-    int d, s;
-    d = dst;
+    int s, r;
+    r = dst;
     s = src;
     if (s) {
-        d = 0;
+        r = 0;
         while ((s & 1) == 0) {
-            d++;
+            r++;
             s >>= 1;
         }
         osm_dst = 1;
@@ -1915,16 +1915,16 @@ int Free86::aux_BSF(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return d;
+    return r;
 }
 int Free86::aux_BSR16(int dst, int src) {
-    int d, s;
-    d = dst;
+    int s, r;
+    r = dst;
     s = src & 0xffff;
     if (s) {
-        d = 15;
+        r = 15;
         while ((s & 0x8000) == 0) {
-            d--;
+            r--;
             s <<= 1;
         }
         osm_dst = 1;
@@ -1932,16 +1932,16 @@ int Free86::aux_BSR16(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return d;
+    return r;
 }
 int Free86::aux_BSR(int dst, int src) {
-    int d, s;
-    d = dst;
+    int s, r;
+    r = dst;
     s = src;
     if (s) {
-        d = 31;
+        r = 31;
         while (s >= 0) {
-            d--;
+            r--;
             s <<= 1;
         }
         osm_dst = 1;
@@ -1949,7 +1949,7 @@ int Free86::aux_BSR(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return d;
+    return r;
 }
 void Free86::aux_DIV8(int divisor) {
     int d, a, q, r;
@@ -2321,8 +2321,8 @@ int Free86::calculate(int dst, int src) {
     return r;
 }
 int Free86::shift8(int src, int count) {
-    int r, s, c, cf;
-    r = s = src & 0xff;
+    int c, cf, s, r;
+    s = r = src & 0xff;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
@@ -2414,8 +2414,8 @@ int Free86::shift8(int src, int count) {
     return r;
 }
 int Free86::shift16(int src, int count) {
-    int r, s, c, cf;
-    r = s = src & 0xffff;
+    int c, cf, s, r;
+    s = r = src & 0xffff;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
@@ -2507,9 +2507,9 @@ int Free86::shift16(int src, int count) {
     return r;
 }
 int Free86::shift(uint32_t src, int count) {
-    uint32_t r, s;
+    uint32_t s, r;
     int c, cf;
-    r = s = src;
+    s = r = src;
     switch (operation & 7) {
     case 0:
         c = count & 0x1f;
@@ -3680,12 +3680,12 @@ void Free86::aux_BOUND16() {
         abort(6);
     }
     segment_translation();
-    m16 = (ld16_readonly_cpl3() << 16) >> 16;
+    imm1st = (ld16_readonly_cpl3() << 16) >> 16;
     lax = lax + 2;
-    imm16 = (ld16_readonly_cpl3() << 16) >> 16;
+    imm2nd = (ld16_readonly_cpl3() << 16) >> 16;
     reg = (modRM >> 3) & 7;
     r = (regs[reg] << 16) >> 16;
-    if (r < m16 || r > imm16) {
+    if (r < imm1st || r > imm2nd) {
         abort(5);
     }
 }
@@ -3695,12 +3695,12 @@ void Free86::aux_BOUND() {
         abort(6);
     }
     segment_translation();
-    m = ld_readonly_cpl3();
+    imm1st = ld_readonly_cpl3();
     lax = lax + 4;
-    imm = ld_readonly_cpl3();
+    imm2nd = ld_readonly_cpl3();
     reg = (modRM >> 3) & 7;
     r = regs[reg];
-    if (r < m || r > imm) {
+    if (r < imm1st || r > imm2nd) {
         abort(5);
     }
 }

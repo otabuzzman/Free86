@@ -166,13 +166,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0xa0: // MOV AL,
                 offset_to_linear(false);
-                m = ld8_readonly_cpl3();
-                regs[0] = (regs[0] & -256) | m;
+                moffs = ld8_readonly_cpl3();
+                regs[0] = (regs[0] & -256) | moffs;
                 goto EXEC_LOOP;
             case 0xa1: // MOV AX,
                 offset_to_linear(false);
-                m = ld_readonly_cpl3();
-                regs[0] = m;
+                moffs = ld_readonly_cpl3();
+                regs[0] = moffs;
                 goto EXEC_LOOP;
             case 0xa2: // MOV ,AL
                 offset_to_linear(true);
@@ -318,12 +318,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation();
                     if (operation != 7) {
-                        m = ld8_writable_cpl3();
-                        x = calculate8(m, r);
+                        rm = ld8_writable_cpl3();
+                        x = calculate8(rm, r);
                         st8_writable_cpl3(x);
                     } else {
-                        m = ld8_readonly_cpl3();
-                        calculate8(m, r);
+                        rm = ld8_readonly_cpl3();
+                        calculate8(rm, r);
                     }
                 }
                 goto EXEC_LOOP;
@@ -337,11 +337,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm = 2;
                 } else {
                     segment_translation();
-                    m = ld_writable_cpl3();
+                    rm = ld_writable_cpl3();
                     osm_src = r;
-                    osm_dst = m = m + osm_src;
+                    osm_dst = rm = rm + osm_src;
                     osm = 2;
-                    st_writable_cpl3(m);
+                    st_writable_cpl3(rm);
                 }
                 goto EXEC_LOOP;
             case 0x09: // OR
@@ -358,8 +358,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[rM] = calculate(regs[rM], r);
                 } else {
                     segment_translation();
-                    m = ld_writable_cpl3();
-                    x = calculate(m, r);
+                    rm = ld_writable_cpl3();
+                    x = calculate(rm, r);
                     st_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -374,9 +374,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm = 8;
                 } else {
                     segment_translation();
-                    m = ld_readonly_cpl3();
+                    rm = ld_readonly_cpl3();
                     osm_src = r;
-                    osm_dst = m - osm_src;
+                    osm_dst = rm - osm_src;
                     osm = 8;
                 }
                 goto EXEC_LOOP;
@@ -494,12 +494,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     imm = ld8_direct();
                     if (operation != 7) {
-                        m = ld8_writable_cpl3();
-                        x = calculate8(m, imm);
+                        rm = ld8_writable_cpl3();
+                        x = calculate8(rm, imm);
                         st8_writable_cpl3(x);
                     } else {
-                        m = ld8_readonly_cpl3();
-                        calculate8(m, imm);
+                        rm = ld8_readonly_cpl3();
+                        calculate8(rm, imm);
                     }
                 }
                 goto EXEC_LOOP;
@@ -525,8 +525,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         imm = ld_direct();
-                        m = ld_writable_cpl3();
-                        x = calculate(m, imm);
+                        rm = ld_writable_cpl3();
+                        x = calculate(rm, imm);
                         st_writable_cpl3(x);
                     }
                 }
@@ -553,8 +553,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         imm = (ld8_direct() << 24) >> 24;
-                        m = ld_writable_cpl3();
-                        x = calculate(m, imm);
+                        rm = ld_writable_cpl3();
+                        x = calculate(rm, imm);
                         st_writable_cpl3(x);
                     }
                 }
@@ -675,8 +675,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(rM, ~(regs[rM & 3] >> ((rM & 4) << 1)));
                     } else {
                         segment_translation();
-                        m = ld8_writable_cpl3();
-                        st8_writable_cpl3(~m);
+                        rm = ld8_writable_cpl3();
+                        st8_writable_cpl3(~rm);
                     }
                     break;
                 case 3: // NEG
@@ -686,8 +686,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(rM, calculate8(0, (regs[rM & 3] >> ((rM & 4) << 1))));
                     } else {
                         segment_translation();
-                        m = ld8_writable_cpl3();
-                        x = calculate8(0, m);
+                        rm = ld8_writable_cpl3();
+                        x = calculate8(0, rm);
                         st8_writable_cpl3(x);
                     }
                     break;
@@ -758,8 +758,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[rM] = ~regs[rM];
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
-                        st_writable_cpl3(~m);
+                        rm = ld_writable_cpl3();
+                        st_writable_cpl3(~rm);
                     }
                     break;
                 case 3: // NEG
@@ -769,8 +769,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[rM] = calculate(0, regs[rM]);
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
-                        x = calculate(0, m);
+                        rm = ld_writable_cpl3();
+                        x = calculate(0, rm);
                         st_writable_cpl3(x);
                     }
                     break;
@@ -832,8 +832,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation();
                     imm = ld8_direct();
-                    m = ld8_writable_cpl3();
-                    x = shift8(m, imm);
+                    rm = ld8_writable_cpl3();
+                    x = shift8(rm, imm);
                     st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -847,8 +847,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation();
                     imm = ld8_direct();
-                    m = ld_writable_cpl3();
-                    x = shift(m, imm);
+                    rm = ld_writable_cpl3();
+                    x = shift(rm, imm);
                     st_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -860,8 +860,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     set_lower_byte(rM, shift8((regs[rM & 3] >> ((rM & 4) << 1)), 1));
                 } else {
                     segment_translation();
-                    m = ld8_writable_cpl3();
-                    x = shift8(m, 1);
+                    rm = ld8_writable_cpl3();
+                    x = shift8(rm, 1);
                     st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -873,8 +873,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[rM] = shift(regs[rM], 1);
                 } else {
                     segment_translation();
-                    m = ld_writable_cpl3();
-                    x = shift(m, 1);
+                    rm = ld_writable_cpl3();
+                    x = shift(rm, 1);
                     st_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -886,8 +886,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     set_lower_byte(rM, shift8((regs[rM & 3] >> ((rM & 4) << 1)), regs[1] & 0xff));
                 } else {
                     segment_translation();
-                    m = ld8_writable_cpl3();
-                    x = shift8(m, regs[1] & 0xff);
+                    rm = ld8_writable_cpl3();
+                    x = shift8(rm, regs[1] & 0xff);
                     st8_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -899,8 +899,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     regs[rM] = shift(regs[rM], regs[1] & 0xff);
                 } else {
                     segment_translation();
-                    m = ld_writable_cpl3();
-                    x = shift(m, regs[1] & 0xff);
+                    rm = ld_writable_cpl3();
+                    x = shift(rm, regs[1] & 0xff);
                     st_writable_cpl3(x);
                 }
                 goto EXEC_LOOP;
@@ -1071,8 +1071,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(rM, aux_INC8((regs[rM & 3] >> ((rM & 4) << 1))));
                     } else {
                         segment_translation();
-                        m = ld8_writable_cpl3();
-                        x = aux_INC8(m);
+                        rm = ld8_writable_cpl3();
+                        x = aux_INC8(rm);
                         st8_writable_cpl3(x);
                     }
                     break;
@@ -1082,8 +1082,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(rM, aux_DEC8((regs[rM & 3] >> ((rM & 4) << 1))));
                     } else {
                         segment_translation();
-                        m = ld8_writable_cpl3();
-                        x = aux_DEC8(m);
+                        rm = ld8_writable_cpl3();
+                        x = aux_DEC8(rm);
                         st8_writable_cpl3(x);
                     }
                     break;
@@ -1106,14 +1106,14 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         osm = 27;
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
+                        rm = ld_writable_cpl3();
                         if (osm < 25) {
                             ocm_preserved = osm;
                             ocm_dst_preserved = osm_dst;
                         }
-                        m = osm_dst = m + 1;
+                        rm = osm_dst = rm + 1;
                         osm = 27;
-                        st_writable_cpl3(m);
+                        st_writable_cpl3(rm);
                     }
                     break;
                 case 1: // DEC
@@ -1127,14 +1127,14 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         osm = 30;
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
+                        rm = ld_writable_cpl3();
                         if (osm < 25) {
                             ocm_preserved = osm;
                             ocm_dst_preserved = osm_dst;
                         }
-                        m = osm_dst = m - 1;
+                        rm = osm_dst = rm - 1;
                         osm = 30;
-                        st_writable_cpl3(m);
+                        st_writable_cpl3(rm);
                     }
                     break;
                 case 2: // CALL
@@ -2008,8 +2008,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         imm = ld8_direct();
-                        m = ld_writable_cpl3();
-                        x = aux_SHLD(m, r, imm);
+                        rm = ld_writable_cpl3();
+                        x = aux_SHLD(rm, r, imm);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2021,8 +2021,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[rM] = aux_SHLD(regs[rM], r, regs[1]);
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
-                        x = aux_SHLD(m, r, regs[1]);
+                        rm = ld_writable_cpl3();
+                        x = aux_SHLD(rm, r, regs[1]);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2036,8 +2036,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         imm = ld8_direct();
-                        m = ld_writable_cpl3();
-                        x = aux_SHRD(m, r, imm);
+                        rm = ld_writable_cpl3();
+                        x = aux_SHRD(rm, r, imm);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2049,8 +2049,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[rM] = aux_SHRD(regs[rM], r, regs[1]);
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
-                        x = aux_SHRD(m, r, regs[1]);
+                        rm = ld_writable_cpl3();
+                        x = aux_SHRD(rm, r, regs[1]);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2080,8 +2080,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation();
                             imm = ld8_direct();
-                            m = ld_writable_cpl3();
-                            x = aux_BTS_BTR_BTC(m, imm);
+                            rm = ld_writable_cpl3();
+                            x = aux_BTS_BTR_BTC(rm, imm);
                             st_writable_cpl3(x);
                         }
                         break;
@@ -2113,8 +2113,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         lax = lax + ((r >> 5) << 2);
-                        m = ld_writable_cpl3();
-                        x = aux_BTS_BTR_BTC(m, r);
+                        rm = ld_writable_cpl3();
+                        x = aux_BTS_BTR_BTC(rm, r);
                         st_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2168,10 +2168,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_byte(rM, x);
                     } else {
                         segment_translation();
-                        m = ld8_writable_cpl3();
-                        x = calculate8(m, (regs[reg & 3] >> ((reg & 4) << 1)));
+                        rm = ld8_writable_cpl3();
+                        x = calculate8(rm, (regs[reg & 3] >> ((reg & 4) << 1)));
                         st8_writable_cpl3(x);
-                        set_lower_byte(reg, m);
+                        set_lower_byte(reg, rm);
                     }
                     goto EXEC_LOOP;
                 case 0xc1: // XADD (80486)
@@ -2186,10 +2186,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[rM] = x;
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
-                        x = calculate(m, regs[reg]);
+                        rm = ld_writable_cpl3();
+                        x = calculate(rm, regs[reg]);
                         st_writable_cpl3(x);
-                        regs[reg] = m;
+                        regs[reg] = rm;
                     }
                     goto EXEC_LOOP;
                 case 0xb0: // CMPXCHG (80486)
@@ -2207,12 +2207,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                     } else {
                         segment_translation();
-                        m = ld8_writable_cpl3();
-                        x = calculate8(regs[0], m);
+                        rm = ld8_writable_cpl3();
+                        x = calculate8(regs[0], rm);
                         if (x == 0) {
                             st8_writable_cpl3((regs[reg & 3] >> ((reg & 4) << 1)));
                         } else {
-                            set_lower_byte(0, m);
+                            set_lower_byte(0, rm);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2231,12 +2231,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                     } else {
                         segment_translation();
-                        m = ld_writable_cpl3();
-                        x = calculate(regs[0], m);
+                        rm = ld_writable_cpl3();
+                        x = calculate(regs[0], rm);
                         if (x == 0) {
                             st_writable_cpl3(regs[reg]);
                         } else {
-                            regs[0] = m;
+                            regs[0] = rm;
                         }
                     }
                     goto EXEC_LOOP;
@@ -2529,12 +2529,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         if (operation != 7) {
-                            m = ld16_writable_cpl3();
-                            x = calculate16(m, r);
+                            rm = ld16_writable_cpl3();
+                            x = calculate16(rm, r);
                             st16_writable_cpl3(x);
                         } else {
-                            m = ld16_readonly_cpl3();
-                            calculate16(m, r);
+                            rm = ld16_readonly_cpl3();
+                            calculate16(rm, r);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2580,12 +2580,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         imm = ld16_direct();
                         if (operation != 7) {
-                            m = ld16_writable_cpl3();
-                            x = calculate16(m, imm);
+                            rm = ld16_writable_cpl3();
+                            x = calculate16(rm, imm);
                             st16_writable_cpl3(x);
                         } else {
-                            m = ld16_readonly_cpl3();
-                            calculate16(m, imm);
+                            rm = ld16_readonly_cpl3();
+                            calculate16(rm, imm);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2600,12 +2600,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         imm = (ld8_direct() << 24) >> 24;
                         if (operation != 7) {
-                            m = ld16_writable_cpl3();
-                            x = calculate16(m, imm);
+                            rm = ld16_writable_cpl3();
+                            x = calculate16(rm, imm);
                             st16_writable_cpl3(x);
                         } else {
-                            m = ld16_readonly_cpl3();
-                            calculate16(m, imm);
+                            rm = ld16_readonly_cpl3();
+                            calculate16(rm, imm);
                         }
                     }
                     goto EXEC_LOOP;
@@ -2695,8 +2695,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(rM, ~regs[rM]);
                         } else {
                             segment_translation();
-                            m = ld16_writable_cpl3();
-                            st16_writable_cpl3(~m);
+                            rm = ld16_writable_cpl3();
+                            st16_writable_cpl3(~rm);
                         }
                         break;
                     case 3: // NEG
@@ -2707,8 +2707,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             operation = 5;
                             segment_translation();
-                            m = ld16_writable_cpl3();
-                            x = calculate16(0, m);
+                            rm = ld16_writable_cpl3();
+                            x = calculate16(0, rm);
                             st16_writable_cpl3(x);
                         }
                         break;
@@ -2766,8 +2766,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         segment_translation();
                         imm = ld8_direct();
-                        m = ld16_writable_cpl3();
-                        x = shift16(m, imm);
+                        rm = ld16_writable_cpl3();
+                        x = shift16(rm, imm);
                         st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2779,22 +2779,22 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         set_lower_word(rM, shift16(regs[rM], 1));
                     } else {
                         segment_translation();
-                        m = ld16_writable_cpl3();
-                        x = shift16(m, 1);
+                        rm = ld16_writable_cpl3();
+                        x = shift16(rm, 1);
                         st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
                 case 0x1d3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
                     modRM = ld8_direct();
                     operation = (modRM >> 3) & 7;
-                    r = regs[1] & 0xff;
+                    ind = regs[1] & 0xff;
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        set_lower_word(rM, shift16(regs[rM], r));
+                        set_lower_word(rM, shift16(regs[rM], ind));
                     } else {
                         segment_translation();
-                        m = ld16_writable_cpl3();
-                        x = shift16(m, r);
+                        rm = ld16_writable_cpl3();
+                        x = shift16(rm, ind);
                         st16_writable_cpl3(x);
                     }
                     goto EXEC_LOOP;
@@ -2897,8 +2897,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(rM, aux_INC16(regs[rM]));
                         } else {
                             segment_translation();
-                            m = ld16_writable_cpl3();
-                            x = aux_INC16(m);
+                            rm = ld16_writable_cpl3();
+                            x = aux_INC16(rm);
                             st16_writable_cpl3(x);
                         }
                         break;
@@ -2908,8 +2908,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(rM, aux_DEC16(regs[rM]));
                         } else {
                             segment_translation();
-                            m = ld16_writable_cpl3();
-                            x = aux_DEC16(m);
+                            rm = ld16_writable_cpl3();
+                            x = aux_DEC16(rm);
                             st16_writable_cpl3(x);
                         }
                         break;
@@ -3293,10 +3293,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(rM, x);
                         } else {
                             segment_translation();
-                            m = ld16_writable_cpl3();
+                            rm = ld16_writable_cpl3();
                             x = calculate16(x, regs[reg]);
                             st16_writable_cpl3(x);
-                            set_lower_word(reg, m);
+                            set_lower_word(reg, rm);
                         }
                         goto EXEC_LOOP;
                     case 0x1a0: // PUSH FS
@@ -3326,8 +3326,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation();
                             imm = ld8_direct();
-                            m = ld16_writable_cpl3();
-                            x = aux_SHRD16_SHLD16(m, r, imm);
+                            rm = ld16_writable_cpl3();
+                            x = aux_SHRD16_SHLD16(rm, r, imm);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
@@ -3341,8 +3341,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_word(rM, aux_SHRD16_SHLD16(regs[rM], r, regs[1]));
                         } else {
                             segment_translation();
-                            m = ld16_writable_cpl3();
-                            x = aux_SHRD16_SHLD16(m, r, regs[1]);
+                            rm = ld16_writable_cpl3();
+                            x = aux_SHRD16_SHLD16(rm, r, regs[1]);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
@@ -3372,8 +3372,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             } else {
                                 segment_translation();
                                 imm = ld8_direct();
-                                m = ld16_writable_cpl3();
-                                x = aux_BTS16_BTR16_BTC16(m, imm);
+                                rm = ld16_writable_cpl3();
+                                x = aux_BTS16_BTR16_BTC16(rm, imm);
                                 st16_writable_cpl3(x);
                             }
                             break;
@@ -3405,8 +3405,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         } else {
                             segment_translation();
                             lax = lax + (((r & 0xffff) >> 4) << 1);
-                            m = ld16_writable_cpl3();
-                            x = aux_BTS16_BTR16_BTC16(m, r);
+                            rm = ld16_writable_cpl3();
+                            x = aux_BTS16_BTR16_BTC16(rm, r);
                             st16_writable_cpl3(x);
                         }
                         goto EXEC_LOOP;
@@ -3443,8 +3443,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             }
                         } else {
                             segment_translation();
-                            m = ld16_writable_cpl3();
-                            x = calculate16(regs[0], m);
+                            rm = ld16_writable_cpl3();
+                            x = calculate16(regs[0], rm);
                             if (x == 0) {
                                 st16_writable_cpl3(regs[reg]);
                             } else {
