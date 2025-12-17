@@ -1,28 +1,15 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
+*.exe
 *.o
 *.obj
-*.idx
-*.log
-.idea/
-.cache/
-build/
-exe/
-log_linux_short.txt
-linux_boot_logs/
-
-# MCP386
+.DS_Store
+.vs
 CMakeCache.txt
 CMakeFiles/
 Makefile
+_out*
+build/
 cmake_install.cmake
 compile_commands.json
-*.exe
+exe/
 ringbuffer
 ringbuffer.cpp
-.DS_Store
-.vs

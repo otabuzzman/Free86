@@ -1346,9 +1346,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
                 imm = (ld8_direct() << 24) >> 24;
-                address_size_mask = (ipr & 0x0080) ? 0xffff : -1;
-                x = (regs[1] - 1) & address_size_mask;
-                regs[1] = (regs[1] & ~address_size_mask) | x;
+                XS_mask = (ipr & 0x0080) ? 0xffff : -1;
+                x = (regs[1] - 1) & XS_mask;
+                regs[1] = (regs[1] & ~XS_mask) | x;
                 opcode &= 3;
                 if (opcode == 0) {
                     y = !(osm_dst == 0);
@@ -1367,8 +1367,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto EXEC_LOOP;
             case 0xe3: // JCXZ
                 imm = (ld8_direct() << 24) >> 24;
-                address_size_mask = (ipr & 0x0080) ? 0xffff : -1;
-                if ((regs[1] & address_size_mask) == 0) {
+                XS_mask = (ipr & 0x0080) ? 0xffff : -1;
+                if ((regs[1] & XS_mask) == 0) {
                     if (ipr & 0x0100) {
                         eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
                     } else {

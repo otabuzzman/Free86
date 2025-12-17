@@ -285,7 +285,8 @@ class Free86 {
  */
     int CS_base; // shortcut for segs[1].base
     int SS_base; // shortcut for segs[2].base
-    int SS_mask; // 16 or 32 bit SS size
+    int SS_mask; // 16/ 32 bit address size mask for SS (from descriptor)
+    int 
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
@@ -293,13 +294,13 @@ class Free86 {
 
     // auxiliary variables for inter-method exchange
     int operation; // bits 5..3 of opcode or modR/M byte
-    int x, y, address_size_mask; // 16 or 32 bit mask
 
     uint32_t lax; // linear address exchange register
     int modRM, reg, rM;   // mod field (modRM >> 6) inline
     int sib, base, index; // scale field (sib >> 6) inline
     int r, m, m16, rm; // discrete/ combined register or memory operands
     int imm, imm16, moffs; // immediate operand, memory offset in segment
+    int x, y, XS_mask; // 16/ 32 bit address size mask for effective DS
 
     // clang-format off
     const std::vector<int> parity_LUT = {

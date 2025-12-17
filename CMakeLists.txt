@@ -6,34 +6,44 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 
-if (WIN32)
-add_compile_options(
-  /W4
-)
+if(APPLE)
+    add_compile_options(
+      -Weverything
+      -Wno-c++98-compat # probably not harmful...
+      -Wno-comma
+      -Wno-conditional-uninitialized
+      -Wno-format
+      -Wno-missing-noreturn
+      -Wno-missing-prototypes
+      -Wno-missing-variable-declarations
+      -Wno-old-style-cast
+      -Wno-padded
+      -Wno-poison-system-directories
+      -Wno-reserved-identifier
+      -Wno-reserved-macro-identifier
+      -Wno-shadow-field-in-constructor
+      -Wno-switch-default
+      -Wno-unused-parameter
+      -Wno-unused-private-field
+      -Wno-unused-variable
+    )
+    add_compile_definitions(
+      _CRT_SECURE_NO_WARNINGS
+    )
+elseif(LINUX)
+    add_compile_options(
+      -Wall
+    )
+elseif(CYGWIN)
+    add_compile_options(
+      -Wall
+    )
+elseif(WIN32)
+    add_compile_options(
+      /W4
+    )
 else()
-add_compile_options(
-  -Weverything
-  -Wno-c++98-compat # probably not harmful...
-  -Wno-comma
-  -Wno-conditional-uninitialized
-  -Wno-format
-  -Wno-missing-noreturn
-  -Wno-missing-prototypes
-  -Wno-missing-variable-declarations
-  -Wno-old-style-cast
-  -Wno-padded
-  -Wno-poison-system-directories
-  -Wno-reserved-identifier
-  -Wno-reserved-macro-identifier
-  -Wno-shadow-field-in-constructor
-  -Wno-switch-default
-  -Wno-unused-parameter
-  -Wno-unused-private-field
-  -Wno-unused-variable
-)
-add_compile_definitions(
-  _CRT_SECURE_NO_WARNINGS
-)
+    message("System not supported.")
 endif()
 
 add_executable(${PROJECT_NAME} ${sourcefiles})
