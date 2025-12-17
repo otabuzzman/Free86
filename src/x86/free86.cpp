@@ -3757,62 +3757,62 @@ void Free86::aux_LEAVE() {
     regs[4] = (regs[4] & ~SS_mask) | ((ebp + 4) & SS_mask);
 }
 void Free86::aux_ENTER16() {
-    int c, l, esp, ebp, exp;
-    c = ld16_direct();
-    l = ld8_direct();
-    l &= 0x1f;
+    int esp, ebp, exp;
+    imm16 = ld16_direct();
+    imm = ld8_direct();
+    imm &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 2;
     lax = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(ebp);
     exp = esp;
-    if (l != 0) {
-        while (l > 1) {
+    if (imm != 0) {
+        while (imm > 1) {
             ebp = ebp - 2;
             lax = (ebp & SS_mask) + SS_base;
             m16 = ld16_readonly_cpl3();
             esp = esp - 2;
             lax = (esp & SS_mask) + SS_base;
             st16_writable_cpl3(m16);
-            l--;
+            imm--;
         }
         esp = esp - 2;
         lax = (esp & SS_mask) + SS_base;
         st16_writable_cpl3(exp);
     }
-    esp = esp - c;
+    esp = esp - imm16;
     lax = (esp & SS_mask) + SS_base;
     ld16_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::aux_ENTER() {
-    int c, l, esp, ebp, exp;
-    c = ld16_direct();
-    l = ld8_direct();
-    l &= 0x1f;
+    int esp, ebp, exp;
+    imm16 = ld16_direct();
+    imm = ld8_direct();
+    imm &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 4;
     lax = (esp & SS_mask) + SS_base;
     st_writable_cpl3(ebp);
     exp = (ebp & ~SS_mask) | (esp & SS_mask);
-    if (l != 0) {
-        while (l > 1) {
+    if (imm != 0) {
+        while (imm > 1) {
             ebp = ebp - 4;
             lax = (ebp & SS_mask) + SS_base;
             m = ld_readonly_cpl3();
             esp = esp - 4;
             lax = (esp & SS_mask) + SS_base;
             st_writable_cpl3(m);
-            l--;
+            imm--;
         }
         esp = esp - 4;
         lax = (esp & SS_mask) + SS_base;
         st_writable_cpl3(exp);
     }
-    esp = esp - c;
+    esp = esp - imm16;
     lax = (esp & SS_mask) + SS_base;
     ld_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
