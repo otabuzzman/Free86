@@ -13,7 +13,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - `test386`: fixed to additionally pass Test386 suite
 - `refactor`: rework of code structure and naming conventions
 
-**Linos (also WSL)**
+**Linos (also Cygwin, WSL)**
 - Install C++, CMake
 - Run commands
   ```
@@ -22,7 +22,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   # build for Linos boot
   cmake -DNO_SDL=ON -DTEST386=OFF -G "Unix Makefiles" .
   
-  # build for Test386 suite
+  # build for Test386 suite (see comment on setup below)
   cmake -DNO_SDL=ON -DTEST386=ON -G "Unix Makefiles" .
   
   # compile...
@@ -44,7 +44,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   # build for Linos boot
   cmake -DNO_SDL=ON -DTEST386=OFF -G "NMake Makefiles" .
   
-  # build for Test386 suite
+  # build for Test386 suite (see comment on setup below)
   cmake -DNO_SDL=ON -DTEST386=ON -G "NMake Makefiles" .
   
   # compile...
@@ -59,6 +59,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 
 **Test386**
 - Install [NASM](https://www.nasm.us/pub/nasm/releasebuilds/) (Netwide Assembler)
+- In the NASM repo’s src/configuration.asm, set OUT_PORT to a non-zero value
 - Run commands
   ```
   # clone repository beside Free86 folder
