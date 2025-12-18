@@ -15,9 +15,6 @@ class PlainCPU : public Free86 {
     void io_write(int port, int data) override;
 };
 
-const int history_size = 512;
-std::string history[history_size];
-
 class Test386 {
   public:
     Test386(int memory_size) {
@@ -200,6 +197,8 @@ class Test386 {
     std::string hex(int bits) {
         return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
     }
+    const int history_size = 512;
+    std::string history[history_size];
 };
 
 int PlainCPU::io_read(int port) {
