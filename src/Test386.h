@@ -49,12 +49,23 @@ class Test386 {
         printf("*******************************\n\n\n");
     }
     void cycle() {
-        uint64_t cycles = cpu->cycles + 100000;
+        uint64_t interval = 100000;
+        uint64_t cycles = cpu->cycles + interval;
+        std::string history[64];
         while (cpu->cycles < cycles) {
             try {
                 cpu->fetch_decode_execute(cycles - cpu->cycles);
-                if (cpu->halted)
+                if (interval == 1) {
+                    history[cpu->cycles % 64] = compile_status_string();
+                }
+                if (cpu->halted) {
+                    if (interval == 1) {
+                        for (int i = 0; i < 64; i++) {
+                            std::cout << history[(cpu->cycles % 64) + 1 + i] << std::endl;
+                        }
+                    }
                     exit(0);
+                }
             } catch (const Interrupt& i) {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
