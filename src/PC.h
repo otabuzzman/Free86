@@ -1,6 +1,7 @@
 #ifndef PC_H
 #define PC_H
 
+#include <cmath>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
@@ -474,7 +475,7 @@ class IRQCH {
         cpu = _cpu;
     }
     int get_time() {
-        return static_cast<int>(std::floor(cpu->cycles * pit_time_unit));
+        return static_cast<int>(floor(cpu->cycles * pit_time_unit));
     }
     int pit_get_count() {
         int d, dh;
