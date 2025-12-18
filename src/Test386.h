@@ -49,7 +49,7 @@ class Test386 {
         printf("*******************************\n\n\n");
     }
     void cycle() {
-        uint64_t number = 100000; // 1 enables instruction history
+        uint64_t number = 100000; // a value of 1 enables history recording (slow)
         uint64_t cycles = cpu->cycles + number;
         while (cpu->cycles < cycles) {
             try {
@@ -63,7 +63,7 @@ class Test386 {
                             std::cout << history[(cpu->cycles + 1 + i) % history_size] << std::endl;
                         }
                     }
-                    std::cout << cpu->cycles << std::endl;
+                    std::cout << cpu->cycles << std::endl; // tell number of fedex'ed instructions
                     exit(0);
                 }
             } catch (const Interrupt& i) {
@@ -198,6 +198,15 @@ class Test386 {
     std::string hex(int bits) {
         return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
     }
+/*
+ Enable history recording in case the test suite unexpectedly terminates
+ before its scheduled end (both by executing hlt). Doing so, first run
+ the suite without recording. The very last number in the output states
+ the number of instructions executed. Reduce it by, for example, 10000,
+ and set `history_skip' to the result.
+ This will start recording only shortly before the termination, saving
+ you some time.
+ */
     static const int history_skip = 0;
     static const int history_size = 512;
     std::string history[history_size];
