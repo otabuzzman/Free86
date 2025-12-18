@@ -52,7 +52,7 @@ class Test386 {
         printf("*******************************\n\n\n");
     }
     void cycle() {
-        uint64_t interval = 1;//00000; // 1 captures instruction history
+        uint64_t interval = 100000; // 1 captures instruction history
         uint64_t cycles = cpu->cycles + interval;
         while (cpu->cycles < cycles) {
             try {
