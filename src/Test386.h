@@ -60,7 +60,7 @@ class Test386 {
                 if (cpu->halted) {
                     if (number == 1) {
                         for (int i = 0; i < history_size; i++) {
-                            std::cout << history[(cpu->cycles + i) % history_size] << std::endl;
+                            std::cout << history[(cpu->cycles + 1 + i) % history_size] << std::endl;
                         }
                     }
                     exit(0);
@@ -197,7 +197,7 @@ class Test386 {
     std::string hex(int bits) {
         return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
     }
-    const int history_size = 512;
+    static const int history_size = 512;
     std::string history[history_size];
 };
 
