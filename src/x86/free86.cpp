@@ -1583,7 +1583,7 @@ void Free86::set_segment_register_real__v86(int sreg, int selector) {
 }
 void Free86::set_segment_register_protected(int sreg, int selector) {
     SegmentRegister xdt;
-    int dte_lower_dword, dte_upper_dword, selector_index;
+    int dte_lower_dword, dte_upper_dword, index;
     if ((selector & 0xfffc) == 0) { // null selector
         if (sreg == 2) {
             abort(13, 0);
@@ -1595,11 +1595,11 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
         } else {
             xdt = gdt;
         }
-        selector_index = selector & ~7;
-        if ((selector_index + 7) > xdt.limit) {
+        index = selector & ~7;
+        if ((index + 7) > xdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        lax = xdt.base + selector_index;
+        lax = xdt.base + index;
         dte_lower_dword = ld_readonly_cplX();
         lax += 4;
         dte_upper_dword = ld_readonly_cplX();
@@ -1681,6 +1681,8 @@ int Free86::is_segment_accessible(int selector, bool writable) {
 void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     SegmentRegister xdt;
     int index, dte_lower_dword, dte_upper_dword;
+    descriptor_table_entry[0] = 0;
+    descriptor_table_entry[1] = 0;
     if (selector & 0x4) {
         xdt = ldt;
     } else {
@@ -1699,6 +1701,8 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
 }
 void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
     int type, offset, is_386, dte_lower_dword, dte_upper_dword;
+    descriptor_table_entry[0] = 0;
+    descriptor_table_entry[1] = 0;
     if (!(tr.flags & (1 << 15))) { // present (P bit)
         abort(11, tr.selector & 0xfffc);
     }
