@@ -54,7 +54,7 @@ class Test386 {
         while (cpu->cycles < cycles) {
             try {
                 cpu->fetch_decode_execute(cycles - cpu->cycles);
-                if (number == 1) {
+                if (number == 1 && cycles > history_skip) {
                     history[cpu->cycles % history_size] = compile_status_string();
                 }
                 if (cpu->halted) {
@@ -63,6 +63,7 @@ class Test386 {
                             std::cout << history[(cpu->cycles + 1 + i) % history_size] << std::endl;
                         }
                     }
+                    std::cout << cpu->cycles << std::endl;
                     exit(0);
                 }
             } catch (const Interrupt& i) {
@@ -197,6 +198,7 @@ class Test386 {
     std::string hex(int bits) {
         return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
     }
+    static const int history_skip = 0;
     static const int history_size = 512;
     std::string history[history_size];
 };
