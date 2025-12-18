@@ -15,6 +15,9 @@ class PlainCPU : public Free86 {
     void io_write(int port, int data) override;
 };
 
+const int history_size = 512;
+std::string history[history_size];
+
 class Test386 {
   public:
     Test386(int memory_size) {
@@ -49,19 +52,18 @@ class Test386 {
         printf("*******************************\n\n\n");
     }
     void cycle() {
-        uint64_t interval = 100000;
+        uint64_t interval = 1;//00000; // 1 captures instruction history
         uint64_t cycles = cpu->cycles + interval;
-        std::string history[64];
         while (cpu->cycles < cycles) {
             try {
                 cpu->fetch_decode_execute(cycles - cpu->cycles);
                 if (interval == 1) {
-                    history[cpu->cycles % 64] = compile_status_string();
+                    history[cpu->cycles % history_size] = compile_status_string();
                 }
                 if (cpu->halted) {
                     if (interval == 1) {
-                        for (int i = 0; i < 64; i++) {
-                            std::cout << history[(cpu->cycles % 64) + 1 + i] << std::endl;
+                        for (int i = 0; i < history_size; i++) {
+                            std::cout << history[(cpu->cycles + 1 + i) % history_size] << std::endl;
                         }
                     }
                     exit(0);
