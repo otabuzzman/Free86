@@ -52,18 +52,18 @@ class Test386 {
         printf("*******************************\n\n\n");
     }
     void cycle() {
-        uint64_t interval = 100000; // 1 captures instruction history
-        uint64_t cycles = cpu->cycles + interval;
+        uint64_t number = 100000; // 1 enables instruction history
+        uint64_t cycles = cpu->cycles + number;
         while (cpu->cycles < cycles) {
             try {
                 cpu->fetch_decode_execute(cycles - cpu->cycles);
-                if (interval == 1) {
+                if (number == 1) {
                     history[cpu->cycles % history_size] = compile_status_string();
                 }
                 if (cpu->halted) {
-                    if (interval == 1) {
+                    if (number == 1) {
                         for (int i = 0; i < history_size; i++) {
-                            std::cout << history[(cpu->cycles + 1 + i) % history_size] << std::endl;
+                            std::cout << history[(cpu->cycles + i) % history_size] << std::endl;
                         }
                     }
                     exit(0);
