@@ -48,7 +48,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   cmake -DNO_SDL=ON -DTEST386=ON -G "NMake Makefiles" .
   
   # compile...
-  make
+  nmake
   # ...and run 
   exe\free86
   ```
