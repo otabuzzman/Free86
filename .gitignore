@@ -2,6 +2,8 @@
 *.o
 *.obj
 .DS_Store
+.build
+.swiftpm
 .vs
 CMakeCache.txt
 CMakeFiles/
