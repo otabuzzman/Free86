@@ -55,7 +55,7 @@ func bitValues() {
 }
 
 @Test("set/ raise/ clear/ toggle bits")
-func setRasieClearToggleBits() {
+func setRaiseClearToggleBits() {
     var byte: Byte = 0b0000_0110
     byte.setBit(3, 1)
     #expect(byte == 0b0000_1110)

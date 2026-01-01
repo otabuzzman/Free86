@@ -34,7 +34,7 @@ extension FixedWidthInteger where Self: UnsignedInteger {
     mutating func toggleBit(_ position: Int) {
         self ^= Self.bitMask(for: position)
     }
-    func isBitSet(_ position: Int) -> Bool {
+    func isBitRaised(_ position: Int) -> Bool {
         (self & Self.bitMask(for: position)) != 0
     }
 }
