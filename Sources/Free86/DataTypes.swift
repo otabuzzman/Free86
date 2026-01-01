@@ -22,7 +22,7 @@ extension FixedWidthInteger where Self: UnsignedInteger {
     static func bitMask(for position: Int) -> Self {
         return Self(1) << position
     }
-    mutating func setBit(_ position: Int, _ value: Int) {
+    mutating func setBit(_ position: Int, _ value: Int = 1) {
         value == 1 ? raiseBit(position) : clearBit(position)
     }
     mutating func raiseBit(_ position: Int) {

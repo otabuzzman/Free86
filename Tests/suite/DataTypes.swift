@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("upper/ lower half masks")
+@Test("data type upper/ lower half masks")
 func halfMasks() {
     #expect(Byte.upperHalfMask == 0xF0)
     #expect(Byte.lowerHalfMask == 0x0F)
@@ -16,7 +16,7 @@ func halfMasks() {
     #expect(QWord.lowerHalfMask == 0x00000000_FFFFFFFF)
 }
 
-@Test("upper/ lower half values")
+@Test("data type upper/ lower half values")
 func halfValues() {
     let byte: Byte = 0x5A
     #expect(byte.upperHalf == 0x5)
@@ -35,7 +35,7 @@ func halfValues() {
     #expect(qWord.lowerHalf == 0x89ABCDEF)
 }
 
-@Test("bit masks")
+@Test("data type bit masks")
 func bitValues() {
     #expect(Byte.bitMask(for: 7) == 0x80)
     #expect(Byte.bitMask(for: 0) == 0x01)
@@ -54,7 +54,7 @@ func bitValues() {
     #expect(QWord.bitMask(for: 17) == 0x00000000_00020000)
 }
 
-@Test("set/ raise/ clear/ toggle bits")
+@Test("data type set/ raise/ clear/ toggle bits")
 func setRaiseClearToggleBits() {
     var byte: Byte = 0b0000_0110
     byte.setBit(3, 1)

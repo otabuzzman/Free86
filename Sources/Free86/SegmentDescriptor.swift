@@ -78,7 +78,7 @@ extension SegmentDescriptor {
     var isCodeSegment: Bool {
         !isSystemSegment && type >> 3 == 1
     }
-    mutating func setFlag(_ flag: Flag, _ value: Int) {
+    mutating func setFlag(_ flag: Flag, _ value: Int = 1) {
         upper.setBit(flag.rawValue, value)
     }
 }
