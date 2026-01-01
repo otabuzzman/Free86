@@ -21,6 +21,8 @@ let package = Package(
             sources: [
                 "DataTypes.swift",
                 "SegmentDescriptor.swift",
+                "SegmentSelector.swift",
+                "SegmentRegister.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -32,6 +34,7 @@ let package = Package(
             sources: [
                 "DataTypes.swift",
                 "SegmentDescriptor.swift",
+                "SegmentSelector.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),

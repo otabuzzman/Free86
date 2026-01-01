@@ -75,7 +75,7 @@ func segmentDescriptorTypes() {
     #expect(segmentDescriptor.isType(.CodeExReadConformingAccessed) == true)
 }
 
-@Test("segment descriptor dpl masks")
+@Test("segment descriptor DPL masks")
 func segmentDescriptorDplMasks() {
     var segmentDescriptor = SegmentDescriptor(
         upper: 0x5505_60AA,
