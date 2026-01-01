@@ -3,7 +3,8 @@ import Testing
 
 @Test("segment selector indices")
 func segmentSelectorIndices() {
-    var segmentSelector: Word = 0b1100_1010_1111_1110 // 0xCAFE
+    var segmentSelector: Word
+    segmentSelector = 0b1100_1010_1111_1110 // 0xCAFE
     #expect(segmentSelector.index == 0b0001_1001_0101_1111)
     segmentSelector = 0b1100_1110_1010_1100 // 0xDEAD
     #expect(segmentSelector.index == 0b0001_1001_1101_0101)
@@ -11,7 +12,8 @@ func segmentSelectorIndices() {
 
 @Test("segment selector tables")
 func segmentSelectorTables() {
-    var segmentSelector: Word = 0b1100_1010_1111_1110
+    var segmentSelector: Word
+    segmentSelector = 0b1100_1010_1111_1110
     #expect(segmentSelector.isGDT == false)
     #expect(segmentSelector.isLDT == true)
     segmentSelector = 0b1100_1110_1010_1000
@@ -21,7 +23,8 @@ func segmentSelectorTables() {
 
 @Test("segment selector RPL")
 func segmentSelectorRpl() {
-    var segmentSelector: Word = 0b1100_1010_1111_1111
+    var segmentSelector: Word
+    segmentSelector = 0b1100_1010_1111_1111
     #expect(segmentSelector.rpl == 3)
     segmentSelector = 0b1100_1010_1111_1110
     #expect(segmentSelector.rpl == 2)

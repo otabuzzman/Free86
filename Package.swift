@@ -23,6 +23,8 @@ let package = Package(
                 "SegmentDescriptor.swift",
                 "SegmentSelector.swift",
                 "SegmentRegister.swift",
+                "LinearAddress.swift",
+                "PageTableEntry.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -35,6 +37,8 @@ let package = Package(
                 "DataTypes.swift",
                 "SegmentDescriptor.swift",
                 "SegmentSelector.swift",
+                "LinearAddress.swift",
+                "PageTableEntry.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -42,4 +46,3 @@ let package = Package(
         ),
     ]
 )
-

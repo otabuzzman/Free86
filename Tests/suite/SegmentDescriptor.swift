@@ -3,7 +3,8 @@ import Testing
 
 @Test("segment descriptor base/ limit values")
 func segmentDescriptorBaseLimit() {
-    var segmentDescriptor = SegmentDescriptor(
+    var segmentDescriptor: SegmentDescriptor
+    segmentDescriptor = SegmentDescriptor(
         upper: 0x5505_00AA,
         lower: 0x55AA_AA55)
     #expect(segmentDescriptor.base  == 0x55AA_55AA)
@@ -15,7 +16,8 @@ func segmentDescriptorBaseLimit() {
 
 @Test("segment descriptor types")
 func segmentDescriptorTypes() {
-    var segmentDescriptor = SegmentDescriptor(upper: 0x5505_61AA, lower: 0x55AA_AA55)
+    var segmentDescriptor: SegmentDescriptor
+    segmentDescriptor = SegmentDescriptor(upper: 0x5505_61AA, lower: 0x55AA_AA55)
     #expect(segmentDescriptor.isType(.TSS16Available) == true)
     segmentDescriptor = SegmentDescriptor(upper: 0x5505_62AA, lower: 0x55AA_AA55)
     #expect(segmentDescriptor.isType(.LDT) == true)
@@ -77,7 +79,8 @@ func segmentDescriptorTypes() {
 
 @Test("segment descriptor DPL masks")
 func segmentDescriptorDplMasks() {
-    var segmentDescriptor = SegmentDescriptor(
+    var segmentDescriptor: SegmentDescriptor
+    segmentDescriptor = SegmentDescriptor(
         upper: 0x5505_60AA,
         lower: 0x55AA_AA55)
     #expect(segmentDescriptor.dpl == 3)
@@ -93,7 +96,8 @@ func segmentDescriptorDplMasks() {
 
 @Test("segment descriptor flags")
 func segmentDescriptorFlags() {
-    var segmentDescriptor = SegmentDescriptor(
+    var segmentDescriptor: SegmentDescriptor
+    segmentDescriptor = SegmentDescriptor(
         upper: 0x5500_0055,
         lower: 0x55AA_AA55)
     segmentDescriptor.setFlag(.G, 1)
