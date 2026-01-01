@@ -5,11 +5,11 @@ protocol PageTableEntry {
 }
 
 enum PageTableEntryFlag: Int {
-    case P = 0
-    case W = 1
-    case U = 2
-    case A = 5
-    case D = 6
+    case P = 0 // 1 = page is present
+    case W = 1 // 1 = page is writable
+    case U = 2 // 1 = page is user accessible
+    case A = 5 // 1 = page has been accessed
+    case D = 6 // 1 = page has been written (dirty)
 }
 
 extension PageTableEntry where Self == DWord {
