@@ -25,6 +25,8 @@ let package = Package(
                 "SegmentRegister.swift",
                 "LinearAddress.swift",
                 "PageTableEntry.swift",
+                "ModRM+SIB.swift",
+                "GeneralRegister.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -39,6 +41,8 @@ let package = Package(
                 "SegmentSelector.swift",
                 "LinearAddress.swift",
                 "PageTableEntry.swift",
+                "ModRM+SIB.swift",
+                "GeneralRegister.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),

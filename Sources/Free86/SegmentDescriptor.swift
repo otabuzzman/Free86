@@ -57,7 +57,7 @@ extension SegmentDescriptor {
         let value =
         lower & 0x0000_FFFF |
         upper & 0x000F_0000
-        return isFlagRaised(.G) ? (value << 12) | 0xfff : value
+        return isFlagRaised(.G) ? value << 12 | 0xfff : value
     }
     var type: DWord {
         (upper & 0x0000_0F00) >> 8

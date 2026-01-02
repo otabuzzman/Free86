@@ -1,5 +1,3 @@
-extension Word: SegmentSelector {}
-
 protocol SegmentSelector {
     var index: Self { get }
     var isGDT: Bool { get }
@@ -11,7 +9,7 @@ enum SegmentSelectorFlag: Int {
     case TI = 2
 }
 
-extension SegmentSelector where Self == Word {
+extension Word: SegmentSelector {
     var index: Self {
         self >> 3
     }

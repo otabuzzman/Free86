@@ -1,5 +1,3 @@
-extension DWord: PageTableEntry {}
-
 protocol PageTableEntry {
     var pageFrameAddress: DWord { get }
 }
@@ -11,7 +9,7 @@ enum PageTableEntryFlag: Int {
     case D = 6 // 1 = page has been written (dirty)
 }
 
-extension PageTableEntry where Self == DWord {
+extension DWord: PageTableEntry {
     var pageFrameAddress: Self {
         self >> 12
     }

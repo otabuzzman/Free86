@@ -1,12 +1,10 @@
-extension DWord: LinearAddress {}
-
 protocol LinearAddress {
     var pageDirectoryIndex: Self { get }
     var pageTableIndex: Self { get }
     var pageOffset: Self { get }
 }
 
-extension LinearAddress where Self == DWord {
+extension DWord: LinearAddress {
     var pageDirectoryIndex: Self {
         self >> 22
     }

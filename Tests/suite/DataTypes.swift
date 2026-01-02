@@ -18,21 +18,33 @@ func halfMasks() {
 
 @Test("data type upper/ lower half values")
 func halfValues() {
-    let byte: Byte = 0x5A
+    var byte: Byte = 0x5A
     #expect(byte.upperHalf == 0x5)
     #expect(byte.lowerHalf == 0xA)
+    byte.upperHalf = 0xA
+    byte.lowerHalf = 0x5
+    #expect(byte == 0xA5)
 
-    let word: Word = 0x5678
+    var word: Word = 0x5678
     #expect(word.upperHalf == 0x56)
     #expect(word.lowerHalf == 0x78)
+    word.upperHalf = 0x78
+    word.lowerHalf = 0x56
+    #expect(word == 0x7856)
 
-    let dWord: DWord = 0x1234_5678
+    var dWord: DWord = 0x1234_5678
     #expect(dWord.upperHalf == 0x1234)
     #expect(dWord.lowerHalf == 0x5678)
+    dWord.upperHalf = 0x5678
+    dWord.lowerHalf = 0x1234
+    #expect(dWord == 0x5678_1234)
 
-    let qWord: QWord = 0x01234567_89ABCDEF
+    var qWord: QWord = 0x01234567_89ABCDEF
     #expect(qWord.upperHalf == 0x01234567)
     #expect(qWord.lowerHalf == 0x89ABCDEF)
+    qWord.upperHalf = 0x89ABCDEF
+    qWord.lowerHalf = 0x01234567
+    #expect(qWord == 0x89ABCDEF_01234567)
 }
 
 @Test("data type bit masks")

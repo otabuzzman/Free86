@@ -14,10 +14,12 @@ extension FixedWidthInteger where Self: UnsignedInteger {
         (Self(1) << halfBitWidth) - 1
     }
     var upperHalf: Self {
-        self >> Self.halfBitWidth
+        get { self >> Self.halfBitWidth }
+        set { self = (self & Self.lowerHalfMask) | (newValue << Self.halfBitWidth) }
     }
     var lowerHalf: Self {
-        self & Self.lowerHalfMask
+        get { self & Self.lowerHalfMask }
+        set { self = (newValue & Self.lowerHalfMask) | (self & Self.upperHalfMask) }
     }
     static func bitMask(for position: Int) -> Self {
         return Self(1) << position
