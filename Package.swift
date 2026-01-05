@@ -27,6 +27,7 @@ let package = Package(
                 "PageTableEntry.swift",
                 "ModRM+SIB.swift",
                 "GeneralRegister.swift",
+                "Pin.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -43,7 +44,8 @@ let package = Package(
                 "PageTableEntry.swift",
                 "ModRM+SIB.swift",
                 "GeneralRegister.swift",
-            ],
+                "Pin.swift",
+           ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
             ],
