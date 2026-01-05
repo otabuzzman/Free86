@@ -1,4 +1,4 @@
-actor Pin<Signal>  {
+actor Pin<Signal> {
     private var signal: Signal
     private var options: [Option]
 
