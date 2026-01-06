@@ -1,4 +1,4 @@
-actor Pin<Signal> {
+actor PinIO<Signal> {
     private var signal: Signal
     private var options: [Option]
 
@@ -35,13 +35,13 @@ actor Pin<Signal> {
     }
 }
 
-extension Pin where Signal == Bool {
+extension PinIO where Signal == Bool {
     init(_ signal: Signal = false) {
         self.init(signal, options: [.allowMultipleTriggers])
     }
 }
 
-extension Pin where Signal: UnsignedInteger {
+extension PinIO where Signal: UnsignedInteger {
     init(_ signal: Signal = .zero) {
         self.init(signal, options: [.allowMultipleTriggers])
     }
