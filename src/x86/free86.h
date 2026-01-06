@@ -110,26 +110,31 @@ class Free86 {
     uint16_t *memory16;
     uint32_t *memory;
 
+    // the TLB
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
-    int tlb_size = 0x100000; // 1M entries
+    // hash tables
     int *tlb_readonly_cplX; // supervisor, any CPL
     int *tlb_writable_cplX;
     int *tlb_readonly_cpl3; // user, CPL == 3
     int *tlb_writable_cpl3;
     int *tlb_readonly; // current (user or supervisor)
     int *tlb_writable;
+    int tlb_size = 0x100000; // 1M entries per HT
     int tlb_hash;
 
-    void tlb_update(uint32_t linear /*data*/, int pte /*key*/, int writable, int user) {
-        tlb_hash = linear ^ pte; // poor man's XOR hash function
-        uint32_t lat20 = linear >> 12;
+    void tlb_update(uint32_t linear /*data*/, int physical /*key*/, int writable, int user) {
+        tlb_hash = linear ^ physical; // poor man's XOR hash function
+        uint32_t lat20 = linear >> 12; // PDE and PTE indices (top 20 bits of linear address)
         if (tlb_readonly_cplX[lat20] == -1) {
-            if (tlb_pages_count >= 2048) {
+            if (tlb_pages_count >= 2048) { // flush TLB if full
+                // if present, keep PTE immediately preceding this PTE to improve performance
                 tlb_flush_all((lat20 - 1) & 0xfffff);
             }
+            // record LA just added to TLB
             tlb_pages[tlb_pages_count++] = lat20;
         }
+        // update hash tables
         tlb_readonly_cplX[lat20] = tlb_hash;
         if (writable) {
             tlb_writable_cplX[lat20] = tlb_hash;
