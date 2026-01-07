@@ -25,6 +25,6 @@ func cpuExceptions() throws {
 func softwareInterrupts() throws {
     #expect(throws: Interrupt(0)) { throw Interrupt(0) }
     #expect(throws: Interrupt(255)) { throw Interrupt(255) }
-    
+
     #expect(throws: Interrupt(42, errorCode: 0xDEADBEEF)) { throw Interrupt(42, errorCode: 0xDEADBEEF) }
 }
