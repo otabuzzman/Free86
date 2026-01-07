@@ -43,7 +43,8 @@ class Free86 {
 
     uint64_t cycles;
 
-    int ld8_direct(int address); // read/ write byte(s) at memory address
+    // memory.cpp
+    int ld8_direct(int address); // read/ write at physical memory address (bypass TLB)
     void st8_direct(int address, int byte);
     void st8_direct(int address, std::string data);
 
@@ -110,22 +111,37 @@ class Free86 {
     uint16_t *memory16;
     uint32_t *memory;
 
-    // the TLB
+/*
+   Translation Lookaside Buffer
+
+   The translation lookaside buffer (TLB) maps linear addresses (LA) to
+   physical addresses (PA). The top 20 bits of an LA represent the PD
+   and PT indices used by the MMU to look up the PA. These 20 bits act
+   as an index into an array containing the PA of the corresponding page.
+   Consequently, each mapping table has 1M entries. There are four
+   such tables, one for each combination of user, supervisor, read-only
+   and writable page features. The PA stored in a table is XORed with
+   its LA and then XORed again on retrieval. This is likely a design
+   choice rather than a necessity. Another array records up to 2024
+   mappings stored in the tables, effectively representing the logical
+   size of the TLB.
+ */
     int tlb_pages[2048]{0};
     int tlb_pages_count = 0;
-    // hash tables
+    // mapping tables
     int *tlb_readonly_cplX; // supervisor, any CPL
     int *tlb_writable_cplX;
     int *tlb_readonly_cpl3; // user, CPL == 3
     int *tlb_writable_cpl3;
-    int *tlb_readonly; // current (user or supervisor)
+    // current mapping tables (user or supervisor)
+    int *tlb_readonly;
     int *tlb_writable;
-    int tlb_size = 0x100000; // 1M entries per HT
-    int tlb_hash;
+    int tlb_size = 0x100000; // 1M entries per MT
+    int tlb_hash; // LA ^ PA (by design, no necessity)
 
     void tlb_update(uint32_t linear /*data*/, int physical /*key*/, int writable, int user) {
         tlb_hash = linear ^ physical; // poor man's XOR hash function
-        uint32_t lat20 = linear >> 12; // PDE and PTE indices (top 20 bits of linear address)
+        uint32_t lat20 = linear >> 12; // PD and PT indices (top 20 bits of linear address)
         if (tlb_readonly_cplX[lat20] == -1) {
             if (tlb_pages_count >= 2048) { // flush TLB if full
                 // if present, keep PTE immediately preceding this PTE to improve performance
@@ -134,7 +150,7 @@ class Free86 {
             // record LA just added to TLB
             tlb_pages[tlb_pages_count++] = lat20;
         }
-        // update hash tables
+        // update mapping tables
         tlb_readonly_cplX[lat20] = tlb_hash;
         if (writable) {
             tlb_writable_cplX[lat20] = tlb_hash;
