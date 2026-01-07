@@ -70,20 +70,20 @@ class Test386 {
                 int mask = 1 << 6;
                 if ((32 > i.id) && (mask & (1 << i.id))) {
                     std::string status = compile_status_string();
-                    int n, eip_linear, phys8_loc;
-                    eip_linear = cpu->segs[1].base + cpu->eip; // offset to linear address
+                    int n, linear, physical;
+                    linear = cpu->segs[1].base + cpu->eip; // EIP is offset of linear address
                     if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
-                        phys8_loc = cpu->tlb_lookup(eip_linear, 0); // physical address
-                        n = 4096 - (eip_linear & 0xfff); // print bytes left to end-of-page...
+                        physical = cpu->tlb_lookup(linear, 0); // physical address
+                        n = 4096 - (linear & 0xfff); // print bytes left to end-of-page...
                         n = std::min(n, 15); // ...or up to maximum instruction length bytes
                     } else {
-                        eip_linear &= 0xfffff;
-                        phys8_loc = eip_linear;
+                        linear &= 0xfffff;
+                        physical = linear;
                         n = 15;
                     }
                     std::string memory = "[EIP..EIP+" + hex((char) (n - 1)) + "]:";
                     for (int i = 0; i < n; i++) {
-                        memory += " " + hex((char) cpu->ld8_direct(phys8_loc + i));
+                        memory += " " + hex((char) cpu->ld8_direct(physical + i));
                     }
                     std::cout
                         << "interrupt id " << i.id
