@@ -29,6 +29,8 @@ let package = Package(
                 "GeneralRegister.swift",
                 "PinIO.swift",
                 "Exception+Interrupt.swift",
+                "Free86.swift",
+                "Free86+Fedex.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
