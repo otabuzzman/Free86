@@ -3603,7 +3603,8 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
             }
         }
-    EXEC_LOOP:;
+    EXEC_LOOP:
+        ;
     } while (--cycles_remaining);
 OUTER_LOOP:
     this->cycles += cycles_requested - cycles_remaining;

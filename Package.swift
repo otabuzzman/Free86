@@ -28,6 +28,7 @@ let package = Package(
                 "ModRM+SIB.swift",
                 "GeneralRegister.swift",
                 "PinIO.swift",
+                "Exception+Interrupt.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -45,6 +46,7 @@ let package = Package(
                 "ModRM+SIB.swift",
                 "GeneralRegister.swift",
                 "PinIO.swift",
+                "Exception+Interrupt.swift",
            ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
