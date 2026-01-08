@@ -23,6 +23,7 @@ let package = Package(
                 "SegmentDescriptor.swift",
                 "SegmentSelector.swift",
                 "SegmentRegister.swift",
+                "LogicalAddress.swift",
                 "LinearAddress.swift",
                 "PageTableEntry.swift",
                 "ModRM+SIB.swift",

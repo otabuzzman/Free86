@@ -19,3 +19,11 @@ extension DWord: LinearAddress {
         self & 0xFFF
     }
 }
+
+typealias PhysicalAddress = DWord
+
+extension LinearAddress {
+    var translation: PhysicalAddress {
+        0
+    }
+}
