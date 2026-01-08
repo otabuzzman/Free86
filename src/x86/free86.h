@@ -43,11 +43,6 @@ class Free86 {
 
     uint64_t cycles;
 
-    // memory.cpp
-    int ld8_direct(int address); // read/ write at physical memory address (bypass TLB)
-    void st8_direct(int address, int byte);
-    void st8_direct(int address, std::string data);
-
     int tlb_lookup(int linear, int writable) {
         uint32_t lat20 = linear >> 12; // PDE and PTE indices
         if (writable) {
@@ -80,6 +75,11 @@ class Free86 {
 
     // fedex.cpp
     void fetch_decode_execute(uint64_t cycles);
+
+    // memory.cpp
+    int ld8_direct(int address); // read/ write at physical memory address (bypass TLB)
+    void st8_direct(int address, int byte);
+    void st8_direct(int address, std::string data);
 
   private:
     uint32_t eip_linear;
