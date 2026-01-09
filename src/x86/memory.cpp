@@ -39,18 +39,12 @@ int Free86::ld_readonly_cplX() {
                 : memory[(lax ^ tlb_hash) >> 2];
 }
 int Free86::_ld8_readonly_cpl3() {
-    int byte;
-    if (is_protected()) {
-        page_translation(0, cpl == 3);
-        tlb_hash = tlb_readonly[lax >> 12];
-        byte = memory8[lax ^ tlb_hash];
-    } else {
-        byte = memory8[lax];
-    }
-    return byte;
+    page_translation(0, cpl == 3);
+    tlb_hash = tlb_readonly[lax >> 12];
+    return memory8[lax ^ tlb_hash];
 }
 int Free86::ld8_readonly_cpl3() {
-    return (is_real__v86() ||
+    return (is_real__v86() ? ld8_direct(lax) :
                     ((tlb_hash = tlb_readonly[lax >> 12]) == -1)
                 ? _ld8_readonly_cpl3()
                 : memory8[lax ^ tlb_hash]);
@@ -63,7 +57,7 @@ int Free86::_ld16_readonly_cpl3() {
     return word;
 }
 int Free86::ld16_readonly_cpl3() {
-    return (is_real__v86() ||
+    return (is_real__v86() ? ld16_direct(lax) :
                     ((tlb_hash = tlb_readonly[lax >> 12]) | lax) & 1
                 ? _ld16_readonly_cpl3()
                 : memory16[(lax ^ tlb_hash) >> 1]);
@@ -80,24 +74,18 @@ int Free86::_ld_readonly_cpl3() {
     return dword;
 }
 int Free86::ld_readonly_cpl3() {
-    return (is_real__v86() ||
+    return (is_real__v86() ? ld_direct(lax) :
                     ((tlb_hash = tlb_readonly[lax >> 12]) | lax) & 3
                 ? _ld_readonly_cpl3()
                 : memory[(lax ^ tlb_hash) >> 2]);
 }
 int Free86::_ld8_writable_cpl3() {
-    int byte;
-    if (is_protected()) {
-        page_translation(1, cpl == 3);
-        tlb_hash = tlb_writable[lax >> 12];
-        byte = memory8[lax ^ tlb_hash];
-    } else {
-        byte = memory8[lax];
-    }
-    return byte;
+    page_translation(1, cpl == 3);
+    tlb_hash = tlb_writable[lax >> 12];
+    return memory8[lax ^ tlb_hash];
 }
 int Free86::ld8_writable_cpl3() {
-    return (is_real__v86() ||
+    return (is_real__v86() ? ld8_direct(lax) :
                     (tlb_hash = tlb_writable[lax >> 12]) == -1)
                 ? _ld8_writable_cpl3()
                 : memory8[lax ^ tlb_hash];
@@ -110,7 +98,7 @@ int Free86::_ld16_writable_cpl3() {
     return word;
 }
 int Free86::ld16_writable_cpl3() {
-    return (is_real__v86() ||
+    return (is_real__v86() ? ld16_direct(lax) :
                     (tlb_hash = tlb_writable[lax >> 12]) | lax) & 1
                 ? _ld16_writable_cpl3()
                 : memory16[(lax ^ tlb_hash) >> 1];
@@ -127,7 +115,7 @@ int Free86::_ld_writable_cpl3() {
     return dword;
 }
 int Free86::ld_writable_cpl3() {
-    return (is_real__v86() ||
+    return (is_real__v86() ? ld_direct(lax) :
                     (tlb_hash = tlb_writable[lax >> 12]) | lax) & 3
                 ? _ld_writable_cpl3()
                 : memory[(lax ^ tlb_hash) >> 2];
@@ -175,16 +163,14 @@ void Free86::st_writable_cplX(int dword) {
     }
 }
 void Free86::_st8_writable_cpl3(int byte) {
-    if (is_protected()) {
-        page_translation(1, cpl == 3);
-        tlb_hash = tlb_writable[lax >> 12];
-        memory8[lax ^ tlb_hash] = byte;
-    } else {
-        memory8[lax] = byte;
-    }
+    page_translation(1, cpl == 3);
+    tlb_hash = tlb_writable[lax >> 12];
+    memory8[lax ^ tlb_hash] = byte;
 }
 void Free86::st8_writable_cpl3(int byte) {
-    if (is_real__v86() || (tlb_hash = tlb_writable[lax >> 12]) == -1) {
+    if (is_real__v86()) {
+        st8_direct(lax, byte);
+    } else if ((tlb_hash = tlb_writable[lax >> 12]) == -1) {
         _st8_writable_cpl3(byte);
     } else {
         memory8[lax ^ tlb_hash] = byte;
@@ -197,7 +183,9 @@ void Free86::_st16_writable_cpl3(int word) {
     lax--;
 }
 void Free86::st16_writable_cpl3(int word) {
-    if (is_real__v86() || ((tlb_hash = tlb_writable[lax >> 12]) | lax) & 1) {
+    if (is_real__v86()) {
+        st16_direct(lax, word);
+    } else if (((tlb_hash = tlb_writable[lax >> 12]) | lax) & 1) {
         _st16_writable_cpl3(word);
     } else {
         memory16[(lax ^ tlb_hash) >> 1] = word;
@@ -214,7 +202,9 @@ void Free86::_st_writable_cpl3(int dword) {
     lax -= 3;
 }
 void Free86::st_writable_cpl3(int dword) {
-    if (is_real__v86() || ((tlb_hash = tlb_writable[lax >> 12]) | lax) & 3) {
+    if (is_real__v86()) {
+        st_direct(lax, dword);
+    } else if (((tlb_hash = tlb_writable[lax >> 12]) | lax) & 3) {
         _st_writable_cpl3(dword);
     } else {
         memory[(lax ^ tlb_hash) >> 2] = dword;
