@@ -76,15 +76,17 @@ void PC::setup()
 void PC::cycle()
 {
     uint64_t cycles = cpu->cycles + 100000;
+    Interrupt interrupt = {-1, 0};
 
     while (cpu->cycles < cycles) {
         cpu->pit->update_irq();
 
         try {
-            cpu->fetch_decode_execute(cycles - cpu->cycles);
+            cpu->fetch_decode_execute(cycles - cpu->cycles, interrupt);
             if (cpu->halted)
                 break;
         } catch (const Interrupt& i) {
+            interrupt = {i.id, i.error_code};
         } catch (const char *m) {
             std::cout << m << std::endl;
             exit(1);

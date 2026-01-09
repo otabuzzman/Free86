@@ -12,7 +12,7 @@ typedef struct SegmentRegister {
 } SegmentRegister;
 
 typedef struct Interrupt {
-    int id = -1; // 0-31 termed `Exceptions'
+    int id; // 0-31 termed `Exceptions'
     int error_code;
 } Interrupt;
 
@@ -74,7 +74,7 @@ class Free86 {
     void reset();
 
     // fedex.cpp
-    void fetch_decode_execute(uint64_t cycles);
+    void fetch_decode_execute(uint64_t cycles, Interrupt& interrupt);
 
     // memory.cpp
     int ld8_direct(int address); // read/ write at physical memory address (bypass TLB)
@@ -102,8 +102,6 @@ class Free86 {
 
     uint64_t cycles_requested;
     uint64_t cycles_remaining;
-
-    Interrupt interrupt;
 
     int memory_size;
 

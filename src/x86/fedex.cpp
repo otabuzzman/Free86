@@ -1,6 +1,6 @@
 #include "free86.h"
 
-void Free86::fetch_decode_execute(uint64_t cycles) {
+void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
     int sreg, hL; // H (0x80) or L (0x00) byte selector
     if (halted) {
         if (get_irq() != 0 && (eflags & 0x00000200)) {
@@ -24,7 +24,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
         fetch_opcode();
         ipr = ipr_default;
         opcode |= ipr & 0x0100;
-        while (true) { // loop over instruction bytes
+        while (true) { // loop over instruction bytes (fetch)
             switch (opcode) {
             case 0x66: // operand-size override prefix
                 if (ipr == ipr_default) {
@@ -106,7 +106,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 opcode &= 7;
                 hL = (opcode & 4) << 1;
                 regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << hL)) | ((imm & 0xff) << hL);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xb8: // MOV A
             case 0xb9: // MOV C
             case 0xba: // MOV D
@@ -117,7 +117,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
             case 0xbf: // MOV DI
                 imm = fetch();
                 regs[opcode & 7] = imm;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x88: // MOV
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -130,7 +130,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     st8_writable_cpl3(r);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x89: // MOV
                 modRM = fetch8();
                 r = regs[(modRM >> 3) & 7];
@@ -140,7 +140,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     st_writable_cpl3(r);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x8a: // MOV
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -153,7 +153,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 reg = (modRM >> 3) & 7;
                 hL = (reg & 4) << 1;
                 regs[reg & 3] = (regs[reg & 3] & ~(0xff << hL)) | ((rm & 0xff) << hL);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x8b: // MOV
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -163,28 +163,28 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     rm = ld_readonly_cpl3();
                 }
                 regs[(modRM >> 3) & 7] = rm;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa0: // MOV AL,
                 offset_to_linear(false);
                 moffs = ld8_readonly_cpl3();
                 regs[0] = (regs[0] & -256) | moffs;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa1: // MOV AX,
                 offset_to_linear(false);
                 moffs = ld_readonly_cpl3();
                 regs[0] = moffs;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa2: // MOV ,AL
                 offset_to_linear(true);
                 st8_writable_cpl3(regs[0]);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa3: // MOV ,AX
                 if (ipr & 0x0040) { // test386, check LOCK prefix (not allowed)
                     abort(6);
                 }
                 offset_to_linear(true);
                 st_writable_cpl3(regs[0]);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd7: // XLAT
                 lax = regs[3] + (regs[0] & 0xff);
                 if (ipr & 0x0080) {
@@ -199,7 +199,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 lax = lax + segs[sreg].base;
                 m = ld8_readonly_cpl3();
                 set_lower_byte(0, m);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc6: // MOV
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -210,7 +210,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     imm = fetch8();
                     st8_writable_cpl3(imm);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc7: // MOV
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -221,7 +221,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     imm = fetch();
                     st_writable_cpl3(imm);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x91: // XCHG C
             case 0x92: // XCHG D
             case 0x93: // XCHG B
@@ -233,7 +233,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 x = regs[0];
                 regs[0] = regs[reg];
                 regs[reg] = x;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x86: // XCHG
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -247,7 +247,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     st8_writable_cpl3((regs[reg & 3] >> ((reg & 4) << 1)));
                 }
                 set_lower_byte(reg, rm);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x87: // XCHG
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -261,7 +261,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     st_writable_cpl3(regs[reg]);
                 }
                 regs[reg] = rm;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x8e: // MOV
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -275,7 +275,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     rm = ld16_readonly_cpl3();
                 }
                 set_segment_register(reg, rm);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x8c: // MOV
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -293,13 +293,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     segment_translation();
                     st16_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc4: // LES
                 ld_far_pointer(0);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc5: // LDS
                 ld_far_pointer(3);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x00: // ADD
             case 0x08: // OR
             case 0x10: // ADC
@@ -326,7 +326,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         calculate8(rm, r);
                     }
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x01: // ADD
                 modRM = fetch8();
                 r = regs[(modRM >> 3) & 7];
@@ -343,7 +343,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm = 2;
                     st_writable_cpl3(rm);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x09: // OR
             case 0x11: // ADC
             case 0x19: // SBB
@@ -362,7 +362,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = calculate(rm, r);
                     st_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x39: // CMP
                 modRM = fetch8();
                 operation = opcode >> 3;
@@ -379,7 +379,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     osm_dst = rm - osm_src;
                     osm = 8;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x02: // ADD
             case 0x0a: // OR
             case 0x12: // ADC
@@ -399,7 +399,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     rm = ld8_readonly_cpl3();
                 }
                 set_lower_byte(reg, calculate8((regs[reg & 3] >> ((reg & 4) << 1)), rm));
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x03: // ADD
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -412,7 +412,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 osm_src = rm;
                 osm_dst = regs[reg] = regs[reg] + osm_src;
                 osm = 2;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x0b: // OR
             case 0x13: // ADC
             case 0x1b: // SBB
@@ -429,7 +429,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     rm = ld_readonly_cpl3();
                 }
                 regs[reg] = calculate(regs[reg], rm);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x3b: // CMP
                 modRM = fetch8();
                 operation = opcode >> 3;
@@ -443,7 +443,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 osm_src = rm;
                 osm_dst = regs[reg] - osm_src;
                 osm = 8;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x04: // ADD
             case 0x0c: // OR
             case 0x14: // ADC
@@ -455,13 +455,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 imm = fetch8();
                 operation = opcode >> 3;
                 set_lower_byte(0, calculate8(regs[0] & 0xff, imm));
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x05: // ADD
                 imm = fetch();
                 osm_src = imm;
                 osm_dst = regs[0] = regs[0] + osm_src;
                 osm = 2;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x0d: // OR
             case 0x15: // ADC
             case 0x1d: // SBB
@@ -470,18 +470,18 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 imm = fetch();
                 operation = opcode >> 3;
                 regs[0] = calculate(regs[0], imm);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x35: // XOR
                 imm = fetch();
                 osm_dst = regs[0] = regs[0] ^ imm;
                 osm = 14;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x3d: // CMP
                 imm = fetch();
                 osm_src = imm;
                 osm_dst = regs[0] - osm_src;
                 osm = 8;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
             case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                 modRM = fetch8();
@@ -502,7 +502,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         calculate8(rm, imm);
                     }
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -530,7 +530,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st_writable_cpl3(x);
                     }
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x83: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -558,7 +558,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st_writable_cpl3(x);
                     }
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x40: // INC A
             case 0x41: // INC C
             case 0x42: // INC D
@@ -574,7 +574,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 regs[reg] = osm_dst = regs[reg] + 1;
                 osm = 27;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x48: // DEC A
             case 0x49: // DEC C
             case 0x4a: // DEC D
@@ -590,7 +590,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 regs[reg] = osm_dst = regs[reg] - 1;
                 osm = 30;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x6b: // IMUL
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -603,7 +603,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 imm = (fetch8() << 24) >> 24;
                 aux_IMUL(rm, imm);
                 regs[reg] = x;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x69: // IMUL
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -616,7 +616,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 imm = fetch();
                 aux_IMUL(rm, imm);
                 regs[reg] = x;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x84: // TEST
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -630,7 +630,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 r = regs[reg & 3] >> ((reg & 4) << 1);
                 osm_dst = ((rm & r) << 24) >> 24;
                 osm = 12;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x85: // TEST
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -642,17 +642,17 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 r = regs[(modRM >> 3) & 7];
                 osm_dst = rm & r;
                 osm = 14;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa8: // TEST
                 imm = fetch8();
                 osm_dst = ((regs[0] & imm) << 24) >> 24;
                 osm = 12;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa9: // TEST
                 imm = fetch();
                 osm_dst = regs[0] & imm;
                 osm = 14;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -736,7 +736,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 default:
                     abort(6);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -821,7 +821,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 default:
                     abort(6);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -836,7 +836,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = shift8(rm, imm);
                     st8_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -851,7 +851,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = shift(rm, imm);
                     st_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -864,7 +864,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = shift8(rm, 1);
                     st8_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -877,7 +877,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = shift(rm, 1);
                     st_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -890,7 +890,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = shift8(rm, regs[1] & 0xff);
                     st8_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -903,13 +903,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = shift(rm, regs[1] & 0xff);
                     st_writable_cpl3(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x98: // CBW
                 regs[0] = (regs[0] << 16) >> 16;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x99: // CWD
                 regs[2] = regs[0] >> 31;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x50: // PUSH A
             case 0x51: // PUSH C
             case 0x52: // PUSH D
@@ -926,7 +926,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     push(r);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x58: // POP A
             case 0x59: // POP C
             case 0x5a: // POP D
@@ -943,13 +943,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     m = pop();
                 }
                 regs[opcode & 7] = m;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x60: // PUSHA
                 aux_PUSHA();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x61: // POPA
                 aux_POPA();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x8f: // POP
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -964,7 +964,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     st_writable_cpl3(m);
                     regs[4] = y;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x68: // PUSH
                 imm = fetch();
                 if (x86_64_long_mode) {
@@ -974,7 +974,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     push(imm);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x6a: // PUSH
                 imm = (fetch8() << 24) >> 24;
                 if (x86_64_long_mode) {
@@ -984,10 +984,10 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     push(imm);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc8: // ENTER
                 aux_ENTER();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc9: // LEAVE
                 if (x86_64_long_mode) {
                     lax = regs[5];
@@ -996,7 +996,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     aux_LEAVE();
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x9c: // PUSHF
                 iopl = (eflags >> 12) & 3;
                 if ((eflags & 0x00020000) && iopl != 3) {
@@ -1008,7 +1008,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     push16(x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x9d: // POPF
                 iopl = (eflags >> 12) & 3;
                 if ((eflags & 0x00020000) && iopl != 3) {
@@ -1033,19 +1033,19 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x06: // PUSH
             case 0x0e: // PUSH
             case 0x16: // PUSH
             case 0x1e: // PUSH
                 push(segs[opcode >> 3].selector);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x07: // POP
             case 0x17: // POP
             case 0x1f: // POP
                 m = pop() & 0xffff;
                 set_segment_register(opcode >> 3, m);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x8d: // LEA
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -1054,7 +1054,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 ipr = (ipr & ~0x000f) | (6 + 1);
                 segment_translation();
                 regs[(modRM >> 3) & 7] = lax;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xfe: // G4 (INC, DEC, -, -, -, -, -)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -1084,7 +1084,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 default:
                     abort(6);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
                 modRM = fetch8();
                 operation = (modRM >> 3) & 7;
@@ -1190,15 +1190,15 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 default:
                     abort(6);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xeb: // JMP
                 imm = (fetch8() << 24) >> 24;
                 far = far + imm;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe9: // JMP
                 imm = fetch();
                 far = far + imm;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xea: // JMPF
                 if (((ipr >> 8) & 1) ^ 1) {
                     imm = fetch();
@@ -1207,7 +1207,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 imm16 = fetch16();
                 aux_JMPF(imm16, imm);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x70: // JO
                 if (is_OF()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1215,7 +1215,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x71: // JNO
                 if (!is_OF()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1223,7 +1223,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x72: // JB
                 if (is_CF()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1231,7 +1231,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x73: // JNB
                 if (!is_CF()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1239,7 +1239,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x74: // JZ
                 if (osm_dst == 0) {
                     imm = (fetch8() << 24) >> 24;
@@ -1247,7 +1247,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x75: // JNZ
                 if (!(osm_dst == 0)) {
                     imm = (fetch8() << 24) >> 24;
@@ -1255,7 +1255,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x76: // JBE
                 if (is_BE()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1263,7 +1263,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x77: // JNBE
                 if (!is_BE()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1271,7 +1271,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x78: // JS
                 if (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) {
                     imm = (fetch8() << 24) >> 24;
@@ -1279,7 +1279,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x79: // JNS
                 if (!(osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
                     imm = (fetch8() << 24) >> 24;
@@ -1287,7 +1287,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x7a: // JP
                 if (is_PF()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1295,7 +1295,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x7b: // JNP
                 if (!is_PF()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1303,7 +1303,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x7c: // JL
                 if (is_LT()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1311,7 +1311,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x7d: // JNL
                 if (!is_LT()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1319,7 +1319,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x7e: // JLE
                 if (is_LE()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1327,7 +1327,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x7f: // JNLE
                 if (!is_LE()) {
                     imm = (fetch8() << 24) >> 24;
@@ -1335,7 +1335,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     far = far + 1;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe0: // LOOPNE
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
@@ -1358,7 +1358,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         far = far + imm;
                     }
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe3: // JCXZ
                 imm = (fetch8() << 24) >> 24;
                 XS_mask = (ipr & 0x0080) ? 0xffff : -1;
@@ -1369,13 +1369,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         far = far + imm;
                     }
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc2: // RET
                 imm = (fetch16() << 16) >> 16;
                 m = ld_stack();
                 regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + imm) & SS_mask);
                 eip = m, far = far_start = 0;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xc3: // RET
                 if (x86_64_long_mode) {
                     lax = regs[4];
@@ -1385,7 +1385,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     m = pop();
                 }
                 eip = m, far = far_start = 0;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe8: // CALL
                 imm = fetch();
                 x = eip + far - far_start;
@@ -1397,7 +1397,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     push(x);
                 }
                 far = far + imm;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x9a: // CALLF
                 x = ((ipr >> 8) & 1) ^ 1;
                 if (x) {
@@ -1410,32 +1410,32 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xca: // RET
                 imm = (fetch16() << 16) >> 16;
                 aux_RETF((((ipr >> 8) & 1) ^ 1), imm);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xcb: // RET
                 aux_RETF((((ipr >> 8) & 1) ^ 1), 0);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xcf: // IRET
                 aux_IRET((((ipr >> 8) & 1) ^ 1));
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x90: // NOP
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xcc: // INT
                 x = eip + far - far_start;
                 raise_interrupt(3, 0, 0, 1, x);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xcd: // INT
                 imm = fetch8();
                 if ((eflags & 0x00020000) && ((eflags >> 12) & 3) != 3) {
@@ -1443,44 +1443,44 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
                 x = eip + far - far_start;
                 raise_interrupt(imm, 0, 0, 1, x);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xce: // INTO
                 if (is_OF()) {
                     x = eip + far - far_start;
                     raise_interrupt(4, 0, 0, 1, x);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x62: // BOUND
                 aux_BOUND();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xf5: // CMC
                 osm_src = compile_eflags() ^ 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xf8: // CLC
                 osm_src = compile_eflags() & ~0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xf9: // STC
                 osm_src = compile_eflags() | 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xfc: // CLD
                 df = 1;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xfd: // STD
                 df = -1;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xfa: // CLI
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
                     abort(13);
                 }
                 eflags &= ~0x00000200;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xfb: // STI
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1490,16 +1490,16 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x9e: // SAHF
                 osm_src = ((regs[0] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (is_OF() << 11);
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x9f: // LAHF
                 x = get_EFLAGS();
                 set_lower_byte(4, x);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xf4: // HLT
                 if (cpl != 0) {
                     abort(13);
@@ -1508,58 +1508,58 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 goto OUTER_LOOP;
             case 0xa4: // MOVSB
                 aux_MOVSB();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa5: // MOVSW/D
                 ipr & 0x0100 ? aux_MOVSW() : aux_MOVSD();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xaa: // STOSB
                 aux_STOSB();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xab: // STOSW/D
                 ipr & 0x0100 ? aux_STOSW() : aux_STOSD();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa6: // CMPSB
                 aux_CMPSB();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa7: // CMPSW/D
                 ipr & 0x0100 ? aux_CMPSW() : aux_CMPSD();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xac: // LOSB
                 aux_LODSB();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xad: // LOSW/D
                 ipr & 0x0100 ? aux_LODSW() : aux_LODSD();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xae: // SCASB
                 aux_SCASB();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xaf: // SCASW/D
                 ipr & 0x0100 ? aux_SCASW() : aux_SCASD();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x6c: // INSB
                 aux_INSB();
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x6d: // INSW/D
                 ipr & 0x0100 ? aux_INSW() : aux_INSD();
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x6e: // OUTSB
                 aux_OUTSB();
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x6f: // OUTSW/D
                 ipr & 0x0100 ? aux_OUTSW() : aux_OUTSD();
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd8: // ESC (80387) 11011XXX
             case 0xd9: // ESC (80387)
             case 0xda: // ESC (80387)
@@ -1580,9 +1580,9 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 } else {
                     segment_translation();
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x9b: // FWAIT/WAIT
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe4: // IN AL,
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1593,7 +1593,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe5: // IN AX,
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1604,7 +1604,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe6: // OUT ,AL
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1615,7 +1615,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xe7: // OUT ,AX
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1626,7 +1626,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xec: // IN AL,DX
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1636,7 +1636,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xed: // IN AX,DX
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1646,7 +1646,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xee: // OUT DX,AL
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1656,7 +1656,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xef: // OUT DX,AX
                 iopl = (eflags >> 12) & 3;
                 if (cpl > iopl) {
@@ -1666,30 +1666,30 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x27: // DAA
                 aux_DAA();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x2f: // DAS
                 aux_DAS();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x37: // AAA
                 aux_AAA();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x3f: // AAS
                 aux_AAS();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd4: // AAM
                 imm = fetch8();
                 aux_AAM(imm);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd5: // AAD
                 imm = fetch8();
                 aux_AAD(imm);
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x63: // ARPL
                 aux_ARPL();
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xd6: // -
             case 0xf1: // -
                 abort(6);
@@ -1716,7 +1716,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (can_jump(opcode & 0xf)) {
                         far = far + imm;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x90: // SETO
                 case 0x91: // SETNO
                 case 0x92: // SETB
@@ -1741,7 +1741,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         st8_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x40: // CMOVx conditional move (80486) - overflow (OF == 1)
                 case 0x41: // CMOVx   - not overflow (OF == 0)
                 case 0x42: // CMOVx   - below/not above or equal/carry (CF == 1)
@@ -1768,7 +1768,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (can_jump(opcode & 0xf)) {
                         regs[(modRM >> 3) & 7] = rm;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xb6: // MOVZX
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -1780,7 +1780,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld8_readonly_cpl3();
                     }
                     regs[reg] = rm;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xb7: // MOVZX
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -1791,7 +1791,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld16_readonly_cpl3();
                     }
                     regs[reg] = rm;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xbe: // MOVSX
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -1803,7 +1803,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld8_readonly_cpl3();
                     }
                     regs[reg] = (rm << 24) >> 24;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xbf: // MOVSX
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -1814,7 +1814,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld16_readonly_cpl3();
                     }
                     regs[reg] = (rm << 16) >> 16;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     if (!is_protected() || (eflags & 0x00020000)) {
                         abort(6);
@@ -1866,7 +1866,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     default:
                         abort(6);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x01: // G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -1904,11 +1904,11 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     default:
                         abort(6);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x02: // LAR
                 case 0x03: // LSL
                     aux_LAR_LSL((((ipr >> 8) & 1) ^ 1), opcode & 1);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x20: // MOV
                     if (cpl != 0) {
                         abort(13);
@@ -1935,7 +1935,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         abort(6);
                     }
                     regs[modRM & 7] = x;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x22: // MOV
                     if (cpl != 0) {
                         abort(13);
@@ -1962,13 +1962,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     default:
                         abort(6);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x06: // CLTS
                     if (cpl != 0) {
                         abort(13);
                     }
                     set_CR0(cr0 & ~(1 << 3));
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x23: // MOV
                     if (cpl != 0) {
                         abort(13);
@@ -1982,15 +1982,15 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (reg == 4 || reg == 5) {
                         abort(6);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xb2: // LSS
                 case 0xb4: // LFS
                 case 0xb5: // LGS
                     ld_far_pointer(opcode & 7);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xa2: // CPUID (80486)
                     aux_CPUID();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xa4: // SHLD
                     modRM = fetch8();
                     r = regs[(modRM >> 3) & 7];
@@ -2005,7 +2005,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = aux_SHLD(rm, r, imm);
                         st_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xa5: // SHLD
                     modRM = fetch8();
                     r = regs[(modRM >> 3) & 7];
@@ -2018,7 +2018,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = aux_SHLD(rm, r, regs[1]);
                         st_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xac: // SHRD
                     modRM = fetch8();
                     r = regs[(modRM >> 3) & 7];
@@ -2033,7 +2033,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = aux_SHRD(rm, r, imm);
                         st_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xad: // SHRD
                     modRM = fetch8();
                     r = regs[(modRM >> 3) & 7];
@@ -2046,7 +2046,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = aux_SHRD(rm, r, regs[1]);
                         st_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2081,7 +2081,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     default:
                         abort(6);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xa3: // BT
                     modRM = fetch8();
                     r = regs[(modRM >> 3) & 7];
@@ -2093,7 +2093,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_BT(rm, r);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xab: // BTS
                 case 0xb3: // BTR
                 case 0xbb: // BTC
@@ -2110,7 +2110,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = aux_BTS_BTR_BTC(rm, r);
                         st_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xbc: // BSF
                 case 0xbd: // BSR
                     modRM = fetch8();
@@ -2126,7 +2126,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     } else {
                         regs[reg] = aux_BSF(regs[reg], rm);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xaf: // IMUL
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -2138,7 +2138,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     }
                     aux_IMUL(regs[reg], rm);
                     regs[reg] = x;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x31: // RDTSC (80486)
                     if ((cr4 & (1 << 2)) && cpl != 0) {
                         abort(13);
@@ -2148,7 +2148,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         regs[0] = t;
                         regs[2] = t >> 32;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xc0: // XADD (80486)
                     operation = 0;
                     modRM = fetch8();
@@ -2166,7 +2166,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st8_writable_cpl3(x);
                         set_lower_byte(reg, rm);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xc1: // XADD (80486)
                     operation = 0;
                     modRM = fetch8();
@@ -2184,7 +2184,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st_writable_cpl3(x);
                         regs[reg] = rm;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xb0: // CMPXCHG (80486)
                     operation = 5;
                     modRM = fetch8();
@@ -2208,7 +2208,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             set_lower_byte(0, rm);
                         }
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xb1: // CMPXCHG (80486)
                     operation = 5;
                     modRM = fetch8();
@@ -2232,16 +2232,16 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             regs[0] = rm;
                         }
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xa0: // PUSH FS
                 case 0xa8: // PUSH GS
                     push(segs[(opcode >> 3) & 7].selector);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xa1: // POP FS
                 case 0xa9: // POP GS
                     m = pop() & 0xffff;
                     set_segment_register((opcode >> 3) & 7, m);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0xc8: // -
                 case 0xc9: // -
                 case 0xca: // -
@@ -2253,7 +2253,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     reg = opcode & 7;
                     r = regs[reg];
                     regs[reg] = ((r >> 24) & 0xff) | ((r >> 8) & 0xff00) | ((r << 8) & 0xff0000) | (r << 24);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x04: // -
                 case 0x05: // -
                 case 0x07: // -
@@ -2431,7 +2431,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         segment_translation();
                         st16_writable_cpl3(r);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x18b: // MOV
                     modRM = fetch8();
                     if ((modRM >> 6) == 3) {
@@ -2441,7 +2441,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld16_readonly_cpl3();
                     }
                     set_lower_word((modRM >> 3) & 7, rm);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1b8: // MOV A
                 case 0x1b9: // MOV C
                 case 0x1ba: // MOV D
@@ -2451,16 +2451,16 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x1be: // MOV SI
                 case 0x1bf: // MOV DI
                     set_lower_word(opcode & 7, fetch16());
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1a1: // MOV AX,
                     offset_to_linear(false);
                     moffs = ld16_readonly_cpl3();
                     set_lower_word(0, moffs);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1a3: // MOV ,AX
                     offset_to_linear(true);
                     st16_writable_cpl3(regs[0]);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c7: // MOV
                     modRM = fetch8();
                     if ((modRM >> 6) == 3) {
@@ -2471,7 +2471,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         imm = fetch16();
                         st16_writable_cpl3(imm);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x191: // XCHG C
                 case 0x192: // XCHG D
                 case 0x193: // XCHG B
@@ -2483,7 +2483,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     x = regs[0];
                     set_lower_word(0, regs[reg]);
                     set_lower_word(reg, x);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x187: // XCHG
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -2497,13 +2497,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st16_writable_cpl3(regs[reg]);
                     }
                     set_lower_word(reg, rm);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c4: // LES
                     ld_far_pointer16(0);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c5: // LDS
                     ld_far_pointer16(3);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x101: // ADD
                 case 0x109: // OR
                 case 0x111: // ADC
@@ -2529,7 +2529,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             calculate16(rm, r);
                         }
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x103: // ADD
                 case 0x10b: // OR
                 case 0x113: // ADC
@@ -2548,7 +2548,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         rm = ld16_readonly_cpl3();
                     }
                     set_lower_word(reg, calculate16(regs[reg], rm));
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x105: // ADD
                 case 0x10d: // OR
                 case 0x115: // ADC
@@ -2560,7 +2560,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     imm = fetch16();
                     operation = (opcode >> 3) & 7;
                     set_lower_word(0, calculate16(regs[0], imm));
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x181: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2580,7 +2580,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             calculate16(rm, imm);
                         }
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x183: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2600,7 +2600,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             calculate16(rm, imm);
                         }
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x140: // INC A
                 case 0x141: // INC C
                 case 0x142: // INC D
@@ -2611,7 +2611,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x147: // INC DI
                     reg = opcode & 7;
                     set_lower_word(reg, aux_INC16(regs[reg]));
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x148: // DEC A
                 case 0x149: // DEC C
                 case 0x14a: // DEC D
@@ -2622,7 +2622,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x14f: // DEC DI
                     reg = opcode & 7;
                     set_lower_word(reg, aux_DEC16(regs[reg]));
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x16b: // IMUL
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -2635,7 +2635,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     imm = (fetch8() << 24) >> 24;
                     aux_IMUL16(rm, imm);
                     set_lower_word(reg, x);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x169: // IMUL
                     modRM = fetch8();
                     reg = (modRM >> 3) & 7;
@@ -2648,7 +2648,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     imm = fetch16();
                     aux_IMUL16(rm, imm);
                     set_lower_word(reg, x);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x185: // TEST
                     modRM = fetch8();
                     if ((modRM >> 6) == 3) {
@@ -2660,12 +2660,12 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     r = regs[(modRM >> 3) & 7];
                     osm_dst = ((rm & r) << 16) >> 16;
                     osm = 13;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1a9: // TEST
                     imm = fetch16();
                     osm_dst = ((regs[0] & imm) << 16) >> 16;
                     osm = 13;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2747,7 +2747,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     default:
                         abort(6);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2762,7 +2762,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = shift16(rm, imm);
                         st16_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1d1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2775,7 +2775,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = shift16(rm, 1);
                         st16_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1d3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2789,15 +2789,15 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         x = shift16(rm, ind);
                         st16_writable_cpl3(x);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x198: // CBW
                     set_lower_word(0, (regs[0] << 24) >> 24);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x199: // CWD
                     set_lower_word(2, (regs[0] << 16) >> 31);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x190: // NOP
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x150: // PUSH A
                 case 0x151: // PUSH C
                 case 0x152: // PUSH D
@@ -2807,7 +2807,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x156: // PUSH SI
                 case 0x157: // PUSH DI
                     push16(regs[opcode & 7]);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x158: // POP A
                 case 0x159: // POP C
                 case 0x15a: // POP D
@@ -2818,13 +2818,13 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 case 0x15f: // POP DI
                     m = pop16();
                     set_lower_word(opcode & 7, m);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x160: // PUSHA
                     aux_PUSHA16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x161: // POPA
                     aux_POPA16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x18f: // POP
                     modRM = fetch8();
                     if ((modRM >> 6) == 3) {
@@ -2839,33 +2839,33 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         st16_writable_cpl3(m);
                         regs[4] = y;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x168: // PUSH
                     imm = fetch16();
                     push16(imm);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x16a: // PUSH
                     imm = (fetch8() << 24) >> 24;
                     push16(imm);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c8: // ENTER
                     aux_ENTER16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c9: // LEAVE
                     aux_LEAVE16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x106: // PUSH
                 case 0x10e: // PUSH
                 case 0x116: // PUSH
                 case 0x11e: // PUSH
                     push16(segs[(opcode >> 3) & 3].selector);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x107: // POP
                 case 0x117: // POP
                 case 0x11f: // POP
                     m = pop16();
                     set_segment_register((opcode >> 3) & 3, m);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x18d: // LEA
                     modRM = fetch8();
                     if ((modRM >> 6) == 3) {
@@ -2874,7 +2874,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     ipr = (ipr & ~0x000f) | (6 + 1);
                     segment_translation();
                     set_lower_word((modRM >> 3) & 7, lax);
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1ff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
                     modRM = fetch8();
                     operation = (modRM >> 3) & 7;
@@ -2947,15 +2947,15 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     default:
                         abort(6);
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1eb: // JMP
                     imm = (fetch8() << 24) >> 24;
                     eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1e9: // JMP
                     imm = fetch16();
                     eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x170: // JO
                 case 0x171: // JNO
                 case 0x172: // JB
@@ -2976,52 +2976,52 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (can_jump(opcode & 0xf)) {
                         eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c2: // RET
                     imm = (fetch16() << 16) >> 16;
                     m = ld16_stack();
                     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + imm) & SS_mask);
                     eip = m, far = far_start = 0;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1c3: // RET
                     m = pop16();
                     eip = m, far = far_start = 0;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1e8: // CALL
                     imm = fetch16();
                     push16((eip + far - far_start));
                     eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x162: // BOUND
                     aux_BOUND16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1a5: // MOVSW/D
                     aux_MOVS16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1a7: // CMPSW/D
                     aux_CMPS16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1ad: // LOSW/D
                     aux_LODS16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1af: // SCASW/D
                     aux_SCAS16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1ab: // STOSW/D
                     aux_STOS16();
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x16d: // INSW/D
                     aux_INS16();
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x16f: // OUTSW/D
                     aux_OUTS16();
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1e5: // IN AX,
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl) {
@@ -3032,7 +3032,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1e7: // OUT ,AX
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl) {
@@ -3043,7 +3043,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1ed: // IN AX,DX
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl) {
@@ -3053,7 +3053,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x1ef: // OUT DX,AX
                     iopl = (eflags >> 12) & 3;
                     if (cpl > iopl) {
@@ -3063,7 +3063,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
-                    goto EXEC_LOOP;
+                    goto FETCH_LOOP;
                 case 0x166: // operand-size override prefix
                 case 0x167: // address-size override prefix
                 case 0x1f0: // LOCK prefix
@@ -3204,7 +3204,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         if (can_jump(opcode & 0xf)) {
                             eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x140: // CMOVx (80486)
                     case 0x141: // CMOVx (80486)
                     case 0x142: // CMOVx (80486)
@@ -3231,7 +3231,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         if (can_jump(opcode & 0xf)) {
                             set_lower_word((modRM >> 3) & 7, rm);
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1b6: // MOVZX
                         modRM = fetch8();
                         reg = (modRM >> 3) & 7;
@@ -3243,7 +3243,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             rm = ld8_readonly_cpl3();
                         }
                         set_lower_word(reg, rm);
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1be: // MOVSX
                         modRM = fetch8();
                         reg = (modRM >> 3) & 7;
@@ -3255,7 +3255,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             rm = ld8_readonly_cpl3();
                         }
                         set_lower_word(reg, ((rm << 24) >> 24));
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1af: // IMUL
                         modRM = fetch8();
                         reg = (modRM >> 3) & 7;
@@ -3267,7 +3267,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         }
                         aux_IMUL16(regs[reg], rm);
                         set_lower_word(reg, x);
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1c1: // XADD (80486)
                         operation = 0;
                         modRM = fetch8();
@@ -3285,21 +3285,21 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             st16_writable_cpl3(x);
                             set_lower_word(reg, rm);
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1a0: // PUSH FS
                     case 0x1a8: // PUSH GS
                         push16(segs[(opcode >> 3) & 7].selector);
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1a1: // POP FS
                     case 0x1a9: // POP GS
                         m = pop16();
                         set_segment_register((opcode >> 3) & 7, m);
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1b2: // LSS
                     case 0x1b4: // LFS
                     case 0x1b5: // LGS
                         ld_far_pointer16(opcode & 7);
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1a4: // SHLD
                     case 0x1ac: // SHRD
                         modRM = fetch8();
@@ -3316,7 +3316,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = aux_SHRD16_SHLD16(rm, r, imm);
                             st16_writable_cpl3(x);
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1a5: // SHLD
                     case 0x1ad: // SHRD
                         modRM = fetch8();
@@ -3331,7 +3331,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = aux_SHRD16_SHLD16(rm, r, regs[1]);
                             st16_writable_cpl3(x);
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1ba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
                         modRM = fetch8();
                         operation = (modRM >> 3) & 7;
@@ -3366,7 +3366,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                         default:
                             abort(6);
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1a3: // BT
                         modRM = fetch8();
                         r = regs[(modRM >> 3) & 7];
@@ -3378,7 +3378,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             rm = ld16_readonly_cpl3();
                         }
                         aux_BT16(rm, r);
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1ab: // BTS
                     case 0x1b3: // BTR
                     case 0x1bb: // BTC
@@ -3395,7 +3395,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = aux_BTS16_BTR16_BTC16(rm, r);
                             st16_writable_cpl3(x);
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1bc: // BSF
                     case 0x1bd: // BSR
                         modRM = fetch8();
@@ -3413,7 +3413,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                             x = aux_BSF16(r, rm);
                         }
                         set_lower_word(reg, x);
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x1b1: // CMPXCHG (40486)
                         operation = 5;
                         modRM = fetch8();
@@ -3437,7 +3437,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                                 set_lower_word(0, m);
                             }
                         }
-                        goto EXEC_LOOP;
+                        goto FETCH_LOOP;
                     case 0x100: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     case 0x101: // G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)
                     case 0x102: // LAR
@@ -3589,7 +3589,7 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
                 }
             }
         }
-    EXEC_LOOP:
+    FETCH_LOOP:
         ;
     } while (--cycles_remaining);
 OUTER_LOOP:
