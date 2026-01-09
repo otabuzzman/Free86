@@ -32,6 +32,8 @@ let package = Package(
                 "Exception+Interrupt.swift",
                 "Free86.swift",
                 "Free86+Fedex.swift",
+                "ControlRegister.swift",
+                "ExtendedFlags.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -50,6 +52,8 @@ let package = Package(
                 "GeneralRegister.swift",
                 "PinIO.swift",
                 "Exception+Interrupt.swift",
+                "ControlRegister.swift",
+                "ExtendedFlags.swift",
            ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
