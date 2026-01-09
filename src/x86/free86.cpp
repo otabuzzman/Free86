@@ -75,7 +75,7 @@ void Free86::fetch_opcode() {
         }
         eip_tlb_hash = tlb_readonly[eip_linear >> 12];
         far = far_start = eip_linear ^ eip_tlb_hash;
-        opcode = ld8_direct();
+        opcode = fetch8();
         int page_offset = eip_linear & 0xfff;
         if (page_offset > (4096 - 15)) {
             x = instruction_length(opcode);
@@ -90,7 +90,7 @@ void Free86::fetch_opcode() {
         }
     } else {
         far = far_start = eip_linear ^ eip_tlb_hash;
-        opcode = ld8_direct();
+        opcode = fetch8();
     }
 }
 int Free86::instruction_length(int opcode) {
@@ -1300,10 +1300,10 @@ void Free86::segment_translation() {
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
-            sib = ld8_direct();
+            sib = fetch8();
             base = sib & 7;
             if (base == 5) {
-                lax = ld_direct();
+                lax = fetch();
             } else {
                 lax = regs[base];
             }
@@ -1313,8 +1313,8 @@ void Free86::segment_translation() {
             }
             break;
         case 0x0c:
-            sib = ld8_direct();
-            lax = (ld8_direct() << 24) >> 24;
+            sib = fetch8();
+            lax = (fetch8() << 24) >> 24;
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -1323,8 +1323,8 @@ void Free86::segment_translation() {
             }
             break;
         case 0x14:
-            sib = ld8_direct();
-            lax = ld_direct();
+            sib = fetch8();
+            lax = fetch();
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -1333,7 +1333,7 @@ void Free86::segment_translation() {
             }
             break;
         case 0x05:
-            lax = ld_direct();
+            lax = fetch();
             break;
         case 0x00:
         case 0x01:
@@ -1351,7 +1351,7 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f:
-            lax = (ld8_direct() << 24) >> 24;
+            lax = (fetch8() << 24) >> 24;
             base = modRM & 7;
             lax = lax + regs[base];
             break;
@@ -1363,7 +1363,7 @@ void Free86::segment_translation() {
         case 0x16:
         case 0x17:
         default:
-            lax = ld_direct();
+            lax = fetch();
             base = modRM & 7;
             lax = lax + regs[base];
             break;
@@ -1371,7 +1371,7 @@ void Free86::segment_translation() {
         return;
     } else if (ipr & 0x0080) {
         if ((modRM & 0xc7) == 0x06) {
-            lax = ld16_direct();
+            lax = fetch16();
             sreg_default = 3;
         } else {
             switch (modRM >> 6) {
@@ -1379,10 +1379,10 @@ void Free86::segment_translation() {
                 lax = 0;
                 break;
             case 1:
-                lax = (ld8_direct() << 24) >> 24;
+                lax = (fetch8() << 24) >> 24;
                 break;
             default:
-                lax = ld16_direct();
+                lax = fetch16();
                 break;
             }
             switch (modRM & 7) {
@@ -1432,10 +1432,10 @@ void Free86::segment_translation() {
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x04:
-            sib = ld8_direct();
+            sib = fetch8();
             base = sib & 7;
             if (base == 5) {
-                lax = ld_direct();
+                lax = fetch();
                 base = 0;
             } else {
                 lax = regs[base];
@@ -1446,8 +1446,8 @@ void Free86::segment_translation() {
             }
             break;
         case 0x0c:
-            sib = ld8_direct();
-            lax = (ld8_direct() << 24) >> 24;
+            sib = fetch8();
+            lax = (fetch8() << 24) >> 24;
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -1456,8 +1456,8 @@ void Free86::segment_translation() {
             }
             break;
         case 0x14:
-            sib = ld8_direct();
-            lax = ld_direct();
+            sib = fetch8();
+            lax = fetch();
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -1466,7 +1466,7 @@ void Free86::segment_translation() {
             }
             break;
         case 0x05:
-            lax = ld_direct();
+            lax = fetch();
             base = 0;
             break;
         case 0x00:
@@ -1485,7 +1485,7 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
-            lax = (ld8_direct() << 24) >> 24;
+            lax = (fetch8() << 24) >> 24;
             base = modRM & 7;
             lax = lax + regs[base];
             break;
@@ -1497,7 +1497,7 @@ void Free86::segment_translation() {
         case 0x16:
         case 0x17:
         default:
-            lax = ld_direct();
+            lax = fetch();
             base = modRM & 7;
             lax = lax + regs[base];
             break;
@@ -1519,10 +1519,10 @@ void Free86::offset_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
-        la = ld16_direct() & 0xffff;
+        la = fetch16() & 0xffff;
         stride = 2; // 16 bit mode
     } else {
-        la = ld_direct() & 0xffffffff;
+        la = fetch() & 0xffffffff;
         stride = 4; // 32 bit mode
     }
     if (!(opcode & 0x01)) {
@@ -3438,7 +3438,7 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    modRM = ld8_direct();
+    modRM = fetch8();
     reg = (modRM >> 3) & 7;
     if ((modRM >> 6) == 3) {
         selector = regs[modRM & 7] & 0xffff;
@@ -3526,7 +3526,7 @@ void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    modRM = ld8_direct();
+    modRM = fetch8();
     if ((modRM >> 6) == 3) {
         rM = modRM & 7;
         rm = regs[rM] & 0xffff;
@@ -3679,7 +3679,7 @@ void Free86::aux_DAS() {
     osm = 24;
 }
 void Free86::aux_BOUND16() {
-    modRM = ld8_direct();
+    modRM = fetch8();
     if ((modRM >> 6) == 3) {
         abort(6);
     }
@@ -3694,7 +3694,7 @@ void Free86::aux_BOUND16() {
     }
 }
 void Free86::aux_BOUND() {
-    modRM = ld8_direct();
+    modRM = fetch8();
     if ((modRM >> 6) == 3) {
         abort(6);
     }
@@ -3762,8 +3762,8 @@ void Free86::aux_LEAVE() {
 }
 void Free86::aux_ENTER16() {
     int esp, ebp, exp;
-    imm16 = ld16_direct();
-    imm = ld8_direct();
+    imm16 = fetch16();
+    imm = fetch8();
     imm &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
@@ -3793,8 +3793,8 @@ void Free86::aux_ENTER16() {
 }
 void Free86::aux_ENTER() {
     int esp, ebp, exp;
-    imm16 = ld16_direct();
-    imm = ld8_direct();
+    imm16 = fetch16();
+    imm = fetch8();
     imm &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
@@ -3823,26 +3823,22 @@ void Free86::aux_ENTER() {
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::ld_far_pointer16(int sreg) {
-    modRM = ld8_direct();
-    if ((modRM >> 3) == 3) {
-        ; // abort(6);
-    }
+    modRM = fetch8();
+    reg = (modRM >> 3) & 7;
     segment_translation();
     imm = ld16_readonly_cpl3();
     lax += 2;
     imm16 = ld16_readonly_cpl3();
     set_segment_register(sreg, imm16);
-    set_lower_word((modRM >> 3) & 7, imm);
+    set_lower_word(reg, imm);
 }
 void Free86::ld_far_pointer(int sreg) {
-    modRM = ld8_direct();
-    if ((modRM >> 3) == 3) {
-        ; // abort(6);
-    }
+    modRM = fetch8();
+    reg = (modRM >> 3) & 7;
     segment_translation();
     imm = ld_readonly_cpl3();
     lax += 4;
     imm16 = ld16_readonly_cpl3();
     set_segment_register(sreg, imm16);
-    regs[(modRM >> 3) & 7] = imm;
+    regs[reg] = imm;
 }
