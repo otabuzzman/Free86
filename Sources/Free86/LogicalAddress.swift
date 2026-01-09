@@ -9,6 +9,6 @@ typealias NearPointer = DWord
 
 extension LogicalAddress {
     var translation: LinearAddress {
-        0
+        0 as! LinearAddress
     }
 }

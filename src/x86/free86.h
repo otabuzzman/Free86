@@ -545,18 +545,17 @@ class Free86 {
     void st_writable_cpl3(int dword); // ...dword at current linear address
 
     int fetch8(); // read byte...
-    int fetch8(); // read byte...
     int fetch16(); // ...word...
     int fetch(); // ...dword at FAR, update FAR, bypass TLB
     int ld_direct(int address); // read/ write dword at memory address
     void st_direct(int address, int dword);
 
-    void push_word(int word);
-    void push_dword(int dword);
-    void pop_word();
-    void pop_dword();
-    int read_stack_word();
-    int read_stack_dword();
+    void push16(int word);
+    void push(int dword);
+    void pop16();
+    void pop();
+    int ld16_stack();
+    int ld_stack();
 
     // eflags.cpp
     bool is_CF(); // carry (bit 0)

@@ -255,29 +255,29 @@ void Free86::st8_direct(int address, std::string data) {
 void Free86::st_direct(int address, int dword) {
     memory[address >> 2] = dword;
 }
-void Free86::push_word(int word) {
+void Free86::push16(int word) {
     int esp = regs[4] - 2;
     lax = (esp & SS_mask) + SS_base;
     st16_writable_cpl3(word);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::push_dword(int dword) {
+void Free86::push(int dword) {
     int esp = regs[4] - 4;
     lax = (esp & SS_mask) + SS_base;
     st_writable_cpl3(dword);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::pop_word() {
+void Free86::pop16() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
 }
-void Free86::pop_dword() {
+void Free86::pop() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4) & SS_mask);
 }
-int Free86::read_stack_word() {
+int Free86::ld16_stack() {
     lax = (regs[4] & SS_mask) + SS_base;
     return ld16_readonly_cpl3();
 }
-int Free86::read_stack_dword() {
+int Free86::ld_stack() {
     lax = (regs[4] & SS_mask) + SS_base;
     return ld_readonly_cpl3();
 }
