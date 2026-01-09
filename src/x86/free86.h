@@ -552,8 +552,8 @@ class Free86 {
 
     void push16(int word);
     void push(int dword);
-    void pop16();
-    void pop();
+    int pop16();
+    int pop();
     int ld16_stack();
     int ld_stack();
 

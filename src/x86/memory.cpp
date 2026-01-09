@@ -239,7 +239,7 @@ int Free86::ld8_direct(int address) {
     return memory8[address];
 }
 int Free86::ld_direct(int address) {
-    return memory[address >> 2];
+    return memory8[address] | (memory8[address + 1] << 8) | (memory8[address + 2] << 16) | (memory8[address + 3] << 24);
 }
 void Free86::st8_direct(int address, int byte) {
     memory8[address] = byte;
@@ -253,7 +253,10 @@ void Free86::st8_direct(int address, std::string data) {
     st8_direct(address, 0);
 }
 void Free86::st_direct(int address, int dword) {
-    memory[address >> 2] = dword;
+    memory8[address] = dword;
+    memory8[address + 1] = dword >> 8;
+    memory8[address + 2] = dword >> 16;
+    memory8[address + 3] = dword >> 24;
 }
 void Free86::push16(int word) {
     int esp = regs[4] - 2;
@@ -267,11 +270,15 @@ void Free86::push(int dword) {
     st_writable_cpl3(dword);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::pop16() {
+int Free86::pop16() {
+    int x = ld16_stack();
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
+    return x;
 }
-void Free86::pop() {
+int Free86::pop() {
+    int x = ld_stack();
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4) & SS_mask);
+    return x;
 }
 int Free86::ld16_stack() {
     lax = (regs[4] & SS_mask) + SS_base;
