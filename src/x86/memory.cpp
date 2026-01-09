@@ -7,8 +7,8 @@ int Free86::_ld8_readonly_cplX() {
 }
 int Free86::ld8_readonly_cplX() {
     return ((tlb_hash = tlb_readonly_cplX[lax >> 12]) == -1)
-               ? _ld8_readonly_cplX()
-               : memory8[lax ^ tlb_hash];
+                ? _ld8_readonly_cplX()
+                : memory8[lax ^ tlb_hash];
 }
 int Free86::_ld16_readonly_cplX() {
     int word = ld8_readonly_cplX();
@@ -19,8 +19,8 @@ int Free86::_ld16_readonly_cplX() {
 }
 int Free86::ld16_readonly_cplX() {
     return ((tlb_hash = tlb_readonly_cplX[lax >> 12]) | lax) & 1
-               ? _ld16_readonly_cplX()
-               : memory16[(lax ^ tlb_hash) >> 1];
+                ? _ld16_readonly_cplX()
+                : memory16[(lax ^ tlb_hash) >> 1];
 }
 int Free86::_ld_readonly_cplX() {
     int dword = ld8_readonly_cplX();
@@ -35,8 +35,8 @@ int Free86::_ld_readonly_cplX() {
 }
 int Free86::ld_readonly_cplX() {
     return ((tlb_hash = tlb_readonly_cplX[lax >> 12]) | lax) & 3
-               ? _ld_readonly_cplX()
-               : memory[(lax ^ tlb_hash) >> 2];
+                ? _ld_readonly_cplX()
+                : memory[(lax ^ tlb_hash) >> 2];
 }
 int Free86::_ld8_readonly_cpl3() {
     int byte;
@@ -129,8 +129,8 @@ int Free86::_ld_writable_cpl3() {
 int Free86::ld_writable_cpl3() {
     return (is_real__v86() ||
                     (tlb_hash = tlb_writable[lax >> 12]) | lax) & 3
-               ? _ld_writable_cpl3()
-               : memory[(lax ^ tlb_hash) >> 2];
+                ? _ld_writable_cpl3()
+                : memory[(lax ^ tlb_hash) >> 2];
 }
 void Free86::_st8_writable_cplX(int byte) {
     page_translation(1, 0);
@@ -226,14 +226,14 @@ void Free86::st_writable_cpl3(int dword) {
         memory[(lax ^ tlb_hash) >> 2] = dword;
     }
 }
-int Free86::ld8_direct() {
+int Free86::fetch8() {
     return memory8[far++];
 }
-int Free86::ld16_direct() {
-    return ld8_direct() | (ld8_direct() << 8);
+int Free86::fetch16() {
+    return fetch8() | (fetch8() << 8);
 }
-int Free86::ld_direct() {
-    return ld8_direct() | (ld8_direct() << 8) | (ld8_direct() << 16) | (ld8_direct() << 24);
+int Free86::fetch() {
+    return fetch8() | (fetch8() << 8) | (fetch8() << 16) | (fetch8() << 24);
 }
 int Free86::ld8_direct(int address) {
     return memory8[address];
