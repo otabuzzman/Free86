@@ -15,6 +15,9 @@ extension InstructionPrefixRegister {
     mutating func setFlag(_ flag: InstructionPrefixRegisterFlag, _ value: Int = 1) {
         self.setBit(flag.rawValue, value)
     }
+    func maskFlag(_ flag: InstructionPrefixRegisterFlag) -> Self {
+        Self.bitMask(for: flag.rawValue)
+    }
 }
 
 extension InstructionPrefixRegister {
