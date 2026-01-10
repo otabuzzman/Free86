@@ -110,7 +110,7 @@ class Free86 {
     uint32_t *memory;
 
 /*
-   Translation Lookaside Buffer
+   Translation lookaside buffer
 
    The translation lookaside buffer (TLB) maps linear addresses (LA) to
    physical addresses (PA). The top 20 bits of an LA represent the PD

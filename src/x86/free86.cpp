@@ -64,16 +64,16 @@ void Free86::update_SSB() {
 void Free86::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
-    int64_t eip_tlb_hash = tlb_readonly[eip_linear >> 12];
+    tlb_hash = tlb_readonly[eip_linear >> 12];
     // `eip_tlb_hash' equals -1 or instruction with maximum bytes (15)
     // would extend across the page boundary.
     // combined check ok because bits 0-11 in `eip_tlb_hash' always 0.
-    if (((eip_tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
-        if (eip_tlb_hash == -1) {
+    if (((tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
+        if (tlb_hash == -1) {
             page_translation(0, cpl == 3, eip_linear);
         }
-        eip_tlb_hash = tlb_readonly[eip_linear >> 12];
-        far = far_start = eip_linear ^ eip_tlb_hash;
+        tlb_hash = tlb_readonly[eip_linear >> 12];
+        far = far_start = eip_linear ^ tlb_hash;
         opcode = fetch8();
         int page_offset = eip_linear & 0xfff;
         if (page_offset > (4096 - 15)) {
@@ -88,7 +88,7 @@ void Free86::fetch_opcode() {
             }
         }
     } else {
-        far = far_start = eip_linear ^ eip_tlb_hash;
+        far = far_start = eip_linear ^ tlb_hash;
         opcode = fetch8();
     }
 }
@@ -1679,7 +1679,7 @@ int Free86::is_segment_accessible(int selector, bool writable) {
 }
 void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     SegmentRegister xdt;
-    int index, dte_lower_dword, dte_upper_dword;
+    int dte_lower_dword, dte_upper_dword, index;
     descriptor_table_entry[0] = 0;
     descriptor_table_entry[1] = 0;
     if (selector & 0x4) {
@@ -1813,7 +1813,7 @@ int Free86::aux_SHRD16_SHLD16(int dst, int src, int count) {
     return r;
 }
 int Free86::aux_SHRD(int dst, int src, int count) {
-    int r, c;
+    int c, r;
     r = dst;
     c = count & 0x1f;
     if (c) {
@@ -2165,7 +2165,7 @@ void Free86::multiply(int multiplicand, int multiplier) {
     this->x = x;
 }
 int Free86::calculate8(int dst, int src) {
-    int r, cf;
+    int cf, r;
     r = dst;
     switch (operation & 7) {
     case 0:
@@ -2218,7 +2218,7 @@ int Free86::calculate8(int dst, int src) {
     return r;
 }
 int Free86::calculate16(int dst, int src) {
-    int r, cf;
+    int cf, r;
     r = dst;
     switch (operation & 7) {
     case 0:
@@ -2271,7 +2271,7 @@ int Free86::calculate16(int dst, int src) {
     return r;
 }
 int Free86::calculate(int dst, int src) {
-    int r, cf;
+    int cf, r;
     r = dst;
     switch (operation & 7) {
     case 0:
