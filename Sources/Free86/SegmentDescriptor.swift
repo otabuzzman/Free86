@@ -10,6 +10,50 @@ enum SegmentDescriptorFlag: Int {
     case S = 12 // 0 = system segment
 }
 
+// segmengt descriptor fields
+extension SegmentDescriptor {
+    var base: DWord {
+        (lower & 0xFFFF_0000) >> 16 |
+        (upper & 0x0000_00FF) << 16 |
+        upper & 0xFF00_0000
+    }
+    var limit: DWord {
+        let value =
+        lower & 0x0000_FFFF |
+        upper & 0x000F_0000
+        return isFlagRaised(.G) ? value << 12 | 0xfff : value
+    }
+    var type: DWord {
+        (upper & 0x0000_0F00) >> 8
+    }
+    var dpl: DWord {
+        (upper & 0x0000_6000) >> 13
+    }
+}
+
+// segment descriptor main types
+extension SegmentDescriptor {
+    var isSystemSegment: Bool {
+        !isFlagRaised(.S)
+    }
+    var isDataSegment: Bool {
+        !isSystemSegment && type >> 3 == 0
+    }
+    var isCodeSegment: Bool {
+        !isSystemSegment && type >> 3 == 1
+    }
+}
+
+// segment descriptor flags
+extension SegmentDescriptor {
+    func isFlagRaised(_ flag: SegmentDescriptorFlag) -> Bool {
+        upper.isBitRaised(flag.rawValue)
+    }
+    mutating func setFlag(_ flag: SegmentDescriptorFlag, _ value: Int = 1) {
+        upper.setBit(flag.rawValue, value)
+    }
+}
+
 //combined S bit and type field
 enum SegmentDescriptorType: DWord {
     // Reserved                         0b0_0000
@@ -44,46 +88,6 @@ enum SegmentDescriptorType: DWord {
     case CodeExOnlyConformingAccessed = 0b1_1101
     case CodeExReadConforming         = 0b1_1110
     case CodeExReadConformingAccessed = 0b1_1111
-}
-
-// segmengt descriptor fields
-extension SegmentDescriptor {
-    var base: DWord {
-        (lower & 0xFFFF_0000) >> 16 |
-        (upper & 0x0000_00FF) << 16 |
-         upper & 0xFF00_0000
-    }
-    var limit: DWord {
-        let value =
-        lower & 0x0000_FFFF |
-        upper & 0x000F_0000
-        return isFlagRaised(.G) ? value << 12 | 0xfff : value
-    }
-    var type: DWord {
-        (upper & 0x0000_0F00) >> 8
-    }
-    var dpl: DWord {
-        (upper & 0x0000_6000) >> 13
-    }
-}
-
-// segment descriptor flags
-extension SegmentDescriptor {
-    func isFlagRaised(_ flag: SegmentDescriptorFlag) -> Bool {
-        upper.isBitRaised(flag.rawValue)
-    }
-    var isSystemSegment: Bool {
-        !isFlagRaised(.S)
-    }
-    var isDataSegment: Bool {
-        !isSystemSegment && type >> 3 == 0
-    }
-    var isCodeSegment: Bool {
-        !isSystemSegment && type >> 3 == 1
-    }
-    mutating func setFlag(_ flag: SegmentDescriptorFlag, _ value: Int = 1) {
-        upper.setBit(flag.rawValue, value)
-    }
 }
 
 // segment descriptor types

@@ -1,10 +1,6 @@
-protocol GeneralRegister {
-    var byteL: Self { get set }
-    var byteH: Self { get set }
-    var wordX: Self { get set }
-}
+typealias GeneralRegister = DWord
 
-extension DWord: GeneralRegister {
+extension GeneralRegister {
     var byteL: Self {
         get { self & 0xFF }
         set { self = (self & ~0xFF) | (newValue & 0xFF) }

@@ -2,7 +2,7 @@ extension Free86 {
     mutating func fetchDecodeExecute(cycles: QWord) throws {
         outerLoop:
         repeat { // cycles (actually instructions)
-            innerLoop:
+            fedexLoop:
             while true { // loop over instruction bytes
             }
             cyclesRemaining -= 1

@@ -1,15 +1,19 @@
-protocol SegmentSelector {
-    var index: Self { get }
-    var isGDT: Bool { get }
-    var isLDT: Bool { get }
-    var rpl: Self { get }
-}
+typealias SegmentSelector = Word
 
 enum SegmentSelectorFlag: Int {
     case TI = 2
 }
 
-extension Word: SegmentSelector {
+extension SegmentSelector {
+    func isFlagRaised(_ flag: SegmentSelectorFlag) -> Bool {
+        self.isBitRaised(flag.rawValue)
+    }
+    mutating func setFlag(_ flag: SegmentSelectorFlag, _ value: Int = 1) {
+        self.setBit(flag.rawValue, value)
+    }
+}
+
+extension SegmentSelector {
     var index: Self {
         self >> 3
     }
@@ -21,11 +25,5 @@ extension Word: SegmentSelector {
     }
     var rpl: Self {
         self & 0b0011
-    }
-}
-
-extension SegmentSelector where Self == Word {
-    func isFlagRaised(_ flag: SegmentSelectorFlag) -> Bool {
-        self.isBitRaised(flag.rawValue)
     }
 }

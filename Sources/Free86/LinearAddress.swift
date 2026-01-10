@@ -1,11 +1,6 @@
-protocol LinearAddress {
-    var pageTablesIndices: Self { get }
-    var pageDirectoryIndex: Self { get }
-    var pageTableIndex: Self { get }
-    var offset: Self { get }
-}
+typealias LinearAddress = DWord
 
-extension DWord: LinearAddress {
+extension LinearAddress {
     var pageTablesIndices: Self {
         self >> 12
     }
@@ -19,8 +14,6 @@ extension DWord: LinearAddress {
         self & 0xFFF
     }
 }
-
-typealias PhysicalAddress = DWord
 
 extension LinearAddress {
     var translation: PhysicalAddress {

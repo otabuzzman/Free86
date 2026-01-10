@@ -1,6 +1,4 @@
-protocol PageTableEntry {
-    var pageFrameAddress: DWord { get }
-}
+typealias PageTableEntry = DWord
 
 enum PageTableEntryFlag: Int {
     case P = 0 // 1 = page is present
@@ -9,16 +7,18 @@ enum PageTableEntryFlag: Int {
     case D = 6 // 1 = page has been written (dirty)
 }
 
-extension DWord: PageTableEntry {
-    var pageFrameAddress: Self {
-        self >> 12
+extension PageTableEntry {
+    func isFlagRaised(_ flag: PageTableEntryFlag) -> Bool {
+        self.isBitRaised(flag.rawValue)
+    }
+    mutating func setFlag(_ flag: PageTableEntryFlag, _ value: Int = 1) {
+        self.setBit(flag.rawValue, value)
     }
 }
 
-// page table entry flags
-extension PageTableEntry where Self == DWord {
-    func isFlagRaised(_ flag: PageTableEntryFlag) -> Bool {
-        self.isBitRaised(flag.rawValue)
+extension PageTableEntry {
+    var pageFrameAddress: Self {
+        self >> 12
     }
     var isPresent: Bool {
         isFlagRaised(.P)
@@ -31,8 +31,5 @@ extension PageTableEntry where Self == DWord {
     }
     var isDirty: Bool {
         isFlagRaised(.D)
-    }
-    mutating func setFlag(_ flag: PageTableEntryFlag, _ value: Int = 1) {
-        self.setBit(flag.rawValue, value)
     }
 }

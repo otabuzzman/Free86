@@ -1,11 +1,6 @@
-protocol ModRM {
-    var mod: Int { get }
-    var reg: Int { get }
-    var opcode: Int { get }
-    var rM: Int { get }
-}
+typealias ModRM = Byte
 
-extension Byte: ModRM {
+extension ModRM {
     var mod: Int {
         Int(self >> 6)
     }
@@ -20,13 +15,9 @@ extension Byte: ModRM {
     }
 }
 
-protocol SIB {
-    var scale: Int { get }
-    var index: Int { get }
-    var base: Int { get }
-}
+typealias SIB = Byte
 
-extension Byte: SIB {
+extension SIB {
     var scale: Int {
         Int(self >> 6)
     }
