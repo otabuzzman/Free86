@@ -32,6 +32,7 @@ let package = Package(
                 "ExtendedFlags.swift",
                 "ControlRegister.swift",
                 "Exception+Interrupt.swift",
+                "InstructionPrefixRegister.swift",
                 "Free86.swift",
                 "Free86+Fedex.swift",
                 "PinIO.swift",
@@ -54,6 +55,7 @@ let package = Package(
                 "ExtendedFlags.swift",
                 "ControlRegister.swift",
                 "Exception+Interrupt.swift",
+                "InstructionPrefixRegister.swift",
                 "PinIO.swift",
            ],
             swiftSettings: [

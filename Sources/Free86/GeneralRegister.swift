@@ -1,6 +1,16 @@
 typealias GeneralRegister = DWord
 
 extension GeneralRegister {
+    enum Name: Int {
+        case EAX
+        case ECX
+        case EDX
+        case EBX
+        case ESP
+        case EBP
+        case ESI
+        case EDI
+    }
     var byteL: Self {
         get { self & 0xFF }
         set { self = (self & ~0xFF) | (newValue & 0xFF) }
