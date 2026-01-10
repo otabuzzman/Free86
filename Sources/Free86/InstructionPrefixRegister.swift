@@ -19,6 +19,7 @@ extension InstructionPrefixRegister {
 
 extension InstructionPrefixRegister {
     var segmentRegisterIndex: Int {
+        assert(7 > self & 7) // ES..GS are 1..6
         guard
             self & 0x7 > 0
         else { return SegmentRegister.Name.DS.rawValue }
