@@ -12,3 +12,15 @@ struct SegmentRegister {
     var selector: SegmentSelector
     var descriptorCache: SegmentDescriptor
 }
+
+extension SegmentRegister: Equatable {
+    static func == (lhs: SegmentRegister, rhs: SegmentRegister) -> Bool {
+        lhs.selector == rhs.selector && lhs.descriptorCache == rhs.descriptorCache
+    }
+}
+
+extension Array where Element == SegmentRegister {
+    subscript (_ register: SegmentRegister.Name) -> Element {
+        self[register.rawValue]
+    }
+}

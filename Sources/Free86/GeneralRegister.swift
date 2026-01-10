@@ -24,3 +24,9 @@ extension GeneralRegister {
         set { self.lowerHalf = newValue & Self.lowerHalfMask }
     }
 }
+
+extension Array where Element == GeneralRegister {
+    subscript (_ register: GeneralRegister.Name) -> Element {
+        self[register.rawValue]
+    }
+}

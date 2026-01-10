@@ -21,3 +21,25 @@ func generalRegisterElements() {
     register.upperHalf = 0xC0DE
     #expect(register == 0xC0DEAA55)
 }
+
+@Test("general register bank")
+func generalRegisterBank() {
+    let bank = [
+        GeneralRegister(0xDEADC0DE),
+        GeneralRegister(0xDEADBEAF),
+        GeneralRegister(0xBEAFC0DE),
+        GeneralRegister(0xBEEFDEAD),
+        GeneralRegister(0xDEDEADC0),
+        GeneralRegister(0xADC0DEDE),
+        GeneralRegister(0xDEC0DEAD),
+        GeneralRegister(0xDEADDEC0),
+    ]
+    #expect(bank[.EAX] == 0xDEADC0DE)
+    #expect(bank[.ECX] == 0xDEADBEAF)
+    #expect(bank[.EDX] == 0xBEAFC0DE)
+    #expect(bank[.EBX] == 0xBEEFDEAD)
+    #expect(bank[.ESP] == 0xDEDEADC0)
+    #expect(bank[.EBP] == 0xADC0DEDE)
+    #expect(bank[.ESI] == 0xDEC0DEAD)
+    #expect(bank[.EDI] == 0xDEADDEC0)
+}

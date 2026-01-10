@@ -96,3 +96,9 @@ extension SegmentDescriptor {
         type.rawValue == self.type | (isSystemSegment ? 0b0_0000 : 0b1_0000)
     }
 }
+
+extension SegmentDescriptor: Equatable {
+    static func == (lhs: SegmentDescriptor, rhs: SegmentDescriptor) -> Bool {
+        lhs.upper == rhs.upper && lhs.lower == rhs.lower
+    }
+}

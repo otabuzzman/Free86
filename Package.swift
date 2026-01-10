@@ -48,6 +48,7 @@ let package = Package(
                 "DataTypes.swift",
                 "SegmentDescriptor.swift",
                 "SegmentSelector.swift",
+                "SegmentRegister.swift",
                 "LinearAddress.swift",
                 "PageTableEntry.swift",
                 "ModRM+SIB.swift",
