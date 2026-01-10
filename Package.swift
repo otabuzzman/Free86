@@ -23,7 +23,7 @@ let package = Package(
                 "SegmentDescriptor.swift",
                 "SegmentSelector.swift",
                 "SegmentRegister.swift",
-                "LogicalAddress.swift",
+                "LogicalAddress+Pointer.swift",
                 "LinearAddress.swift",
                 "PhysicalAddress.swift",
                 "PageTableEntry.swift",
