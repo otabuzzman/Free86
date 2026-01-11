@@ -4,9 +4,9 @@ import Testing
 @Test("page table entry frame address")
 func pageTableEntryFrameAddress() {
     var pageTableEntry: DWord
-    pageTableEntry = 0xDEADCAFE // 0b1101_1110_1010_1101_1100_1010_1111_1110
+    pageTableEntry = 0xDEADCAFE  // 0b1101_1110_1010_1101_1100_1010_1111_1110
     #expect(pageTableEntry.pageFrameAddress == 0b1101_1110_1010_1101_1100)
-    pageTableEntry = 0xBEAFC0DE // 0b1011_1110_1010_1111_1100_0000_1101_1110
+    pageTableEntry = 0xBEAFC0DE  // 0b1011_1110_1010_1111_1100_0000_1101_1110
     #expect(pageTableEntry.pageFrameAddress == 0b1011_1110_1010_1111_1100)
 }
 

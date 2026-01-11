@@ -3,7 +3,7 @@ import Testing
 
 @Test("control register flags")
 func conrolRegister() {
-    var cr0: DWord = 0xDEADBEAF // 0b1101_1110_1010_1101_1100_1010_1111_1110
+    var cr0: DWord = 0xDEADBEAF  // 0b1101_1110_1010_1101_1100_1010_1111_1110
     #expect(cr0.isFlagRaised(.PE) == true)
     #expect(cr0.isFlagRaised(.MP) == true)
     #expect(cr0.isFlagRaised(.EM) == true)

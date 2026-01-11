@@ -31,9 +31,9 @@ func instructionPrefixRegisterFlags() {
     ipr = ipr & 0xFF8 | 6
     #expect(ipr.segmentRegisterIndex == SegmentRegister.Name.GS.rawValue)
 
-    #expect(ipr.maskFlag(.repzStringOperation)  == 0b00_0001_0000)
-    #expect(ipr.maskFlag(.repnzStringOperation) == 0b00_0010_0000)
-    #expect(ipr.maskFlag(.lockSignal)           == 0b00_0100_0000)
-    #expect(ipr.maskFlag(.operandSizeOverride)  == 0b00_1000_0000)
-    #expect(ipr.maskFlag(.addressSizeOverride)  == 0b01_0000_0000)
+    #expect(InstructionPrefixRegister.maskFlag(.repzStringOperation)  == 0b00_0001_0000)
+    #expect(InstructionPrefixRegister.maskFlag(.repnzStringOperation) == 0b00_0010_0000)
+    #expect(InstructionPrefixRegister.maskFlag(.lockSignal)           == 0b00_0100_0000)
+    #expect(InstructionPrefixRegister.maskFlag(.operandSizeOverride)  == 0b00_1000_0000)
+    #expect(InstructionPrefixRegister.maskFlag(.addressSizeOverride)  == 0b01_0000_0000)
 }

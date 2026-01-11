@@ -1,20 +1,19 @@
 enum Exception: Byte {
     case DE
     case DB
-    case NonMaskableInterrupt // PinIO
+    case NonMaskableInterrupt  // PinIO
     case BP = 3
     case OF
     case BR
     case UD
     case NM
-    case DF // error code
+    case DF  // error code
     case CoprocessorSegmentOverrun
-    case TS // error code
-    case NP // error code
-    case SS // error code
-    case GP // error code
-    case PF // error code
-    // Reserved
+    case TS  // error code
+    case NP  // error code
+    case SS  // error code
+    case GP  // error code
+    case PF  // error code
     case MF = 16
 }
 

@@ -23,7 +23,7 @@ let package = Package(
                 "SegmentDescriptor.swift",
                 "SegmentSelector.swift",
                 "SegmentRegister.swift",
-                "LogicalAddress+Pointer.swift",
+                "LogicalAddress+Pointers.swift",
                 "LinearAddress.swift",
                 "PhysicalAddress.swift",
                 "PageTableEntry.swift",
@@ -34,7 +34,8 @@ let package = Package(
                 "Exception+Interrupt.swift",
                 "InstructionPrefixRegister.swift",
                 "Free86.swift",
-                "Free86+Fedex.swift",
+                "Free86+fetchDecodeExecute.swift",
+                "OpcodeDecoder+Program.swift",
                 "PinIO.swift",
             ],
             swiftSettings: [

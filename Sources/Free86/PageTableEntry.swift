@@ -1,10 +1,10 @@
 typealias PageTableEntry = DWord
 
 enum PageTableEntryFlag: Int {
-    case P = 0 // 1 = page is present
-    case W = 1 // 1 = page is writable
-    case U = 2 // 1 = page is user accessible
-    case D = 6 // 1 = page has been written (dirty)
+    case P = 0  // 1 = page is present
+    case W = 1  // 1 = page is writable
+    case U = 2  // 1 = page is user accessible
+    case D = 6  // 1 = page has been written (dirty)
 }
 
 extension PageTableEntry {

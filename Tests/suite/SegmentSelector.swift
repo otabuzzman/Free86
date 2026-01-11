@@ -4,9 +4,9 @@ import Testing
 @Test("segment selector indices")
 func segmentSelectorIndices() {
     var segmentSelector: Word
-    segmentSelector = 0b1100_1010_1111_1110 // 0xCAFE
+    segmentSelector = 0b1100_1010_1111_1110  // 0xCAFE
     #expect(segmentSelector.index == 0b0001_1001_0101_1111)
-    segmentSelector = 0b1100_1110_1010_1100 // 0xDEAD
+    segmentSelector = 0b1100_1110_1010_1100  // 0xDEAD
     #expect(segmentSelector.index == 0b0001_1001_1101_0101)
 }
 

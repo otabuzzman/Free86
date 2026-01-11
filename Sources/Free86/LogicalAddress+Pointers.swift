@@ -9,6 +9,6 @@ extension LogicalAddress {
     }
 }
 
-// PM (1986), 2.2, Intel IA-32 SDM (latest), Vol. 3A, fig. 3-1
+/// PM (1986), 2.2, Intel IA-32 SDM (latest), Vol. 3A, fig. 3-1
 typealias FarPointer = LogicalAddress
 typealias NearPointer = DWord

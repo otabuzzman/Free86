@@ -4,13 +4,13 @@ struct SegmentDescriptor {
 }
 
 enum SegmentDescriptorFlag: Int {
-    case G = 23 // granularity, 1 = limit in 4 kB units
-    case D = 22 // 0 = 16-bit segment, 1 = 32-bit segment
-    case P = 15 // 1 = segment is present
-    case S = 12 // 0 = system segment
+    case G = 23  // granularity, 1 = limit in 4 kB units
+    case D = 22  // 0 = 16-bit segment, 1 = 32-bit segment
+    case P = 15  // 1 = segment is present
+    case S = 12  // 0 = system segment
 }
 
-// segmengt descriptor fields
+/// segmengt descriptor fields
 extension SegmentDescriptor {
     var base: DWord {
         (lower & 0xFFFF_0000) >> 16 |
@@ -31,7 +31,7 @@ extension SegmentDescriptor {
     }
 }
 
-// segment descriptor main types
+/// segment descriptor main types
 extension SegmentDescriptor {
     var isSystemSegment: Bool {
         !isFlagRaised(.S)
@@ -44,7 +44,7 @@ extension SegmentDescriptor {
     }
 }
 
-// segment descriptor flags
+/// segment descriptor flags
 extension SegmentDescriptor {
     func isFlagRaised(_ flag: SegmentDescriptorFlag) -> Bool {
         upper.isBitRaised(flag.rawValue)
@@ -54,7 +54,7 @@ extension SegmentDescriptor {
     }
 }
 
-//combined S bit and type field
+///combined S bit and type field
 enum SegmentDescriptorType: DWord {
     // Reserved                         0b0_0000
     case TSS16Available               = 0b0_0001
@@ -90,7 +90,7 @@ enum SegmentDescriptorType: DWord {
     case CodeExReadConformingAccessed = 0b1_1111
 }
 
-// segment descriptor types
+/// segment descriptor types
 extension SegmentDescriptor {
     func isType(_ type: SegmentDescriptorType) -> Bool {
         type.rawValue == self.type | (isSystemSegment ? 0b0_0000 : 0b1_0000)

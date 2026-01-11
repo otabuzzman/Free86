@@ -15,14 +15,14 @@ extension InstructionPrefixRegister {
     mutating func setFlag(_ flag: InstructionPrefixRegisterFlag, _ value: Int = 1) {
         self.setBit(flag.rawValue, value)
     }
-    func maskFlag(_ flag: InstructionPrefixRegisterFlag) -> Self {
+    static func maskFlag(_ flag: InstructionPrefixRegisterFlag) -> Self {
         Self.bitMask(for: flag.rawValue)
     }
 }
 
 extension InstructionPrefixRegister {
     var segmentRegisterIndex: Int {
-        assert(7 > self & 7) // ES..GS are 1..6
+        assert(7 > self & 7)  // ES..GS are 1..6
         guard
             self & 0x7 > 0
         else { return SegmentRegister.Name.DS.rawValue }
