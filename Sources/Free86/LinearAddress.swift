@@ -16,7 +16,7 @@ extension LinearAddress {
 }
 
 extension LinearAddress {
-    var translation: PhysicalAddress {
-        0
+    var translation: any PhysicalAddress {
+        DWord(0)
     }
 }

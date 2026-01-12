@@ -58,7 +58,7 @@ let package = Package(
                 "ControlRegister.swift",
                 "Exception+Interrupt.swift",
                 "InstructionPrefixRegister.swift",
-//                "MemoryIO+PhysicalAddress.swift",
+                "MemoryIO+PhysicalAddress.swift",
                 "PinIO.swift",
            ],
             swiftSettings: [

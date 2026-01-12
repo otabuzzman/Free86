@@ -125,13 +125,13 @@ protocol PhysicalAddress: UnsignedInteger {
 }
 
 extension DWord: PhysicalAddress {
-    static let bankSize: Int { 0x01000 }  // 4 kB
-    static let bankIndexShift: Int { 12 }
-    static let bankOffsetMask: Int { 0x00fff }
+    static var bankSize: Int { 0x01000 }  // 4 kB
+    static var bankIndexShift: Int { 12 }
+    static var bankOffsetMask: Int { 0x00fff }
 }
 
 extension QWord: PhysicalAddress {
-    static let bankSize: Int { 0x20000 }  // 128 kB
-    static let bankIndexShift: Int { 17 }
-    static let bankOffsetMask: Int { 0x1ffff }
+    static var bankSize: Int { 0x20000 }  // 128 kB
+    static var bankIndexShift: Int { 17 }
+    static var bankOffsetMask: Int { 0x1ffff }
 }

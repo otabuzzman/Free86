@@ -1,5 +1,5 @@
 import XCTest
-@testable import i80386
+@testable import Free86
 
 // MARK: - Dummy types for testing
 
