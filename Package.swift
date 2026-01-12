@@ -25,7 +25,6 @@ let package = Package(
                 "SegmentRegister.swift",
                 "LogicalAddress+Pointers.swift",
                 "LinearAddress.swift",
-                "PhysicalAddress.swift",
                 "PageTableEntry.swift",
                 "ModRM+SIB.swift",
                 "GeneralRegister.swift",
@@ -36,6 +35,7 @@ let package = Package(
                 "Free86.swift",
                 "Free86+fetchDecodeExecute.swift",
                 "OpcodeDecoder+Program.swift",
+                "MemoryIO+PhysicalAddress.swift",
                 "PinIO.swift",
             ],
             swiftSettings: [
@@ -58,6 +58,7 @@ let package = Package(
                 "ControlRegister.swift",
                 "Exception+Interrupt.swift",
                 "InstructionPrefixRegister.swift",
+//                "MemoryIO+PhysicalAddress.swift",
                 "PinIO.swift",
            ],
             swiftSettings: [
