@@ -65,9 +65,9 @@ void Free86::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
     tlb_hash = tlb_readonly[eip_linear >> 12];
-    // `eip_tlb_hash' equals -1 or instruction with maximum bytes (15)
+    // `tlb_hash' equals -1 or instruction with maximum bytes (15)
     // would extend across the page boundary.
-    // combined check ok because bits 0-11 in `eip_tlb_hash' always 0.
+    // combined check ok because bits 0-11 in `tlb_hash' always 0.
     if (((tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
         if (tlb_hash == -1) {
             page_translation(0, cpl == 3, eip_linear);
