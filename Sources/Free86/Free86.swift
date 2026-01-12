@@ -1,5 +1,5 @@
 struct Free86 {
-    var opcode: DWord
+    var opcode: Int
     
     var cyclesRequested: QWord
     var cyclesRemaining: QWord

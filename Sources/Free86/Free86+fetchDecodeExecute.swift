@@ -11,7 +11,8 @@ extension Free86 {
                 } else {
                     opcodeDecoder = oneByteDecoder
                 }
-                switch try opcodeDecoder[0]() {
+                let opcodeProgram = opcodeDecoder[opcode]
+                switch try opcodeProgram() {
                 case .success(let resume):
                     switch resume {
                     case .goOnFetching:

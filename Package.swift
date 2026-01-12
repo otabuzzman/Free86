@@ -7,6 +7,14 @@ let package = Package(
     name: "Free86",
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
+        .executable(
+            name: "linos",
+            targets: ["linos"]
+        ),
+        .executable(
+            name: "test386",
+            targets: ["test386"]
+        ),
         .library(
             name: "Free86",
             targets: ["Free86"],
@@ -15,6 +23,26 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
+        .executableTarget(
+            name: "linos",
+            dependencies: ["Free86"],
+            sources: [
+                "main.swift",
+            ],
+            swiftSettings: [
+                .define("DEBUG", .when(configuration: .debug)),
+            ],
+        ),
+        .executableTarget(
+            name: "test386",
+            dependencies: ["Free86"],
+            sources: [
+                "main.swift",
+            ],
+            swiftSettings: [
+                .define("DEBUG", .when(configuration: .debug)),
+            ],
+        ),
         .target(
             name: "Free86",
             dependencies: [],

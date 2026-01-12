@@ -101,7 +101,7 @@ int Free86::instruction_length(int opcode) {
     } else {
         stride = 4;
     }
-    while (true) {
+    while (true) { // loop over instruction bytes (fetch)
         switch (opcode) {
         case 0x66: // operand-size override prefix
             if (ipr_default & 0x0100) {
@@ -231,7 +231,7 @@ int Free86::instruction_length(int opcode) {
         case 0x6d: // INSW/D
         case 0x6e: // OUTSB
         case 0x6f: // OUTSW/D
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xb0: // MOV AL
         case 0xb1: // MOV CL
         case 0xb2: // MOV DL
@@ -282,7 +282,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xb8: // MOV A
         case 0xb9: // MOV C
         case 0xba: // MOV D
@@ -307,7 +307,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0x88: // MOV
         case 0x89: // MOV
         case 0x8a: // MOV
@@ -440,7 +440,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xa0: // MOV AL,
         case 0xa1: // MOV AX,
         case 0xa2: // MOV ,AL
@@ -453,7 +453,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xc6: // MOV
         case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
         case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
@@ -535,7 +535,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xc7: // MOV
         case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
         case 0x69: // IMUL
@@ -613,7 +613,7 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
                 abort(13);
@@ -692,7 +692,7 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
                 abort(13);
@@ -771,27 +771,27 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xea: // JMPF
         case 0x9a: // CALLF
             n += 2 + stride;
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xc2: // RET
         case 0xca: // RET
             n += 2;
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xc8: // ENTER
             n += 3;
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xd6: // -
         case 0xf1: // -
         default:
@@ -818,7 +818,7 @@ int Free86::instruction_length(int opcode) {
             case 0xcd: // -
             case 0xce: // -
             case 0xcf: // -
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x80: // JO
             case 0x81: // JNO
             case 0x82: // JB
@@ -839,7 +839,7 @@ int Free86::instruction_length(int opcode) {
                 if (n > 15) {
                     abort(13);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x90: // SETO
             case 0x91: // SETNO
             case 0x92: // SETB
@@ -969,7 +969,7 @@ int Free86::instruction_length(int opcode) {
                 if (n > 15) {
                     abort(13);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0xa4: // SHLD
             case 0xac: // SHRD
             case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
@@ -1047,7 +1047,7 @@ int Free86::instruction_length(int opcode) {
                 if (n > 15) {
                     abort(13);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x04: // -
             case 0x05: // -
             case 0x07: // -
@@ -1168,7 +1168,8 @@ int Free86::instruction_length(int opcode) {
             }
         }
     }
-EXEC_LOOP:;
+FETCH_LOOP:
+    ;
     return n;
 }
 void Free86::set_CR0(int bits) {
