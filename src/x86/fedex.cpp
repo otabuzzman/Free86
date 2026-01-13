@@ -1148,14 +1148,20 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     eip = rm, far = far_start = 0;
                     break;
-                case 4: // JMP
+                case 3: // CALLF
+                case 5: // JMPF
                     if ((modRM >> 6) == 3) {
-                        rm = regs[modRM & 7];
-                    } else {
-                        segment_translation();
-                        rm = ld_readonly_cpl3();
+                        abort(6);
                     }
-                    eip = rm, far = far_start = 0;
+                    segment_translation();
+                    m = ld_readonly_cpl3();
+                    lax = lax + 4;
+                    m16 = ld16_readonly_cpl3();
+                    if (operation == 3) {
+                        aux_CALLF(1, m16, m, (eip + far - far_start));
+                    } else {
+                        aux_JMPF(m16, m);
+                    }
                     break;
                 case 6: // PUSH
                     if ((modRM >> 6) == 3) {
@@ -1172,20 +1178,14 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         push(rm);
                     }
                     break;
-                case 3: // CALLF
-                case 5: // JMPF
+                case 4: // JMP
                     if ((modRM >> 6) == 3) {
-                        abort(6);
-                    }
-                    segment_translation();
-                    m = ld_readonly_cpl3();
-                    lax = lax + 4;
-                    m16 = ld16_readonly_cpl3();
-                    if (operation == 3) {
-                        aux_CALLF(1, m16, m, (eip + far - far_start));
+                        rm = regs[modRM & 7];
                     } else {
-                        aux_JMPF(m16, m);
+                        segment_translation();
+                        rm = ld_readonly_cpl3();
                     }
+                    eip = rm, far = far_start = 0;
                     break;
                 default:
                     abort(6);
@@ -2911,24 +2911,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         push16((eip + far - far_start));
                         eip = rm, far = far_start = 0;
                         break;
-                    case 4: // JMP
-                        if ((modRM >> 6) == 3) {
-                            rm = regs[modRM & 7] & 0xffff;
-                        } else {
-                            segment_translation();
-                            rm = ld16_readonly_cpl3();
-                        }
-                        eip = rm, far = far_start = 0;
-                        break;
-                    case 6: // PUSH
-                        if ((modRM >> 6) == 3) {
-                            rm = regs[modRM & 7];
-                        } else {
-                            segment_translation();
-                            rm = ld16_readonly_cpl3();
-                        }
-                        push16(rm);
-                        break;
                     case 3: // CALL
                     case 5: // JMP
                         if ((modRM >> 6) == 3) {
@@ -2943,6 +2925,24 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         } else {
                             aux_JMPF(m16, m);
                         }
+                        break;
+                    case 6: // PUSH
+                        if ((modRM >> 6) == 3) {
+                            rm = regs[modRM & 7];
+                        } else {
+                            segment_translation();
+                            rm = ld16_readonly_cpl3();
+                        }
+                        push16(rm);
+                        break;
+                    case 4: // JMP
+                        if ((modRM >> 6) == 3) {
+                            rm = regs[modRM & 7] & 0xffff;
+                        } else {
+                            segment_translation();
+                            rm = ld16_readonly_cpl3();
+                        }
+                        eip = rm, far = far_start = 0;
                         break;
                     default:
                         abort(6);
