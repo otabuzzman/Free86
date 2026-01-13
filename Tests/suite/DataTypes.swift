@@ -69,14 +69,33 @@ func bitValues() {
 @Test("data type set/ raise/ clear/ toggle bits")
 func setRaiseClearToggleBits() {
     var byte: Byte = 0b0000_0110
-    byte.setBit(3, 1)
+    var bit = 3
+    #expect(byte.isBitRaised(bit) == false)
+    byte.setBit(bit, 1)
     #expect(byte == 0b0000_1110)
-    byte.setBit(1, 0)
+    #expect(byte.isBitRaised(bit) == true)
+
+    bit = 1
+    #expect(byte.isBitRaised(bit) == true)
+    byte.setBit(bit, 0)
     #expect(byte == 0b0000_1100)
-    byte.raiseBit(4)
+    #expect(byte.isBitRaised(bit) == false)
+
+    bit = 4
+    #expect(byte.isBitRaised(bit) == false)
+    byte.raiseBit(bit)
     #expect(byte == 0b0001_1100)
-    byte.clearBit(2)
+    #expect(byte.isBitRaised(bit) == true)
+
+    bit = 2
+    #expect(byte.isBitRaised(bit) == true)
+    byte.clearBit(bit)
     #expect(byte == 0b0001_1000)
-    byte.toggleBit(0)
+    #expect(byte.isBitRaised(bit) == false)
+
+    bit = 0
+    #expect(byte.isBitRaised(bit) == false)
+    byte.toggleBit(bit)
     #expect(byte == 0b0001_1001)
+    #expect(byte.isBitRaised(bit) == true)
 }
