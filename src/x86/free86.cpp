@@ -103,6 +103,41 @@ int Free86::instruction_length(int opcode) {
     }
     while (true) { // loop over instruction bytes (fetch)
         switch (opcode) {
+        case 0x26: // ES segment override prefix
+        case 0x2e: // CS segment override prefix
+        case 0x36: // SS segment override prefix
+        case 0x3e: // DS segment override prefix
+        case 0x64: // FS segment override prefix
+        case 0x65: // GS segment override prefix
+        case 0xf0: // LOCK prefix
+        case 0xf2: // REPN[EZ] repeat string operation prefix
+        case 0xf3: // REP[EZ] repeat string operation prefix
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            opcode = ld8_readonly_cpl3();
+            break;
+        case 0x66: // operand-size override prefix
+            if (ipr_default & 0x0100) {
+                stride = 4;
+                ipr &= ~0x0100;
+            } else {
+                stride = 2;
+                ipr |= 0x0100;
+            }
+        case 0x67: // address-size override prefix
+            if (ipr_default & 0x0080) {
+                ipr &= ~0x0080;
+            } else {
+                ipr |= 0x0080;
+            }
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            opcode = ld8_readonly_cpl3();
+            break;
         case 0x00: // ADD
         case 0x01: // ADD
         case 0x02: // ADD
@@ -404,41 +439,82 @@ int Free86::instruction_length(int opcode) {
         case 0xfc: // CLD
         case 0xfd: // STD
             goto FETCH_LOOP;
-        case 0x26: // ES segment override prefix
-        case 0x2e: // CS segment override prefix
-        case 0x36: // SS segment override prefix
-        case 0x3e: // DS segment override prefix
-        case 0x64: // FS segment override prefix
-        case 0x65: // GS segment override prefix
-        case 0xf0: // LOCK prefix
-        case 0xf2: // REPN[EZ] repeat string operation prefix
-        case 0xf3: // REP[EZ] repeat string operation prefix
+        case 0x69: // IMUL
+        case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+        case 0xc7: // MOV
             if ((n + 1) > 15) {
                 abort(13);
             }
             lax = eip_linear + (n++);
-            opcode = ld8_readonly_cpl3();
-            break;
-        case 0x66: // operand-size override prefix
-            if (ipr_default & 0x0100) {
-                stride = 4;
-                ipr &= ~0x0100;
+            modRM = ld8_readonly_cpl3();
+            if (ipr & 0x0080) {
+                switch (modRM >> 6) {
+                case 0:
+                    if ((modRM & 7) == 6) {
+                        n += 2;
+                    }
+                    break;
+                case 1:
+                    n++;
+                    break;
+                default:
+                    n += 2;
+                    break;
+                }
             } else {
-                stride = 2;
-                ipr |= 0x0100;
+                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x06:
+                case 0x07:
+                    break;
+                case 0x04:
+                    if ((n + 1) > 15) {
+                        abort(13);
+                    }
+                    lax = eip_linear + (n++);
+                    modRM = ld8_readonly_cpl3();
+                    if ((modRM & 7) == 5) {
+                        n += 4;
+                    }
+                    break;
+                case 0x05:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                    n += 4;
+                    break;
+                case 0x08:
+                case 0x09:
+                case 0x0a:
+                case 0x0b:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                    n++;
+                    break;
+                case 0x0c:
+                    n += 2;
+                    break;
+                case 0x14:
+                    n += 5;
+                    break;
+                }
             }
-        case 0x67: // address-size override prefix
-            if (ipr_default & 0x0080) {
-                ipr &= ~0x0080;
-            } else {
-                ipr |= 0x0080;
-            }
-            if ((n + 1) > 15) {
+            if (n > 15) {
                 abort(13);
             }
-            lax = eip_linear + (n++);
-            opcode = ld8_readonly_cpl3();
-            break;
+            n += stride;
+            if (n > 15) {
+                abort(13);
+            }
+            goto FETCH_LOOP;
         case 0x6b: // IMUL
         case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
         case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
@@ -515,82 +591,6 @@ int Free86::instruction_length(int opcode) {
                 abort(13);
             }
             n++;
-            if (n > 15) {
-                abort(13);
-            }
-            goto FETCH_LOOP;
-        case 0x69: // IMUL
-        case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
-        case 0xc7: // MOV
-            if ((n + 1) > 15) {
-                abort(13);
-            }
-            lax = eip_linear + (n++);
-            modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x05:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                }
-            }
-            if (n > 15) {
-                abort(13);
-            }
-            n += stride;
             if (n > 15) {
                 abort(13);
             }

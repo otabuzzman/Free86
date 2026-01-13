@@ -26,27 +26,23 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
         opcode |= ipr & 0x0100;
         while (true) { // loop over instruction bytes (fetch)
             switch (opcode) {
-            case 0x66: // operand-size override prefix
+            case 0x26: // ES segment override prefix
+            case 0x2e: // CS segment override prefix
+            case 0x36: // SS segment override prefix
+            case 0x3e: // DS segment override prefix
                 if (ipr == ipr_default) {
                     instruction_length(opcode);
                 }
-                if (ipr_default & 0x0100) {
-                    ipr &= ~0x0100;
-                } else {
-                    ipr |= 0x0100;
-                }
+                ipr = (ipr & ~0x000f) | (((opcode >> 3) & 3) + 1);
                 opcode = fetch8();
                 opcode |= ipr & 0x0100;
                 break;
-            case 0x67: // address-size override prefix
+            case 0x64: // FS segment override prefix
+            case 0x65: // GS segment override prefix
                 if (ipr == ipr_default) {
                     instruction_length(opcode);
                 }
-                if (ipr_default & 0x0080) {
-                    ipr &= ~0x0080;
-                } else {
-                    ipr |= 0x0080;
-                }
+                ipr = (ipr & ~0x000f) | ((opcode & 7) + 1);
                 opcode = fetch8();
                 opcode |= ipr & 0x0100;
                 break;
@@ -74,23 +70,27 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 opcode = fetch8();
                 opcode |= ipr & 0x0100;
                 break;
-            case 0x26: // ES segment override prefix
-            case 0x2e: // CS segment override prefix
-            case 0x36: // SS segment override prefix
-            case 0x3e: // DS segment override prefix
+            case 0x66: // operand-size override prefix
                 if (ipr == ipr_default) {
                     instruction_length(opcode);
                 }
-                ipr = (ipr & ~0x000f) | (((opcode >> 3) & 3) + 1);
+                if (ipr_default & 0x0100) {
+                    ipr &= ~0x0100;
+                } else {
+                    ipr |= 0x0100;
+                }
                 opcode = fetch8();
                 opcode |= ipr & 0x0100;
                 break;
-            case 0x64: // FS segment override prefix
-            case 0x65: // GS segment override prefix
+            case 0x67: // address-size override prefix
                 if (ipr == ipr_default) {
                     instruction_length(opcode);
                 }
-                ipr = (ipr & ~0x000f) | ((opcode & 7) + 1);
+                if (ipr_default & 0x0080) {
+                    ipr &= ~0x0080;
+                } else {
+                    ipr |= 0x0080;
+                }
                 opcode = fetch8();
                 opcode |= ipr & 0x0100;
                 break;
@@ -185,21 +185,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 offset_to_linear(true);
                 st_writable_cpl3(regs[0]);
                 goto FETCH_LOOP;
-            case 0xd7: // XLAT
-                lax = regs[3] + (regs[0] & 0xff);
-                if (ipr & 0x0080) {
-                    lax &= 0xffff;
-                }
-                sreg = ipr & 0x000f;
-                if (sreg == 0) {
-                    sreg = 3;
-                } else {
-                    sreg--;
-                }
-                lax = lax + segs[sreg].base;
-                m = ld8_readonly_cpl3();
-                set_lower_byte(0, m);
-                goto FETCH_LOOP;
             case 0xc6: // MOV
                 modRM = fetch8();
                 if ((modRM >> 6) == 3) {
@@ -221,46 +206,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     imm = fetch();
                     st_writable_cpl3(imm);
                 }
-                goto FETCH_LOOP;
-            case 0x91: // XCHG C
-            case 0x92: // XCHG D
-            case 0x93: // XCHG B
-            case 0x94: // XCHG SP
-            case 0x95: // XCHG BP
-            case 0x96: // XCHG SI
-            case 0x97: // XCHG DI
-                reg = opcode & 7;
-                x = regs[0];
-                regs[0] = regs[reg];
-                regs[reg] = x;
-                goto FETCH_LOOP;
-            case 0x86: // XCHG
-                modRM = fetch8();
-                reg = (modRM >> 3) & 7;
-                if ((modRM >> 6) == 3) {
-                    rM = modRM & 7;
-                    rm = regs[rM & 3] >> ((rM & 4) << 1);
-                    set_lower_byte(rM, (regs[reg & 3] >> ((reg & 4) << 1)));
-                } else {
-                    segment_translation();
-                    rm = ld8_writable_cpl3();
-                    st8_writable_cpl3((regs[reg & 3] >> ((reg & 4) << 1)));
-                }
-                set_lower_byte(reg, rm);
-                goto FETCH_LOOP;
-            case 0x87: // XCHG
-                modRM = fetch8();
-                reg = (modRM >> 3) & 7;
-                if ((modRM >> 6) == 3) {
-                    rM = modRM & 7;
-                    rm = regs[rM];
-                    regs[rM] = regs[reg];
-                } else {
-                    segment_translation();
-                    rm = ld_writable_cpl3();
-                    st_writable_cpl3(regs[reg]);
-                }
-                regs[reg] = rm;
                 goto FETCH_LOOP;
             case 0x8e: // MOV
                 modRM = fetch8();
@@ -293,6 +238,61 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     segment_translation();
                     st16_writable_cpl3(x);
                 }
+                goto FETCH_LOOP;
+            case 0x86: // XCHG
+                modRM = fetch8();
+                reg = (modRM >> 3) & 7;
+                if ((modRM >> 6) == 3) {
+                    rM = modRM & 7;
+                    rm = regs[rM & 3] >> ((rM & 4) << 1);
+                    set_lower_byte(rM, (regs[reg & 3] >> ((reg & 4) << 1)));
+                } else {
+                    segment_translation();
+                    rm = ld8_writable_cpl3();
+                    st8_writable_cpl3((regs[reg & 3] >> ((reg & 4) << 1)));
+                }
+                set_lower_byte(reg, rm);
+                goto FETCH_LOOP;
+            case 0x87: // XCHG
+                modRM = fetch8();
+                reg = (modRM >> 3) & 7;
+                if ((modRM >> 6) == 3) {
+                    rM = modRM & 7;
+                    rm = regs[rM];
+                    regs[rM] = regs[reg];
+                } else {
+                    segment_translation();
+                    rm = ld_writable_cpl3();
+                    st_writable_cpl3(regs[reg]);
+                }
+                regs[reg] = rm;
+                goto FETCH_LOOP;
+            case 0x91: // XCHG C
+            case 0x92: // XCHG D
+            case 0x93: // XCHG B
+            case 0x94: // XCHG SP
+            case 0x95: // XCHG BP
+            case 0x96: // XCHG SI
+            case 0x97: // XCHG DI
+                reg = opcode & 7;
+                x = regs[0];
+                regs[0] = regs[reg];
+                regs[reg] = x;
+                goto FETCH_LOOP;
+            case 0xd7: // XLAT
+                lax = regs[3] + (regs[0] & 0xff);
+                if (ipr & 0x0080) {
+                    lax &= 0xffff;
+                }
+                sreg = ipr & 0x000f;
+                if (sreg == 0) {
+                    sreg = 3;
+                } else {
+                    sreg--;
+                }
+                lax = lax + segs[sreg].base;
+                m = ld8_readonly_cpl3();
+                set_lower_byte(0, m);
                 goto FETCH_LOOP;
             case 0xc4: // LES
                 ld_far_pointer(0);
@@ -591,19 +591,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 regs[reg] = osm_dst = regs[reg] - 1;
                 osm = 30;
                 goto FETCH_LOOP;
-            case 0x6b: // IMUL
-                modRM = fetch8();
-                reg = (modRM >> 3) & 7;
-                if ((modRM >> 6) == 3) {
-                    rm = regs[modRM & 7];
-                } else {
-                    segment_translation();
-                    rm = ld_readonly_cpl3();
-                }
-                imm = (fetch8() << 24) >> 24;
-                aux_IMUL(rm, imm);
-                regs[reg] = x;
-                goto FETCH_LOOP;
             case 0x69: // IMUL
                 modRM = fetch8();
                 reg = (modRM >> 3) & 7;
@@ -614,6 +601,19 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     rm = ld_readonly_cpl3();
                 }
                 imm = fetch();
+                aux_IMUL(rm, imm);
+                regs[reg] = x;
+                goto FETCH_LOOP;
+            case 0x6b: // IMUL
+                modRM = fetch8();
+                reg = (modRM >> 3) & 7;
+                if ((modRM >> 6) == 3) {
+                    rm = regs[modRM & 7];
+                } else {
+                    segment_translation();
+                    rm = ld_readonly_cpl3();
+                }
+                imm = (fetch8() << 24) >> 24;
                 aux_IMUL(rm, imm);
                 regs[reg] = x;
                 goto FETCH_LOOP;
@@ -1163,6 +1163,15 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         aux_JMPF(m16, m);
                     }
                     break;
+                case 4: // JMP
+                    if ((modRM >> 6) == 3) {
+                        rm = regs[modRM & 7];
+                    } else {
+                        segment_translation();
+                        rm = ld_readonly_cpl3();
+                    }
+                    eip = rm, far = far_start = 0;
+                    break;
                 case 6: // PUSH
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
@@ -1177,15 +1186,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     } else {
                         push(rm);
                     }
-                    break;
-                case 4: // JMP
-                    if ((modRM >> 6) == 3) {
-                        rm = regs[modRM & 7];
-                    } else {
-                        segment_translation();
-                        rm = ld_readonly_cpl3();
-                    }
-                    eip = rm, far = far_start = 0;
                     break;
                 default:
                     abort(6);
@@ -3064,91 +3064,69 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         goto OUTER_LOOP;
                     }
                     goto FETCH_LOOP;
-                case 0x166: // operand-size override prefix
-                case 0x167: // address-size override prefix
-                case 0x1f0: // LOCK prefix
-                case 0x1f2: // REPN[EZ] repeat string operation prefix
-                case 0x1f3: // REP[EZ] repeat string operation prefix
                 case 0x126: // ES segment override prefix
                 case 0x12e: // CS segment override prefix
                 case 0x136: // SS segment override prefix
                 case 0x13e: // DS segment override prefix
                 case 0x164: // FS segment override prefix
                 case 0x165: // GS segment override prefix
+                case 0x1f0: // LOCK prefix
+                case 0x1f2: // REPN[EZ] repeat string operation prefix
+                case 0x1f3: // REP[EZ] repeat string operation prefix
+                case 0x166: // operand-size override prefix
+                case 0x167: // address-size override prefix
                 case 0x100: // ADD
-                case 0x108: // OR
-                case 0x110: // ADC
-                case 0x118: // SBB
-                case 0x120: // AND
-                case 0x128: // SUB
-                case 0x130: // XOR
-                case 0x138: // CMP
                 case 0x102: // ADD
-                case 0x10a: // OR
-                case 0x112: // ADC
-                case 0x11a: // SBB
-                case 0x122: // AND
-                case 0x12a: // SUB
-                case 0x132: // XOR
-                case 0x13a: // CMP
                 case 0x104: // ADD
+                case 0x108: // OR
+                case 0x10a: // OR
                 case 0x10c: // OR
+                case 0x110: // ADC
+                case 0x112: // ADC
                 case 0x114: // ADC
+                case 0x118: // SBB
+                case 0x11a: // SBB
                 case 0x11c: // SBB
+                case 0x120: // AND
+                case 0x122: // AND
                 case 0x124: // AND
-                case 0x12c: // SUB
-                case 0x134: // XOR
-                case 0x13c: // CMP
-                case 0x1a0: // MOV AL,
-                case 0x1a2: // MOV ,AL
-                case 0x1d8: // ESC (80387)
-                case 0x1d9: // ESC (80387)
-                case 0x1da: // ESC (80387)
-                case 0x1db: // ESC (80387)
-                case 0x1dc: // ESC (80387)
-                case 0x1dd: // ESC (80387)
-                case 0x1de: // ESC (80387)
-                case 0x1df: // ESC (80387)
-                case 0x184: // TEST
-                case 0x1a8: // TEST
-                case 0x1f6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
-                case 0x1c0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
-                case 0x1d0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
-                case 0x1d2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
-                case 0x1fe: // G4 (INC, DEC, -, -, -, -, -)
-                case 0x1cd: // INT
-                case 0x1ce: // INTO
-                case 0x1f5: // CMC
-                case 0x1f8: // CLC
-                case 0x1f9: // STC
-                case 0x1fc: // CLD
-                case 0x1fd: // STD
-                case 0x1fa: // CLI
-                case 0x1fb: // STI
-                case 0x19e: // SAHF
-                case 0x19f: // LAHF
-                case 0x1f4: // HLT
                 case 0x127: // DAA
+                case 0x128: // SUB
+                case 0x12a: // SUB
+                case 0x12c: // SUB
                 case 0x12f: // DAS
+                case 0x130: // XOR
+                case 0x132: // XOR
+                case 0x134: // XOR
                 case 0x137: // AAA
+                case 0x138: // CMP
+                case 0x13a: // CMP
+                case 0x13c: // CMP
                 case 0x13f: // AAS
-                case 0x1d4: // AAM
-                case 0x1d5: // AAD
                 case 0x16c: // INSB
                 case 0x16e: // OUTSB
-                case 0x1a4: // MOVSB
-                case 0x1a6: // CMPSB
-                case 0x1aa: // STOSB
-                case 0x1ac: // LOSB
-                case 0x1ae: // SCASB
                 case 0x180: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
                 case 0x182: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+                case 0x184: // TEST
                 case 0x186: // XCHG
                 case 0x188: // MOV
                 case 0x18a: // MOV
                 case 0x18c: // MOV
                 case 0x18e: // MOV
+                case 0x19a: // CALLF
                 case 0x19b: // FWAIT/WAIT
+                case 0x19c: // PUSHF
+                case 0x19d: // POPF
+                case 0x19e: // SAHF
+                case 0x19f: // LAHF
+                case 0x1a0: // MOV AL,
+                case 0x1a2: // MOV ,AL
+                case 0x1a4: // MOVSB
+                case 0x1a6: // CMPSB
+                case 0x1a8: // TEST
+                case 0x1aa: // STOSB
+                case 0x1ac: // LOSB
+                case 0x1ae: // SCASB
                 case 0x1b0: // MOV AL
                 case 0x1b1: // MOV CL
                 case 0x1b2: // MOV DL
@@ -3157,24 +3135,46 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x1b5: // MOV CH
                 case 0x1b6: // MOV DH
                 case 0x1b7: // MOV BH
+                case 0x1c0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
                 case 0x1c6: // MOV
-                case 0x1cc: // INT
-                case 0x1d7: // XLAT
-                case 0x1e4: // IN AL,
-                case 0x1e6: // OUT ,AL
-                case 0x1ec: // IN AL,DX
-                case 0x1ee: // OUT DX,AL
-                case 0x1cf: // IRET
                 case 0x1ca: // RET
                 case 0x1cb: // RET
-                case 0x19a: // CALLF
-                case 0x19c: // PUSHF
-                case 0x19d: // POPF
-                case 0x1ea: // JMPF
+                case 0x1cc: // INT
+                case 0x1cd: // INT
+                case 0x1ce: // INTO
+                case 0x1cf: // IRET
+                case 0x1d0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
+                case 0x1d2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
+                case 0x1d4: // AAM
+                case 0x1d5: // AAD
+                case 0x1d7: // XLAT
+                case 0x1d8: // ESC (80387)
+                case 0x1d9: // ESC (80387)
+                case 0x1da: // ESC (80387)
+                case 0x1db: // ESC (80387)
+                case 0x1dc: // ESC (80387)
+                case 0x1dd: // ESC (80387)
+                case 0x1de: // ESC (80387)
+                case 0x1df: // ESC (80387)
                 case 0x1e0: // LOOPNE
                 case 0x1e1: // LOOPE
                 case 0x1e2: // LOOP
                 case 0x1e3: // JCXZ
+                case 0x1e4: // IN AL,
+                case 0x1e6: // OUT ,AL
+                case 0x1ea: // JMPF
+                case 0x1ec: // IN AL,DX
+                case 0x1ee: // OUT DX,AL
+                case 0x1f4: // HLT
+                case 0x1f5: // CMC
+                case 0x1f6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
+                case 0x1f8: // CLC
+                case 0x1f9: // STC
+                case 0x1fa: // CLI
+                case 0x1fb: // STI
+                case 0x1fc: // CLD
+                case 0x1fd: // STD
+                case 0x1fe: // G4 (INC, DEC, -, -, -, -, -)
                     opcode &= 0xff;
                     break;
                 case 0x163: // ARPL
@@ -3442,11 +3442,10 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     case 0x101: // G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)
                     case 0x102: // LAR
                     case 0x103: // LSL
+                    case 0x106: // CLTS
                     case 0x120: // MOV
                     case 0x122: // MOV
-                    case 0x106: // CLTS
                     case 0x123: // MOV
-                    case 0x1a2: // -
                     case 0x131: // -
                     case 0x190: // SETO
                     case 0x191: // SETNO
@@ -3464,6 +3463,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     case 0x19d: // SETNL
                     case 0x19e: // SETLE
                     case 0x19f: // SETNLE
+                    case 0x1a2: // -
                     case 0x1b0: // CMPXCHG (80486)
                         opcode = 0x0f;
                         far--;
