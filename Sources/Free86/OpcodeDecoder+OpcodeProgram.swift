@@ -6,4 +6,5 @@ enum Resume {
     case goOnFetching
     case endFetchLoop
     case endCyclesLoop
+    case endCyclesLoopOnInterrupt
 }

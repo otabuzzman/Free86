@@ -16,7 +16,7 @@ extension Free86 {
     /// 0x18d  JNL
     /// 0x18e  JLE
     /// 0x18f  JNLE
-    func tOx18f() throws -> Result<Resume, Never> {
+    func Ox10f8f() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x140  CMOVx (80486)
@@ -35,72 +35,72 @@ extension Free86 {
     /// 0x14d  CMOVx (80486)
     /// 0x14e  CMOVx (80486)
     /// 0x14f  CMOVx (80486)
-    func tOx14f() throws -> Result<Resume, Never> {
+    func Ox10f4f() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1b6  MOVZX
-    func tOx1b6() throws -> Result<Resume, Never> {
+    func Ox10fb6() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1be  MOVSX
-    func tOx1be() throws -> Result<Resume, Never> {
+    func Ox10fbe() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1af  IMUL
-    func tOx1af() throws -> Result<Resume, Never> {
+    func Ox10faf() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1c1  XADD (80486)
-    func tOx1c1() throws -> Result<Resume, Never> {
+    func Ox10fc1() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1a0  PUSH FS
     /// 0x1a8  PUSH GS
-    func tOx1a8() throws -> Result<Resume, Never> {
+    func Ox10fa8() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1a1  POP FS
     /// 0x1a9  POP GS
-    func tOx1a9() throws -> Result<Resume, Never> {
+    func Ox10fa9() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1b2  LSS
     /// 0x1b4  LFS
     /// 0x1b5  LGS
-    func tOx1b5() throws -> Result<Resume, Never> {
+    func Ox10fb5() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1a4  SHLD
     /// 0x1ac  SHRD
-    func tOx1ac() throws -> Result<Resume, Never> {
+    func Ox10fac() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1a5  SHLD
     /// 0x1ad  SHRD
-    func tOx1ad() throws -> Result<Resume, Never> {
+    func Ox10fad() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1ba  G8 (-, -, -, -, BT, BTS, BTR, BTC)
-    func tOx1ba() throws -> Result<Resume, Never> {
+    func Ox10fba() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1a3  BT
-    func tOx1a3() throws -> Result<Resume, Never> {
+    func Ox10fa3() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1ab  BTS
     /// 0x1b3  BTR
     /// 0x1bb  BTC
-    func tOx1bb() throws -> Result<Resume, Never> {
+    func Ox10fbb() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1bc  BSF
     /// 0x1bd  BSR
-    func tOx1bd() throws -> Result<Resume, Never> {
+    func Ox10fbd() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x1b1  CMPXCHG (40486)
-    func tOx1b1() throws -> Result<Resume, Never> {
+    func Ox10fb1() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x100  G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
@@ -130,7 +130,7 @@ extension Free86 {
     /// 0x19f  SETNLE
     /// 0x1a2  -
     /// 0x1b0  CMPXCHG (80486)
-    mutating func tOx1b0() throws -> Result<Resume, Never> {
+    mutating func Ox10fb0() throws -> Result<Resume, Never> {
         opcode = 0x0f
         far -= 1
         return .success(.goOnFetching)
@@ -247,7 +247,7 @@ extension Free86 {
     /// 0x1b9  -
     /// 0x1bf  MOVSX
     /// 0x1c0  -
-    func tOx1c0() throws -> Result<Resume, Never> {
+    func Ox10fc0() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
 }

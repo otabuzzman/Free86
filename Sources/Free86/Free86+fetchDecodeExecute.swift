@@ -1,5 +1,5 @@
 extension Free86 {
-    mutating func fetchDecodeExecute(cycles: QWord) throws {
+    mutating func fetchDecodeExecute(cycles: QWord) async throws {
         cyclesLoop:
         repeat {  // cycles (actually instructions)
             fetchLoop:
@@ -14,7 +14,16 @@ extension Free86 {
                         break fetchLoop
                     case .endCyclesLoop:
                         break cyclesLoop
-                    }
+                    case .endCyclesLoopOnInterrupt:
+                        if eflags.isFlagRaised(.IF) {
+                            let irq = try await INTR.probe()
+                            if irq {
+                                break cyclesLoop
+                            } else {
+                                break fetchLoop
+                            }
+                        }
+                   }
                 }
             }
             cyclesRemaining -= 1
