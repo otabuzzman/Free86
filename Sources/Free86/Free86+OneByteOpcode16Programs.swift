@@ -295,27 +295,45 @@ extension Free86 {
         return .success(.endFetchLoop)
     }
     /// 0x16d  INSW/D
-    func oOx16d() throws -> Result<Resume, Never> {
+    mutating func oOx16d() throws -> Result<Resume, Never> {
+        if (eflags.isFlagRaised(.IF) && INTR.probe()) {
+            return .success(.endCyclesLoopLoop)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x16f  OUTSW/D
-    func oOx16f() throws -> Result<Resume, Never> {
+    mutating func oOx16f() throws -> Result<Resume, Never> {
+        if (eflags.isFlagRaised(.IF) && INTR.probe()) {
+            return .success(.endCyclesLoopLoop)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x1e5  IN AX,
-    func oOx1e5() throws -> Result<Resume, Never> {
+    mutating func oOx1e5() throws -> Result<Resume, Never> {
+        if (eflags.isFlagRaised(.IF) && INTR.probe()) {
+            return .success(.endCyclesLoopLoop)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x1e7  OUT ,AX
-    func oOx1e7() throws -> Result<Resume, Never> {
+    mutating func oOx1e7() throws -> Result<Resume, Never> {
+        if (eflags.isFlagRaised(.IF) && INTR.probe()) {
+            return .success(.endCyclesLoopLoop)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x1ed  IN AX,DX
-    func oOx1ed() throws -> Result<Resume, Never> {
+    mutating func oOx1ed() throws -> Result<Resume, Never> {
+        if (eflags.isFlagRaised(.IF) && INTR.probe()) {
+            return .success(.endCyclesLoopLoop)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x1ef  OUT DX,AX
-    func oOx1ef() throws -> Result<Resume, Never> {
+    mutating func oOx1ef() throws -> Result<Resume, Never> {
+        if (eflags.isFlagRaised(.IF) && INTR.probe()) {
+            return .success(.endCyclesLoopLoop)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x126  ES segment override prefix
@@ -429,8 +447,9 @@ extension Free86 {
     /// 0x1fc  CLD
     /// 0x1fd  STD
     /// 0x1fe  G4 (INC, DEC, -, -, -, -, -)
-    func oOx1fe() throws -> Result<Resume, Never> {
-        return .success(.endFetchLoop)
+    mutating func oOx1fe() throws -> Result<Resume, Never> {
+        opcode.clearBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
+        return .success(.goOnFetching)
     }
     /// 0x163  ARPL
     /// 0x1d6  -
@@ -438,6 +457,7 @@ extension Free86 {
     /// 0x10f  2-byte instruction escape
     mutating func oOx10f() throws -> Result<Resume, Never> {
         // opcode = fetch8()
+        opcode.raiseBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
         return try twoByteDecoder[opcode]()
     }
 }

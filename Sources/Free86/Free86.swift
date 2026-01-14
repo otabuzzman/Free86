@@ -1,4 +1,19 @@
 struct Free86 {
+    var eflags: EFlags
+
+    /// interrupt pins and data bus low byte
+    let INTR = PinIO<Bool>()
+    let DB8 = PinIO<Byte>()  // INTR vector
+    let NMI = PinIO<Bool>()
+    let RESET = PinIO<Bool>()
+
+    ///   Fetch address register
+    ///
+    ///   The fetch address register (FAR, aka MAR) stores the physical memory
+    ///   address of the next byte to be retrieved in the current fetch cycle.
+    var far: DWord        // fetch address register (FAR, aka MAR)
+    var far_start: DWord  // first fetch address of current cycle
+
     var opcode: Int
     
     var cyclesRequested: QWord

@@ -3,7 +3,7 @@ public typealias Word = UInt16
 public typealias DWord = UInt32
 public typealias QWord = UInt64
 
-extension FixedWidthInteger where Self: UnsignedInteger {
+extension FixedWidthInteger {
     static var halfBitWidth: Int {
         Self.bitWidth / 2
     }
