@@ -26,10 +26,9 @@ struct Free86 {
     var ipr_default: InstructionPrefixRegister  // reflects D flag (PM (1986), 16.1)
                                                 // also belongs to the SSB (below)
 
-    lazy var invalid: OpcodeProgram = {
+    var invalid: OpcodeProgram = {
         throw Interrupt(.UD)
     }
-
     lazy var oneByteDecoder: OpcodeDecoder = [
         //          0x0      0x1      0x2      0x3      0x4      0x5      0x6      0x7      0x8      0x9      0xa      0xb      0xc      0xd      0xe      0xf
         /* 0x000 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,

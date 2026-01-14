@@ -62,7 +62,7 @@ let package = Package(
                 "InstructionPrefixRegister.swift",
                 "Free86.swift",
                 "Free86+fetchDecodeExecute.swift",
-                "OpcodeDecoder+Program.swift",
+                "OpcodeDecoder+OpcodeProgram.swift",
                 "MemoryIO+PhysicalAddress.swift",
                 "PinIO.swift",
             ],

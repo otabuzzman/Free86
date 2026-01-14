@@ -1,7 +1,7 @@
-typealias Byte = UInt8
-typealias Word = UInt16
-typealias DWord = UInt32
-typealias QWord = UInt64
+public typealias Byte = UInt8
+public typealias Word = UInt16
+public typealias DWord = UInt32
+public typealias QWord = UInt64
 
 extension FixedWidthInteger where Self: UnsignedInteger {
     static var halfBitWidth: Int {

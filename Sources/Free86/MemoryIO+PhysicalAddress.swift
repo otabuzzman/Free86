@@ -35,14 +35,14 @@ protocol IOPort {
     func wr(_ iodata: Element)
 }
 
-class Memory<A: PhysicalAddress> {
+public class Memory<A: PhysicalAddress> {
     private var slot: [AnyBank<A>]
     
-    init<B: MemoryBank>(defaultBank: B, count: Int = 1024 * 1024) where B.Address == A {
-        slot = [AnyBank<A>](repeating: AnyBank<A>(defaultBank), count: count)
+    public init<B: MemoryBank>(defaultBank: B) where B.Address == A {
+        slot = [AnyBank<A>](repeating: AnyBank<A>(defaultBank), count: 1024 * 1024)
     }
     
-    subscript(addr: A) -> Byte {
+    public subscript(addr: A) -> Byte {
         get {
             let index = Int(addr >> A.bankIndexShift)
             let offset = addr & A(A.bankOffsetMask)
@@ -55,7 +55,7 @@ class Memory<A: PhysicalAddress> {
         }
     }
     
-    func register<B: MemoryBank>(bank: B, at addr: A) where B.Address == A {
+    public func register<B: MemoryBank>(bank: B, at addr: A) where B.Address == A {
         let index = Int(addr >> A.bankIndexShift)
         slot[index] = AnyBank<A>(bank)
     }
@@ -78,26 +78,28 @@ class AnyBank<A: PhysicalAddress> {
     }
 }
 
-protocol MemoryBank {
+public protocol MemoryBank {
     associatedtype Address: PhysicalAddress
     subscript(addr: Address) -> Byte { get set }
 }
 
-class DefaultBank<A: PhysicalAddress>: MemoryBank {
-    subscript(addr: A) -> Byte {
+public class DefaultBank<A: PhysicalAddress>: MemoryBank {
+    public init() { }
+
+    public subscript(addr: A) -> Byte {
         get { .zero }
         set { }
     }
 }
 
-class RAMBank<A: PhysicalAddress>: MemoryBank {
+public class RAMBank<A: PhysicalAddress>: MemoryBank {
     private var bank: [Byte]
     
-    init(fill: Byte = .zero) {
+    public init(fill: Byte = .zero) {
         bank = [Byte](repeating: fill, count: A.bankSize)
     }
     
-    subscript(addr: A) -> Byte {
+    public subscript(addr: A) -> Byte {
         get { bank[Int(addr) & A.bankOffsetMask] }
         set(byte) { bank[Int(addr) & A.bankOffsetMask] = byte }
     }
@@ -118,20 +120,20 @@ class ROMBank<A: PhysicalAddress>: MemoryBank {
     }
 }
 
-protocol PhysicalAddress: UnsignedInteger {
+public protocol PhysicalAddress: UnsignedInteger {
     static var bankSize: Int { get }
     static var bankOffsetMask: Int { get }
     static var bankIndexShift: Int { get }
 }
 
 extension DWord: PhysicalAddress {
-    static var bankSize: Int { 0x01000 }  // 4 kB
-    static var bankIndexShift: Int { 12 }
-    static var bankOffsetMask: Int { 0x00fff }
+    public static var bankSize: Int { 0x01000 }  // 4 kB
+    public static var bankIndexShift: Int { 12 }
+    public static var bankOffsetMask: Int { 0x00fff }
 }
 
 extension QWord: PhysicalAddress {
-    static var bankSize: Int { 0x20000 }  // 128 kB
-    static var bankIndexShift: Int { 17 }
-    static var bankOffsetMask: Int { 0x1ffff }
+    public static var bankSize: Int { 0x20000 }  // 128 kB
+    public static var bankIndexShift: Int { 17 }
+    public static var bankOffsetMask: Int { 0x1ffff }
 }
