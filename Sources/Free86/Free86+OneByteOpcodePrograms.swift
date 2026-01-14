@@ -375,7 +375,7 @@ extension Free86 {
     /// 0x9d  POPF
     func oOx9d() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
@@ -505,28 +505,28 @@ extension Free86 {
     /// 0x9a  CALLF
     mutating func oOx9a() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xca  RET
     mutating func oOxca() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xcb  RET
     mutating func oOxcb() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xcf  IRET
     mutating func oOxcf() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
@@ -577,7 +577,7 @@ extension Free86 {
     /// 0xfb  STI
     mutating func oOxfb() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
@@ -636,28 +636,28 @@ extension Free86 {
     /// 0x6c  INSB
     mutating func oOx6c() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0x6d  INSW/D
     mutating func oOx6d() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0x6e  OUTSB
     mutating func oOx6e() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0x6f  OUTSW/D
     mutating func oOx6f() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
@@ -679,56 +679,56 @@ extension Free86 {
     /// 0xe4  IN AL,
     mutating func oOxe4() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xe5  IN AX,
     mutating func oOxe5() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xe6  OUT ,AL
     mutating func oOxe6() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xe7  OUT ,AX
     mutating func oOxe7() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xec  IN AL,DX
     mutating func oOxec() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xed  IN AX,DX
     mutating func oOxed() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xee  OUT DX,AL
     mutating func oOxee() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
     /// 0xef  OUT DX,AX
     mutating func oOxef() throws -> Result<Resume, Never> {
         if (eflags.isFlagRaised(.IF) && INTR.probe()) {
-            return .success(.endCyclesLoopLoop)
+            return .success(.endCyclesLoop)
         }
         return .success(.endFetchLoop)
     }
