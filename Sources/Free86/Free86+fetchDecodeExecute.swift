@@ -4,15 +4,8 @@ extension Free86 {
         repeat {  // cycles (actually instructions)
             fetchLoop:
             while true {  // loop over instruction bytes (fetch)
-                let opcodeDecoder: OpcodeDecoder
-                if true {
-                    // opcode = fetch()
-                    opcodeDecoder = twoByteDecoder
-                } else {
-                    opcodeDecoder = oneByteDecoder
-                }
-                let opcodeProgram = opcodeDecoder[opcode]
-                switch try opcodeProgram() {
+                let result = try oneByteDecoder[opcode]()
+                switch result {
                 case .success(let resume):
                     switch resume {
                     case .goOnFetching:
