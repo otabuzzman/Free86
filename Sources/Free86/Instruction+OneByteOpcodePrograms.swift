@@ -9,15 +9,15 @@ extension Instruction {
     /// 0xf0  LOCK prefix
     /// 0xf2  REPN[EZ] repeat string operation prefix
     /// 0xf3  REP[EZ] repeat string operation prefix
-    func Oxf3() throws -> Result<Resume, Never> {
+    func Oxf3(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.goOnFetching)
     }
     /// 0x66  operand-size override prefix
-    func Ox66() throws -> Result<Resume, Never> {
+    func Ox66(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.goOnFetching)
     }
     /// 0x67  address-size override prefix
-    func Ox67() throws -> Result<Resume, Never> {
+    func Ox67(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.goOnFetching)
     }
     /// 0x00  ADD
@@ -82,7 +82,7 @@ extension Instruction {
     /// 0xdf  ESC (80387)
     /// 0xfe  G4 (INC, DEC, -, -, -, -, -)
     /// 0xff  G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
-    func Oxff() throws -> Result<Resume, Never> {
+    func Oxff(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x04  ADD
@@ -131,7 +131,7 @@ extension Instruction {
     /// 0xe6  OUT ,AL
     /// 0xe7  OUT ,AX
     /// 0xeb  JMP
-    func Oxeb() throws -> Result<Resume, Never> {
+    func Oxeb(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x05  ADD
@@ -154,7 +154,7 @@ extension Instruction {
     /// 0xbf  MOV DI
     /// 0xe8  CALL
     /// 0xe9  JMP
-    func Oxe9() throws -> Result<Resume, Never> {
+    func Oxe9(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x06  PUSH
@@ -250,13 +250,13 @@ extension Instruction {
     /// 0xfb  STI
     /// 0xfc  CLD
     /// 0xfd  STD
-    func Oxfd() throws -> Result<Resume, Never> {
+    func Oxfd(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x69  IMUL
     /// 0x81  G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
     /// 0xc7  MOV
-    func Oxc7() throws -> Result<Resume, Never> {
+    func Oxc7(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x6b  IMUL
@@ -266,45 +266,45 @@ extension Instruction {
     /// 0xc0  G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
     /// 0xc1  G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
     /// 0xc6  MOV
-    func Oxc6() throws -> Result<Resume, Never> {
+    func Oxc6(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x9a  CALLF
     /// 0xea  JMPF
-    func Oxea() throws -> Result<Resume, Never> {
+    func Oxea(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0xa0  MOV AL,
     /// 0xa1  MOV AX,
     /// 0xa2  MOV ,AL
     /// 0xa3  MOV ,AX
-    func Oxa3() throws -> Result<Resume, Never> {
+    func Oxa3(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0xc2  RET
     /// 0xca  RET
-    func Oxca() throws -> Result<Resume, Never> {
+    func Oxca(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0xc8  ENTER
-    func Oxc8() throws -> Result<Resume, Never> {
+    func Oxc8(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0xf6  G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
-    func Oxf6() throws -> Result<Resume, Never> {
+    func Oxf6(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0xf7  G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
-    func Oxf7() throws -> Result<Resume, Never> {
+    func Oxf7(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0xd6  -
     /// 0xf1  -
-    func Oxf1() throws -> Result<Resume, Never> {
+    func Oxf1(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
     /// 0x0f  2-byte instruction escape
-    func Ox0f() throws -> Result<Resume, Never> {
+    func Ox0f(length: inout Int) throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
 }

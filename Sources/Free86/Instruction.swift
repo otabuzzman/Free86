@@ -10,8 +10,6 @@ struct Instruction {
                 case .goOnFetching:
                     continue fetchLoop
                 case .endFetchLoop:
-                    fallthrough
-                default:
                     break fetchLoop
                }
             }
@@ -19,9 +17,13 @@ struct Instruction {
         return length
     }
 
-    /// local overrides of defnitions in OpcodeDecoder+OpcodeProgram.swift
     typealias OpcodeDecoder = Array<OpcodeProgram>
     typealias OpcodeProgram = (inout Int) throws -> Result<Resume, Never>
+
+    enum Resume {
+        case goOnFetching
+        case endFetchLoop
+    }
 
     var invalid: OpcodeProgram = { _ in
         throw Interrupt(.UD)

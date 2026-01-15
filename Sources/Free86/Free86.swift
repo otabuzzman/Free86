@@ -41,6 +41,16 @@ struct Free86 {
     var ipr_default: InstructionPrefixRegister  // reflects D flag (PM (1986), 16.1)
                                                 // also belongs to the SSB (below)
 
+    typealias OpcodeDecoder = Array<OpcodeProgram>
+    typealias OpcodeProgram = () throws -> Result<Resume, Never>
+
+    enum Resume {
+        case goOnFetching
+        case endFetchLoop
+        case endCyclesLoop
+        case endCyclesLoopOnInterrupt
+    }
+
     var invalid: OpcodeProgram = {
         throw Interrupt(.UD)
     }
