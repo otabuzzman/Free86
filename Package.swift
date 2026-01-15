@@ -68,6 +68,9 @@ let package = Package(
                 "Free86+TwoByteOpcodePrograms.swift",
                 "OpcodeDecoder+OpcodeProgram.swift",
                 "MemoryIO+PhysicalAddress.swift",
+                "Instruction.swift",
+                "Instruction+OneByteOpcodePrograms.swift",
+                "Instruction+TwoByteOpcodePrograms.swift",
                 "PinIO.swift",
             ],
             swiftSettings: [

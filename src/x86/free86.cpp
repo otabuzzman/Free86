@@ -205,66 +205,7 @@ int Free86::instruction_length(int opcode) {
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x05:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
@@ -447,66 +388,7 @@ int Free86::instruction_length(int opcode) {
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x05:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
@@ -527,66 +409,7 @@ int Free86::instruction_length(int opcode) {
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x05:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
@@ -634,66 +457,7 @@ int Free86::instruction_length(int opcode) {
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x05:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
@@ -711,66 +475,7 @@ int Free86::instruction_length(int opcode) {
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x05:
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
@@ -857,66 +562,7 @@ int Free86::instruction_length(int opcode) {
                 }
                 lax = eip_linear + (n++);
                 modRM = ld8_readonly_cpl3();
-                if (ipr & 0x0080) {
-                    switch (modRM >> 6) {
-                    case 0:
-                        if ((modRM & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
-                        n += 2;
-                        break;
-                    }
-                } else {
-                    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x04:
-                        if ((n + 1) > 15) {
-                            abort(13);
-                        }
-                        lax = eip_linear + (n++);
-                        modRM = ld8_readonly_cpl3();
-                        if ((modRM & 7) == 5) {
-                            n += 4;
-                        }
-                        break;
-                    case 0x05:
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    }
-                }
+                n += operands_length();
                 if (n > 15) {
                     abort(13);
                 }
@@ -966,66 +612,7 @@ int Free86::instruction_length(int opcode) {
                 }
                 lax = eip_linear + (n++);
                 modRM = ld8_readonly_cpl3();
-                if (ipr & 0x0080) {
-                    switch (modRM >> 6) {
-                    case 0:
-                        if ((modRM & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
-                        n += 2;
-                        break;
-                    }
-                } else {
-                    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x04:
-                        if ((n + 1) > 15) {
-                            abort(13);
-                        }
-                        lax = eip_linear + (n++);
-                        modRM = ld8_readonly_cpl3();
-                        if ((modRM & 7) == 5) {
-                            n += 4;
-                        }
-                        break;
-                    case 0x05:
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    }
-                }
+                n += operands_length();
                 if (n > 15) {
                     abort(13);
                 }
@@ -1156,6 +743,70 @@ int Free86::instruction_length(int opcode) {
     }
 FETCH_LOOP:
     ;
+    return n;
+}
+int Free86::operands_length() {
+    int n = 0;
+    if (ipr & 0x0080) {
+        switch (modRM >> 6) {
+        case 0:
+            if ((modRM & 7) == 6) {
+                n += 2;
+            }
+            break;
+        case 1:
+            n++;
+            break;
+        default:
+            n += 2;
+            break;
+        }
+    } else {
+        switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
+        case 0x06:
+        case 0x07:
+            break;
+        case 0x04:
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            modRM = ld8_readonly_cpl3();
+            if ((modRM & 7) == 5) {
+                n += 4;
+            }
+            break;
+        case 0x05:
+        case 0x10:
+        case 0x11:
+        case 0x12:
+            case 0x13:
+            case 0x15:
+            case 0x16:
+            case 0x17:
+                n += 4;
+                break;
+            case 0x08:
+            case 0x09:
+            case 0x0a:
+            case 0x0b:
+            case 0x0d:
+            case 0x0e:
+            case 0x0f:
+                n++;
+                break;
+            case 0x0c:
+                n += 2;
+                break;
+            case 0x14:
+                n += 5;
+                break;
+        }
+    }
     return n;
 }
 void Free86::set_CR0(int bits) {

@@ -358,6 +358,7 @@ class Free86 {
     void fetch_opcode();
 
     int instruction_length(int opcode);
+    int operands_length();
 
     void set_CR0(int bits);
     void set_CR3(int bits);
