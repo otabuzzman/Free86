@@ -1,5 +1,4 @@
 typealias OpcodeDecoder = Array<OpcodeProgram>
-
 typealias OpcodeProgram = () throws -> Result<Resume, Never>
 
 enum Resume {
