@@ -214,12 +214,12 @@ int Free86::fetch8() {
     return ld8_direct(far++);
 }
 int Free86::fetch16() {
-    int word = fetch8()
+    int word = fetch8();
     word |= fetch8() << 8;
     return word;
 }
 int Free86::fetch() {
-    int dword = fetch8()
+    int dword = fetch8();
     dword |= fetch8() << 8;
     dword |= fetch8() << 16;
     dword |= fetch8() << 24;
