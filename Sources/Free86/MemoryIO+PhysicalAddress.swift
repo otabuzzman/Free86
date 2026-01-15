@@ -35,7 +35,7 @@ protocol IOPort {
     func wr(_ iodata: Element)
 }
 
-public class Memory<A: PhysicalAddress> {
+public class MemoryIO<A: PhysicalAddress> {
     private var slot: [AnyBank<A>]
     
     public init<B: MemoryBank>(defaultBank: B) where B.Address == A {

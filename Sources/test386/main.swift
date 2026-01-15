@@ -4,10 +4,10 @@ import Free86
 let testSuiteFileURL = URL(fileURLWithPath: "../test386.asm/test386.bin")
 let testSuiteAddress: DWord = 0x000f0000
 
-let mem = Memory<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
+let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
 try mem.load(file: testSuiteFileURL, at: testSuiteAddress)
 
-extension Memory<DWord> {
+extension MemoryIO<DWord> {
     convenience init(capacity: A) {
         assert(capacity % A(A.bankSize) == 0)
         self.init(defaultBank: DefaultBank<A>())

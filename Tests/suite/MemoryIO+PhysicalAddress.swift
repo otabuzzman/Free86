@@ -176,7 +176,7 @@ func readWriteMultipleMemoryMappedIoPorts64() {
 
 @Test("read/ write 8 bit data from/ to RAM/ ROM/ memory mapped IO ports at 32 bit addresses")
 func readWriteRamRomMemoryMappedIoPorts() {
-    let memory = Memory<DWord>(defaultBank: DefaultBank<DWord>())
+    let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     let ram = RAMBank<DWord>()
     let rom = ROMBank<DWord>(bytes: [0xDE, 0xED, 0xC0, 0xDE])
     let bank = IOPortBank<DWord, Port<Byte>>()
@@ -211,7 +211,7 @@ func readWriteRamRomMemoryMappedIoPorts() {
 
 @Test("read/ write 8 bit data from/ to RAM/ ROM/ memory mapped IO ports at 64 bit addresses")
 func readWriteRamRomMemoryMappedIoPorts64() {
-    let memory = Memory<QWord>(defaultBank: DefaultBank<QWord>())
+    let memory = MemoryIO<QWord>(defaultBank: DefaultBank<QWord>())
     let ram = RAMBank<QWord>()
     let rom = ROMBank<QWord>(bytes: [0xDE, 0xED, 0xC0, 0xDE])
     let bank = IOPortBank<QWord, Port<Byte>>()

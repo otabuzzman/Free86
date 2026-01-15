@@ -1,7 +1,7 @@
 import Foundation
 import Free86
 
-let mem = Memory<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
+let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
 
 let bootloaderFileURL = URL(fileURLWithPath: "bin/linuxstart.bin")
 let bootloaderAddress: DWord = 0x0001_0000
@@ -21,7 +21,7 @@ let cpuStateInitFileURL = URL(fileURLWithPath: "bin/bootstrap.bin")
 let cpuStateInitAddress: DWord = 0x000f_0000
 try mem.load(file: cpuStateInitFileURL, at: cpuStateInitAddress)
 
-extension Memory<DWord> {
+extension MemoryIO<DWord> {
     convenience init(capacity: A) {
         assert(capacity % A(A.bankSize) == 0)
         self.init(defaultBank: DefaultBank<A>())
