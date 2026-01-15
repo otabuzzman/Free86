@@ -211,13 +211,19 @@ void Free86::st_writable_cpl3(int dword) {
     }
 }
 int Free86::fetch8() {
-    return memory8[far++];
+    return ld8_direct(far++);
 }
 int Free86::fetch16() {
-    return fetch8() | (fetch8() << 8);
+    int word = fetch8();
+    word |= fetch8() << 8;
+    return word;
 }
 int Free86::fetch() {
-    return fetch8() | (fetch8() << 8) | (fetch8() << 16) | (fetch8() << 24);
+    int dword = fetch8();
+    dword |= fetch8() << 8;
+    dword |= fetch8() << 16;
+    dword |= fetch8() << 24;
+    return dword;
 }
 int Free86::ld8_direct(int address) {
     return memory8[address];
