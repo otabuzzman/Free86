@@ -5,7 +5,7 @@ let testSuiteFileURL = URL(fileURLWithPath: "../test386.asm/test386.bin")
 let testSuiteAddress: DWord = 0x000f0000
 
 let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
-try mem.load(file: testSuiteFileURL, at: testSuiteAddress)
+try mem.load(file: testSuiteFileURL, storeAt: testSuiteAddress)
 
 extension MemoryIO<DWord> {
     convenience init(capacity: A) {
@@ -16,10 +16,10 @@ extension MemoryIO<DWord> {
         }
     }
     
-    func load(file: URL, at: A) throws {
+    func load(file: URL, storeAt address: A) throws {
         let data = try Data(contentsOf: file)
         for (offset, byte) in data.enumerated() {
-            self[at + A(offset)] = Byte(byte)
+            self[address + A(offset)] = Byte(byte)
         }
     }
 }
