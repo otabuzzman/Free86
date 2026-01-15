@@ -101,8 +101,23 @@ int Free86::instruction_length(int opcode) {
     } else {
         stride = 4;
     }
-    while (true) {
+    while (true) { // loop over instruction bytes (fetch)
         switch (opcode) {
+        case 0x26: // ES segment override prefix
+        case 0x2e: // CS segment override prefix
+        case 0x36: // SS segment override prefix
+        case 0x3e: // DS segment override prefix
+        case 0x64: // FS segment override prefix
+        case 0x65: // GS segment override prefix
+        case 0xf0: // LOCK prefix
+        case 0xf2: // REPN[EZ] repeat string operation prefix
+        case 0xf3: // REP[EZ] repeat string operation prefix
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            opcode = ld8_readonly_cpl3();
+            break;
         case 0x66: // operand-size override prefix
             if (ipr_default & 0x0100) {
                 stride = 4;
@@ -111,21 +126,6 @@ int Free86::instruction_length(int opcode) {
                 stride = 2;
                 ipr |= 0x0100;
             }
-        case 0xf0: // LOCK prefix
-        case 0xf2: // REPN[EZ] repeat string operation prefix
-        case 0xf3: // REP[EZ] repeat string operation prefix
-        case 0x26: // ES segment override prefix
-        case 0x2e: // CS segment override prefix
-        case 0x36: // SS segment override prefix
-        case 0x3e: // DS segment override prefix
-        case 0x64: // FS segment override prefix
-        case 0x65: // GS segment override prefix
-            if ((n + 1) > 15) {
-                abort(13);
-            }
-            lax = eip_linear + (n++);
-            opcode = ld8_readonly_cpl3();
-            break;
         case 0x67: // address-size override prefix
             if (ipr_default & 0x0080) {
                 ipr &= ~0x0080;
@@ -138,13 +138,165 @@ int Free86::instruction_length(int opcode) {
             lax = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             break;
-        case 0x91: // XCHG C
-        case 0x92: // XCHG D
-        case 0x93: // XCHG B
-        case 0x94: // XCHG SP
-        case 0x95: // XCHG BP
-        case 0x96: // XCHG SI
-        case 0x97: // XCHG DI
+        case 0x00: // ADD
+        case 0x01: // ADD
+        case 0x02: // ADD
+        case 0x03: // ADD
+        case 0x08: // OR
+        case 0x09: // OR
+        case 0x0a: // OR
+        case 0x0b: // OR
+        case 0x10: // ADC
+        case 0x11: // ADC
+        case 0x12: // ADC
+        case 0x13: // ADC
+        case 0x18: // SBB
+        case 0x19: // SBB
+        case 0x1a: // SBB
+        case 0x1b: // SBB
+        case 0x20: // AND
+        case 0x21: // AND
+        case 0x22: // AND
+        case 0x23: // AND
+        case 0x28: // SUB
+        case 0x29: // SUB
+        case 0x2a: // SUB
+        case 0x2b: // SUB
+        case 0x30: // XOR
+        case 0x31: // XOR
+        case 0x32: // XOR
+        case 0x33: // XOR
+        case 0x38: // CMP
+        case 0x39: // CMP
+        case 0x3a: // CMP
+        case 0x3b: // CMP
+        case 0x62: // BOUND
+        case 0x63: // ARPL
+        case 0x84: // TEST
+        case 0x85: // TEST
+        case 0x86: // XCHG
+        case 0x87: // XCHG
+        case 0x88: // MOV
+        case 0x89: // MOV
+        case 0x8a: // MOV
+        case 0x8b: // MOV
+        case 0x8c: // MOV
+        case 0x8d: // LEA
+        case 0x8e: // MOV
+        case 0x8f: // POP
+        case 0xc4: // LES
+        case 0xc5: // LDS
+        case 0xd0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
+        case 0xd1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
+        case 0xd2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
+        case 0xd3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
+        case 0xd8: // ESC (80387)
+        case 0xd9: // ESC (80387)
+        case 0xda: // ESC (80387)
+        case 0xdb: // ESC (80387)
+        case 0xdc: // ESC (80387)
+        case 0xdd: // ESC (80387)
+        case 0xde: // ESC (80387)
+        case 0xdf: // ESC (80387)
+        case 0xfe: // G4 (INC, DEC, -, -, -, -, -)
+        case 0xff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            modRM = ld8_readonly_cpl3();
+            n += operands_length();
+            if (n > 15) {
+                abort(13);
+            }
+            goto FETCH_LOOP;
+        case 0x04: // ADD
+        case 0x0c: // OR
+        case 0x14: // ADC
+        case 0x1c: // SBB
+        case 0x24: // AND
+        case 0x2c: // SUB
+        case 0x34: // XOR
+        case 0x3c: // CMP
+        case 0x6a: // PUSH
+        case 0x70: // JO
+        case 0x71: // JNO
+        case 0x72: // JB
+        case 0x73: // JNB
+        case 0x74: // JZ
+        case 0x75: // JNZ
+        case 0x76: // JBE
+        case 0x77: // JNBE
+        case 0x78: // JS
+        case 0x79: // JNS
+        case 0x7a: // JP
+        case 0x7b: // JNP
+        case 0x7c: // JL
+        case 0x7d: // JNL
+        case 0x7e: // JLE
+        case 0x7f: // JNLE
+        case 0xa8: // TEST
+        case 0xb0: // MOV AL
+        case 0xb1: // MOV CL
+        case 0xb2: // MOV DL
+        case 0xb3: // MOV BL
+        case 0xb4: // MOV AH
+        case 0xb5: // MOV CH
+        case 0xb6: // MOV DH
+        case 0xb7: // MOV BH
+        case 0xcd: // INT
+        case 0xd4: // AAM
+        case 0xd5: // AAD
+        case 0xe0: // LOOPNE
+        case 0xe1: // LOOPE
+        case 0xe2: // LOOP
+        case 0xe3: // JCXZ
+        case 0xe4: // IN AL,
+        case 0xe5: // IN AX,
+        case 0xe6: // OUT ,AL
+        case 0xe7: // OUT ,AX
+        case 0xeb: // JMP
+            n++;
+            if (n > 15) {
+                abort(13);
+            }
+            goto FETCH_LOOP;
+        case 0x05: // ADD
+        case 0x0d: // OR
+        case 0x15: // ADC
+        case 0x1d: // SBB
+        case 0x25: // AND
+        case 0x2d: // SUB
+        case 0x35: // XOR
+        case 0x3d: // CMP
+        case 0x68: // PUSH
+        case 0xa9: // TEST
+        case 0xb8: // MOV A
+        case 0xb9: // MOV C
+        case 0xba: // MOV D
+        case 0xbb: // MOV B
+        case 0xbc: // MOV SP
+        case 0xbd: // MOV BP
+        case 0xbe: // MOV SI
+        case 0xbf: // MOV DI
+        case 0xe8: // CALL
+        case 0xe9: // JMP
+            n += stride;
+            if (n > 15) {
+                abort(13);
+            }
+            goto FETCH_LOOP;
+        case 0x06: // PUSH
+        case 0x07: // POP
+        case 0x0e: // PUSH
+        case 0x16: // PUSH
+        case 0x17: // POP
+        case 0x1e: // PUSH
+        case 0x1f: // POP
+        case 0x27: // DAA
+        case 0x2f: // DAS
+        case 0x37: // AAA
+        case 0x3f: // AAS
         case 0x40: // INC A
         case 0x41: // INC C
         case 0x42: // INC D
@@ -177,270 +329,102 @@ int Free86::instruction_length(int opcode) {
         case 0x5d: // POP BP
         case 0x5e: // POP SI
         case 0x5f: // POP DI
-        case 0x98: // CBW
-        case 0x99: // CWD
-        case 0xc9: // LEAVE
-        case 0x9c: // PUSHF
-        case 0x9d: // POPF
-        case 0x06: // PUSH
-        case 0x0e: // PUSH
-        case 0x16: // PUSH
-        case 0x1e: // PUSH
-        case 0x07: // POP
-        case 0x17: // POP
-        case 0x1f: // POP
-        case 0xc3: // RET
-        case 0xcb: // RET
-        case 0x90: // NOP
-        case 0xcc: // INT
-        case 0xce: // INTO
-        case 0xcf: // IRET
-        case 0xf5: // CMC
-        case 0xf8: // CLC
-        case 0xf9: // STC
-        case 0xfc: // CLD
-        case 0xfd: // STD
-        case 0xfa: // CLI
-        case 0xfb: // STI
-        case 0x9e: // SAHF
-        case 0x9f: // LAHF
-        case 0xf4: // HLT
-        case 0xa4: // MOVSB
-        case 0xa5: // MOVSW/D
-        case 0xaa: // STOSB
-        case 0xab: // STOSW/D
-        case 0xa6: // CMPSB
-        case 0xa7: // CMPSW/D
-        case 0xac: // LOSB
-        case 0xad: // LOSW/D
-        case 0xae: // SCASB
-        case 0xaf: // SCASW/D
-        case 0x9b: // FWAIT/WAIT
-        case 0xec: // IN AL,DX
-        case 0xed: // IN AX,DX
-        case 0xee: // OUT DX,AL
-        case 0xef: // OUT DX,AX
-        case 0xd7: // XLAT
-        case 0x27: // DAA
-        case 0x2f: // DAS
-        case 0x37: // AAA
-        case 0x3f: // AAS
         case 0x60: // PUSHA
         case 0x61: // POPA
         case 0x6c: // INSB
         case 0x6d: // INSW/D
         case 0x6e: // OUTSB
         case 0x6f: // OUTSW/D
-            goto EXEC_LOOP;
-        case 0xb0: // MOV AL
-        case 0xb1: // MOV CL
-        case 0xb2: // MOV DL
-        case 0xb3: // MOV BL
-        case 0xb4: // MOV AH
-        case 0xb5: // MOV CH
-        case 0xb6: // MOV DH
-        case 0xb7: // MOV BH
-        case 0x04: // ADD
-        case 0x0c: // OR
-        case 0x14: // ADC
-        case 0x1c: // SBB
-        case 0x24: // AND
-        case 0x2c: // SUB
-        case 0x34: // XOR
-        case 0x3c: // CMP
-        case 0xa8: // TEST
-        case 0x6a: // PUSH
-        case 0xeb: // JMP
-        case 0x70: // JO
-        case 0x71: // JNO
-        case 0x72: // JB
-        case 0x73: // JNB
-        case 0x76: // JBE
-        case 0x77: // JNBE
-        case 0x78: // JS
-        case 0x79: // JNS
-        case 0x7a: // JP
-        case 0x7b: // JNP
-        case 0x7c: // JL
-        case 0x7d: // JNL
-        case 0x7e: // JLE
-        case 0x7f: // JNLE
-        case 0x74: // JZ
-        case 0x75: // JNZ
-        case 0xe0: // LOOPNE
-        case 0xe1: // LOOPE
-        case 0xe2: // LOOP
-        case 0xe3: // JCXZ
-        case 0xcd: // INT
-        case 0xe4: // IN AL,
-        case 0xe5: // IN AX,
-        case 0xe6: // OUT ,AL
-        case 0xe7: // OUT ,AX
-        case 0xd4: // AAM
-        case 0xd5: // AAD
-            n++;
-            if (n > 15) {
-                abort(13);
-            }
-            goto EXEC_LOOP;
-        case 0xb8: // MOV A
-        case 0xb9: // MOV C
-        case 0xba: // MOV D
-        case 0xbb: // MOV B
-        case 0xbc: // MOV SP
-        case 0xbd: // MOV BP
-        case 0xbe: // MOV SI
-        case 0xbf: // MOV DI
-        case 0x05: // ADD
-        case 0x0d: // OR
-        case 0x15: // ADC
-        case 0x1d: // SBB
-        case 0x25: // AND
-        case 0x2d: // SUB
-        case 0x35: // XOR
-        case 0x3d: // CMP
-        case 0xa9: // TEST
-        case 0x68: // PUSH
-        case 0xe9: // JMP
-        case 0xe8: // CALL
-            n += stride;
-            if (n > 15) {
-                abort(13);
-            }
-            goto EXEC_LOOP;
-        case 0x88: // MOV
-        case 0x89: // MOV
-        case 0x8a: // MOV
-        case 0x8b: // MOV
-        case 0x86: // XCHG
-        case 0x87: // XCHG
-        case 0x8e: // MOV
-        case 0x8c: // MOV
-        case 0xc4: // LES
-        case 0xc5: // LDS
-        case 0x00: // ADD
-        case 0x08: // OR
-        case 0x10: // ADC
-        case 0x18: // SBB
-        case 0x20: // AND
-        case 0x28: // SUB
-        case 0x30: // XOR
-        case 0x38: // CMP
-        case 0x01: // ADD
-        case 0x09: // OR
-        case 0x11: // ADC
-        case 0x19: // SBB
-        case 0x21: // AND
-        case 0x29: // SUB
-        case 0x31: // XOR
-        case 0x39: // CMP
-        case 0x02: // ADD
-        case 0x0a: // OR
-        case 0x12: // ADC
-        case 0x1a: // SBB
-        case 0x22: // AND
-        case 0x2a: // SUB
-        case 0x32: // XOR
-        case 0x3a: // CMP
-        case 0x03: // ADD
-        case 0x0b: // OR
-        case 0x13: // ADC
-        case 0x1b: // SBB
-        case 0x23: // AND
-        case 0x2b: // SUB
-        case 0x33: // XOR
-        case 0x3b: // CMP
-        case 0x84: // TEST
-        case 0x85: // TEST
-        case 0xd0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
-        case 0xd1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),1
-        case 0xd2: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
-        case 0xd3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
-        case 0x8f: // POP
-        case 0x8d: // LEA
-        case 0xfe: // G4 (INC, DEC, -, -, -, -, -)
-        case 0xff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
-        case 0xd8: // ESC (80387)
-        case 0xd9: // ESC (80387)
-        case 0xda: // ESC (80387)
-        case 0xdb: // ESC (80387)
-        case 0xdc: // ESC (80387)
-        case 0xdd: // ESC (80387)
-        case 0xde: // ESC (80387)
-        case 0xdf: // ESC (80387)
-        case 0x62: // BOUND
-        case 0x63: // ARPL
+        case 0x90: // NOP
+        case 0x91: // XCHG C
+        case 0x92: // XCHG D
+        case 0x93: // XCHG B
+        case 0x94: // XCHG SP
+        case 0x95: // XCHG BP
+        case 0x96: // XCHG SI
+        case 0x97: // XCHG DI
+        case 0x98: // CBW
+        case 0x99: // CWD
+        case 0x9b: // FWAIT/WAIT
+        case 0x9c: // PUSHF
+        case 0x9d: // POPF
+        case 0x9e: // SAHF
+        case 0x9f: // LAHF
+        case 0xa4: // MOVSB
+        case 0xa5: // MOVSW/D
+        case 0xa6: // CMPSB
+        case 0xa7: // CMPSW/D
+        case 0xaa: // STOSB
+        case 0xab: // STOSW/D
+        case 0xac: // LOSB
+        case 0xad: // LOSW/D
+        case 0xae: // SCASB
+        case 0xaf: // SCASW/D
+        case 0xc3: // RET
+        case 0xc9: // LEAVE
+        case 0xcb: // RET
+        case 0xcc: // INT
+        case 0xce: // INTO
+        case 0xcf: // IRET
+        case 0xd7: // XLAT
+        case 0xec: // IN AL,DX
+        case 0xed: // IN AX,DX
+        case 0xee: // OUT DX,AL
+        case 0xef: // OUT DX,AX
+        case 0xf4: // HLT
+        case 0xf5: // CMC
+        case 0xf8: // CLC
+        case 0xf9: // STC
+        case 0xfa: // CLI
+        case 0xfb: // STI
+        case 0xfc: // CLD
+        case 0xfd: // STD
+            goto FETCH_LOOP;
+        case 0x69: // IMUL
+        case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+        case 0xc7: // MOV
             if ((n + 1) > 15) {
                 abort(13);
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                case 0x05:
-                    n += 4;
-                    break;
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
+            n += stride;
+            if (n > 15) {
+                abort(13);
+            }
+            goto FETCH_LOOP;
+        case 0x6b: // IMUL
+        case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+        case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+        case 0x83: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
+        case 0xc0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
+        case 0xc1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
+        case 0xc6: // MOV
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            modRM = ld8_readonly_cpl3();
+            n += operands_length();
+            if (n > 15) {
+                abort(13);
+            }
+            n++;
+            if (n > 15) {
+                abort(13);
+            }
+            goto FETCH_LOOP;
+        case 0x9a: // CALLF
+        case 0xea: // JMPF
+            n += 2 + stride;
+            if (n > 15) {
+                abort(13);
+            }
+            goto FETCH_LOOP;
         case 0xa0: // MOV AL,
         case 0xa1: // MOV AX,
         case 0xa2: // MOV ,AL
@@ -453,235 +437,27 @@ int Free86::instruction_length(int opcode) {
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
-        case 0xc6: // MOV
-        case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
-        case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
-        case 0x83: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
-        case 0x6b: // IMUL
-        case 0xc0: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
-        case 0xc1: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
-            if ((n + 1) > 15) {
-                abort(13);
-            }
-            lax = eip_linear + (n++);
-            modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                case 0x05:
-                    n += 4;
-                    break;
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                }
-            }
+            goto FETCH_LOOP;
+        case 0xc2: // RET
+        case 0xca: // RET
+            n += 2;
             if (n > 15) {
                 abort(13);
             }
-            n++;
+            goto FETCH_LOOP;
+        case 0xc8: // ENTER
+            n += 3;
             if (n > 15) {
                 abort(13);
             }
-            goto EXEC_LOOP;
-        case 0xc7: // MOV
-        case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
-        case 0x69: // IMUL
-            if ((n + 1) > 15) {
-                abort(13);
-            }
-            lax = eip_linear + (n++);
-            modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                case 0x05:
-                    n += 4;
-                    break;
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                }
-            }
-            if (n > 15) {
-                abort(13);
-            }
-            n += stride;
-            if (n > 15) {
-                abort(13);
-            }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
                 abort(13);
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                case 0x05:
-                    n += 4;
-                    break;
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
@@ -692,75 +468,14 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
             }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
             if ((n + 1) > 15) {
                 abort(13);
             }
             lax = eip_linear + (n++);
             modRM = ld8_readonly_cpl3();
-            if (ipr & 0x0080) {
-                switch (modRM >> 6) {
-                case 0:
-                    if ((modRM & 7) == 6) {
-                        n += 2;
-                    }
-                    break;
-                case 1:
-                    n++;
-                    break;
-                default:
-                    n += 2;
-                    break;
-                }
-            } else {
-                switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                case 0x04:
-                    if ((n + 1) > 15) {
-                        abort(13);
-                    }
-                    lax = eip_linear + (n++);
-                    modRM = ld8_readonly_cpl3();
-                    if ((modRM & 7) == 5) {
-                        n += 4;
-                    }
-                    break;
-                case 0x0c:
-                    n += 2;
-                    break;
-                case 0x14:
-                    n += 5;
-                    break;
-                case 0x05:
-                    n += 4;
-                    break;
-                case 0x00:
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x06:
-                case 0x07:
-                    break;
-                case 0x08:
-                case 0x09:
-                case 0x0a:
-                case 0x0b:
-                case 0x0d:
-                case 0x0e:
-                case 0x0f:
-                    n++;
-                    break;
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x15:
-                case 0x16:
-                case 0x17:
-                    n += 4;
-                    break;
-                }
-            }
+            n += operands_length();
             if (n > 15) {
                 abort(13);
             }
@@ -771,27 +486,7 @@ int Free86::instruction_length(int opcode) {
                     abort(13);
                 }
             }
-            goto EXEC_LOOP;
-        case 0xea: // JMPF
-        case 0x9a: // CALLF
-            n += 2 + stride;
-            if (n > 15) {
-                abort(13);
-            }
-            goto EXEC_LOOP;
-        case 0xc2: // RET
-        case 0xca: // RET
-            n += 2;
-            if (n > 15) {
-                abort(13);
-            }
-            goto EXEC_LOOP;
-        case 0xc8: // ENTER
-            n += 3;
-            if (n > 15) {
-                abort(13);
-            }
-            goto EXEC_LOOP;
+            goto FETCH_LOOP;
         case 0xd6: // -
         case 0xf1: // -
         default:
@@ -803,59 +498,13 @@ int Free86::instruction_length(int opcode) {
             lax = eip_linear + (n++);
             opcode = ld8_readonly_cpl3();
             switch (opcode) {
-            case 0x06: // CLTS
-            case 0xa2: // -
-            case 0x31: // -
-            case 0xa0: // PUSH FS
-            case 0xa8: // PUSH GS
-            case 0xa1: // POP FS
-            case 0xa9: // POP GS
-            case 0xc8: // -
-            case 0xc9: // -
-            case 0xca: // -
-            case 0xcb: // -
-            case 0xcc: // -
-            case 0xcd: // -
-            case 0xce: // -
-            case 0xcf: // -
-                goto EXEC_LOOP;
-            case 0x80: // JO
-            case 0x81: // JNO
-            case 0x82: // JB
-            case 0x83: // JNB
-            case 0x84: // JZ
-            case 0x85: // JNZ
-            case 0x86: // JBE
-            case 0x87: // JNBE
-            case 0x88: // JS
-            case 0x89: // JNS
-            case 0x8a: // JP
-            case 0x8b: // JNP
-            case 0x8c: // JL
-            case 0x8d: // JNL
-            case 0x8e: // JLE
-            case 0x8f: // JNLE
-                n += stride;
-                if (n > 15) {
-                    abort(13);
-                }
-                goto EXEC_LOOP;
-            case 0x90: // SETO
-            case 0x91: // SETNO
-            case 0x92: // SETB
-            case 0x93: // SETNB
-            case 0x94: // SETZ
-            case 0x95: // SETNZ
-            case 0x96: // SETBE
-            case 0x97: // SETNBE
-            case 0x98: // SETS
-            case 0x99: // SETNS
-            case 0x9a: // SETP
-            case 0x9b: // SETNP
-            case 0x9c: // SETL
-            case 0x9d: // SETNL
-            case 0x9e: // SETLE
-            case 0x9f: // SETNLE
+            case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
+            case 0x01: // G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)
+            case 0x02: // LAR
+            case 0x03: // LSL
+            case 0x20: // MOV
+            case 0x22: // MOV
+            case 0x23: // MOV
             case 0x40: // -
             case 0x41: // -
             case 0x42: // -
@@ -872,104 +521,89 @@ int Free86::instruction_length(int opcode) {
             case 0x4d: // -
             case 0x4e: // -
             case 0x4f: // -
-            case 0xb6: // MOVZX
-            case 0xb7: // MOVZX
-            case 0xbe: // MOVSX
-            case 0xbf: // MOVSX
-            case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
-            case 0x01: // G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)
-            case 0x02: // LAR
-            case 0x03: // LSL
-            case 0x20: // MOV
-            case 0x22: // MOV
-            case 0x23: // MOV
+            case 0x90: // SETO
+            case 0x91: // SETNO
+            case 0x92: // SETB
+            case 0x93: // SETNB
+            case 0x94: // SETZ
+            case 0x95: // SETNZ
+            case 0x96: // SETBE
+            case 0x97: // SETNBE
+            case 0x98: // SETS
+            case 0x99: // SETNS
+            case 0x9a: // SETP
+            case 0x9b: // SETNP
+            case 0x9c: // SETL
+            case 0x9d: // SETNL
+            case 0x9e: // SETLE
+            case 0x9f: // SETNLE
+            case 0xa3: // BT
+            case 0xa5: // SHLD
+            case 0xab: // BTS
+            case 0xad: // SHRD
+            case 0xaf: // IMUL
+            case 0xb0: // CMPXCHG (80486)
+            case 0xb1: // CMPXCHG (80486)
             case 0xb2: // LSS
+            case 0xb3: // BTR
             case 0xb4: // LFS
             case 0xb5: // LGS
-            case 0xa5: // SHLD
-            case 0xad: // SHRD
-            case 0xa3: // BT
-            case 0xab: // BTS
-            case 0xb3: // BTR
+            case 0xb6: // MOVZX
+            case 0xb7: // MOVZX
             case 0xbb: // BTC
             case 0xbc: // BSF
             case 0xbd: // BSR
-            case 0xaf: // IMUL
+            case 0xbe: // MOVSX
+            case 0xbf: // MOVSX
             case 0xc0: // XADD (80486)
             case 0xc1: // XADD (80486)
-            case 0xb0: // CMPXCHG (80486)
-            case 0xb1: // CMPXCHG (80486)
                 if ((n + 1) > 15) {
                     abort(13);
                 }
                 lax = eip_linear + (n++);
                 modRM = ld8_readonly_cpl3();
-                if (ipr & 0x0080) {
-                    switch (modRM >> 6) {
-                    case 0:
-                        if ((modRM & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
-                        n += 2;
-                        break;
-                    }
-                } else {
-                    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                    case 0x04:
-                        if ((n + 1) > 15) {
-                            abort(13);
-                        }
-                        lax = eip_linear + (n++);
-                        modRM = ld8_readonly_cpl3();
-                        if ((modRM & 7) == 5) {
-                            n += 4;
-                        }
-                        break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    case 0x05:
-                        n += 4;
-                        break;
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
-                    }
-                }
+                n += operands_length();
                 if (n > 15) {
                     abort(13);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
+            case 0x06: // CLTS
+            case 0x31: // -
+            case 0xa0: // PUSH FS
+            case 0xa1: // POP FS
+            case 0xa2: // -
+            case 0xa8: // PUSH GS
+            case 0xa9: // POP GS
+            case 0xc8: // -
+            case 0xc9: // -
+            case 0xca: // -
+            case 0xcb: // -
+            case 0xcc: // -
+            case 0xcd: // -
+            case 0xce: // -
+            case 0xcf: // -
+                goto FETCH_LOOP;
+                n += stride;
+            case 0x80: // JO
+            case 0x81: // JNO
+            case 0x82: // JB
+            case 0x83: // JNB
+            case 0x84: // JZ
+            case 0x85: // JNZ
+            case 0x86: // JBE
+            case 0x87: // JNBE
+            case 0x88: // JS
+            case 0x89: // JNS
+            case 0x8a: // JP
+            case 0x8b: // JNP
+            case 0x8c: // JL
+            case 0x8d: // JNL
+            case 0x8e: // JLE
+            case 0x8f: // JNLE
+                if (n > 15) {
+                    abort(13);
+                }
+                goto FETCH_LOOP;
             case 0xa4: // SHLD
             case 0xac: // SHRD
             case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
@@ -978,68 +612,7 @@ int Free86::instruction_length(int opcode) {
                 }
                 lax = eip_linear + (n++);
                 modRM = ld8_readonly_cpl3();
-                if (ipr & 0x0080) {
-                    switch (modRM >> 6) {
-                    case 0:
-                        if ((modRM & 7) == 6) {
-                            n += 2;
-                        }
-                        break;
-                    case 1:
-                        n++;
-                        break;
-                    default:
-                        n += 2;
-                        break;
-                    }
-                } else {
-                    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-                    case 0x04:
-                        if ((n + 1) > 15) {
-                            abort(13);
-                        }
-                        lax = eip_linear + (n++);
-                        modRM = ld8_readonly_cpl3();
-                        if ((modRM & 7) == 5) {
-                            n += 4;
-                        }
-                        break;
-                    case 0x0c:
-                        n += 2;
-                        break;
-                    case 0x14:
-                        n += 5;
-                        break;
-                    case 0x05:
-                        n += 4;
-                        break;
-                    case 0x00:
-                    case 0x01:
-                    case 0x02:
-                    case 0x03:
-                    case 0x06:
-                    case 0x07:
-                        break;
-                    case 0x08:
-                    case 0x09:
-                    case 0x0a:
-                    case 0x0b:
-                    case 0x0d:
-                    case 0x0e:
-                    case 0x0f:
-                        n++;
-                        break;
-                    case 0x10:
-                    case 0x11:
-                    case 0x12:
-                    case 0x13:
-                    case 0x15:
-                    case 0x16:
-                    case 0x17:
-                        n += 4;
-                        break;
-                    }
-                }
+                n += operands_length();
                 if (n > 15) {
                     abort(13);
                 }
@@ -1047,7 +620,7 @@ int Free86::instruction_length(int opcode) {
                 if (n > 15) {
                     abort(13);
                 }
-                goto EXEC_LOOP;
+                goto FETCH_LOOP;
             case 0x04: // -
             case 0x05: // -
             case 0x07: // -
@@ -1168,7 +741,72 @@ int Free86::instruction_length(int opcode) {
             }
         }
     }
-EXEC_LOOP:;
+FETCH_LOOP:
+    ;
+    return n;
+}
+int Free86::operands_length() {
+    int n = 0;
+    if (ipr & 0x0080) {
+        switch (modRM >> 6) {
+        case 0:
+            if ((modRM & 7) == 6) {
+                n += 2;
+            }
+            break;
+        case 1:
+            n++;
+            break;
+        default:
+            n += 2;
+            break;
+        }
+    } else {
+        switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
+        case 0x06:
+        case 0x07:
+            break;
+        case 0x04:
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            modRM = ld8_readonly_cpl3();
+            if ((modRM & 7) == 5) {
+                n += 4;
+            }
+            break;
+        case 0x05:
+        case 0x10:
+        case 0x11:
+        case 0x12:
+            case 0x13:
+            case 0x15:
+            case 0x16:
+            case 0x17:
+                n += 4;
+                break;
+            case 0x08:
+            case 0x09:
+            case 0x0a:
+            case 0x0b:
+            case 0x0d:
+            case 0x0e:
+            case 0x0f:
+                n++;
+                break;
+            case 0x0c:
+                n += 2;
+                break;
+            case 0x14:
+                n += 5;
+                break;
+        }
+    }
     return n;
 }
 void Free86::set_CR0(int bits) {
@@ -1298,6 +936,15 @@ void Free86::segment_translation() {
     int sreg, sreg_default; // no DS override prefix
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
+        case 0x06:
+        case 0x07:
+            base = modRM & 7;
+            lax = regs[base];
+            break;
         case 0x04:
             sib = fetch8();
             base = sib & 7;
@@ -1310,6 +957,20 @@ void Free86::segment_translation() {
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
             }
+            break;
+        case 0x05:
+            lax = fetch();
+            break;
+        case 0x08:
+        case 0x09:
+        case 0x0a:
+        case 0x0b:
+        case 0x0d:
+        case 0x0e:
+        case 0x0f:
+            lax = (fetch8() << 24) >> 24;
+            base = modRM & 7;
+            lax = lax + regs[base];
             break;
         case 0x0c:
             sib = fetch8();
@@ -1330,29 +991,6 @@ void Free86::segment_translation() {
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
             }
-            break;
-        case 0x05:
-            lax = fetch();
-            break;
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-        case 0x06:
-        case 0x07:
-            base = modRM & 7;
-            lax = regs[base];
-            break;
-        case 0x08:
-        case 0x09:
-        case 0x0a:
-        case 0x0b:
-        case 0x0d:
-        case 0x0e:
-        case 0x0f:
-            lax = (fetch8() << 24) >> 24;
-            base = modRM & 7;
-            lax = lax + regs[base];
             break;
         case 0x10:
         case 0x11:
@@ -1430,6 +1068,15 @@ void Free86::segment_translation() {
         return;
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
+        case 0x06:
+        case 0x07:
+            base = modRM & 7;
+            lax = regs[base];
+            break;
         case 0x04:
             sib = fetch8();
             base = sib & 7;
@@ -1443,6 +1090,21 @@ void Free86::segment_translation() {
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
             }
+            break;
+        case 0x05:
+            lax = fetch();
+            base = 0;
+            break;
+        case 0x08:
+        case 0x09:
+        case 0x0a:
+        case 0x0b:
+        case 0x0d:
+        case 0x0e:
+        case 0x0f: // 2-byte instruction escape
+            lax = (fetch8() << 24) >> 24;
+            base = modRM & 7;
+            lax = lax + regs[base];
             break;
         case 0x0c:
             sib = fetch8();
@@ -1463,30 +1125,6 @@ void Free86::segment_translation() {
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
             }
-            break;
-        case 0x05:
-            lax = fetch();
-            base = 0;
-            break;
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-        case 0x06:
-        case 0x07:
-            base = modRM & 7;
-            lax = regs[base];
-            break;
-        case 0x08:
-        case 0x09:
-        case 0x0a:
-        case 0x0b:
-        case 0x0d:
-        case 0x0e:
-        case 0x0f: // 2-byte instruction escape
-            lax = (fetch8() << 24) >> 24;
-            base = modRM & 7;
-            lax = lax + regs[base];
             break;
         case 0x10:
         case 0x11:
@@ -2814,13 +2452,13 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         dpl = (dte_upper_dword >> 13) & 3;
         rpl = selector & 3;
         switch (descriptor_type) {
+        case 1: // 16 bit task state segment
+        case 5: // task gate
+        case 9: // 32 bit task state segment
+            throw "fatal: unsupported TSS or task gate in CALL";
         case 4:  // call gate
         case 12: // 386 call gate
             break;
-        case 1: // 16 bit task state segment
-        case 9: // 32 bit task state segment
-        case 5: // task gate
-            throw "fatal: unsupported TSS or task gate in CALL";
         default:
             abort(13, selector & 0xfffc);
         }
@@ -3240,13 +2878,13 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     dte_upper_dword = ld_readonly_cplX();
     descriptor_type = (dte_upper_dword >> 8) & 0x1f;
     switch (descriptor_type) {
-    case 14: // 32 bit interrupt gate
-    case 15: // 32 bit trap gate
-        break;
     case 5: // 16/ 32 bit task gate
     case 6: // 16 bit interrupt gate
     case 7: // 16 bit trap gate
         throw "fatal: unsupported gate type";
+    case 14: // 32 bit interrupt gate
+    case 15: // 32 bit trap gate
+        break;
     default:
         abort(13, id * 8 + 2);
     }
