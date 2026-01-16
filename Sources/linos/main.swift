@@ -29,18 +29,20 @@ extension MemoryIO<DWord> {
             self.register(bank: RAMBank<A>(), at: address)
         }
     }
+}
 
+extension MemoryIO: DirectMemory {
     func load(utf8: String, storeAt address: A) {
         let data = utf8.data(using: .utf8)!
         for (offset, byte) in data.enumerated() {
-            self[address + A(offset)] = Byte(byte)
+            st8(at: address + A(offset), Byte(byte))
         }
     }
 
     func load(file: URL, storeAt address: A) throws {
         let data = try Data(contentsOf: file)
         for (offset, byte) in data.enumerated() {
-            self[address + A(offset)] = Byte(byte)
+            st8(at: address + A(offset), Byte(byte))
         }
     }
 }

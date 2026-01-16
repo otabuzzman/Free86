@@ -1,11 +1,11 @@
 /// only byte-type IO ports permitted for memory-mapped IO since memory is also byte-typed
 class IOPortBank<A: PhysicalAddress, P: IOPort>: IsolatedIO<A, P>, MemoryBank where P.Element == Byte {
-    override subscript(addr: A) -> P.Element {
+    override subscript(address: A) -> P.Element {
         get {
-             P.Element(super[addr & A(A.bankOffsetMask)])
+             P.Element(super[address & A(A.bankOffsetMask)])
         }
         set(iodata) {
-             super[addr & A(A.bankOffsetMask)] = P.Element(iodata)
+             super[address & A(A.bankOffsetMask)] = P.Element(iodata)
         }
     }
 }
@@ -13,19 +13,19 @@ class IOPortBank<A: PhysicalAddress, P: IOPort>: IsolatedIO<A, P>, MemoryBank wh
 class IsolatedIO<A: PhysicalAddress, P: IOPort> {
     private var mapping: [A: P] = [:]
     
-    subscript(addr: A) -> P.Element {
+    subscript(address: A) -> P.Element {
         get {
-            guard let port = mapping[addr] else { return .zero }
+            guard let port = mapping[address] else { return .zero }
             return port.rd()
         }
         set(iodata) {
-            guard let port = mapping[addr] else { return }
+            guard let port = mapping[address] else { return }
             port.wr(iodata)
         }
     }
     
-    func register(port: P, at addr: A) {
-        mapping.updateValue(port, forKey: addr)
+    func register(port: P, at address: A) {
+        mapping.updateValue(port, forKey: address)
     }
 }
 
@@ -42,21 +42,21 @@ public class MemoryIO<A: PhysicalAddress> {
         slot = [AnyBank<A>](repeating: AnyBank<A>(defaultBank), count: 1024 * 1024)
     }
     
-    public subscript(addr: A) -> Byte {
+    public subscript(address: A) -> Byte {
         get {
-            let index = Int(addr >> A.bankIndexShift)
-            let offset = addr & A(A.bankOffsetMask)
+            let index = Int(address >> A.bankIndexShift)
+            let offset = address & A(A.bankOffsetMask)
             return slot[index][offset]
         }
         set(byte) {
-            let index = Int(addr >> A.bankIndexShift)
-            let offset = addr & A(A.bankOffsetMask)
+            let index = Int(address >> A.bankIndexShift)
+            let offset = address & A(A.bankOffsetMask)
             slot[index][offset] = byte
         }
     }
     
-    public func register<B: MemoryBank>(bank: B, at addr: A) where B.Address == A {
-        let index = Int(addr >> A.bankIndexShift)
+    public func register<B: MemoryBank>(bank: B, at address: A) where B.Address == A {
+        let index = Int(address >> A.bankIndexShift)
         slot[index] = AnyBank<A>(bank)
     }
 }
@@ -66,27 +66,27 @@ class AnyBank<A: PhysicalAddress> {
     private let _get: (A) -> Byte
     private let _set: (A, Byte) -> Void
 
-    subscript(addr: A) -> Byte {
-        get { _get(addr) }
-        set(byte) { _set(addr, byte) }
+    subscript(address: A) -> Byte {
+        get { _get(address) }
+        set(byte) { _set(address, byte) }
     }
 
     init<B: MemoryBank>(_ bank: B) where B.Address == A {
         var _bank = bank
-        _get = { addr in _bank[addr] }
-        _set = { addr, byte in _bank[addr] = byte }
+        _get = { address in _bank[address] }
+        _set = { address, byte in _bank[address] = byte }
     }
 }
 
 public protocol MemoryBank {
     associatedtype Address: PhysicalAddress
-    subscript(addr: Address) -> Byte { get set }
+    subscript(address: Address) -> Byte { get set }
 }
 
 public class DefaultBank<A: PhysicalAddress>: MemoryBank {
     public init() { }
 
-    public subscript(addr: A) -> Byte {
+    public subscript(address: A) -> Byte {
         get { .zero }
         set { }
     }
@@ -99,9 +99,9 @@ public class RAMBank<A: PhysicalAddress>: MemoryBank {
         bank = [Byte](repeating: fill, count: A.bankSize)
     }
     
-    public subscript(addr: A) -> Byte {
-        get { bank[Int(addr) & A.bankOffsetMask] }
-        set(byte) { bank[Int(addr) & A.bankOffsetMask] = byte }
+    public subscript(address: A) -> Byte {
+        get { bank[Int(address) & A.bankOffsetMask] }
+        set(byte) { bank[Int(address) & A.bankOffsetMask] = byte }
     }
 }
 
@@ -114,8 +114,8 @@ class ROMBank<A: PhysicalAddress>: MemoryBank {
         bank.replaceSubrange(0..<count, with: bytes.prefix(count))
     }
     
-    subscript(addr: A) -> Byte {
-        get { bank[Int(addr) & A.bankOffsetMask] }
+    subscript(address: A) -> Byte {
+        get { bank[Int(address) & A.bankOffsetMask] }
         set { }
     }
 }

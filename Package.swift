@@ -67,6 +67,7 @@ let package = Package(
                 "Free86+TwoByteOpcode16Programs.swift",
                 "Free86+TwoByteOpcodePrograms.swift",
                 "MemoryIO+PhysicalAddress.swift",
+                "PagedMemory+DirectMemory.swift",
                 "Instruction.swift",
                 "Instruction+OneByteOpcodePrograms.swift",
                 "Instruction+TwoByteOpcodePrograms.swift",

@@ -15,11 +15,13 @@ extension MemoryIO<DWord> {
             self.register(bank: RAMBank<A>(), at: addr)
         }
     }
-    
+}
+
+extension MemoryIO: DirectMemory {
     func load(file: URL, storeAt address: A) throws {
         let data = try Data(contentsOf: file)
         for (offset, byte) in data.enumerated() {
-            self[address + A(offset)] = Byte(byte)
+            st8(at: address + A(offset), Byte(byte))
         }
     }
 }
