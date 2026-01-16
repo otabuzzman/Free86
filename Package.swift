@@ -67,7 +67,7 @@ let package = Package(
                 "Free86+TwoByteOpcode16Programs.swift",
                 "Free86+TwoByteOpcodePrograms.swift",
                 "MemoryIO+PhysicalAddress.swift",
-                "PagedMemory+DirectMemory.swift",
+                "DirectMemory.swift",
                 "Instruction.swift",
                 "Instruction+OneByteOpcodePrograms.swift",
                 "Instruction+TwoByteOpcodePrograms.swift",
@@ -94,6 +94,7 @@ let package = Package(
                 "Exception+Interrupt.swift",
                 "InstructionPrefixRegister.swift",
                 "MemoryIO+PhysicalAddress.swift",
+                "DirectMemory.swift",
                 "PinIO.swift",
            ],
             swiftSettings: [
