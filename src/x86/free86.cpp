@@ -69,12 +69,12 @@ void Free86::fetch_opcode() {
     int page_offset = eip_linear & 0xfff;
     x = instruction_length(opcode);
     if ((page_offset + x) > 4096) { // instruction extends page boundary
-        far = far_start = memory_size;
-        for (y = 0; y < x; y++) { // copy instruction to buffer on top of memory
-            lax = eip_linear + y;
-            memory8[far + y] = ld8_readonly_cpl3();
+        far = far_start = memory_size; // point FAR to buffer on top of memory
+        for (y = 0; y < x; y++) {      // copy instruction bytewise to buffer
+            lax = eip_linear + y;      // LAX holds linear address of byte to fetch
+            st8_direct(far + y, ld8_readonly_cpl3()); // copy [LAX] to physical [FAR]
         }
-        far++;
+        far++; // adjust FAR for upcomming fetches from buffer
     }
 }
 int Free86::instruction_length(int opcode) {
