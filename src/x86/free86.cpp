@@ -64,32 +64,17 @@ void Free86::update_SSB() {
 void Free86::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
-    tlb_hash = tlb_readonly[eip_linear >> 12];
-    // `tlb_hash' equals -1 or instruction with maximum bytes (15)
-    // would extend across the page boundary.
-    // combined check ok because bits 0-11 in `tlb_hash' always 0.
-    if (((tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
-        if (tlb_hash == -1) {
-            page_translation(0, cpl == 3, eip_linear);
+    far = far_start = tlb_lookup(eip_linear, 0);
+    opcode = fetch8();
+    int page_offset = eip_linear & 0xfff;
+    x = instruction_length(opcode);
+    if ((page_offset + x) > 4096) { // instruction extends page boundary
+        far = far_start = memory_size;
+        for (y = 0; y < x; y++) { // copy instruction to buffer on top of memory
+            lax = eip_linear + y;
+            memory8[far + y] = ld8_readonly_cpl3();
         }
-        tlb_hash = tlb_readonly[eip_linear >> 12];
-        far = far_start = eip_linear ^ tlb_hash;
-        opcode = fetch8();
-        int page_offset = eip_linear & 0xfff;
-        if (page_offset > (4096 - 15)) {
-            x = instruction_length(opcode);
-            if ((page_offset + x) > 4096) { // instruction extends page boundary
-                far = far_start = memory_size;
-                for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
-                    lax = eip_linear + y;
-                    memory8[far + y] = ld8_readonly_cpl3();
-                }
-                far++;
-            }
-        }
-    } else {
-        far = far_start = eip_linear ^ tlb_hash;
-        opcode = fetch8();
+        far++;
     }
 }
 int Free86::instruction_length(int opcode) {

@@ -43,7 +43,7 @@ class Free86 {
 
     uint64_t cycles;
 
-    int tlb_lookup(int linear, int writable) {
+    int tlb_lookup(uint32_t linear, int writable) {
         uint32_t lat20 = linear >> 12; // PDE and PTE indices
         if (writable) {
             tlb_hash = tlb_writable[lat20];
