@@ -277,7 +277,7 @@ class Free86 {
    Instruction prefix register
 
    The instruction prefix register (IPR) captures the instruction prefixes
-   of the current retrieval cycle, each in its own bit. IPR is specific to
+   of the current fetch cycle, each in its own bit. IPR is specific to
    this emulator and not part of the processor architecture, from which it
    was derived.
 
