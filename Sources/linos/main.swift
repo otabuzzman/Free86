@@ -35,14 +35,14 @@ extension MemoryIO {
     func load(utf8: String, storeAt address: A) {
         let data = utf8.data(using: .utf8)!
         for (offset, byte) in data.enumerated() {
-            st8(at: address + A(offset), byte: Byte(byte))
+            st8Direct(at: address + A(offset), byte: Byte(byte))
         }
     }
 
     func load(file: URL, storeAt address: A) throws {
         let data = try Data(contentsOf: file)
         for (offset, byte) in data.enumerated() {
-            st8(at: address + A(offset), byte: Byte(byte))
+            st8Direct(at: address + A(offset), byte: Byte(byte))
         }
     }
 }

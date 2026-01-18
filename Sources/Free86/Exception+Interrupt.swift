@@ -29,7 +29,6 @@ struct Interrupt: Error, Equatable {
 
 extension Interrupt {
     init(_ exception: Exception, errorCode: DWord = 0) {
-        vector = exception.rawValue
-        self.errorCode = errorCode
+        self.init(exception.rawValue, errorCode: errorCode)
     }
 }

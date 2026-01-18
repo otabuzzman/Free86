@@ -21,7 +21,7 @@ extension MemoryIO {
     func load(file: URL, storeAt address: A) throws {
         let data = try Data(contentsOf: file)
         for (offset, byte) in data.enumerated() {
-            st8(at: address + A(offset), byte: Byte(byte))
+            st8Direct(at: address + A(offset), byte: Byte(byte))
         }
     }
 }
