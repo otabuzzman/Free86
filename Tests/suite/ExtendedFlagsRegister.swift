@@ -1,8 +1,8 @@
 import Testing
 @testable import Free86
 
-@Test("extended flags")
-func extendedFlags() {
+@Test("extended flags register")
+func extendedFlagsRegister() {
     let eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(eflags.isFlagRaised(.CF) == true)
     #expect(eflags.isFlagRaised(.PF) == true)
@@ -18,8 +18,8 @@ func extendedFlags() {
     #expect(eflags.isFlagRaised(.VM) == false)
 }
 
-@Test("extended flags IOPL")
-func extendedFlagsIopl() {
+@Test("extended flags register IOPL")
+func extendedFlagsRegisterIopl() {
     var eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(eflags.iopl == 3)
     eflags.iopl = 2

@@ -1,8 +1,8 @@
 import Testing
 @testable import Free86
 
-@Test("data type upper/ lower half masks")
-func halfMasks() {
+@Test("machine data type upper/ lower half masks")
+func machineDataTypeHalfMasks() {
     #expect(Byte.upperHalfMask == 0xF0)
     #expect(Byte.lowerHalfMask == 0x0F)
 
@@ -16,8 +16,8 @@ func halfMasks() {
     #expect(QWord.lowerHalfMask == 0x00000000_FFFFFFFF)
 }
 
-@Test("data type upper/ lower half values")
-func halfValues() {
+@Test("machine data type upper/ lower half values")
+func machineDataTypeHalfValues() {
     var byte: Byte = 0x5A
     #expect(byte.upperHalf == 0x5)
     #expect(byte.lowerHalf == 0xA)
@@ -47,8 +47,8 @@ func halfValues() {
     #expect(qWord == 0x89ABCDEF_01234567)
 }
 
-@Test("data type bit masks")
-func bitValues() {
+@Test("machine data type bit masks")
+func machineDataTypeBitValues() {
     #expect(Byte.bitMask(for: 7) == 0x80)
     #expect(Byte.bitMask(for: 0) == 0x01)
     #expect(Byte.bitMask(for: 3) == 0x08)
@@ -66,8 +66,8 @@ func bitValues() {
     #expect(QWord.bitMask(for: 17) == 0x00000000_00020000)
 }
 
-@Test("data type set/ raise/ clear/ toggle bits")
-func setRaiseClearToggleBits() {
+@Test("machine data type set/ raise/ clear/ toggle bits")
+func machineDataTypeSetRaiseClearToggleBits() {
     var byte: Byte = 0b0000_0110
     var bit = 3
     #expect(byte.isBitRaised(bit) == false)
