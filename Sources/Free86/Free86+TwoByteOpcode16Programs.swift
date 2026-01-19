@@ -130,7 +130,7 @@ extension Free86 {
     /// 0x19f  SETNLE
     /// 0x1a2  -
     /// 0x1b0  CMPXCHG (80486)
-    mutating func Ox10f1b0() throws -> Result<Resume, Never> {
+    func Ox10f1b0() throws -> Result<Resume, Never> {
         opcode = 0x0f
         far -= 1
         return .success(.goOnFetching)

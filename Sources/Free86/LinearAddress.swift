@@ -14,9 +14,3 @@ extension LinearAddress {
         self & 0xFFF
     }
 }
-
-extension LinearAddress {
-    var translation: any PhysicalAddress {
-        DWord(0)
-    }
-}

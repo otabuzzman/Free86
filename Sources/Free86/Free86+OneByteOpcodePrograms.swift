@@ -712,7 +712,7 @@ extension Free86 {
         return .success(.endFetchLoop)
     }
     /// 0x0f  2-byte instruction escape
-    mutating func Ox0f() throws -> Result<Resume, Never> {
+    func Ox0f() throws -> Result<Resume, Never> {
         // opcode = fetch8()
         return try twoByteDecoder[opcode]()
     }

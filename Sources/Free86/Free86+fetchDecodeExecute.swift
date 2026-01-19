@@ -1,5 +1,5 @@
 extension Free86 {
-    mutating func fetchDecodeExecute(cycles: QWord) async throws {
+    func fetchDecodeExecute(cycles: QWord) async throws {
         cyclesLoop:
         repeat {  // cycles (actually instructions)
             fetchLoop:
