@@ -104,10 +104,7 @@ class Free86 {
     uint64_t cycles_remaining;
 
     int memory_size;
-
-    uint8_t *memory8;
-    uint16_t *memory16;
-    uint32_t *memory;
+    uint8_t *memory;
 
 /*
    Translation lookaside buffer

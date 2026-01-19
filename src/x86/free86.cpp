@@ -5,9 +5,7 @@ Free86::Free86(int memory_size) {
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
-    memory8 = (uint8_t *) calloc(1, memory_size + ((15 + 3) & ~3));
-    memory16 = (uint16_t *) (memory8);
-    memory = (uint32_t *) (memory8);
+    memory = (uint8_t *) calloc(1, memory_size + ((15 + 3) & ~3));
     tlb_readonly_cplX = new int[tlb_size];
     tlb_writable_cplX = new int[tlb_size];
     tlb_readonly_cpl3 = new int[tlb_size];
@@ -20,7 +18,7 @@ Free86::Free86(int memory_size) {
     set_cpl(0); // PM (1986), 10.3
 }
 Free86::~Free86() {
-    free(memory8);
+    free(memory);
     delete[] tlb_readonly_cplX;
     delete[] tlb_writable_cplX;
     delete[] tlb_readonly_cpl3;
