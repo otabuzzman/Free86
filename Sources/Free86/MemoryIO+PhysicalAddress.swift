@@ -12,7 +12,7 @@ class IOPortBank<A: PhysicalAddress, P: IOPort>: IsolatedIO<A, P>, MemoryBank wh
 
 class IsolatedIO<A: PhysicalAddress, P: IOPort> {
     private var mapping: [A: P] = [:]
-    
+
     subscript(address: A) -> P.Element {
         get {
             guard let port = mapping[address] else { return .zero }
@@ -23,7 +23,7 @@ class IsolatedIO<A: PhysicalAddress, P: IOPort> {
             port.wr(iodata)
         }
     }
-    
+
     func register(port: P, at address: A) {
         mapping.updateValue(port, forKey: address)
     }
@@ -36,12 +36,14 @@ protocol IOPort {
 }
 
 public class MemoryIO<A: PhysicalAddress> {
+    public private(set) var count = 0
+
     private var slot: [AnyBank<A>]
-    
+
     public init<B: MemoryBank>(defaultBank: B) where B.Address == A {
         slot = [AnyBank<A>](repeating: AnyBank<A>(defaultBank), count: 1024 * 1024)
     }
-    
+
     public subscript(address: A) -> Byte {
         get {
             let index = Int(address >> A.bankIndexShift)
@@ -54,10 +56,11 @@ public class MemoryIO<A: PhysicalAddress> {
             slot[index][offset] = byte
         }
     }
-    
+
     public func register<B: MemoryBank>(bank: B, at address: A) where B.Address == A {
         let index = Int(address >> A.bankIndexShift)
         slot[index] = AnyBank<A>(bank)
+        count += A.bankSize
     }
 }
 
@@ -94,7 +97,7 @@ public class DefaultBank<A: PhysicalAddress>: MemoryBank {
 
 public class RAMBank<A: PhysicalAddress>: MemoryBank {
     private var bank: [Byte]
-    
+
     public init(fill: Byte = .zero) {
         bank = [Byte](repeating: fill, count: A.bankSize)
     }
@@ -107,13 +110,13 @@ public class RAMBank<A: PhysicalAddress>: MemoryBank {
 
 class ROMBank<A: PhysicalAddress>: MemoryBank {
     private var bank: [Byte]
-    
+
     init(bytes: [Byte]) {
         let count = min(bytes.count, A.bankSize)
         bank = [Byte](repeating: .zero, count: A.bankSize)
         bank.replaceSubrange(0..<count, with: bytes.prefix(count))
     }
-    
+
     subscript(address: A) -> Byte {
         get { bank[Int(address) & A.bankOffsetMask] }
         set { }

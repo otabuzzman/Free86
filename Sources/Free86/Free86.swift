@@ -34,7 +34,8 @@ class Free86 {
     var cyclesRequested: QWord = 0
     var cyclesRemaining: QWord = 0
 
-    var memory: MemoryIO<DWord>
+    let memory: MemoryIO<DWord>
+    let memoryCount: DWord
 
     /// Translation lookaside buffer
     ///
@@ -174,6 +175,10 @@ class Free86 {
 
     init(memory: MemoryIO<DWord>) {
         self.memory = memory
+        memoryCount = DWord(memory.count)
+        /// append buffer to store bytes of an instruction
+        /// in case it exceeds current page boundary
+        memory.register(bank: RAMBank<DWord>(), at: memoryCount)
         tlbPages = [DWord](repeating: 0, count: 2048)
         tlbPagesCount = 0
         tlbReadOnlyCplX = .allocate(capacity: 0x100000)  // 1M entries per MT

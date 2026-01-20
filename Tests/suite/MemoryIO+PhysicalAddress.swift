@@ -183,12 +183,14 @@ func readWriteRamRomMemoryMappedIoPorts() {
     memory.register(bank: ram, at: 0x0000_0000)
     memory.register(bank: rom, at: 0x0001_0000)
     memory.register(bank: bank, at: 0x0002_0000)
+    #expect(memory.count == 3 * DWord.bankSize)
     let portA = Port<Byte>()
     let portB = Port<Byte>()
     let portC = Port<Byte>()
     bank.register(port: portA, at: 0x66)
     bank.register(port: portB, at: 0x45)
     bank.register(port: portC, at: 0x62)
+    #expect(memory.count == 3 * DWord.bankSize)
     memory[0x0000_0000] = 0x12  // RAM
     memory[0x0000_0001] = 0x34
     #expect(memory[0x0000_0000] == 0x12)
