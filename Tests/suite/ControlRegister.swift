@@ -9,14 +9,16 @@ func conrolRegister() {
     #expect(cr0.isFlagRaised(.EM) == true)
     #expect(cr0.isFlagRaised(.TS) == true)
     #expect(cr0.isFlagRaised(.ET) == false)
+    #expect(cr0.isFlagRaised(.WP) == true)
     #expect(cr0.isFlagRaised(.PG) == true)
 
-    cr0 &= 0x7FFFFFF0
+    cr0 &= 0x7FFEFFF0
     cr0.setBit(4)
     #expect(cr0.isFlagRaised(.PE) == false)
     #expect(cr0.isFlagRaised(.MP) == false)
     #expect(cr0.isFlagRaised(.EM) == false)
     #expect(cr0.isFlagRaised(.TS) == false)
     #expect(cr0.isFlagRaised(.ET) == true)
+    #expect(cr0.isFlagRaised(.WP) == false)
     #expect(cr0.isFlagRaised(.PG) == false)
 }

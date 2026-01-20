@@ -1,4 +1,5 @@
 typealias CR0 = DWord
+typealias CR3 = DWord
 
 enum CR0Flag: Int {
     case PE
@@ -6,6 +7,7 @@ enum CR0Flag: Int {
     case EM
     case TS
     case ET
+    case WP = 16  // 80486
     case PG = 31
 }
 
@@ -20,12 +22,18 @@ extension CR0 {
 
 extension CR0 {
     var isPagingEnabled: Bool {
-        isFlagRaised(.PG)
+        isFlagRaised(.PG) && isProtectedMode
     }
     var isProtectedMode: Bool {
         isFlagRaised(.PE)
     }
     var isRealOrV86Mode: Bool {
         !isProtectedMode
+    }
+}
+
+extension CR3 {
+    var pageDirectoryBase: DWord {
+        self >> 12
     }
 }

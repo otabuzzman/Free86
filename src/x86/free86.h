@@ -51,7 +51,7 @@ class Free86 {
             tlb_hash = tlb_readonly[lat20];
         }
         if (tlb_hash == -1) {
-            page_translation(writable, cpl == 3, linear);
+            page_translation(linear, writable, cpl == 3);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
             } else {
@@ -140,7 +140,7 @@ class Free86 {
         if (tlb_readonly_cplX[lat20] == -1) {
             if (tlb_pages_count >= 2048) { // flush TLB if full
                 // if present, keep PTE immediately preceding this PTE to improve performance
-                tlb_flush_all((lat20 - 1) & 0xfffff);
+                tlb_flush_all(lat20 - 1);
             }
             // record LA just added to TLB
             tlb_pages[tlb_pages_count++] = lat20;
@@ -375,8 +375,8 @@ class Free86 {
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 
-    void page_translation(int writable, bool user);
-    void page_translation(int writable, bool user, int address);
+    void page_translation(int writable, int user);
+    void page_translation(int address, int writable, int user);
 
     void segment_translation();
     void offset_to_linear(bool writable);

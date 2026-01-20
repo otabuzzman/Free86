@@ -5,10 +5,10 @@ extension LinearAddress {
         self >> 12
     }
     var pageDirectoryIndex: Self {
-        self >> 22
+        self >> 20 & 0xFFC
     }
     var pageTableIndex: Self {
-        self >> 12 & 0x3FF
+        self >> 10 & 0xFFC
     }
     var offset: Self {
         self & 0xFFF

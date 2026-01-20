@@ -7,9 +7,9 @@ class Free86 {
     let NMI = PinIO<Bool>()
     let RESET = PinIO<Bool>()
 
-    var cr0: DWord = 0
+    var cr0: CR0 = 0
     var cr2: DWord = 0
-    var cr3: DWord = 0
+    var cr3: CR3 = 0
     var cr4: DWord = 0 // 80486
 
     var cpl: DWord = 0 // current privilege level register
