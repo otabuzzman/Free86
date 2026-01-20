@@ -1,4 +1,4 @@
-/// two-byte opcodes
+/// two-byte opcode programs
 extension Free86 {
     /// 0x80  JO
     /// 0x81  JNO

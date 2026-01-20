@@ -1,5 +1,4 @@
-/// TLB
-extension Free86 {
+extension Free86: TranslationLookasideBuffer {
     func tlbLookup(linear: LinearAddress, writable: Bool) throws -> DWord {
         var hash: Int
         let pxi = linear.pageTablesIndices  // PDE and PTE indices
@@ -65,12 +64,12 @@ extension Free86 {
     private func tlbFlush(preservePageIfPresent pxi: DWord) {
         var n = 0
         for i in 0..<tlbPagesCount {
-            let _pxi = tlbPages[i]
-            if _pxi == pxi {
-                tlbPages[n] = _pxi
+            let pageTablesIndex = tlbPages[i]
+            if pageTablesIndex == pxi {
+                tlbPages[n] = pageTablesIndex
                 n += 1
             } else {
-                tlbClear(_pxi)
+                tlbClear(pageTablesIndex)
             }
         }
         tlbPagesCount = n
@@ -81,69 +80,6 @@ extension Free86 {
         tlbWritableCplX[pxi] = -1
         tlbReadOnlyCpl3[pxi] = -1
         tlbWritableCpl3[pxi] = -1
-    }
-}
-
-/// page translation
-extension Free86 {
-    func translate(_ linear: LinearAddress, writable: Bool, user: Bool) throws {
-        if !cr0.isPagingEnabled {
-            tlbUpdate(linear: linear & ~0xfff, with: linear & ~0xfff, writable: true, user: false)
-            return
-        }
-        /// paging enabled
-        var errorCode: DWord = 0
-        let pdeAddress = cr3.pageDirectoryBase + linear.pageDirectoryIndex
-        var pde: PageTableEntry = memory.ld(from: pdeAddress)
-        if pde.isPresent {
-            let pteAddress = pde.pageFrameAddress + linear.pageTableIndex
-            var pte: PageTableEntry = memory.ld(from: pteAddress)
-            if pde.isPresent {
-                let supervisor = !user
-                let pxe = pde & pte
-                /// error: user request and page not user-accessible
-                if user && !pxe.isUser {
-                    errorCode.setFlag(.P)
-                }
-                /// error: writable request and page not writable and not supervisor or (supervisor and) WP is set
-                if writable && !pxe.isWritable && (!supervisor || cr0.isFlagRaised(.WP)) {
-                    errorCode.setFlag(.P)
-                }
-                if errorCode == 0 {
-                    if !pde.accessed {
-                        pde.setFlag(.A)
-                        memory.st(at: pdeAddress, dword: pde)
-                    }
-                    let isBlankPage = writable && !pte.isDirty
-                    if isBlankPage && !pte.accessed {
-                        pte.setFlag(.A)
-                        if isBlankPage {
-                            pte.setFlag(.D)
-                        }
-                        memory.st(at: pteAddress, dword: pte)
-                    }
-                    var wFlag = false
-                    var uFlag = false
-                    if pte.isDirty && (pxe.isWritable || supervisor) {
-                        wFlag = true
-                    }
-                    if pxe.isUser {
-                        uFlag = true
-                    }
-                    tlbUpdate(linear: linear & ~0xfff, with: pte & ~0xfff, writable: wFlag, user: uFlag)
-                    return
-                }
-            }
-        }
-        /// page fault
-        cr2 = linear
-        if writable {
-            errorCode.setFlag(.W)
-        }
-        if user {
-            errorCode.setFlag(.U)
-        }
-        throw Interrupt(.PF, errorCode: errorCode)
     }
 }
 

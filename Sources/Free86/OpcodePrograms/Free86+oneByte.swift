@@ -1,4 +1,4 @@
-/// one-byte opcodes
+/// one-byte opcode programs
 extension Free86 {
     /// 0x26  ES segment override prefix
     /// 0x2e  CS segment override prefix

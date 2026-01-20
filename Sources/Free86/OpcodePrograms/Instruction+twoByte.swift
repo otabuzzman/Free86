@@ -1,4 +1,4 @@
-/// two-byte opcodes
+/// two-byte opcode programs
 extension Instruction {
     /// 0x00  G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
     /// 0x01  G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)

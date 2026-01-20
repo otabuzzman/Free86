@@ -1,4 +1,4 @@
-/// two-byte 16 bit opcodes
+/// two-byte 16 bit opcode programs
 extension Free86 {
     /// 0x180  JO
     /// 0x181  JNO

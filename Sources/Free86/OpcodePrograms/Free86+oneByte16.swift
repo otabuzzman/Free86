@@ -1,4 +1,4 @@
-/// one-byte 16 bit opcodes
+/// one-byte 16 bit opcode programs
 extension Free86 {
     /// 0x189  MOV
     func Ox189() throws -> Result<Resume, Never> {

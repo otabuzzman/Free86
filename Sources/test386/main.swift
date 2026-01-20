@@ -17,11 +17,12 @@ extension MemoryIO<DWord> {
     }
 }
 
-extension MemoryIO {
+@MainActor
+extension MemoryIO<DWord> {
     func load(file: URL, storeAt address: A) throws {
         let data = try Data(contentsOf: file)
         for (offset, byte) in data.enumerated() {
-            st8(at: address + A(offset), byte: Byte(byte))
+            mem[address + A(offset)] = Byte(byte)
         }
     }
 }
