@@ -19,6 +19,4 @@ protocol PagedMemory {
     func st8InUserReadonly(byte: Byte)
     func st16InUserReadonly(word: Word)
     func stInUserReadonly(dword: DWord)
-
-    func translate(_ linear: LinearAddress, writable: Bool, user: Bool) throws
 }
