@@ -190,6 +190,11 @@ class Free86 {
         tlbWritableCpl3 = .allocate(capacity: 0x100000)
         tlbReadonly = tlbReadonlyCplX
         tlbWritable = tlbWritableCplX
+        /// RAM configuration check
+        st(at: 0x00000000, dword: 0xDEADBEEF)
+        st(at: 0x000FFFF0, dword: 0xC0DECAFE)
+        assert(ld(from: 0x00000000) == 0xDEADBEEF, "no RAM at address 0x00000000")
+        assert(ld(from: 0x000FFFF0) == 0xC0DECAFE, "no RAM at address 0x000FFFF0")
     }
     deinit {
         tlbReadonlyCplX.deallocate()
