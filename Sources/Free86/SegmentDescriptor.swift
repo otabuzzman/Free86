@@ -26,8 +26,8 @@ extension SegmentDescriptor {
     var type: DWord {
         (upper & 0x0000_0F00) >> 8
     }
-    var dpl: DWord {
-        (upper & 0x0000_6000) >> 13
+    var dpl: Int {
+        Int((upper & 0x0000_6000) >> 13)
     }
 }
 

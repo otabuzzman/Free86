@@ -23,7 +23,7 @@ extension SegmentSelector {
     var isLDT: Bool {
         isFlagRaised(.TI)
     }
-    var rpl: Self {
-        self & 0b0011
+    var rpl: Int {
+        Int(self & 0b0011)
     }
 }

@@ -12,7 +12,7 @@ class Free86 {
     var cr3: CR3 = 0
     var cr4: DWord = 0 // 80486
 
-    var cpl: DWord = 0 // current privilege level register
+    var cpl: Int = 0 // current privilege level register
 
     var halted = false
 
