@@ -5,14 +5,14 @@ extension Free86: TranslationLookasideBuffer {
         if (writable) {
             hash = tlbWritable[pxi]
         } else {
-            hash = tlbReadOnly[pxi]
+            hash = tlbReadonly[pxi]
         }
         if (hash == -1) {
             try translate(linear, writable: writable, user: cpl == 3)
             if (writable) {
                 hash = tlbWritable[pxi]
             } else {
-                hash = tlbReadOnly[pxi]
+                hash = tlbReadonly[pxi]
             }
         }
         return linear ^ DWord(hash)
@@ -20,7 +20,7 @@ extension Free86: TranslationLookasideBuffer {
     func tlbUpdate(linear: LinearAddress, with address: DWord, writable: Bool, user: Bool) {
         let hash = Int(linear ^ address)    // XOR hash function (by design, no necessity)
         let pxi = linear.pageTablesIndices  // PD and PT indices (top 20 bits of linear address)
-        if (tlbReadOnlyCplX[pxi] == -1) {
+        if (tlbReadonlyCplX[pxi] == -1) {
             if (tlbPagesCount >= 2048) {  // flush TLB if full
                 /// if present, keep PTE immediately preceding this PTE to improve performance
                 tlbFlush(preservePageIfPresent: pxi - 1)
@@ -30,21 +30,21 @@ extension Free86: TranslationLookasideBuffer {
             tlbPagesCount += 1
         }
         /// update mapping tables
-        tlbReadOnlyCplX[pxi] = hash
+        tlbReadonlyCplX[pxi] = hash
         if (writable) {
             tlbWritableCplX[pxi] = hash
         } else {
             tlbWritableCplX[pxi] = -1
         }
         if (user) {
-            tlbReadOnlyCpl3[pxi] = hash;
+            tlbReadonlyCpl3[pxi] = hash;
             if (writable) {
                 tlbWritableCpl3[pxi] = hash;
             } else {
                 tlbWritableCpl3[pxi] = -1
             }
         } else {
-            tlbReadOnlyCpl3[pxi] = -1
+            tlbReadonlyCpl3[pxi] = -1
             tlbWritableCpl3[pxi] = -1
         }
     }
@@ -72,9 +72,9 @@ extension Free86: TranslationLookasideBuffer {
         tlbPagesCount = n
     }
     private func tlbClear(_ pxi: DWord) {
-        tlbReadOnlyCplX[pxi] = -1
+        tlbReadonlyCplX[pxi] = -1
         tlbWritableCplX[pxi] = -1
-        tlbReadOnlyCpl3[pxi] = -1
+        tlbReadonlyCpl3[pxi] = -1
         tlbWritableCpl3[pxi] = -1
     }
 }

@@ -1,7 +1,9 @@
 extension Free86: PagedMemory {
     func ld8FromReadonly() {
-        let ld8FromReadonly: () -> Byte = {
-             0
+        let ld8FromReadonly: () throws -> Byte = { [self] in
+            try translate(lax, writable: false, user: false)
+            let hash = tlbReadonlyCplX[lax.pageTablesIndices]
+            return memory.ld8(from: lax ^ DWord(hash))
         }
     }
     func ld16FromReadonly() {
@@ -15,8 +17,10 @@ extension Free86: PagedMemory {
         }
     }
     func ld8FromUserReadonly() {
-        let ld8FromUserReadonly: () -> Byte = {
-             0
+        let ld8FromUserReadonly: () throws -> Byte = { [self] in
+            try translate(lax, writable: false, user: cpl == 3)
+            let hash = tlbReadonly[lax.pageTablesIndices]
+            return memory.ld8(from: lax ^ DWord(hash))
         }
     }
     func ld16FromUserReadonly() {
@@ -30,8 +34,10 @@ extension Free86: PagedMemory {
         }
     }
     func ld8FromUserWritable() {
-        let ld8FromUserWritable: () -> Byte = {
-             0
+        let ld8FromUserWritable: () throws -> Byte = { [self] in
+            try translate(lax, writable: true, user: cpl == 3)
+            let hash = tlbWritable[lax.pageTablesIndices]
+            return memory.ld8(from: lax ^ DWord(hash))
         }
     }
     func ld16FromUserWritable() {
@@ -44,28 +50,34 @@ extension Free86: PagedMemory {
              0
         }
     }
-    func st8InReadonly(byte: Byte) {
-        let st8InReadonly: (Byte) -> () = { byte in
+    func st8InWritable(byte: Byte) {
+        let st8InWritable: (Byte) throws -> () = { [self] byte in
+            try translate(lax, writable: true, user: false)
+            let hash = tlbWritableCplX[lax.pageTablesIndices]
+            memory.st8(at: lax ^ DWord(hash), byte: byte)
         }
     }
-    func st16InReadonly(word: Word) {
-        let st16InReadonly: (Word) -> () = { word in
+    func st16InWritable(word: Word) {
+        let st16InWritable: (Word) -> () = { word in
         }
     }
-    func stInReadonly(dword: DWord) {
-        let stInReadonly: (DWord) -> () = { dword in
+    func stInWritable(dword: DWord) {
+        let stInWritable: (DWord) -> () = { dword in
         }
     }
-    func st8InUserReadonly(byte: Byte) {
-        let st8InUserReadonly: (Byte) -> () = { byte in
+    func st8InUserWritable(byte: Byte) {
+        let st8InUserWritable: (Byte) throws -> () = { [self] byte in
+            try translate(lax, writable: true, user: cpl == 3)
+            let hash = tlbWritable[lax.pageTablesIndices]
+            memory.st8(at: lax ^ DWord(hash), byte: byte)
         }
     }
-    func st16InUserReadonly(word: Word) {
-        let st16InUserReadonly: (Word) -> () = { word in
+    func st16InUserWritable(word: Word) {
+        let st16InUserWritable: (Word) -> () = { word in
         }
     }
-    func stInUserReadonly(dword: DWord) {
-        let stInUserReadonly: (DWord) -> () = { dword in
+    func stInUserWritable(dword: DWord) {
+        let stInUserWritable: (DWord) -> () = { dword in
         }
     }
 }

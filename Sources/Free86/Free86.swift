@@ -53,12 +53,12 @@ class Free86 {
     var tlbPages: Array<DWord>
     var tlbPagesCount: Int
     /// mapping tables
-    var tlbReadOnlyCplX: UnsafeMutablePointer<Int>  // supervisor, any CPL
+    var tlbReadonlyCplX: UnsafeMutablePointer<Int>  // supervisor, any CPL
     var tlbWritableCplX: UnsafeMutablePointer<Int>
-    var tlbReadOnlyCpl3: UnsafeMutablePointer<Int>  // user, CPL == 3
+    var tlbReadonlyCpl3: UnsafeMutablePointer<Int>  // user, CPL == 3
     var tlbWritableCpl3: UnsafeMutablePointer<Int>
     /// current mapping tables (user or supervisor)/
-    var tlbReadOnly: UnsafeMutablePointer<Int>
+    var tlbReadonly: UnsafeMutablePointer<Int>
     var tlbWritable: UnsafeMutablePointer<Int>
 
     /// Instruction prefix register
@@ -82,6 +82,9 @@ class Free86 {
     var ipr: InstructionPrefixRegister = 0
     var ipr_default: InstructionPrefixRegister = 0  // reflects D flag (PM (1986), 16.1)
                                                     // also belongs to the SSB (below)
+
+    /// auxiliary variables for inter-method exchange
+    var lax: LinearAddress = 0  // linear address exchange register
 
     typealias OpcodeDecoder = Array<OpcodeProgram>
     typealias OpcodeProgram = () throws -> Result<Resume, Never>
@@ -181,17 +184,17 @@ class Free86 {
         memory.register(bank: RAMBank<DWord>(), at: memoryCount)
         tlbPages = [DWord](repeating: 0, count: 2048)
         tlbPagesCount = 0
-        tlbReadOnlyCplX = .allocate(capacity: 0x100000)  // 1M entries per MT
+        tlbReadonlyCplX = .allocate(capacity: 0x100000)  // 1M entries per MT
         tlbWritableCplX = .allocate(capacity: 0x100000)
-        tlbReadOnlyCpl3 = .allocate(capacity: 0x100000)
+        tlbReadonlyCpl3 = .allocate(capacity: 0x100000)
         tlbWritableCpl3 = .allocate(capacity: 0x100000)
-        tlbReadOnly = tlbReadOnlyCplX
+        tlbReadonly = tlbReadonlyCplX
         tlbWritable = tlbWritableCplX
     }
     deinit {
-        tlbReadOnlyCplX.deallocate()
+        tlbReadonlyCplX.deallocate()
         tlbWritableCplX.deallocate()
-        tlbReadOnlyCpl3.deallocate()
+        tlbReadonlyCpl3.deallocate()
         tlbWritableCpl3.deallocate()
     }
 }
