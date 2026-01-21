@@ -1,10 +1,12 @@
 extension Free86: PagedMemory {
-    func ld8FromReadonly() {
+    func ld8FromReadonly() throws -> Byte {
+        var hash = tlbReadonlyCplX[lax.pageTablesIndices]
         let ld8FromReadonly: () throws -> Byte = { [self] in
             try translate(lax, writable: false, user: false)
-            let hash = tlbReadonlyCplX[lax.pageTablesIndices]
+            hash = tlbReadonlyCplX[lax.pageTablesIndices]
             return memory.ld8(from: lax ^ DWord(hash))
         }
+        return hash == -1 ? try ld8FromReadonly() : memory.ld8(from: lax ^ DWord(hash))
     }
     func ld16FromReadonly() {
         let ld16FromReadonly: () -> Word = {

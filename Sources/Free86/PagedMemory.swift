@@ -1,6 +1,6 @@
 protocol PagedMemory {
     /// load byte/ word/ dword from read-only supervisor memory
-    func ld8FromReadonly() throws
+    func ld8FromReadonly() throws -> Byte
     func ld16FromReadonly()
     func ldFromReadonly()
     /// load byte/ word/ dword from read-only user memory
