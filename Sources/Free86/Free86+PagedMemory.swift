@@ -1,85 +1,205 @@
 extension Free86: PagedMemory {
-    func ld8FromReadonly() throws -> Byte {
+    func ld8ReadonlyCplX() throws -> Byte {
         var hash = tlbReadonlyCplX[lax.pageTablesIndices]
-        let ld8FromReadonly: () throws -> Byte = { [self] in
+        if hash == -1 {
             try translate(lax, writable: false, user: false)
             hash = tlbReadonlyCplX[lax.pageTablesIndices]
-            return memory.ld8(from: lax ^ DWord(hash))
         }
-        return hash == -1 ? try ld8FromReadonly() : memory.ld8(from: lax ^ DWord(hash))
+        return memory.ld8(from: lax ^ DWord(hash))
     }
-    func ld16FromReadonly() {
-        let ld16FromReadonly: () -> Word = {
-             0
+    func ld16ReadonlyCplX() throws -> Word {
+        let hash = tlbReadonlyCplX[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 1) != 0) {
+            var word: Word = 0
+            word.lowerHalf = Word(try ld8ReadonlyCplX())
+            lax += 1
+            word.upperHalf = Word(try ld8ReadonlyCplX())
+            lax -= 1
+            return word
         }
+        return memory.ld16(from: lax ^ DWord(hash))
     }
-    func ldFromReadonly() {
-        let ldFromReadonly: () -> DWord = {
-             0
+    func ldReadonlyCplX() throws -> DWord {
+        let hash = tlbReadonlyCplX[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 3) != 0) {
+            var dword: DWord = 0
+            dword = DWord(try ld8ReadonlyCplX())
+            lax += 1
+            dword |= try DWord(ld8ReadonlyCplX()) << 8
+            lax += 1
+            dword |= try DWord(ld8ReadonlyCplX()) << 16
+            lax += 1
+            dword |= try DWord(ld8ReadonlyCplX()) << 24
+            lax -= 3
+            return dword
         }
+        return memory.ld(from: lax ^ DWord(hash))
     }
-    func ld8FromUserReadonly() {
-        let ld8FromUserReadonly: () throws -> Byte = { [self] in
+    func ld8ReadonlyCpl3() throws -> Byte {
+        if cr0.isRealOrV86Mode {
+            return memory.ld8(from: lax)
+        }
+        var hash = tlbReadonly[lax.pageTablesIndices]
+        if hash == -1 {
             try translate(lax, writable: false, user: cpl == 3)
-            let hash = tlbReadonly[lax.pageTablesIndices]
-            return memory.ld8(from: lax ^ DWord(hash))
+            hash = tlbReadonly[lax.pageTablesIndices]
         }
+        return memory.ld8(from: lax ^ DWord(hash))
     }
-    func ld16FromUserReadonly() {
-        let ld16FromUserReadonly: () -> Word = {
-             0
+    func ld16ReadonlyCpl3() throws -> Word {
+        if cr0.isRealOrV86Mode {
+            return memory.ld16(from: lax)
         }
-    }
-    func ldFromUserReadonly() {
-        let ldFromUserReadonly: () -> DWord = {
-             0
+        let hash = tlbReadonly[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 1) != 0) {
+            var word: Word = 0
+            word.lowerHalf = Word(try ld8ReadonlyCpl3())
+            lax += 1
+            word.upperHalf = Word(try ld8ReadonlyCpl3())
+            lax -= 1
+            return word
         }
+        return memory.ld16(from: lax ^ DWord(hash))
     }
-    func ld8FromUserWritable() {
-        let ld8FromUserWritable: () throws -> Byte = { [self] in
+    func ldReadonlyCpl3() throws -> DWord {
+        if cr0.isRealOrV86Mode {
+            return memory.ld(from: lax)
+        }
+        let hash = tlbReadonly[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 3) != 0) {
+            var dword: DWord = 0
+            dword = DWord(try ld8ReadonlyCpl3())
+            lax += 1
+            dword |= try DWord(ld8ReadonlyCpl3()) << 8
+            lax += 1
+            dword |= try DWord(ld8ReadonlyCpl3()) << 16
+            lax += 1
+            dword |= try DWord(ld8ReadonlyCpl3()) << 24
+            lax -= 3
+            return dword
+        }
+        return memory.ld(from: lax ^ DWord(hash))
+    }
+    func ld8WritableCpl3() throws -> Byte {
+        if cr0.isRealOrV86Mode {
+            return memory.ld8(from: lax)
+        }
+        var hash = tlbWritable[lax.pageTablesIndices]
+        if hash == -1 {
             try translate(lax, writable: true, user: cpl == 3)
-            let hash = tlbWritable[lax.pageTablesIndices]
-            return memory.ld8(from: lax ^ DWord(hash))
+            hash = tlbWritable[lax.pageTablesIndices]
         }
+        return memory.ld8(from: lax ^ DWord(hash))
     }
-    func ld16FromUserWritable() {
-        let ld16FromUserWritable: () -> Word = {
-             0
+    func ld16WritableCpl3() throws -> Word {
+        if cr0.isRealOrV86Mode {
+            return memory.ld16(from: lax)
         }
-    }
-    func ldFromUserWritable() {
-        let ldFromUserWritable: () -> DWord = {
-             0
+        let hash = tlbWritable[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 1) != 0) {
+            var word: Word = 0
+            word.lowerHalf = Word(try ld8WritableCpl3())
+            lax += 1
+            word.upperHalf = Word(try ld8WritableCpl3())
+            lax -= 1
+            return word
         }
+        return memory.ld16(from: lax ^ DWord(hash))
     }
-    func st8InWritable(byte: Byte) {
-        let st8InWritable: (Byte) throws -> () = { [self] byte in
+    func ldWritableCpl3() throws -> DWord {
+        if cr0.isRealOrV86Mode {
+            return memory.ld(from: lax)
+        }
+        let hash = tlbWritable[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 3) != 0) {
+            var dword: DWord = 0
+            dword = DWord(try ld8WritableCpl3())
+            lax += 1
+            dword |= try DWord(ld8WritableCpl3()) << 8
+            lax += 1
+            dword |= try DWord(ld8WritableCpl3()) << 16
+            lax += 1
+            dword |= try DWord(ld8WritableCpl3()) << 24
+            lax -= 3
+            return dword
+        }
+        return memory.ld(from: lax ^ DWord(hash))
+    }
+    func st8WritableCplX(byte: Byte) throws {
+        var hash = tlbWritableCplX[lax.pageTablesIndices]
+        if hash == -1 {
             try translate(lax, writable: true, user: false)
-            let hash = tlbWritableCplX[lax.pageTablesIndices]
-            memory.st8(at: lax ^ DWord(hash), byte: byte)
+            hash = tlbWritableCplX[lax.pageTablesIndices]
+        }
+        memory.st8(at: lax ^ DWord(hash), byte: byte)
+    }
+    func st16WritableCplX(word: Word) throws {
+        let hash = tlbWritableCplX[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 1) != 0) {
+            try st8WritableCplX(byte: Byte(word.lowerHalf))
+            lax += 1
+            try st8WritableCplX(byte: Byte(word.upperHalf))
+            lax -= 1
+        } else {
+            memory.st16(at: lax ^ DWord(hash), word: word)
         }
     }
-    func st16InWritable(word: Word) {
-        let st16InWritable: (Word) -> () = { word in
+    func stWritableCplX(dword: DWord) throws {
+        let hash = tlbWritableCplX[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 3) != 0) {
+            try st8WritableCplX(byte: Byte(dword))
+            lax += 1
+            try st8WritableCplX(byte: Byte(dword >> 8))
+            lax += 1
+            try st8WritableCplX(byte: Byte(dword >> 16))
+            lax += 1
+            try st8WritableCplX(byte: Byte(dword >> 24))
+            lax -= 3
+        } else {
+            memory.st(at: lax ^ DWord(hash), dword: dword)
         }
     }
-    func stInWritable(dword: DWord) {
-        let stInWritable: (DWord) -> () = { dword in
+    func st8WritableCpl3(byte: Byte) throws {
+        if cr0.isRealOrV86Mode {
+            memory.st8(at: lax, byte: byte)
         }
-    }
-    func st8InUserWritable(byte: Byte) {
-        let st8InUserWritable: (Byte) throws -> () = { [self] byte in
+        var hash = tlbWritable[lax.pageTablesIndices]
+        if hash == -1 {
             try translate(lax, writable: true, user: cpl == 3)
-            let hash = tlbWritable[lax.pageTablesIndices]
-            memory.st8(at: lax ^ DWord(hash), byte: byte)
+            hash = tlbWritable[lax.pageTablesIndices]
+        }
+        memory.st8(at: lax ^ DWord(hash), byte: byte)
+    }
+    func st16WritableCpl3(word: Word) throws {
+        if cr0.isRealOrV86Mode {
+            memory.st16(at: lax, word: word)
+        }
+        let hash = tlbWritable[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 1) != 0) {
+            try st8WritableCpl3(byte: Byte(word.lowerHalf))
+            lax += 1
+            try st8WritableCpl3(byte: Byte(word.upperHalf))
+            lax -= 1
+        } else {
+            memory.st16(at: lax ^ DWord(hash), word: word)
         }
     }
-    func st16InUserWritable(word: Word) {
-        let st16InUserWritable: (Word) -> () = { word in
+    func stWritableCpl3(dword: DWord) throws {
+        if cr0.isRealOrV86Mode {
+            memory.st(at: lax, dword: dword)
         }
-    }
-    func stInUserWritable(dword: DWord) {
-        let stInUserWritable: (DWord) -> () = { dword in
+        let hash = tlbWritable[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 3) != 0) {
+            try st8WritableCpl3(byte: Byte(dword))
+            lax += 1
+            try st8WritableCpl3(byte: Byte(dword >> 8))
+            lax += 1
+            try st8WritableCpl3(byte: Byte(dword >> 16))
+            lax += 1
+            try st8WritableCpl3(byte: Byte(dword >> 24))
+            lax -= 3
+        } else {
+            memory.st(at: lax ^ DWord(hash), dword: dword)
         }
     }
 }

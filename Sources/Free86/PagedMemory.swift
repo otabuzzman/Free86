@@ -1,22 +1,22 @@
 protocol PagedMemory {
     /// load byte/ word/ dword from read-only supervisor memory
-    func ld8FromReadonly() throws -> Byte
-    func ld16FromReadonly()
-    func ldFromReadonly()
+    func ld8ReadonlyCplX() throws -> Byte
+    func ld16ReadonlyCplX() throws -> Word
+    func ldReadonlyCplX() throws -> DWord
     /// load byte/ word/ dword from read-only user memory
-    func ld8FromUserReadonly() throws
-    func ld16FromUserReadonly()
-    func ldFromUserReadonly()
+    func ld8ReadonlyCpl3() throws -> Byte
+    func ld16ReadonlyCpl3() throws -> Word
+    func ldReadonlyCpl3() throws -> DWord
     /// load byte/ word/ dword from writable user memory
-    func ld8FromUserWritable() throws
-    func ld16FromUserWritable()
-    func ldFromUserWritable()
+    func ld8WritableCpl3() throws -> Byte
+    func ld16WritableCpl3() throws -> Word
+    func ldWritableCpl3() throws -> DWord
     /// store byte/ word/ dword in read-only supervisor memory
-    func st8InWritable(byte: Byte)
-    func st16InWritable(word: Word)
-    func stInWritable(dword: DWord)
+    func st8WritableCplX(byte: Byte) throws
+    func st16WritableCplX(word: Word) throws
+    func stWritableCplX(dword: DWord) throws
     /// store byte/ word/ dword in read-only user memory
-    func st8InUserWritable(byte: Byte)
-    func st16InUserWritable(word: Word)
-    func stInUserWritable(dword: DWord)
+    func st8WritableCpl3(byte: Byte) throws
+    func st16WritableCpl3(word: Word) throws
+    func stWritableCpl3(dword: DWord) throws
 }
