@@ -1,62 +1,71 @@
 extension Free86: PagedMemory {
     func ld8FromReadonly() {
-        var ld8FromReadonly: () -> DWord = {
+        let ld8FromReadonly: () -> Byte = {
+             0
         }
     }
     func ld16FromReadonly() {
-        var ld16FromReadonly: () -> DWord = {
+        let ld16FromReadonly: () -> Word = {
+             0
         }
     }
     func ldFromReadonly() {
-        var ldFromReadonly: () -> DWord = {
+        let ldFromReadonly: () -> DWord = {
+             0
         }
     }
     func ld8FromUserReadonly() {
-        var ld8FromUserReadonly: () -> DWord = {
+        let ld8FromUserReadonly: () -> Byte = {
+             0
         }
     }
     func ld16FromUserReadonly() {
-        var ld16FromUserReadonly: () -> DWord = {
+        let ld16FromUserReadonly: () -> Word = {
+             0
         }
     }
     func ldFromUserReadonly() {
-        var ldFromUserReadonly: () -> DWord = {
+        let ldFromUserReadonly: () -> DWord = {
+             0
         }
     }
     func ld8FromUserWritable() {
-        var ld8FromUserWritable: () -> DWord = {
+        let ld8FromUserWritable: () -> Byte = {
+             0
         }
     }
     func ld16FromUserWritable() {
-        var ld16FromUserWritable: () -> DWord = {
+        let ld16FromUserWritable: () -> Word = {
+             0
         }
     }
     func ldFromUserWritable() {
-        var ldFromUserWritable: () -> DWord = {
+        let ldFromUserWritable: () -> DWord = {
+             0
         }
     }
-    func st8InReadonly() {
-        var st8InReadonly: () -> DWord = {
+    func st8InReadonly(byte: Byte) {
+        let st8InReadonly: (Byte) -> () = { byte in
         }
     }
-    func st16InReadonly() {
-        var st16InReadonly: () -> DWord = {
+    func st16InReadonly(word: Word) {
+        let st16InReadonly: (Word) -> () = { word in
         }
     }
-    func stInReadonly() {
-        var stInReadonly: () -> DWord = {
+    func stInReadonly(dword: DWord) {
+        let stInReadonly: (DWord) -> () = { dword in
         }
     }
-    func st8InUserReadonly() {
-        var st8InUserReadonly: () -> DWord = {
+    func st8InUserReadonly(byte: Byte) {
+        let st8InUserReadonly: (Byte) -> () = { byte in
         }
     }
-    func st16InUserReadonly() {
-        var st16InUserReadonly: () -> DWord = {
+    func st16InUserReadonly(word: Word) {
+        let st16InUserReadonly: (Word) -> () = { word in
         }
     }
-    func stInUserReadonly() {
-        var stInUserReadonly: () -> DWord = {
+    func stInUserReadonly(dword: DWord) {
+        let stInUserReadonly: (DWord) -> () = { dword in
         }
     }
 }
