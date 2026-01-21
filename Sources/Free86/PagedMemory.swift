@@ -12,13 +12,13 @@ protocol PagedMemory {
     func ld16FromUserWritable()
     func ldFromUserWritable()
     /// store byte/ word/ dword as supervisor in read-only memory
-    func st8InReadonly()
-    func st16InReadonly()
-    func stInReadonly()
+    func st8InReadonly(byte: Byte)
+    func st16InReadonly(word: Word)
+    func stInReadonly(dword: DWord)
     /// store byte/ word/ dword as user in read-only memory
-    func st8InUserReadonly()
-    func st16InUserReadonly()
-    func stInUserReadonly()
+    func st8InUserReadonly(byte: Byte)
+    func st16InUserReadonly(word: Word)
+    func stInUserReadonly(dword: DWord)
 
     func translate(_ linear: LinearAddress, writable: Bool, user: Bool) throws
 }

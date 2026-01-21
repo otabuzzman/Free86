@@ -68,9 +68,7 @@ extension Free86: PagedMemory {
         let stInUserReadonly: (DWord) -> () = { dword in
         }
     }
-}
 
-extension Free86: PagedMemory {
     func translate(_ linear: LinearAddress, writable: Bool, user: Bool) throws {
         if !cr0.isPagingEnabled {
             tlbUpdate(linear: linear & ~0xfff, with: linear & ~0xfff, writable: true, user: false)
