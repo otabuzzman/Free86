@@ -1,4 +1,67 @@
 extension Free86: PagedMemory {
+    func ld8FromReadonly() {
+        var ld8FromReadonly: () -> DWord = {
+        }
+    }
+    func ld16FromReadonly() {
+        var ld16FromReadonly: () -> DWord = {
+        }
+    }
+    func ldFromReadonly() {
+        var ldFromReadonly: () -> DWord = {
+        }
+    }
+    func ld8FromUserReadonly() {
+        var ld8FromUserReadonly: () -> DWord = {
+        }
+    }
+    func ld16FromUserReadonly() {
+        var ld16FromUserReadonly: () -> DWord = {
+        }
+    }
+    func ldFromUserReadonly() {
+        var ldFromUserReadonly: () -> DWord = {
+        }
+    }
+    func ld8FromUserWritable() {
+        var ld8FromUserWritable: () -> DWord = {
+        }
+    }
+    func ld16FromUserWritable() {
+        var ld16FromUserWritable: () -> DWord = {
+        }
+    }
+    func ldFromUserWritable() {
+        var ldFromUserWritable: () -> DWord = {
+        }
+    }
+    func st8InReadonly() {
+        var st8InReadonly: () -> DWord = {
+        }
+    }
+    func st16InReadonly() {
+        var st16InReadonly: () -> DWord = {
+        }
+    }
+    func stInReadonly() {
+        var stInReadonly: () -> DWord = {
+        }
+    }
+    func st8InUserReadonly() {
+        var st8InUserReadonly: () -> DWord = {
+        }
+    }
+    func st16InUserReadonly() {
+        var st16InUserReadonly: () -> DWord = {
+        }
+    }
+    func stInUserReadonly() {
+        var stInUserReadonly: () -> DWord = {
+        }
+    }
+}
+
+extension Free86: PagedMemory {
     func translate(_ linear: LinearAddress, writable: Bool, user: Bool) throws {
         if !cr0.isPagingEnabled {
             tlbUpdate(linear: linear & ~0xfff, with: linear & ~0xfff, writable: true, user: false)

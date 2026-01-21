@@ -188,7 +188,6 @@ class Free86 {
         tlbReadOnly = tlbReadOnlyCplX
         tlbWritable = tlbWritableCplX
     }
-
     deinit {
         tlbReadOnlyCplX.deallocate()
         tlbWritableCplX.deallocate()

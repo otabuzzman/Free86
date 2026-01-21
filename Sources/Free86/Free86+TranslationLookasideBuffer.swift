@@ -17,7 +17,6 @@ extension Free86: TranslationLookasideBuffer {
         }
         return linear ^ DWord(hash)
     }
-
     func tlbUpdate(linear: LinearAddress, with address: DWord, writable: Bool, user: Bool) {
         let hash = Int(linear ^ address)    // XOR hash function (by design, no necessity)
         let pxi = linear.pageTablesIndices  // PD and PT indices (top 20 bits of linear address)
@@ -49,7 +48,6 @@ extension Free86: TranslationLookasideBuffer {
             tlbWritableCpl3[pxi] = -1
         }
     }
-
     func tlbFlush() {
         for i in 0..<tlbPagesCount {
             tlbClear(tlbPages[i])
@@ -57,10 +55,9 @@ extension Free86: TranslationLookasideBuffer {
         tlbPagesCount = 0
     }
 
-    func tlbFlush(pageContainingAddress linear: LinearAddress) {
+    private func tlbFlush(pageContainingAddress linear: LinearAddress) {
         tlbClear(linear.pageTablesIndices)
     }
-
     private func tlbFlush(preservePageIfPresent pxi: DWord) {
         var n = 0
         for i in 0..<tlbPagesCount {
@@ -74,7 +71,6 @@ extension Free86: TranslationLookasideBuffer {
         }
         tlbPagesCount = n
     }
-
     private func tlbClear(_ pxi: DWord) {
         tlbReadOnlyCplX[pxi] = -1
         tlbWritableCplX[pxi] = -1
