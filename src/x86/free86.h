@@ -43,7 +43,7 @@ class Free86 {
 
     uint64_t cycles;
 
-    int tlb_lookup(int linear, int writable) {
+    int tlb_lookup(uint32_t linear, int writable) {
         uint32_t lat20 = linear >> 12; // PDE and PTE indices
         if (writable) {
             tlb_hash = tlb_writable[lat20];
@@ -51,7 +51,7 @@ class Free86 {
             tlb_hash = tlb_readonly[lat20];
         }
         if (tlb_hash == -1) {
-            page_translation(writable, cpl == 3, linear);
+            page_translation(linear, writable, cpl == 3);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
             } else {
@@ -104,10 +104,7 @@ class Free86 {
     uint64_t cycles_remaining;
 
     int memory_size;
-
-    uint8_t *memory8;
-    uint16_t *memory16;
-    uint32_t *memory;
+    uint8_t *memory;
 
 /*
    Translation lookaside buffer
@@ -143,7 +140,7 @@ class Free86 {
         if (tlb_readonly_cplX[lat20] == -1) {
             if (tlb_pages_count >= 2048) { // flush TLB if full
                 // if present, keep PTE immediately preceding this PTE to improve performance
-                tlb_flush_all((lat20 - 1) & 0xfffff);
+                tlb_flush_all(lat20 - 1);
             }
             // record LA just added to TLB
             tlb_pages[tlb_pages_count++] = lat20;
@@ -277,7 +274,7 @@ class Free86 {
    Instruction prefix register
 
    The instruction prefix register (IPR) captures the instruction prefixes
-   of the current retrieval cycle, each in its own bit. IPR is specific to
+   of the current fetch cycle, each in its own bit. IPR is specific to
    this emulator and not part of the processor architecture, from which it
    was derived.
 
@@ -378,8 +375,8 @@ class Free86 {
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 
-    void page_translation(int writable, bool user);
-    void page_translation(int writable, bool user, int address);
+    void page_translation(int writable, int user);
+    void page_translation(int address, int writable, int user);
 
     void segment_translation();
     void offset_to_linear(bool writable);
@@ -508,49 +505,34 @@ class Free86 {
     void aux_SCASD();
 
     // memory.cpp
-    int _ld8_readonly_cplX();
     int ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
-    int _ld16_readonly_cplX();
     int ld16_readonly_cplX();  // ...word
-    int _ld_readonly_cplX();
     int ld_readonly_cplX();  // ...dword from current linear address
 
-    int _ld8_readonly_cpl3();
     int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
-    int _ld16_readonly_cpl3();
     int ld16_readonly_cpl3(); // ...word
-    int _ld_readonly_cpl3();
     int ld_readonly_cpl3(); // ...dword from current linear address
 
-    int _ld8_writable_cpl3();
     int ld8_writable_cpl3(); // from user WR memory: load (return) byte
-    int _ld16_writable_cpl3();
     int ld16_writable_cpl3(); // ...word
-    int _ld_writable_cpl3();
     int ld_writable_cpl3(); // ...dword from current linear address
 
-    void _st8_writable_cplX(int byte);
     void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
-    void _st16_writable_cplX(int word);
     void st16_writable_cplX(int word); // ...word
-    void _st_writable_cplX(int dword);
     void st_writable_cplX(int dword); // ...dword at current linear address
 
-    void _st8_writable_cpl3(int byte);
     void st8_writable_cpl3(int byte); // in user WR memory: store byte
-    void _st16_writable_cpl3(int word);
     void st16_writable_cpl3(int word); // ...word
-    void _st_writable_cpl3(int dword);
     void st_writable_cpl3(int dword); // ...dword at current linear address
 
-    int fetch8(); // read byte...
-    int fetch16(); // ...word...
-    int fetch(); // ...dword at FAR, update FAR, bypass TLB
     int ld16_direct(int address);
-    int ld_direct(int address); // read/ write dword at memory address
+    int ld_direct(int address); // read/ write dword at memory address, bypass TLB
     void st16_direct(int address, int byte);
     void st_direct(int address, int dword);
 
+    int fetch8(); // read byte...
+    int fetch16(); // ...word...
+    int fetch(); // ...dword at FAR, update FAR
     void push16(int word);
     void push(int dword);
     int pop16();

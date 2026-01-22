@@ -5,9 +5,7 @@ Free86::Free86(int memory_size) {
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
-    memory8 = (uint8_t *) calloc(1, memory_size + ((15 + 3) & ~3));
-    memory16 = (uint16_t *) (memory8);
-    memory = (uint32_t *) (memory8);
+    memory = (uint8_t *) calloc(1, memory_size + ((15 + 3) & ~3));
     tlb_readonly_cplX = new int[tlb_size];
     tlb_writable_cplX = new int[tlb_size];
     tlb_readonly_cpl3 = new int[tlb_size];
@@ -20,7 +18,7 @@ Free86::Free86(int memory_size) {
     set_cpl(0); // PM (1986), 10.3
 }
 Free86::~Free86() {
-    free(memory8);
+    free(memory);
     delete[] tlb_readonly_cplX;
     delete[] tlb_writable_cplX;
     delete[] tlb_readonly_cpl3;
@@ -64,32 +62,17 @@ void Free86::update_SSB() {
 void Free86::fetch_opcode() {
     eip = eip + far - far_start;
     eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
-    tlb_hash = tlb_readonly[eip_linear >> 12];
-    // `tlb_hash' equals -1 or instruction with maximum bytes (15)
-    // would extend across the page boundary.
-    // combined check ok because bits 0-11 in `tlb_hash' always 0.
-    if (((tlb_hash | eip_linear) & 0xfff) > (4096 - 15)) {
-        if (tlb_hash == -1) {
-            page_translation(0, cpl == 3, eip_linear);
+    far = far_start = tlb_lookup(eip_linear, 0);
+    opcode = fetch8();
+    int page_offset = eip_linear & 0xfff;
+    x = instruction_length(opcode);
+    if ((page_offset + x) > 4096) { // instruction extends page boundary
+        far = far_start = memory_size; // point FAR to buffer on top of memory
+        for (y = 0; y < x; y++) {      // copy instruction bytewise to buffer
+            lax = eip_linear + y;      // LAX holds linear address of byte to fetch
+            st8_direct(far + y, ld8_readonly_cpl3()); // copy [LAX] to physical [FAR]
         }
-        tlb_hash = tlb_readonly[eip_linear >> 12];
-        far = far_start = eip_linear ^ tlb_hash;
-        opcode = fetch8();
-        int page_offset = eip_linear & 0xfff;
-        if (page_offset > (4096 - 15)) {
-            x = instruction_length(opcode);
-            if ((page_offset + x) > 4096) { // instruction extends page boundary
-                far = far_start = memory_size;
-                for (y = 0; y < x; y++) { // copy instruction to dedicated buffer on top of memory
-                    lax = eip_linear + y;
-                    memory8[far + y] = ld8_readonly_cpl3();
-                }
-                far++;
-            }
-        }
-    } else {
-        far = far_start = eip_linear ^ tlb_hash;
-        opcode = fetch8();
+        far++; // adjust FAR for upcomming fetches from buffer
     }
 }
 int Free86::instruction_length(int opcode) {
@@ -872,65 +855,63 @@ void Free86::set_lower_byte(int reg, int byte) {
 void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-void Free86::page_translation(int writable, bool user) {
-    page_translation(writable, user, lax);
+void Free86::page_translation(int writable, int user) {
+    page_translation(lax, writable, user);
 }
-void Free86::page_translation(int writable, bool user, int address) {
-    int pde_address, pde, pte_address, pte, pxe, pte_RW = 0, pte_US = 1, ok, error_code;
+void Free86::page_translation(int address, int writable, int user) {
+    int pde_address, pde, pte_address, pte, pxe;
+    int error_code = 0, supervisor = !user, blank_page;
     if (!is_paging()) {
-        pte_RW = 1; // writable
-        pte_US = 0; // supervisor
-        tlb_update(address & -4096, address & -4096, pte_RW, pte_US);
-    } else { // paging enabled
-        pde_address = (cr3 & -4096) + ((address >> 20) & 0xffc);
-        pde = ld_direct(pde_address);
-        if (!(pde & 0x00000001)) { // page not present
-            error_code = 0;
-        } else {
-            pte_address = (pde & -4096) + ((address >> 10) & 0xffc);
-            pte = ld_direct(pte_address);
-            if (!(pte & 0x00000001)) { // page not present
-                error_code = 0;
-            } else {
-                pxe = pde & pte;
-                if (user && !(pxe & 0x00000004)) { // user request and page supervisor
-                    error_code = 0x01;
-                // user request or WP set and W request for RO page
-                } else if ((user || (cr0 & (1 << 16))) && writable && !(pxe & 0x00000002)) {
-                    error_code = 0x01;
-                } else {
-                    if (!(pde & 0x00000020)) { // page not accessed
-                        pde |= 0x00000020;
-                        st_direct(pde_address, pde);
-                    }
-                    ok = writable && !(pte & 0x00000040); // WR request and page not dirty
-                    if (ok || !(pte & 0x00000020)) { // previous or page not yet accessed
-                        pte |= 0x00000020;     // set page accessed
-                        if (ok) {
-                            pte |= 0x00000040; // set page dirty
-                        }
-                        st_direct(pte_address, pte);
-                    }
-                    // page dirty and supervisor request and page not RO
-                    if ((pte & 0x00000040) && (!user || (pxe & 0x00000002))) {
-                        pte_RW = 1;
-                    }
-                    // page not supervisor
-                    if (pxe & 0x00000004) {
-                        pte_US = 1;
-                    }
-                    tlb_update(address & -4096, pte & -4096, pte_RW, pte_US);
-                    return;
+        tlb_update(address & -4096, address & -4096, 1, 0);
+        return;
+    }
+    // paging enabled
+    pde_address = (cr3 & -4096) + ((address >> 20) & 0xffc);
+    pde = ld_direct(pde_address);
+    if (pde & 0x00000001) { // page referenced by PDE is present
+        pte_address = (pde & -4096) + ((address >> 10) & 0xffc);
+        pte = ld_direct(pte_address);
+        if (pte & 0x00000001) { // page referenced by PTE is present
+            pxe = pde & pte;
+            // user request and page not user-accessible
+            if (user && !(pxe & 0x00000004)) {
+                error_code = 1;
+            }
+            // writable request and page not writable and not supervisor or WP is set
+            if (writable && !(pxe & 0x00000002) && (!supervisor || (cr0 & (1 << 16)))) {
+                error_code = 1;
+            }
+            if (error_code == 0) {
+                if (!(pde & 0x00000020)) { // page not accessed
+                    pde |= 0x00000020;
+                    st_direct(pde_address, pde);
                 }
+                blank_page = writable && !(pte & 0x00000040); // writable request and page not dirty
+                if (blank_page || !(pte & 0x00000020)) {      // blank page or page not yet accessed
+                    pte |= 0x00000020;     // set page accessed
+                    if (blank_page) {
+                        pte |= 0x00000040; // set page dirty
+                    }
+                    st_direct(pte_address, pte);
+                }
+                // page set dirty and PDE/ PTE both writable or supervisor request
+                writable = 0;
+                if ((pte & 0x00000040) && ((pxe & 0x00000002) || supervisor)) {
+                    writable = 1;
+                }
+                // PDE/ PTE both user-accessible
+                user = 0;
+                if (pxe & 0x00000004) {
+                    user = 1;
+                }
+                tlb_update(address & -4096, pte & -4096, writable, user);
+                return;
             }
         }
-        error_code |= writable << 1;
-        if (user) {
-            error_code |= 0x04;
-        }
-        cr2 = address;
-        abort(14, error_code);
     }
+    // page fault
+    cr2 = address;
+    abort(14, error_code | writable << 1 | user << 2);
 }
 void Free86::segment_translation() {
     int sreg, sreg_default; // no DS override prefix
