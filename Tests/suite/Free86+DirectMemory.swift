@@ -1,8 +1,8 @@
 import Testing
 @testable import Free86
 
-@Test("free386 direct memory access")
-func free386DirectMemoryAccess() {
+@Test("free86 direct memory access")
+func free86DirectMemoryAccess() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     let ramA = RAMBank<DWord>()
     let ramO = RAMBank<DWord>()

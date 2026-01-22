@@ -76,8 +76,8 @@ let package = Package(
                 "PagedMemory.swift",          // protocol, no explicit tests
                 "Free86+PagedMemory.swift",   // no tests
                 "PageTableEntry.swift",
-                "TranslationLookasideBuffer.swift",         // protocol, no explicit tests
-                "Free86+TranslationLookasideBuffer.swift",  // no tests
+                "TranslationLookasideBuffer.swift",  // protocol, no explicit tests
+                "Free86+TranslationLookasideBuffer.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -103,6 +103,7 @@ let package = Package(
                 "MemoryIO+DirectMemory.swift",
                 "Free86+DirectMemory.swift",
                 "PageTableEntry.swift",
+                "Free86+TranslationLookasideBuffer.swift",
            ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),

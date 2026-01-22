@@ -190,6 +190,11 @@ class Free86 {
         tlbWritableCpl3 = .allocate(capacity: 0x100000)
         tlbReadonly = tlbReadonlyCplX
         tlbWritable = tlbWritableCplX
+        tlbReadonlyCplX.initialize(repeating: -1, count: 0x10000)
+        tlbWritableCplX.initialize(repeating: -1, count: 0x10000)
+        tlbReadonlyCpl3.initialize(repeating: -1, count: 0x10000)
+        tlbWritableCpl3.initialize(repeating: -1, count: 0x10000)
+
         /// RAM configuration check
         st(at: 0x00000000, dword: 0xDEADBEEF)
         st(at: 0x000FFFF0, dword: 0xC0DECAFE)
