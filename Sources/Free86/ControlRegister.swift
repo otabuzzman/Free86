@@ -34,6 +34,6 @@ extension CR0 {
 
 extension CR3 {
     var pageDirectoryBase: DWord {
-        self >> 12
+        self & ~0xFFF
     }
 }

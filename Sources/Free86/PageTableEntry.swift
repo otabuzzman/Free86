@@ -19,7 +19,7 @@ extension PageTableEntry {
 
 extension PageTableEntry {
     var pageFrameAddress: Self {
-        self >> 12
+        self & ~0xFFF
     }
     var isPresent: Bool {
         isFlagRaised(.P)

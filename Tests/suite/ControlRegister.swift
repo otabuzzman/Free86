@@ -11,6 +11,7 @@ func conrolRegister() {
     #expect(cr0.isFlagRaised(.ET) == false)
     #expect(cr0.isFlagRaised(.WP) == true)
     #expect(cr0.isFlagRaised(.PG) == true)
+    #expect(cr0.pageDirectoryBase == 0xDEADB000)
 
     cr0 &= 0x7FFEFFF0
     cr0.setBit(4)
@@ -21,4 +22,5 @@ func conrolRegister() {
     #expect(cr0.isFlagRaised(.ET) == true)
     #expect(cr0.isFlagRaised(.WP) == false)
     #expect(cr0.isFlagRaised(.PG) == false)
+    #expect(cr0.pageDirectoryBase == 0x5EACB000)
 }
