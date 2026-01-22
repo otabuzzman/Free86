@@ -197,21 +197,6 @@ void Free86::st_writable_cpl3(int dword) {
         st_direct(lax ^ tlb_hash, dword);
     }
 }
-int Free86::fetch8() {
-    return ld8_direct(far++);
-}
-int Free86::fetch16() {
-    int word = fetch8();
-    word |= fetch8() << 8;
-    return word;
-}
-int Free86::fetch() {
-    int dword = fetch8();
-    dword |= fetch8() << 8;
-    dword |= fetch8() << 16;
-    dword |= fetch8() << 24;
-    return dword;
-}
 int Free86::ld8_direct(int address) {
     return memory[address];
 }
@@ -241,6 +226,21 @@ void Free86::st_direct(int address, int dword) {
     memory[address + 1] = dword >> 8;
     memory[address + 2] = dword >> 16;
     memory[address + 3] = dword >> 24;
+}
+int Free86::fetch8() {
+    return ld8_direct(far++);
+}
+int Free86::fetch16() {
+    int word = fetch8();
+    word |= fetch8() << 8;
+    return word;
+}
+int Free86::fetch() {
+    int dword = fetch8();
+    dword |= fetch8() << 8;
+    dword |= fetch8() << 16;
+    dword |= fetch8() << 24;
+    return dword;
 }
 void Free86::push16(int word) {
     int esp = regs[4] - 2;
