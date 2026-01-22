@@ -1,8 +1,8 @@
 import Testing
 @testable import Free86
 
-@Test("free86 translation lookaside buffer")
-func free86TranslationLookasideBuffer() {
+@Test("free86 TLB update/ flush")
+func free86TLBUpdateFlush() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     let ramA = RAMBank<DWord>()
     let ramO = RAMBank<DWord>()
@@ -85,4 +85,50 @@ func free86TranslationLookasideBuffer() {
     
     free86.tlbFlush()
     #expect(free86.tlbPagesCount == 0)
+}
+
+@Test("free86 page translation")
+func free86PageTranslation() {
+    let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
+	let num4kBBanks = 512
+    for i in 0..<num4kBBanks {  // 2MB (num4kBBanks * 4kB)
+        memory.register(bank: RAMBank<DWord>(), at: i * num4kBBanks)
+    }
+    let free86 = Free86(memory: memory)
+
+    /// from test386.asm
+    let pageDirAddr: DWord = 0x1000
+    let pageTbl0Addr pageDirAddr + 0x1000
+    let pageTbl1Addr pageDirAddr + 0x2000
+    /// PD at physical 0x1000
+    var pde = pageTbl0Addr  // one entry for PT at physical 0x2000
+    pde.setFlag(.P)
+    pde.setFlag(.W)
+    pde.setFlag(.U)
+    free86.st(at: pageDirAddr, dword: pde)
+    for e in 1..<1024 {  // set remaining to 0
+        free86.st(at: pageDirAddr + e, dword: 0)
+    }
+    /// PT at physical 0x2000
+    var pte = 0x100000  // 256 entries mapping first 1MB linear == physical + 1MB
+    pte.setFlag(.P)
+    pte.setFlag(.W)
+    pte.setFlag(.U)
+    for e in 0..<256 {
+        free86.st(at: pageTbl0Addr + e, dword: pte + e * 0x1000)
+    }
+    for e in 256..<1024 {  // set remaining to 0
+        free86.st(at: pageTbl0Addr + e, dword: 0)
+    }
+    /// enable paging
+    free86.cr3 = pageDirAddr
+    free86.cr0.setFlag(.PE)
+    free86.cr0.setFlag(.PG)
+
+    let linear: LinearAddress = 0x4711
+    #expect(throws: Never.self) {
+        try free86.translate(linear, writable: true, user: true)
+    }
+    let hash = tlbReadonlyCplX[linear.pageTablesIndices]
+    #expect(linear ^ DWord(hash), 0x4711 + 0x100000)
 }
