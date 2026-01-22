@@ -70,13 +70,13 @@ let package = Package(
                 "LinearAddress.swift",
                 "MemoryIO+PhysicalAddress.swift",
                 "PinIO.swift",
-                "DirectMemory.swift",  // no tests
+                "DirectMemory.swift",  // protocol, no explicit tests
                 "MemoryIO+DirectMemory.swift",
-                "Free86+DirectMemory.swift",  // no tests
-                "PagedMemory.swift",          // no tests
+                "Free86+DirectMemory.swift",
+                "PagedMemory.swift",          // protocol, no explicit tests
                 "Free86+PagedMemory.swift",   // no tests
                 "PageTableEntry.swift",
-                "TranslationLookasideBuffer.swift",         // no tests
+                "TranslationLookasideBuffer.swift",         // protocol, no explicit tests
                 "Free86+TranslationLookasideBuffer.swift",  // no tests
             ],
             swiftSettings: [
@@ -101,6 +101,7 @@ let package = Package(
                 "MemoryIO+PhysicalAddress.swift",
                 "PinIO.swift",
                 "MemoryIO+DirectMemory.swift",
+                "Free86+DirectMemory.swift",
                 "PageTableEntry.swift",
            ],
             swiftSettings: [
