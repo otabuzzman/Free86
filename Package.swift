@@ -47,14 +47,14 @@ let package = Package(
             name: "Free86",
             dependencies: [],
             sources: [
-                "Free86.swift",
-                "Free86+fetchDecodeExecute.swift",
-                "OpcodePrograms/Free86+oneByte16.swift",
-                "OpcodePrograms/Free86+oneByte.swift",
-                "OpcodePrograms/Free86+twoByte16.swift",
-                "OpcodePrograms/Free86+twoByte.swift",
-                "OpcodePrograms/Instruction+oneByte.swift",
-                "OpcodePrograms/Instruction+twoByte.swift",
+                "Free86.swift",  // no tests
+                "Free86+fetchDecodeExecute.swift",  // no tests
+                "OpcodePrograms/Free86+oneByte16.swift",  // no tests
+                "OpcodePrograms/Free86+oneByte.swift",    // no tests
+                "OpcodePrograms/Free86+twoByte16.swift",  // no tests
+                "OpcodePrograms/Free86+twoByte.swift",    // no tests
+                "OpcodePrograms/Instruction+oneByte.swift",  // no tests
+                "OpcodePrograms/Instruction+twoByte.swift",  // no tests
                 "MachineDataTypes.swift",
                 "GeneralRegister.swift",
                 "SegmentRegister.swift",
@@ -63,21 +63,21 @@ let package = Package(
                 "ExtendedFlagsRegister.swift",
                 "ControlRegister.swift",
                 "Exception+Interrupt.swift",
-                "Instruction.swift",
+                "Instruction.swift",  // no tests
                 "ModRM+SIB.swift",
                 "InstructionPrefixRegister.swift",
-                "LogicalAddress+Pointers.swift",
+                "LogicalAddress+Pointers.swift",  // no tests
                 "LinearAddress.swift",
                 "MemoryIO+PhysicalAddress.swift",
                 "PinIO.swift",
-                "DirectMemory.swift",
+                "DirectMemory.swift",  // no tests
                 "MemoryIO+DirectMemory.swift",
-                "Free86+DirectMemory.swift",
-                "PagedMemory.swift",
-                "Free86+PagedMemory.swift",
+                "Free86+DirectMemory.swift",  // no tests
+                "PagedMemory.swift",          // no tests
+                "Free86+PagedMemory.swift",   // no tests
                 "PageTableEntry.swift",
-                "TranslationLookasideBuffer.swift",
-                "Free86+TranslationLookasideBuffer.swift",
+                "TranslationLookasideBuffer.swift",         // no tests
+                "Free86+TranslationLookasideBuffer.swift",  // no tests
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),

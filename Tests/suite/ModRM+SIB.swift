@@ -9,6 +9,7 @@ func modRMByteElements() {
     #expect(modRM.reg == 4)
     #expect(modRM.opcode == 4)
     #expect(modRM.rM == 5)
+
     modRM = 0b01_011_010
     #expect(modRM.mod == 1)
     #expect(modRM.reg == 3)
@@ -23,6 +24,7 @@ func sibByteElements() {
     #expect(sib.scale == 2)
     #expect(sib.index == 4)
     #expect(sib.base == 5)
+
     sib = 0b01_011_010
     #expect(sib.scale == 1)
     #expect(sib.index == 3)

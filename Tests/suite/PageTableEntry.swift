@@ -19,12 +19,14 @@ func pageTableEntryFlags() {
     #expect(pageTableEntry.isUser     == true)
     #expect(pageTableEntry.accessed   == true)
     #expect(pageTableEntry.isDirty    == true)
+
     pageTableEntry = 0b1011_1111
     #expect(pageTableEntry.isPresent == true)
     #expect(pageTableEntry.isWritable == true)
     #expect(pageTableEntry.isUser     == true)
     #expect(pageTableEntry.accessed   == true)
     #expect(pageTableEntry.isDirty    == false)
+
     pageTableEntry = 0b1001_1001
     #expect(pageTableEntry.isPresent == true)
     #expect(pageTableEntry.isWritable == false)
