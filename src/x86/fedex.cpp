@@ -1589,7 +1589,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     abort(13);
                 }
                 imm = fetch_data8();
-                set_lower_byte(0, ld8_io(imm));
+                set_lower_byte(0, io_read(imm));
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1600,7 +1600,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     abort(13);
                 }
                 imm = fetch_data8();
-                regs[0] = ld_io(imm);
+                regs[0] = io_read(imm);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1611,7 +1611,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     abort(13);
                 }
                 imm = fetch_data8();
-                st8_io(imm, regs[0] & 0xff);
+                io_write(imm, regs[0] & 0xff);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1622,7 +1622,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     abort(13);
                 }
                 imm = fetch_data8();
-                st_io(imm, regs[0]);
+                io_write(imm, regs[0]);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1632,7 +1632,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                set_lower_byte(0, ld8_io(regs[2] & 0xffff));
+                set_lower_byte(0, io_read(regs[2] & 0xffff));
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1642,7 +1642,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                regs[0] = ld_io(regs[2] & 0xffff);
+                regs[0] = io_read(regs[2] & 0xffff);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1652,7 +1652,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                st8_io(regs[2] & 0xffff, regs[0] & 0xff);
+                io_write(regs[2] & 0xffff, regs[0] & 0xff);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1662,7 +1662,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                st_io(regs[2] & 0xffff, regs[0]);
+                io_write(regs[2] & 0xffff, regs[0]);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -3028,7 +3028,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         abort(13);
                     }
                     imm = fetch_data8();
-                    set_lower_word(0, ld16_io(imm));
+                    set_lower_word(0, io_read(imm));
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
@@ -3039,7 +3039,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         abort(13);
                     }
                     imm = fetch_data8();
-                    st16_io(imm, regs[0] & 0xffff);
+                    io_write(imm, regs[0] & 0xffff);
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
@@ -3049,7 +3049,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     if (cpl > iopl) {
                         abort(13);
                     }
-                    set_lower_word(0, ld16_io(regs[2] & 0xffff));
+                    set_lower_word(0, io_read(regs[2] & 0xffff));
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
@@ -3059,7 +3059,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     if (cpl > iopl) {
                         abort(13);
                     }
-                    st16_io(regs[2] & 0xffff, regs[0] & 0xffff);
+                    io_write(regs[2] & 0xffff, regs[0] & 0xffff);
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }

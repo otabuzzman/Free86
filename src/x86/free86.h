@@ -365,13 +365,6 @@ class Free86 {
     bool is_paging(); // PG && PE set
     void set_cpl(int level);
 
-    int ld8_io(int port);
-    int ld16_io(int port);
-    int ld_io(int port);
-    void st8_io(int port, int byte);
-    void st16_io(int port, int word);
-    void st_io(int port, int dword);
-
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 

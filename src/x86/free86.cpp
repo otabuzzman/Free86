@@ -827,24 +827,6 @@ void Free86::set_cpl(int level) {
         tlb_writable = tlb_writable_cplX;
     }
 }
-int Free86::ld8_io(int port) {
-    return io_read(port);
-}
-int Free86::ld16_io(int port) {
-    return io_read(port);
-}
-int Free86::ld_io(int port) {
-    return io_read(port);
-}
-void Free86::st8_io(int port, int byte) {
-    io_write(port, byte);
-}
-void Free86::st16_io(int port, int word) {
-    io_write(port, word);
-}
-void Free86::st_io(int port, int dword) {
-    io_write(port, dword);
-}
 void Free86::set_lower_byte(int reg, int byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
         regs[reg & 3] = (regs[reg & 3] & -65281) | ((byte & 0xff) << 8);
