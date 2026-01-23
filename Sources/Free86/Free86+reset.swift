@@ -8,6 +8,7 @@ extension Free86 {
 
         segs = .init(repeating: SegmentRegister(), count: 7)
         segs[.CS].descriptorCache.base = 0xFFFF0000
+
         idt = SegmentRegister()
         idt.descriptorCache.base = 0x03FF
 
