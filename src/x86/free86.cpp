@@ -61,15 +61,15 @@ void Free86::update_SSB() {
 }
 void Free86::fetch_opcode() {
     eip = eip + far - far_start;
-    eip_linear = is_real__v86() ? (eip + CS_base) & 0xfffff : eip + CS_base;
+    eip_linear = is_real__v86() ? (CS_base + eip) & 0xfffff : CS_base + eip;
     far = far_start = tlb_lookup(eip_linear, 0);
-    opcode = fetch8();
+    opcode = fetch_data8();
     int page_offset = eip_linear & 0xfff;
     x = instruction_length(opcode);
     if ((page_offset + x) > 4096) { // instruction extends page boundary
         far = far_start = memory_size; // point FAR to buffer on top of memory
         for (y = 0; y < x; y++) {      // copy instruction bytewise to buffer
-            lax = eip_linear + y;      // LAX holds linear address of byte to fetch
+            lax = eip_linear + y;      // paged memory functions expect address in LAX
             st8_direct(far + y, ld8_readonly_cpl3()); // copy [LAX] to physical [FAR]
         }
         far++; // adjust FAR for upcomming fetches from buffer
@@ -927,10 +927,10 @@ void Free86::segment_translation() {
             lax = regs[base];
             break;
         case 0x04:
-            sib = fetch8();
+            sib = fetch_data8();
             base = sib & 7;
             if (base == 5) {
-                lax = fetch();
+                lax = fetch_data();
             } else {
                 lax = regs[base];
             }
@@ -940,7 +940,7 @@ void Free86::segment_translation() {
             }
             break;
         case 0x05:
-            lax = fetch();
+            lax = fetch_data();
             break;
         case 0x08:
         case 0x09:
@@ -949,13 +949,13 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f:
-            lax = (fetch8() << 24) >> 24;
+            lax = (fetch_data8() << 24) >> 24;
             base = modRM & 7;
             lax = lax + regs[base];
             break;
         case 0x0c:
-            sib = fetch8();
-            lax = (fetch8() << 24) >> 24;
+            sib = fetch_data8();
+            lax = (fetch_data8() << 24) >> 24;
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -964,8 +964,8 @@ void Free86::segment_translation() {
             }
             break;
         case 0x14:
-            sib = fetch8();
-            lax = fetch();
+            sib = fetch_data8();
+            lax = fetch_data();
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -981,7 +981,7 @@ void Free86::segment_translation() {
         case 0x16:
         case 0x17:
         default:
-            lax = fetch();
+            lax = fetch_data();
             base = modRM & 7;
             lax = lax + regs[base];
             break;
@@ -989,7 +989,7 @@ void Free86::segment_translation() {
         return;
     } else if (ipr & 0x0080) {
         if ((modRM & 0xc7) == 0x06) {
-            lax = fetch16();
+            lax = fetch_data16();
             sreg_default = 3;
         } else {
             switch (modRM >> 6) {
@@ -997,10 +997,10 @@ void Free86::segment_translation() {
                 lax = 0;
                 break;
             case 1:
-                lax = (fetch8() << 24) >> 24;
+                lax = (fetch_data8() << 24) >> 24;
                 break;
             default:
-                lax = fetch16();
+                lax = fetch_data16();
                 break;
             }
             switch (modRM & 7) {
@@ -1059,10 +1059,10 @@ void Free86::segment_translation() {
             lax = regs[base];
             break;
         case 0x04:
-            sib = fetch8();
+            sib = fetch_data8();
             base = sib & 7;
             if (base == 5) {
-                lax = fetch();
+                lax = fetch_data();
                 base = 0;
             } else {
                 lax = regs[base];
@@ -1073,7 +1073,7 @@ void Free86::segment_translation() {
             }
             break;
         case 0x05:
-            lax = fetch();
+            lax = fetch_data();
             base = 0;
             break;
         case 0x08:
@@ -1083,13 +1083,13 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
-            lax = (fetch8() << 24) >> 24;
+            lax = (fetch_data8() << 24) >> 24;
             base = modRM & 7;
             lax = lax + regs[base];
             break;
         case 0x0c:
-            sib = fetch8();
-            lax = (fetch8() << 24) >> 24;
+            sib = fetch_data8();
+            lax = (fetch_data8() << 24) >> 24;
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -1098,8 +1098,8 @@ void Free86::segment_translation() {
             }
             break;
         case 0x14:
-            sib = fetch8();
-            lax = fetch();
+            sib = fetch_data8();
+            lax = fetch_data();
             base = sib & 7;
             lax = lax + regs[base];
             index = (sib >> 3) & 7;
@@ -1115,7 +1115,7 @@ void Free86::segment_translation() {
         case 0x16:
         case 0x17:
         default:
-            lax = fetch();
+            lax = fetch_data();
             base = modRM & 7;
             lax = lax + regs[base];
             break;
@@ -1137,10 +1137,10 @@ void Free86::offset_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
-        la = fetch16() & 0xffff;
+        la = fetch_data16() & 0xffff;
         stride = 2; // 16 bit mode
     } else {
-        la = fetch() & 0xffffffff;
+        la = fetch_data() & 0xffffffff;
         stride = 4; // 32 bit mode
     }
     if (!(opcode & 0x01)) {
@@ -2348,17 +2348,17 @@ void Free86::aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int 
     int esp = regs[4];
     if (is_operand_size32) {
         esp = esp - 4;
-        lax = (esp & SS_mask) + SS_base;
+        lax = SS_base + (esp & SS_mask);
         st_writable_cpl3(segs[1].selector);
         esp = esp - 4;
-        lax = (esp & SS_mask) + SS_base;
+        lax = SS_base + (esp & SS_mask);
         st_writable_cpl3(return_address);
     } else {
         esp = esp - 2;
-        lax = (esp & SS_mask) + SS_base;
+        lax = SS_base + (esp & SS_mask);
         st16_writable_cpl3(segs[1].selector);
         esp = esp - 2;
-        lax = (esp & SS_mask) + SS_base;
+        lax = SS_base + (esp & SS_mask);
         st16_writable_cpl3(return_address);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
@@ -2818,13 +2818,13 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     selector = ld16_readonly_cplX();
     esp = regs[4];
     esp = esp - 2;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     st16_writable_cpl3(get_EFLAGS());
     esp = esp - 2;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     st16_writable_cpl3(segs[1].selector);
     esp = esp - 2;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     st16_writable_cpl3(is_sw ? return_address : eip);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
@@ -3056,7 +3056,7 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    modRM = fetch8();
+    modRM = fetch_data8();
     reg = (modRM >> 3) & 7;
     if ((modRM >> 6) == 3) {
         selector = regs[modRM & 7] & 0xffff;
@@ -3144,7 +3144,7 @@ void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
-    modRM = fetch8();
+    modRM = fetch_data8();
     if ((modRM >> 6) == 3) {
         rM = modRM & 7;
         rm = regs[rM] & 0xffff;
@@ -3297,7 +3297,7 @@ void Free86::aux_DAS() {
     osm = 24;
 }
 void Free86::aux_BOUND16() {
-    modRM = fetch8();
+    modRM = fetch_data8();
     if ((modRM >> 6) == 3) {
         abort(6);
     }
@@ -3312,7 +3312,7 @@ void Free86::aux_BOUND16() {
     }
 }
 void Free86::aux_BOUND() {
-    modRM = fetch8();
+    modRM = fetch_data8();
     if ((modRM >> 6) == 3) {
         abort(6);
     }
@@ -3327,7 +3327,7 @@ void Free86::aux_BOUND() {
     }
 }
 void Free86::aux_PUSHA16() {
-    lax = ((regs[4] - 16) & SS_mask) + SS_base;
+    lax = SS_base + ((regs[4] - 16) & SS_mask);
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st16_writable_cpl3(r);
@@ -3336,7 +3336,7 @@ void Free86::aux_PUSHA16() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] - 16) & SS_mask);
 }
 void Free86::aux_PUSHA() {
-    lax = ((regs[4] - 32) & SS_mask) + SS_base;
+    lax = SS_base + ((regs[4] - 32) & SS_mask);
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st_writable_cpl3(r);
@@ -3345,7 +3345,7 @@ void Free86::aux_PUSHA() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] - 32) & SS_mask);
 }
 void Free86::aux_POPA16() {
-    lax = (regs[4] & SS_mask) + SS_base;
+    lax = SS_base + (regs[4] & SS_mask);
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             set_lower_word(reg, ld16_readonly_cpl3());
@@ -3355,7 +3355,7 @@ void Free86::aux_POPA16() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 16) & SS_mask);
 }
 void Free86::aux_POPA() {
-    lax = (regs[4] & SS_mask) + SS_base;
+    lax = SS_base + (regs[4] & SS_mask);
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             regs[reg] = ld_readonly_cpl3();
@@ -3367,81 +3367,81 @@ void Free86::aux_POPA() {
 void Free86::aux_LEAVE16() {
     int ebp;
     ebp = regs[5];
-    lax = (ebp & SS_mask) + SS_base;
+    lax = SS_base + (ebp & SS_mask);
     set_lower_word(5, ld16_readonly_cpl3());
     regs[4] = (regs[4] & ~SS_mask) | ((ebp + 2) & SS_mask);
 }
 void Free86::aux_LEAVE() {
     int ebp;
     ebp = regs[5];
-    lax = (ebp & SS_mask) + SS_base;
+    lax = SS_base + (ebp & SS_mask);
     regs[5] = ld_readonly_cpl3();
     regs[4] = (regs[4] & ~SS_mask) | ((ebp + 4) & SS_mask);
 }
 void Free86::aux_ENTER16() {
     int esp, ebp, exp;
-    imm16 = fetch16();
-    imm = fetch8();
+    imm16 = fetch_data16();
+    imm = fetch_data8();
     imm &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 2;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     st16_writable_cpl3(ebp);
     exp = esp;
     if (imm != 0) {
         while (imm > 1) {
             ebp = ebp - 2;
-            lax = (ebp & SS_mask) + SS_base;
+            lax = SS_base + (ebp & SS_mask);
             m16 = ld16_readonly_cpl3();
             esp = esp - 2;
-            lax = (esp & SS_mask) + SS_base;
+            lax = SS_base + (esp & SS_mask);
             st16_writable_cpl3(m16);
             imm--;
         }
         esp = esp - 2;
-        lax = (esp & SS_mask) + SS_base;
+        lax = SS_base + (esp & SS_mask);
         st16_writable_cpl3(exp);
     }
     esp = esp - imm16;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     ld16_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::aux_ENTER() {
     int esp, ebp, exp;
-    imm16 = fetch16();
-    imm = fetch8();
+    imm16 = fetch_data16();
+    imm = fetch_data8();
     imm &= 0x1f;
     esp = regs[4];
     ebp = regs[5];
     esp = esp - 4;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     st_writable_cpl3(ebp);
     exp = (ebp & ~SS_mask) | (esp & SS_mask);
     if (imm != 0) {
         while (imm > 1) {
             ebp = ebp - 4;
-            lax = (ebp & SS_mask) + SS_base;
+            lax = SS_base + (ebp & SS_mask);
             m = ld_readonly_cpl3();
             esp = esp - 4;
-            lax = (esp & SS_mask) + SS_base;
+            lax = SS_base + (esp & SS_mask);
             st_writable_cpl3(m);
             imm--;
         }
         esp = esp - 4;
-        lax = (esp & SS_mask) + SS_base;
+        lax = SS_base + (esp & SS_mask);
         st_writable_cpl3(exp);
     }
     esp = esp - imm16;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     ld_writable_cpl3();
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::ld_far_pointer16(int sreg) {
-    modRM = fetch8();
+    modRM = fetch_data8();
     reg = (modRM >> 3) & 7;
     segment_translation();
     imm = ld16_readonly_cpl3();
@@ -3451,7 +3451,7 @@ void Free86::ld_far_pointer16(int sreg) {
     set_lower_word(reg, imm);
 }
 void Free86::ld_far_pointer(int sreg) {
-    modRM = fetch8();
+    modRM = fetch_data8();
     reg = (modRM >> 3) & 7;
     segment_translation();
     imm = ld_readonly_cpl3();

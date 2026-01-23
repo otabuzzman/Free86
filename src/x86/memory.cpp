@@ -227,30 +227,30 @@ void Free86::st_direct(int address, int dword) {
     memory[address + 2] = dword >> 16;
     memory[address + 3] = dword >> 24;
 }
-int Free86::fetch8() {
+int Free86::fetch_data8() {
     return ld8_direct(far++);
 }
-int Free86::fetch16() {
-    int word = fetch8();
-    word |= fetch8() << 8;
+int Free86::fetch_data16() {
+    int word = fetch_data8();
+    word |= fetch_data8() << 8;
     return word;
 }
-int Free86::fetch() {
-    int dword = fetch8();
-    dword |= fetch8() << 8;
-    dword |= fetch8() << 16;
-    dword |= fetch8() << 24;
+int Free86::fetch_data() {
+    int dword = fetch_data8();
+    dword |= fetch_data8() << 8;
+    dword |= fetch_data8() << 16;
+    dword |= fetch_data8() << 24;
     return dword;
 }
 void Free86::push16(int word) {
     int esp = regs[4] - 2;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     st16_writable_cpl3(word);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::push(int dword) {
     int esp = regs[4] - 4;
-    lax = (esp & SS_mask) + SS_base;
+    lax = SS_base + (esp & SS_mask);
     st_writable_cpl3(dword);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
@@ -265,10 +265,10 @@ int Free86::pop() {
     return x;
 }
 int Free86::ld16_stack() {
-    lax = (regs[4] & SS_mask) + SS_base;
+    lax = SS_base + (regs[4] & SS_mask);
     return ld16_readonly_cpl3();
 }
 int Free86::ld_stack() {
-    lax = (regs[4] & SS_mask) + SS_base;
+    lax = SS_base + (regs[4] & SS_mask);
     return ld_readonly_cpl3();
 }
