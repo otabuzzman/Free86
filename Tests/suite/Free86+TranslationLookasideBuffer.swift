@@ -95,11 +95,11 @@ func free86PageTranslation() {
     }
     let free86 = Free86(memory: memory)
 
-    /// from test386.asm
+    /// from test386.asm: set up the PD. a single entry at index 0 refers to a PT which maps 1 MB starting at linear 0 to physical 0x100000
     let pageDirAddr: DWord = 0x1000
-    let pageTbl0Addr = pageDirAddr + 0x1000
-    /// PD  at physical 0x1000
-    var pde = pageTbl0Addr  // PDE for PT
+    let pageTblAddr = pageDirAddr + 0x1000
+    /// PD
+    var pde = pageTblAddr  // PDE for PT
     pde.setFlag(.P)
     pde.setFlag(.W)
     pde.setFlag(.U)
@@ -107,16 +107,16 @@ func free86PageTranslation() {
     for e: DWord in 1..<1024 {  // set remaining PDEs to 0
         free86.st(at: pageDirAddr + e * 4, dword: 0)
     }
-    /// PT at physical 0x2000
-    var pte: PageTableEntry = 0x100000  // PTE for 1st memory page, maps linear 0 to physical 0x100000
+    /// PT
+    var pte: PageTableEntry = 0x100000  // PTE for 1st memory page
     pte.setFlag(.P)
     pte.setFlag(.W)
     pte.setFlag(.U)
-    for e: DWord in 0..<256 {  // 1st 256 PTEs map linear 0...0xFFFFF to physical 0x100000...0x1FFFFF
-        free86.st(at: pageTbl0Addr + e * 4, dword: pte + e * 0x1000)
+    for e: DWord in 0..<256 {  // 256 PTEs map linear 0...0xFFFFF to physical 0x100000...0x1FFFFF
+        free86.st(at: pageTblAddr + e * 4, dword: pte + e * 0x1000)
     }
     for e: DWord in 256..<1024 {  // set remaining PTEs to 0
-        free86.st(at: pageTbl0Addr + e * 4, dword: 0)
+        free86.st(at: pageTblAddr + e * 4, dword: 0)
     }
     /// enable paging
     free86.cr3 = pageDirAddr

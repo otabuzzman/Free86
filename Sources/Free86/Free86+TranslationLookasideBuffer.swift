@@ -94,10 +94,10 @@ extension Free86 {
         }
         /// paging enabled
         var errorCode: DWord = 0
-        let pdeAddress = cr3.pageDirectoryBase + linear.pageDirectoryIndex
+        let pdeAddress = cr3.pageDirectoryBase + linear.pageDirectoryOffset
         var pde: PageTableEntry = ld(from: pdeAddress)
         if pde.isPresent {
-            let pteAddress = pde.pageFrameAddress + linear.pageTableIndex
+            let pteAddress = pde.pageFrameAddress + linear.pageTableOffset
             var pte: PageTableEntry = ld(from: pteAddress)
             if pde.isPresent {
                 let supervisor = !user

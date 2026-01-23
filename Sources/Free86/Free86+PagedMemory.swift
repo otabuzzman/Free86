@@ -190,13 +190,13 @@ extension Free86: PagedMemory {
         }
         let hash = tlbWritable[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
-            try st8WritableCpl3(byte: Byte(dword))
+            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword))
             lax += 1
-            try st8WritableCpl3(byte: Byte(dword >> 8))
+            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword >> 8))
             lax += 1
-            try st8WritableCpl3(byte: Byte(dword >> 16))
+            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword >> 16))
             lax += 1
-            try st8WritableCpl3(byte: Byte(dword >> 24))
+            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword >> 24))
             lax -= 3
         } else {
             memory.st(at: lax ^ DWord(hash), dword: dword)

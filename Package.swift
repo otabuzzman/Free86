@@ -73,8 +73,8 @@ let package = Package(
                 "DirectMemory.swift",  // protocol, no explicit tests
                 "MemoryIO+DirectMemory.swift",
                 "Free86+DirectMemory.swift",
-                "PagedMemory.swift",          // protocol, no explicit tests
-                "Free86+PagedMemory.swift",   // no tests
+                "PagedMemory.swift",   // protocol, no explicit tests
+                "Free86+PagedMemory.swift",
                 "PageTableEntry.swift",
                 "TranslationLookasideBuffer.swift",  // protocol, no explicit tests
                 "Free86+TranslationLookasideBuffer.swift",
@@ -102,6 +102,7 @@ let package = Package(
                 "PinIO.swift",
                 "MemoryIO+DirectMemory.swift",
                 "Free86+DirectMemory.swift",
+                "Free86+PagedMemory.swift",
                 "PageTableEntry.swift",
                 "Free86+TranslationLookasideBuffer.swift",
            ],
