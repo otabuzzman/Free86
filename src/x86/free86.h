@@ -359,7 +359,6 @@ class Free86 {
 
     void set_CR0(int bits);
     void set_CR3(int bits);
-    void set_CR4(int bits);
     bool is_real__v86();
     bool is_protected();
     bool is_paging(); // PG && PE set

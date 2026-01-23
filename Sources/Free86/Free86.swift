@@ -1,20 +1,32 @@
 class Free86 {
-    var eflags: EFlags = 0
-
     /// interrupt pins and data bus low byte
     let INTR = PinIO<Bool>()
     let DB8 = PinIO<Byte>()  // INTR vector
     let NMI = PinIO<Bool>()
     let RESET = PinIO<Bool>()
 
-    var cr0: CR0 = 0
+    /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
+    var regs: [GeneralRegister]!
+    var eflags: EFlags!
+
+    var eip: DWord!
+
+    /// ES, CS, SS, DS, FS, GS, LDT, TR
+    var segs: [SegmentRegister]!
+
+    var gdt = SegmentRegister()  // GDT register
+    var ldt = SegmentRegister()  // LDT register
+    var tr = SegmentRegister()  // task register
+    var idt: SegmentRegister!  // IDT register
+
+    var cr0: CR0!
     var cr2: LinearAddress = 0
     var cr3: CR3 = 0
-    var cr4: DWord = 0 // 80486
+    var cr4: DWord = 0  // 80486
 
-    var cpl: Int = 0 // current privilege level register
+    var cpl: Int = 0  // current privilege level register
 
-    var halted = false
+    var halted: Bool!
 
     var cycles: QWord = 0
 
@@ -57,17 +69,16 @@ class Free86 {
     var tlbWritableCplX: UnsafeMutablePointer<Int>
     var tlbReadonlyCpl3: UnsafeMutablePointer<Int>  // user, CPL == 3
     var tlbWritableCpl3: UnsafeMutablePointer<Int>
-    /// current mapping tables (user or supervisor)/
+    /// current mapping tables (user or supervisor)
     var tlbReadonly: UnsafeMutablePointer<Int>
     var tlbWritable: UnsafeMutablePointer<Int>
 
     /// Instruction prefix register
-
+    ///
     /// The instruction prefix register (IPR) captures the instruction prefixes
     /// of the current fetch cycle, each in its own bit. IPR is specific to
     /// this emulator and not part of the processor architecture, from which
     /// it was derived.
-
     // 0x0001 ES segment override prefix    (0x26)
     // 0x0002 CS segment override prefix    (0x2e)
     // 0x0003 SS segment override prefix    (0x36)
@@ -177,6 +188,12 @@ class Free86 {
     ]
 
     init(memory: MemoryIO<DWord>) {
+        /// RAM configuration check
+        memory.st(at: 0x00000000, dword: 0xDEADBEEF)
+        memory.st(at: 0x000FFFF0, dword: 0xC0DECAFE)
+        assert(memory.ld(from: 0x00000000) == 0xDEADBEEF, "no RAM at address 0x00000000")
+        assert(memory.ld(from: 0x000FFFF0) == 0xC0DECAFE, "no RAM at address 0x000FFFF0")
+
         self.memory = memory
         memoryCount = DWord(memory.count)
         /// append buffer to store bytes of an instruction
@@ -194,12 +211,7 @@ class Free86 {
         tlbWritableCplX.initialize(repeating: -1, count: 0x10000)
         tlbReadonlyCpl3.initialize(repeating: -1, count: 0x10000)
         tlbWritableCpl3.initialize(repeating: -1, count: 0x10000)
-
-        /// RAM configuration check
-        st(at: 0x00000000, dword: 0xDEADBEEF)
-        st(at: 0x000FFFF0, dword: 0xC0DECAFE)
-        assert(ld(from: 0x00000000) == 0xDEADBEEF, "no RAM at address 0x00000000")
-        assert(ld(from: 0x000FFFF0) == 0xC0DECAFE, "no RAM at address 0x000FFFF0")
+        reset()
     }
     deinit {
         tlbReadonlyCplX.deallocate()

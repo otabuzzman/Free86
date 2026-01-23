@@ -89,7 +89,7 @@ extension UnsafeMutablePointer {
 extension Free86 {
     func translate(_ linear: LinearAddress, writable: Bool, user: Bool) throws {
         if !cr0.isPagingEnabled {
-            tlbUpdate(linear: linear & ~0xfff, with: linear & ~0xfff, writable: true, user: false)
+            tlbUpdate(linear: linear & ~0xFFF, with: linear & ~0xFFF, writable: true, user: false)
             return
         }
         /// paging enabled
@@ -131,7 +131,7 @@ extension Free86 {
                     if pxe.isUser {
                         uFlag = true
                     }
-                    tlbUpdate(linear: linear & ~0xfff, with: pte & ~0xfff, writable: wFlag, user: uFlag)
+                    tlbUpdate(linear: linear & ~0xFFF, with: pte & ~0xFFF, writable: wFlag, user: uFlag)
                     return
                 }
             }

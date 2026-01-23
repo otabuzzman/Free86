@@ -9,8 +9,8 @@ struct SegmentRegister {
         case LDT  // holds 16-bit selector and cache for LDT
         case TR   // holds 16-bit selector and cache for TSS
     }
-    var selector: SegmentSelector
-    var descriptorCache: SegmentDescriptor
+    var selector: SegmentSelector = 0
+    var descriptorCache = SegmentDescriptor()
 }
 
 extension SegmentRegister: Equatable {
@@ -21,6 +21,7 @@ extension SegmentRegister: Equatable {
 
 extension Array where Element == SegmentRegister {
     subscript (_ register: SegmentRegister.Name) -> Element {
-        self[register.rawValue]
+        get { self[register.rawValue] }
+        set { self[register.rawValue] = newValue }
     }
 }

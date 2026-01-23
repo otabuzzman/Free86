@@ -1957,7 +1957,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         set_CR3(rm);
                         break;
                     case 4:
-                        set_CR4(rm);
+                        cr4 = rm;
                         break;
                     default:
                         abort(6);

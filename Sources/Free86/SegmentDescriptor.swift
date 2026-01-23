@@ -1,6 +1,6 @@
 struct SegmentDescriptor {
-    var upper: DWord
-    var lower: DWord
+    var upper: DWord = 0
+    var lower: DWord = 0
 }
 
 enum SegmentDescriptorFlag: Int {
@@ -10,18 +10,24 @@ enum SegmentDescriptorFlag: Int {
     case S = 12  // 0 = system segment
 }
 
-/// segmengt descriptor fields
+/// segment descriptor fields
 extension SegmentDescriptor {
     var base: DWord {
-        (lower & 0xFFFF_0000) >> 16 |
-        (upper & 0x0000_00FF) << 16 |
-        upper & 0xFF00_0000
+        get {
+            (lower & 0xFFFF_0000) >> 16 |
+            (upper & 0x0000_00FF) << 16 |
+             upper & 0xFF00_0000
+        }
+        set {
+            lower = lower & 0x0000_FFFF | newValue << 16
+            upper = upper & 0x00FF_FF00 | newValue >> 16 & 0x0000_00FF | newValue & 0xFF00_0000
+        }
     }
     var limit: DWord {
         let value =
         lower & 0x0000_FFFF |
         upper & 0x000F_0000
-        return isFlagRaised(.G) ? value << 12 | 0xfff : value
+        return isFlagRaised(.G) ? value << 12 | 0xFFF : value
     }
     var type: DWord {
         (upper & 0x0000_0F00) >> 8

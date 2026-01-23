@@ -801,12 +801,9 @@ void Free86::set_CR0(int bits) {
 }
 void Free86::set_CR3(int bits) {
     cr3 = bits;
-    if (cr0 & (1 << 31)) { // if in paging mode must reset tables
+    if (cr0 & (1 << 31)) { // if in paging mode must flush tlb
         tlb_flush_all();
     }
-}
-void Free86::set_CR4(int bits) {
-    cr4 = bits;
 }
 bool Free86::is_real__v86() {
     return !is_protected();

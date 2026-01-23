@@ -132,11 +132,11 @@ public protocol PhysicalAddress: UnsignedInteger {
 extension DWord: PhysicalAddress {
     public static var bankSize: Int { 0x01000 }  // 4 kB
     public static var bankIndexShift: Int { 12 }
-    public static var bankOffsetMask: Int { 0x00fff }
+    public static var bankOffsetMask: Int { 0x00FFF }
 }
 
 extension QWord: PhysicalAddress {
     public static var bankSize: Int { 0x20000 }  // 128 kB
     public static var bankIndexShift: Int { 17 }
-    public static var bankOffsetMask: Int { 0x1ffff }
+    public static var bankOffsetMask: Int { 0x1FFFF }
 }

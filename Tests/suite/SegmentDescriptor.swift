@@ -12,6 +12,10 @@ func segmentDescriptorBaseLimit() {
 
     segmentDescriptor.setFlag(.G, 1)
     #expect(segmentDescriptor.limit == 0x5AA5_5FFF)
+
+    segmentDescriptor.base = 0xDEADBEEF
+    #expect(segmentDescriptor.base == 0xDEADBEEF)
+    #expect(segmentDescriptor.limit == 0x5AA5_5FFF)
 }
 
 @Test("segment descriptor types")
