@@ -95,10 +95,11 @@ func free86PageTranslation() {
     }
     let free86 = Free86(memory: memory)
 
-    /// from test386.asm: set up the PD. a single entry at index 0 refers to a PT which maps 1 MB starting at linear 0 to physical 0x100000
+    /// set up the PD with a single entry at index 0 refering to a PT
+    /// which maps 1 MB starting at linear 0 to physical 0x100000
     let pageDirAddr: DWord = 0x1000
     let pageTblAddr = pageDirAddr + 0x1000
-    /// PD
+    /// PD setup
     var pde = pageTblAddr  // PDE for PT
     pde.setFlag(.P)
     pde.setFlag(.W)
@@ -107,8 +108,8 @@ func free86PageTranslation() {
     for e: DWord in 1..<1024 {  // set remaining PDEs to 0
         free86.st(at: pageDirAddr + e * 4, dword: 0)
     }
-    /// PT
-    var pte: PageTableEntry = 0x100000  // PTE for 1st memory page
+    /// PT setup
+    var pte: PageTableEntry = 0x100000  // PTE for 1st memory page at 0x100000
     pte.setFlag(.P)
     pte.setFlag(.W)
     pte.setFlag(.U)
@@ -118,23 +119,30 @@ func free86PageTranslation() {
     for e: DWord in 256..<1024 {  // set remaining PTEs to 0
         free86.st(at: pageTblAddr + e * 4, dword: 0)
     }
-    /// enable paging
+    /// start paging
     free86.cr3 = pageDirAddr
     free86.cr0.setFlag(.PE)
     free86.cr0.setFlag(.PG)
 
+    /// test case: access 1st linear (0)
     var linear: LinearAddress = 0
-    #expect(throws: Never.self) {
+    #expect(throws: Never.self) {  // mapped, thus no exception
         try free86.translate(linear, writable: true, user: true)
     }
+    /// get hash for linear from TLB, has been added by translate
     var hash = free86.tlbReadonlyCplX[linear.pageTablesIndices]
+    /// unhash yields 1st physical (0x100000)
     #expect(linear ^ DWord(hash) == 0x100000)
+
+    /// test case: access arbitrary linear (0x4711)
     linear = 0x4711
     #expect(throws: Never.self) {
         try free86.translate(linear, writable: true, user: true)
     }
     hash = free86.tlbReadonlyCplX[linear.pageTablesIndices]
     #expect(linear ^ DWord(hash) == 0x4711 + 0x100000)
+
+    /// test case: access last linear (0xFFFFF)
     linear = 0xFFFFF
     #expect(throws: Never.self) {
         try free86.translate(linear, writable: true, user: true)
