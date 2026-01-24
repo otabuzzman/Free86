@@ -26,6 +26,7 @@ extension FixedWidthInteger {
         return Self(1) << position
     }
     mutating func setBit(_ position: Int, _ value: Int = 1) {
+        assert(value == 1 || value == 0)
         value == 1 ? raiseBit(position) : clearBit(position)
     }
     mutating func raiseBit(_ position: Int) {

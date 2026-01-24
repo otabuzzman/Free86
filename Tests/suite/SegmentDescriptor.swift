@@ -1,6 +1,19 @@
 import Testing
 @testable import Free86
 
+import Foundation
+
+@Test("segment descriptor init")
+func segmentDescriptorInit() {
+    let segmentDescriptor = SegmentDescriptor(0xC0FEBA5E, 0x00012345, .CodeExOnly, 3)
+    #expect(segmentDescriptor.base  == 0xC0FEBA5E)
+    #expect(segmentDescriptor.limit == 0x00012345)
+    #expect(segmentDescriptor.type == 0b00011000)
+    #expect(segmentDescriptor.dpl == 3)
+    #expect(segmentDescriptor.upper == 0xC001_78FE)
+    #expect(segmentDescriptor.lower == 0xBA5E_2345)
+}
+
 @Test("segment descriptor base/ limit values")
 func segmentDescriptorBaseLimit() {
     var segmentDescriptor: SegmentDescriptor
@@ -106,7 +119,7 @@ func segmentDescriptorFlags() {
         lower: 0x55AA_AA55)
     segmentDescriptor.setFlag(.G, 1)
     #expect(segmentDescriptor.upper.isBitRaised(23) == true)
-    segmentDescriptor.setFlag(.D, 1)
+    segmentDescriptor.setFlag(.DB, 1)
     #expect(segmentDescriptor.upper.isBitRaised(22) == true)
     segmentDescriptor.setFlag(.P, 1)
     #expect(segmentDescriptor.upper.isBitRaised(15) == true)
@@ -117,7 +130,7 @@ func segmentDescriptorFlags() {
 
     segmentDescriptor.setFlag(.G, 0)
     #expect(segmentDescriptor.upper.isBitRaised(23) == false)
-    segmentDescriptor.setFlag(.D, 0)
+    segmentDescriptor.setFlag(.DB, 0)
     #expect(segmentDescriptor.upper.isBitRaised(22) == false)
     segmentDescriptor.setFlag(.P, 0)
     #expect(segmentDescriptor.upper.isBitRaised(15) == false)

@@ -3,9 +3,20 @@ struct SegmentDescriptor {
     var lower: DWord = 0
 }
 
+extension SegmentDescriptor {
+    init(_ base: DWord, _ limit: DWord, _ type: SegmentDescriptorType, _ dpl: Int) {
+        assert(dpl >= 0 && dpl <= 3)
+        self.base  = base
+        self.limit = limit
+        self.type = type.rawValue
+        self.dpl = dpl
+    }
+}
+
 enum SegmentDescriptorFlag: Int {
     case G = 23  // granularity, 1 = limit in 4 kB units
-    case D = 22  // 0 = 16-bit segment, 1 = 32-bit segment
+    case DB = 22  // D flag if code segment, 0 = 16 bit addresses and 16/ 8 bit operands, 1 = 32 bit addresses and 32/ 8 bit operands
+                  // B flag if data segment and expand down, 0 = 0xFFFF upper bound, 1 = 0xFFFFFFFF upper bound
     case P = 15  // 1 = segment is present
     case S = 12  // 0 = system segment
 }
@@ -24,16 +35,29 @@ extension SegmentDescriptor {
         }
     }
     var limit: DWord {
-        let value =
-        lower & 0x0000_FFFF |
-        upper & 0x000F_0000
-        return isFlagRaised(.G) ? value << 12 | 0xFFF : value
+        get {
+            let limit =
+            lower & 0x0000_FFFF |
+            upper & 0x000F_0000
+            return isFlagRaised(.G) ? limit << 12 | 0xFFF : limit
+        }
+        set {
+            lower = lower & 0xFFFF_0000 | newValue & 0x0000_FFFF
+            upper = upper & 0xFFF0_FFFF | newValue & 0x000F_0000
+        }
     }
     var type: DWord {
-        (upper & 0x0000_0F00) >> 8
+        get { (upper & 0x0000_1F00) >> 8 }
+        set { upper = upper & 0xFFFF_E0FF | DWord(newValue) << 8 }
     }
     var dpl: Int {
-        Int((upper & 0x0000_6000) >> 13)
+        get {
+            Int((upper & 0x0000_6000) >> 13 & 0b0011)
+        }
+        set {
+            assert(newValue >= 0 && newValue <= 3)
+            upper = upper & 0xFFFF_9FFF | DWord(newValue << 13)
+        }
     }
 }
 

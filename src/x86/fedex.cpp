@@ -12,7 +12,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
     cycles_requested = cycles;
     cycles_remaining = cycles;
     far = far_start = 0;
-    update_SSB(); // segments state block
+    update_SSB(); // init segments state block
     if (interrupt.id >= 0) {
         raise_interrupt(interrupt.id, interrupt.error_code, 0, 0, 0);
         interrupt = {-1, 0};

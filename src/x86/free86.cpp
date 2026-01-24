@@ -2574,6 +2574,7 @@ void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int ret
     regs[4] = (regs[4] & ~SS_mask) | ((esp + return_offset) & SS_mask);
     segs[1].selector = cs;
     segs[1].base = cs << 4;
+    update_SSB();
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
         int mask;
@@ -2587,7 +2588,6 @@ void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int ret
         }
         set_EFLAGS(stack_eflags, mask);
     }
-    update_SSB();
 }
 void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
