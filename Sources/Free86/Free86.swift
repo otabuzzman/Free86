@@ -33,7 +33,7 @@ class Free86 {
     ///   The fetch address register (FAR, aka MAR) stores the physical memory
     ///   address of the next byte to be retrieved in the current fetch cycle.
     var far: DWord = 0        // fetch address register (FAR, aka MAR)
-    var far_start: DWord = 0  // first fetch address of current cycle
+    var farStart: DWord = 0  // first fetch address of current cycle
 
     var opcode: Int = 0
 
@@ -89,8 +89,8 @@ class Free86 {
     // 0x0080 address-size override prefix  (0x67)
     // 0x0100 operand-size override prefix  (0x66)
     var ipr: InstructionPrefixRegister = 0
-    var ipr_default: InstructionPrefixRegister = 0  // reflects D flag (PM (1986), 16.1)
-                                                    // also belongs to the SSB (below)
+    var iprDefault: InstructionPrefixRegister = 0  // reflects D flag (PM (1986), 16.1)
+                                                   // also belongs to the SSB (below)
 
     /// auxiliary variables for inter-method exchange
     var lax: LinearAddress = 0  // linear address exchange register

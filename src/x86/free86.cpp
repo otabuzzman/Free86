@@ -46,13 +46,13 @@ void Free86::reset() {
 }
 void Free86::update_SSB() {
     CS_base = segs[1].base;
-    if (segs[1].flags & (1 << 22)) {
+    if (segs[1].flags & (1 << 22)) { // D: default address and operand size 32 bit
         ipr_default = 0;
     } else {
         ipr_default = 0x0100 | 0x0080;
     }
     SS_base = segs[2].base;
-    if (segs[2].flags & (1 << 22)) {
+    if (segs[2].flags & (1 << 22)) { // B: 4 GB stack segment size
         SS_mask = -1;
     } else {
         SS_mask = 0xffff;

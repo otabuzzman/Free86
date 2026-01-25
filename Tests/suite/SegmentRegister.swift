@@ -21,4 +21,9 @@ func segmentRegisterBank() {
     #expect(bank[.GS] == SegmentRegister(0xDEDE, .init(0xADBEEFC0_DECAFEDE)))
     #expect(bank[.LDT] == SegmentRegister(0xDEAD, .init(0xBEEFC0DE_CAFEDEAD)))
     #expect(bank[.TR] == SegmentRegister(0xDEC0, .init(0xEFC0DECA_FEDEADBE)))
+
+    #expect(bank[.TR].hidden.base == 0xEFCAFEDE)
+    #expect(bank[.TR].hidden.limit == 0x0ADBEFFF)
+    #expect(bank[.TR].hidden.type == SegmentDescriptorType.CodeExReadConforming.rawValue)
+    #expect(bank[.TR].hidden.dpl  == 2)
 }

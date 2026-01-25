@@ -94,7 +94,7 @@ class Free86 {
 
     int opcode; // sort of fetch data register (FDR, aka MDR)
 
-    int df; // direction Flag (string instructions)
+    int df; // values 1/ -1 reflect EFLAGS.DF false/ true (string instructions)
 
     int dpl;  // descriptor privilege level
     int rpl;  // requested privilege level
@@ -275,8 +275,7 @@ class Free86 {
 
    The instruction prefix register (IPR) captures the instruction prefixes
    of the current fetch cycle, each in its own bit. IPR is specific to
-   this emulator and not part of the processor architecture, from which it
-   was derived.
+   this emulator and not part of the processor architecture.
 
    0x0001 ES segment override prefix    (0x26)
    0x0002 CS segment override prefix    (0x2e)
@@ -294,10 +293,12 @@ class Free86 {
     int ipr_default; // reflects D flag (PM (1986), 16.1)
                      // also belongs to the SSB (below)
 /*
-   Segments state block
+   Segments size block
 
-   Variables in the segment state block (SSB) reflect code and stack segment
-   sizes as well as address and operand size prefixes.
+   Variables in the segments size block (SSB) reflect code and stack
+   segment sizes as well as address and operand size prefixes.
+   SSB is specific to this emulator and not part of the processor
+   architecture.
  */
     int CS_base; // shortcut for segs[1].base
     int SS_base; // shortcut for segs[2].base
