@@ -10,12 +10,16 @@ struct SegmentRegister {
         case TR   // holds 16-bit selector and cache for TSS
     }
     var selector: SegmentSelector = 0
-    var descriptorCache = SegmentDescriptor()
+    private var shadow = SegmentDescriptor(0)  // "hidden" descriptor cache
+    init(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor) {
+        self.selector = selector
+        self.shadow = descriptor
+    }
 }
 
 extension SegmentRegister: Equatable {
-    static func == (lhs: SegmentRegister, rhs: SegmentRegister) -> Bool {
-        lhs.selector == rhs.selector && lhs.descriptorCache == rhs.descriptorCache
+    static func ==(lhs: SegmentRegister, rhs: SegmentRegister) -> Bool {
+        lhs.selector == rhs.selector && lhs.shadow == rhs.shadow
     }
 }
 

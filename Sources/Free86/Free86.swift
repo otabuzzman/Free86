@@ -6,28 +6,26 @@ class Free86 {
     let RESET = PinIO<Bool>()
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-    var regs: [GeneralRegister]!
-    var eflags: EFlags!
+    var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
+    var eflags: EFlags = 0
 
-    var eip: DWord!
+    var eip: DWord = 0
 
     /// ES, CS, SS, DS, FS, GS, LDT, TR
-    var segs: [SegmentRegister]!
+    var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 7)
+    var gdt = SegmentRegister(0, .init(0))  // GDT register
+    var ldt = SegmentRegister(0, .init(0))  // LDT register
+    var tr = SegmentRegister(0, .init(0))  // task register
+    var idt = SegmentRegister(0, .init(0))  // IDT register
 
-    var gdt = SegmentRegister()  // GDT register
-    var ldt = SegmentRegister()  // LDT register
-    var tr = SegmentRegister()  // task register
-    var idt: SegmentRegister!  // IDT register
-
-    var cr0: CR0!
+    var cr0: CR0 = 0
     var cr2: LinearAddress = 0
     var cr3: CR3 = 0
     var cr4: DWord = 0  // 80486
 
     var cpl: Int = 0  // current privilege level register
 
-    var halted: Bool!
-
+    var halted = false
     var cycles: QWord = 0
 
     ///   Fetch address register

@@ -2817,7 +2817,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
     st_error_code = 0;
     if (!is_sw && !is_hw) {
-        switch (id) { // with error codes, Intel IA-32 SDM (latest), Vol. 3A, 7.3
+        switch (id) { // with error codes, Intel 64 IA-32 SDM (latest), Vol. 3A, 7.3
         case 8:  // double exception
         case 10: // invalid task state segment
         case 11: // segment not present

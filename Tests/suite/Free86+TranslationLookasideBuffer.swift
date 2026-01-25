@@ -104,9 +104,9 @@ func free86PageTranslation() {
     pde.setFlag(.P)
     pde.setFlag(.W)
     pde.setFlag(.U)
-    free86.st(at: pageDirAddr, dword: pde)
+    memory.st(at: pageDirAddr, dword: pde)
     for e: DWord in 1..<1024 {  // set remaining PDEs to 0
-        free86.st(at: pageDirAddr + e * 4, dword: 0)
+        memory.st(at: pageDirAddr + e * 4, dword: 0)
     }
     /// PT setup
     var pte: PageTableEntry = 0x100000  // PTE for 1st memory page at 0x100000
@@ -114,10 +114,10 @@ func free86PageTranslation() {
     pte.setFlag(.W)
     pte.setFlag(.U)
     for e: DWord in 0..<256 {  // 256 PTEs map linear 0...0xFFFFF to physical 0x100000...0x1FFFFF
-        free86.st(at: pageTblAddr + e * 4, dword: pte + e * 0x1000)
+        memory.st(at: pageTblAddr + e * 4, dword: pte + e * 0x1000)
     }
     for e: DWord in 256..<1024 {  // set remaining PTEs to 0
-        free86.st(at: pageTblAddr + e * 4, dword: 0)
+        memory.st(at: pageTblAddr + e * 4, dword: 0)
     }
     /// start paging
     free86.cr3 = pageDirAddr

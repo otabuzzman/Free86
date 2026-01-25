@@ -95,10 +95,10 @@ extension Free86 {
         /// paging enabled
         var errorCode: DWord = 0
         let pdeAddress = cr3.pageDirectoryBase + linear.pageDirectoryOffset
-        var pde: PageTableEntry = ld(from: pdeAddress)
+        var pde: PageTableEntry = memory.ld(from: pdeAddress)
         if pde.isPresent {
             let pteAddress = pde.pageFrameAddress + linear.pageTableOffset
-            var pte: PageTableEntry = ld(from: pteAddress)
+            var pte: PageTableEntry = memory.ld(from: pteAddress)
             if pde.isPresent {
                 let supervisor = !user
                 let pxe = pde & pte
@@ -113,7 +113,7 @@ extension Free86 {
                 if errorCode == 0 {
                     if !pde.accessed {
                         pde.setFlag(.A)
-                        st(at: pdeAddress, dword: pde)
+                        memory.st(at: pdeAddress, dword: pde)
                     }
                     let isBlankPage = writable && !pte.isDirty
                     if isBlankPage && !pte.accessed {
@@ -121,7 +121,7 @@ extension Free86 {
                         if isBlankPage {
                             pte.setFlag(.D)
                         }
-                        st(at: pteAddress, dword: pte)
+                        memory.st(at: pteAddress, dword: pte)
                     }
                     var wFlag = false
                     var uFlag = false

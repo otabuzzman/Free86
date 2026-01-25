@@ -1,16 +1,18 @@
 extension Free86 {
     func reset() {
-        /// chip state (Intel 64 IA-32 SDM, Vol. 3A, 11.1.1)
-        regs = .init(repeating: GeneralRegister(0), count: 8)
+        /// chip state (PM (1986), 10.1, Intel 64 IA-32 SDM, Vol. 3A, 11.1.1)
+        for r in 0..<regs.count {
+            regs[r] = GeneralRegister(0)
+        }
         eflags = 0x2
 
         eip = 0xFFF0
 
-        segs = .init(repeating: SegmentRegister(), count: 7)
-        segs[.CS].descriptorCache.base = 0xFFFF0000
-
-        idt = SegmentRegister()
-        idt.descriptorCache.base = 0x03FF
+        for s in 0..<segs.count {
+            segs[s] = SegmentRegister(0, .init(0, 0, .zero, 0))
+        }
+        segs[.CS] = SegmentRegister(0, .init(0xFFFF0000, 0, .CodeExOnly, 0))
+        idt = SegmentRegister(0, .init(0x03FF, 0, .zero, 0))
 
         cr0 = 0
         cr0.setFlag(.ET)  // 80387 present (Vol. 3A, p. 2-16)

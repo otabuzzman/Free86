@@ -17,9 +17,9 @@ func free86PagedMemoryAccess() {
     pde.setFlag(.P)
     pde.setFlag(.W)
     pde.setFlag(.U)
-    free86.st(at: pageDirAddr, dword: pde)
+    memory.st(at: pageDirAddr, dword: pde)
     for e: DWord in 1..<1024 {  // set remaining PDEs to 0
-        free86.st(at: pageDirAddr + e * 4, dword: 0)
+        memory.st(at: pageDirAddr + e * 4, dword: 0)
     }
     /// start paging
     free86.cr3 = pageDirAddr
@@ -39,12 +39,12 @@ func free86PagedMemoryAccess() {
     pte.setFlag(.U)
     let o: DWord = linear.pageTableOffset
     let i: DWord = linear.pageTableOffset >> 2
-    free86.st(at: pde.pageFrameAddress + o, dword: pte + i * 0x1000)
+    memory.st(at: pde.pageFrameAddress + o, dword: pte + i * 0x1000)
     /// repeat test case
     #expect(throws: Never.self) {  // now mapped, thus no exception
         try free86.translate(linear, writable: true, user: true)
     }
     free86.lax = linear  // paged memory functions expect linear in `lax`
     try! free86.stWritableCpl3(dword: 0xDEADBEEF)     // store linear
-    #expect(free86.ld(from: 0x104711) == 0xDEADBEEF)  // load from physical
+    #expect(memory.ld(from: 0x104711) == 0xDEADBEEF)  // load from physical
 }
