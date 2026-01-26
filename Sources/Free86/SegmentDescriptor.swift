@@ -11,7 +11,7 @@ struct SegmentDescriptor {
 }
 
 extension SegmentDescriptor {
-    init(_ base: DWord, _ limit: DWord, _ type: SegmentDescriptorType, _ dpl: Int) {
+    init(_ base: LinearAddress, _ limit: DWord, _ type: SegmentDescriptorType, _ dpl: Int) {
         assert(dpl >= 0 && dpl <= 3)
         self.init(0)
         self.base  = base
@@ -29,7 +29,7 @@ enum SegmentDescriptorFlag: Int {
 }
 
 extension SegmentDescriptor {
-    var base: DWord {
+    var base: LinearAddress {
         get {
             (lower & 0xFFFF_0000) >> 16 |
             (upper & 0x0000_00FF) << 16 |

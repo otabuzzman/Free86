@@ -296,10 +296,7 @@ class Free86 {
    Segments state block
 
    Variables in the segments state block (SSB) provide shorthand
-   access to frequently used segment data, e.g. code and stack
-   segment sizes as well as address and operand size prefixes.
-   SSB is specific to this emulator and not part of the processor
-   architecture.
+   access to frequently used segment data.
  */
     int CS_base; // shortcut for segs[1].base
     int SS_base; // shortcut for segs[2].base

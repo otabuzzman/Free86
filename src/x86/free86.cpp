@@ -800,10 +800,11 @@ void Free86::set_CR0(int bits) {
     cr0 = bits | (1 << 4); // keep bit 4 set to 1 (80387 present)
 }
 void Free86::set_CR3(int bits) {
-    cr3 = bits;
-    if (cr0 & (1 << 31)) { // if in paging mode must flush tlb
+    // if in paging mode must flush tlb
+    if (bits & (1 << 31)) {
         tlb_flush_all();
     }
+    cr3 = bits;
 }
 bool Free86::is_real__v86() {
     return !is_protected();
