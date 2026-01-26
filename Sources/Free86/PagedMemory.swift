@@ -1,8 +1,9 @@
 protocol PagedMemory {
-    /// load byte/ word/ dword from read-only supervisor memory
+    /// load byte/ word/ dword/ qword from read-only supervisor memory
     func ld8ReadonlyCplX() throws -> Byte
     func ld16ReadonlyCplX() throws -> Word
     func ldReadonlyCplX() throws -> DWord
+    func ld64ReadonlyCplX() throws -> QWord
     /// load byte/ word/ dword from read-only user memory
     func ld8ReadonlyCpl3() throws -> Byte
     func ld16ReadonlyCpl3() throws -> Word

@@ -293,9 +293,10 @@ class Free86 {
     int ipr_default; // reflects D flag (PM (1986), 16.1)
                      // also belongs to the SSB (below)
 /*
-   Segments size block
+   Segments state block
 
-   Variables in the segments size block (SSB) reflect code and stack
+   Variables in the segments state block (SSB) provide shorthand
+   access to frequently used segment data, e.g. code and stack
    segment sizes as well as address and operand size prefixes.
    SSB is specific to this emulator and not part of the processor
    architecture.

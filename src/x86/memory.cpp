@@ -22,13 +22,9 @@ int Free86::ld16_readonly_cplX() {
 int Free86::ld_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
     if ((tlb_hash | lax) & 3) {
-        int dword = ld8_readonly_cplX();
-        lax++;
-        dword |= ld8_readonly_cplX() << 8;
-        lax++;
-        dword |= ld8_readonly_cplX() << 16;
-        lax++;
-        dword |= ld8_readonly_cplX() << 24;
+        int dword = ld16_readonly_cplX();
+        lax += 2;
+        dword |= ld16_readonly_cplX() << 16;
         lax -= 3;
         return dword;
     }
@@ -65,13 +61,9 @@ int Free86::ld_readonly_cpl3() {
     }
     tlb_hash = tlb_readonly[lax >> 12];
         if ((tlb_hash | lax) & 3) {
-        int dword = ld8_readonly_cpl3();
-        lax++;
-        dword |= ld8_readonly_cpl3() << 8;
-        lax++;
-        dword |= ld8_readonly_cpl3() << 16;
-        lax++;
-        dword |= ld8_readonly_cpl3() << 24;
+        int dword = ld16_readonly_cpl3();
+        lax += 2;
+        dword |= ld16_readonly_cpl3() << 16;
         lax -= 3;
         return dword;
     }
@@ -108,13 +100,9 @@ int Free86::ld_writable_cpl3() {
     }
     tlb_hash = tlb_writable[lax >> 12];
         if ((tlb_hash | lax) & 3) {
-        int dword = ld8_writable_cpl3();
-        lax++;
-        dword |= ld8_writable_cpl3() << 8;
-        lax++;
-        dword |= ld8_writable_cpl3() << 16;
-        lax++;
-        dword |= ld8_writable_cpl3() << 24;
+        int dword = ld16_writable_cpl3();
+        lax += 2;
+        dword |= ld16_writable_cpl3() << 16;
         lax -= 3;
         return dword;
     }
@@ -142,13 +130,9 @@ void Free86::st16_writable_cplX(int word) {
 void Free86::st_writable_cplX(int dword) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
     if (tlb_hash | lax & 3) {
-        st8_writable_cplX(dword);
-        lax++;
-        st8_writable_cplX(dword >> 8);
-        lax++;
-        st8_writable_cplX(dword >> 16);
-        lax++;
-        st8_writable_cplX(dword >> 24);
+        st16_writable_cplX(dword);
+        lax += 2;
+        st16_writable_cplX(dword >> 16);
         lax -= 3;
     } else {
         st_direct(lax ^ tlb_hash, dword);
@@ -185,13 +169,9 @@ void Free86::st_writable_cpl3(int dword) {
     }
     tlb_hash = tlb_writable[lax >> 12];
     if ((tlb_hash | lax) & 3) {
-        st8_writable_cpl3(dword);
-        lax++;
-        st8_writable_cpl3(dword >> 8);
-        lax++;
-        st8_writable_cpl3(dword >> 16);
-        lax++;
-        st8_writable_cpl3(dword >> 24);
+        st16_writable_cpl3(dword);
+        lax += 2;
+        st16_writable_cpl3(dword >> 16);
         lax -= 3;
     } else {
         st_direct(lax ^ tlb_hash, dword);

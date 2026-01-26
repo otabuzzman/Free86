@@ -23,15 +23,23 @@ extension Free86: PagedMemory {
         let hash = tlbReadonlyCplX[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
             var dword: DWord = 0
-            dword = DWord(try ld8ReadonlyCplX())
-            lax += 1
-            dword |= try DWord(ld8ReadonlyCplX()) << 8
-            lax += 1
-            dword |= try DWord(ld8ReadonlyCplX()) << 16
-            lax += 1
-            dword |= try DWord(ld8ReadonlyCplX()) << 24
+            dword = DWord(try ld16ReadonlyCplX())
+            lax += 2
+            dword |= DWord(try ld16ReadonlyCplX()) << 16
             lax -= 3
             return dword
+        }
+        return memory.ld(from: lax ^ DWord(hash))
+    }
+    func ld64ReadonlyCplX() throws -> QWord {
+        let hash = tlbReadonlyCplX[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 3) != 0) {
+            var qword: QWord = 0
+            qword = QWord(try ldReadonlyCplX())
+            lax += 4
+            qword |= QWord(try ldReadonlyCplX()) << 32
+            lax -= 7
+            return qword
         }
         return memory.ld(from: lax ^ DWord(hash))
     }
@@ -68,13 +76,9 @@ extension Free86: PagedMemory {
         let hash = tlbReadonly[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
             var dword: DWord = 0
-            dword = DWord(try ld8ReadonlyCpl3())
-            lax += 1
-            dword |= try DWord(ld8ReadonlyCpl3()) << 8
-            lax += 1
-            dword |= try DWord(ld8ReadonlyCpl3()) << 16
-            lax += 1
-            dword |= try DWord(ld8ReadonlyCpl3()) << 24
+            dword = DWord(try ld16ReadonlyCpl3())
+            lax += 2
+            dword |= DWord(try ld16ReadonlyCpl3()) << 16
             lax -= 3
             return dword
         }
@@ -113,13 +117,9 @@ extension Free86: PagedMemory {
         let hash = tlbWritable[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
             var dword: DWord = 0
-            dword = DWord(try ld8WritableCpl3())
-            lax += 1
-            dword |= try DWord(ld8WritableCpl3()) << 8
-            lax += 1
-            dword |= try DWord(ld8WritableCpl3()) << 16
-            lax += 1
-            dword |= try DWord(ld8WritableCpl3()) << 24
+            dword = DWord(try ld16WritableCpl3())
+            lax += 2
+            dword |= DWord(try ld16WritableCpl3()) << 16
             lax -= 3
             return dword
         }
@@ -147,13 +147,9 @@ extension Free86: PagedMemory {
     func stWritableCplX(dword: DWord) throws {
         let hash = tlbWritableCplX[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
-            try st8WritableCplX(byte: Byte(dword))
-            lax += 1
-            try st8WritableCplX(byte: Byte(dword >> 8))
-            lax += 1
-            try st8WritableCplX(byte: Byte(dword >> 16))
-            lax += 1
-            try st8WritableCplX(byte: Byte(dword >> 24))
+            try st16WritableCplX(word: Word(dword))
+            lax += 2
+            try st16WritableCplX(word: Word(dword >> 16))
             lax -= 3
         } else {
             memory.st(at: lax ^ DWord(hash), dword: dword)
@@ -190,13 +186,9 @@ extension Free86: PagedMemory {
         }
         let hash = tlbWritable[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword))
-            lax += 1
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword >> 8))
-            lax += 1
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword >> 16))
-            lax += 1
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: dword >> 24))
+            try st16WritableCpl3(word: Word(truncatingIfNeeded: dword))
+            lax += 2
+            try st16WritableCpl3(word: Word(truncatingIfNeeded: dword >> 16))
             lax -= 3
         } else {
             memory.st(at: lax ^ DWord(hash), dword: dword)
