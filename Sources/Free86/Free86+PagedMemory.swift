@@ -26,7 +26,7 @@ extension Free86: PagedMemory {
             dword = DWord(try ld16ReadonlyCplX())
             lax += 2
             dword |= DWord(try ld16ReadonlyCplX()) << 16
-            lax -= 3
+            lax -= 2
             return dword
         }
         return memory.ld(from: lax ^ DWord(hash))
@@ -38,10 +38,10 @@ extension Free86: PagedMemory {
             qword = QWord(try ldReadonlyCplX())
             lax += 4
             qword |= QWord(try ldReadonlyCplX()) << 32
-            lax -= 7
+            lax -= 4
             return qword
         }
-        return memory.ld(from: lax ^ DWord(hash))
+        return memory.ld64(from: lax ^ DWord(hash))
     }
     func ld8ReadonlyCpl3() throws -> Byte {
         if cr0.isRealOrV86Mode {
@@ -79,7 +79,7 @@ extension Free86: PagedMemory {
             dword = DWord(try ld16ReadonlyCpl3())
             lax += 2
             dword |= DWord(try ld16ReadonlyCpl3()) << 16
-            lax -= 3
+            lax -= 2
             return dword
         }
         return memory.ld(from: lax ^ DWord(hash))
@@ -120,7 +120,7 @@ extension Free86: PagedMemory {
             dword = DWord(try ld16WritableCpl3())
             lax += 2
             dword |= DWord(try ld16WritableCpl3()) << 16
-            lax -= 3
+            lax -= 2
             return dword
         }
         return memory.ld(from: lax ^ DWord(hash))
@@ -150,7 +150,7 @@ extension Free86: PagedMemory {
             try st16WritableCplX(word: Word(dword))
             lax += 2
             try st16WritableCplX(word: Word(dword >> 16))
-            lax -= 3
+            lax -= 2
         } else {
             memory.st(at: lax ^ DWord(hash), dword: dword)
         }
@@ -189,7 +189,7 @@ extension Free86: PagedMemory {
             try st16WritableCpl3(word: Word(truncatingIfNeeded: dword))
             lax += 2
             try st16WritableCpl3(word: Word(truncatingIfNeeded: dword >> 16))
-            lax -= 3
+            lax -= 2
         } else {
             memory.st(at: lax ^ DWord(hash), dword: dword)
         }

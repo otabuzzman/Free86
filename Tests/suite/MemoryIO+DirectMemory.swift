@@ -28,28 +28,23 @@ func directMemoryAccess() {
     /// load qword
     #expect(memory.ld64(from: 0x0123) == 0xBEEFCAFE_DEADC0DE)
 
+    /// store byte
     memory.st8(at: 0x0143, byte: 0xFE)
     memory.st8(at: 0x0144, byte: 0xCA)
     memory.st8(at: 0x0145, byte: 0xEF)
     memory.st8(at: 0x0146, byte: 0xBE)
-    /// store byte
     #expect(memory[0x0143] == 0xFE)
     #expect(memory[0x0144] == 0xCA)
     #expect(memory[0x0145] == 0xEF)
     #expect(memory[0x0146] == 0xBE)
     /// store word
-    memory.st16(at: 0x0143, word: 0xCAFE)
-    memory.st16(at: 0x0145, word: 0xBEEF)
-    #expect(memory[0x0143] == 0xFE)
-    #expect(memory[0x0144] == 0xCA)
-    #expect(memory[0x0145] == 0xEF)
-    #expect(memory[0x0146] == 0xBE)
+    memory.st16(at: 0x0143, word: 0xBEEF)
+    memory.st16(at: 0x0145, word: 0xCAFE)
+    #expect(memory[0x0143] == 0xEF)
+    #expect(memory[0x0144] == 0xBE)
+    #expect(memory[0x0145] == 0xFE)
+    #expect(memory[0x0146] == 0xCA)
     /// store dword
-    memory.st(at: 0x0143, dword: 0xBEEFCAFE)
-    #expect(memory[0x0143] == 0xFE)
-    #expect(memory[0x0144] == 0xCA)
-    #expect(memory[0x0145] == 0xEF)
-    #expect(memory[0x0146] == 0xBE)
     memory.st(at: 0x0143, dword: 0xBEEFCAFE)
     #expect(memory[0x0143] == 0xFE)
     #expect(memory[0x0144] == 0xCA)
