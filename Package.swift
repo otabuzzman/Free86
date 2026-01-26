@@ -88,6 +88,7 @@ let package = Package(
             dependencies: ["Free86"],
             sources: [
                 "Free86+reset.swift",
+                "Free86+SSB.swift",
                 "MachineDataTypes.swift",
                 "GeneralRegister.swift",
                 "SegmentRegister.swift",
