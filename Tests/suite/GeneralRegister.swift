@@ -22,8 +22,8 @@ func generalRegisterElements() {
     #expect(register == 0xC0DEAA55)
 }
 
-@Test("general register bank")
-func generalRegisterBank() {
+@Test("general register index access")
+func generalRegisterIndexAccess() {
     let bank = [
         GeneralRegister(0xDEADC0DE),
         GeneralRegister(0xDEADBEAF),

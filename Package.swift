@@ -49,6 +49,7 @@ let package = Package(
             sources: [
                 "Free86.swift",  // no tests
                 "Free86+reset.swift",
+                "Free86+setter.swift",
                 "Free86+fetchDecodeExecute.swift",  // no tests
                 "OpcodePrograms/Free86+oneByte16.swift",  // no tests
                 "OpcodePrograms/Free86+oneByte.swift",    // no tests
@@ -88,6 +89,7 @@ let package = Package(
             dependencies: ["Free86"],
             sources: [
                 "Free86+reset.swift",
+                "Free86+setter.swift",
                 "Free86+SSB.swift",
                 "MachineDataTypes.swift",
                 "GeneralRegister.swift",

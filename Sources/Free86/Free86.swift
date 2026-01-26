@@ -18,12 +18,12 @@ class Free86 {
     var tr = SegmentRegister(0, .init(0))  // task register
     var idt = SegmentRegister(0, .init(0))  // IDT register
 
-    var cr0: CR0 = 0
+    var _cr0: CR0 = 0
     var cr2: LinearAddress = 0
-    var cr3: CR3 = 0
+    var _cr3: CR3 = 0
     var cr4: DWord = 0  // 80486
 
-    var cpl: Int = 0  // current privilege level register
+    var _cpl: Int = 0  // current privilege level register
 
     var halted = false
     var cycles: QWord = 0
