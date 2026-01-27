@@ -94,7 +94,7 @@ class Free86 {
 
     int opcode; // sort of fetch data register (FDR, aka MDR)
 
-    int df; // direction Flag (string instructions)
+    int df; // values 1/ -1 reflect EFLAGS.DF false/ true (string instructions)
 
     int dpl;  // descriptor privilege level
     int rpl;  // requested privilege level
@@ -121,7 +121,7 @@ class Free86 {
    mappings stored in the tables, effectively representing the logical
    size of the TLB.
  */
-    int tlb_pages[2048]{0};
+    uint32_t tlb_pages[2048]{0};
     int tlb_pages_count = 0;
     // mapping tables
     int *tlb_readonly_cplX; // supervisor, any CPL
@@ -134,7 +134,7 @@ class Free86 {
     int tlb_size = 0x100000; // 1M entries per MT
     int tlb_hash; // LA ^ PA (by design, no necessity)
 
-    void tlb_update(uint32_t linear /*data*/, int physical /*key*/, int writable, int user) {
+    void tlb_update(uint32_t linear /*data*/, uint32_t physical /*key*/, int writable, int user) {
         tlb_hash = linear ^ physical; // poor man's XOR hash function
         uint32_t lat20 = linear >> 12; // PD and PT indices (top 20 bits of linear address)
         if (tlb_readonly_cplX[lat20] == -1) {
@@ -275,8 +275,7 @@ class Free86 {
 
    The instruction prefix register (IPR) captures the instruction prefixes
    of the current fetch cycle, each in its own bit. IPR is specific to
-   this emulator and not part of the processor architecture, from which it
-   was derived.
+   this emulator and not part of the processor architecture.
 
    0x0001 ES segment override prefix    (0x26)
    0x0002 CS segment override prefix    (0x2e)
@@ -296,8 +295,8 @@ class Free86 {
 /*
    Segments state block
 
-   Variables in the segment state block (SSB) reflect code and stack segment
-   sizes as well as address and operand size prefixes.
+   Variables in the segments state block (SSB) provide shorthand
+   access to frequently used segment data.
  */
     int CS_base; // shortcut for segs[1].base
     int SS_base; // shortcut for segs[2].base
@@ -359,24 +358,16 @@ class Free86 {
 
     void set_CR0(int bits);
     void set_CR3(int bits);
-    void set_CR4(int bits);
     bool is_real__v86();
     bool is_protected();
     bool is_paging(); // PG && PE set
     void set_cpl(int level);
 
-    int ld8_io(int port);
-    int ld16_io(int port);
-    int ld_io(int port);
-    void st8_io(int port, int byte);
-    void st16_io(int port, int word);
-    void st_io(int port, int dword);
-
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 
     void page_translation(int writable, int user);
-    void page_translation(int address, int writable, int user);
+    void page_translation(uint32_t address, int writable, int user);
 
     void segment_translation();
     void offset_to_linear(bool writable);
@@ -530,9 +521,9 @@ class Free86 {
     void st16_direct(int address, int byte);
     void st_direct(int address, int dword);
 
-    int fetch8(); // read byte...
-    int fetch16(); // ...word...
-    int fetch(); // ...dword at FAR, update FAR
+    int fetch_data8(); // read byte...
+    int fetch_data16(); // ...word...
+    int fetch_data(); // ...dword at FAR, update FAR
     void push16(int word);
     void push(int dword);
     int pop16();
