@@ -54,9 +54,9 @@ class CMOS {
     }
 
   private:
-    int bin_to_bcd(int a)
+    uint8_t bin_to_bcd(int a)
     {
-        return ((a / 10) << 4) | (a % 10);
+        return static_cast<uint8_t>(((a / 10) << 4) | (a % 10));
     }
 };
 

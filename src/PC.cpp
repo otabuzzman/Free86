@@ -30,16 +30,16 @@ PC::~PC()
     delete cpu;
 }
 
-int PC::load(std::string path, int offset)
+long PC::load(std::string path, int offset)
 {
     FILE *f = fopen(path.c_str(), "rb");
     fseek(f, 0, SEEK_END);
-    const int size = ftell(f);
+    long size = ftell(f);
     fseek(f, 0, SEEK_SET);
     auto buffer = new uint8_t[size];
     auto _ = fread(buffer, size, 1, f);
 
-    printf("load %d bytes at 0x%x\n", size, offset);
+    printf("load %ld bytes at 0x%x\n", size, offset);
     for (int i = 0; i < size; i++) {
         cpu->st8_direct(offset + i, buffer[i]);
     }
@@ -52,7 +52,7 @@ void PC::setup()
 {
     load("bin/linuxstart.bin",             0x00010000); // custom bootloader
     load("bin/vmlinux-2.6.20.bin",         0x00100000); // Linux kernel
-    int initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
+    long initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
 
     int cmdline_addr = 0x0f800;
     std::string cmdline = "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1";

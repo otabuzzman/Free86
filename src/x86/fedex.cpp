@@ -1,5 +1,6 @@
 #include "free86.h"
 
+#pragma clang diagnostic ignored "-Wshadow" // cycles
 void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
     int sreg, hL; // H (0x80) or L (0x00) byte selector
     if (halted) {
@@ -2145,7 +2146,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     {
                         uint64_t t = this->cycles + (cycles_requested - cycles_remaining);
-                        regs[0] = t;
+                        regs[0] = static_cast<uint32_t>(t & 0xffffffff);
                         regs[2] = t >> 32;
                     }
                     goto FETCH_LOOP;

@@ -76,8 +76,9 @@ void Free86::fetch_opcode() {
     }
 }
 int Free86::instruction_length(int opcode) {
-    int ipr, operation, stride;
-    int n = 1;
+    #pragma clang diagnostic ignored "-Wshadow"
+    int ipr, operation;
+    int stride, n = 1;
     ipr = ipr_default;
     if (ipr & 0x0100) {
         stride = 2;
@@ -566,7 +567,6 @@ int Free86::instruction_length(int opcode) {
             case 0xce: // -
             case 0xcf: // -
                 goto FETCH_LOOP;
-                n += stride;
             case 0x80: // JO
             case 0x81: // JNO
             case 0x82: // JB
@@ -825,6 +825,8 @@ void Free86::set_cpl(int level) {
         tlb_writable = tlb_writable_cplX;
     }
 }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow" // reg
 void Free86::set_lower_byte(int reg, int byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
         regs[reg & 3] = (regs[reg & 3] & -65281) | ((byte & 0xff) << 8);
@@ -835,11 +837,12 @@ void Free86::set_lower_byte(int reg, int byte) {
 void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
+#pragma clang diagnostic pop
 void Free86::page_translation(int writable, int user) {
     page_translation(lax, writable, user);
 }
-void Free86::page_translation(int address, int writable, int user) {
-    int pde_address, pde, pte_address, pte, pxe;
+void Free86::page_translation(uint32_t address, int writable, int user) {
+    uint32_t pde_address, pde, pte_address, pte, pxe;
     int error_code = 0, supervisor = !user, blank_page;
     if (!is_paging()) {
         tlb_update(address & -4096, address & -4096, 1, 0);
@@ -1155,8 +1158,9 @@ void Free86::offset_to_linear(bool writable) {
             abort(13, 0); // #GP(0)
         }
     }
-    lax = la;
+    lax = static_cast<uint32_t>(la & 0xffffffff);
 }
+#pragma clang diagnostic ignored "-Wshadow" // base
 void Free86::set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[sreg] = {selector, base, limit, flags}; // set register
     update_SSB(); // emulator state variables
@@ -1278,7 +1282,7 @@ int Free86::is_segment_accessible(int selector, bool writable) {
 }
 void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     SegmentRegister xdt;
-    int dte_lower_dword, dte_upper_dword, index;
+    int dte_lower_dword, dte_upper_dword, dti;
     descriptor_table_entry[0] = 0;
     descriptor_table_entry[1] = 0;
     if (selector & 0x4) {
@@ -1286,11 +1290,11 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     } else {
         xdt = gdt;
     }
-    index = selector & ~7;
-    if ((index + 7) > xdt.limit) {
+    dti = selector & ~7;
+    if ((dti + 7) > xdt.limit) {
         return;
     }
-    lax = xdt.base + index;
+    lax = xdt.base + dti;
     dte_lower_dword = ld_readonly_cplX();
     lax += 4;
     dte_upper_dword = ld_readonly_cplX();
@@ -1384,59 +1388,61 @@ int Free86::aux_DEC16(int data) {
     return osm_dst;
 }
 int Free86::aux_SHRD16_SHLD16(int dst, int src, int count) {
-    int c, s, r;
-    r = dst;
+    int c, s, res;
+    res = dst;
     c = count & 0x1f;
     if (c) {
         if (operation == 0) { // SHLD
             s = src & 0xffff;
-            x = s | (r << 16);
+            x = s | (res << 16);
             osm_src = x >> (32 - c);
             x = x << c;
             if (c > 16) {
                 x |= s << (c - 16);
             }
-            osm_dst = r = x >> 16;
+            osm_dst = res = x >> 16;
             osm = 19;
         } else { // SHRD
-            x = (r & 0xffff) | (src << 16);
+            x = (res & 0xffff) | (src << 16);
             osm_src = x >> (c - 1);
             x = x >> c;
             if (c > 16) {
                 x |= src << (32 - c);
             }
-            osm_dst = r = (x << 16) >> 16;
+            osm_dst = res = (x << 16) >> 16;
             osm = 19;
         }
     }
-    return r;
+    return res;
 }
 int Free86::aux_SHRD(int dst, int src, int count) {
-    int c, r;
-    r = dst;
+    int c, res;
+    res = dst;
     c = count & 0x1f;
     if (c) {
-        osm_src = r >> (c - 1);
-        uint32_t lval = (uint32_t) r >> c;
+        osm_src = res >> (c - 1);
+        uint32_t lval = (uint32_t) res >> c;
         uint32_t rval = (uint32_t) src << (32 - c);
-        osm_dst = r = lval | rval;
+        osm_dst = res = lval | rval;
         osm = 20;
     }
-    return r;
+    return res;
 }
 int Free86::aux_SHLD(int dst, int src, int count) {
-    int c, r;
-    r = dst;
+    int c, res;
+    res = dst;
     c = count & 0x1f;
     if (c) {
-        osm_src = r << (c - 1);
-        uint32_t lval = r << c;
+        osm_src = res << (c - 1);
+        uint32_t lval = res << c;
         uint32_t rval = (uint32_t) src >> (32 - c);
-        osm_dst = r = lval | rval;
+        osm_dst = res = lval | rval;
         osm = 17;
     }
-    return r;
+    return res;
 }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow" // base
 void Free86::aux_BT16(int base, int offset) {
     osm_src = base >> (offset & 0xf);
     osm = 19;
@@ -1446,53 +1452,54 @@ void Free86::aux_BT(int base, int offset) {
     osm = 20;
 }
 int Free86::aux_BTS16_BTR16_BTC16(int base, int offset) {
-    int o, r;
+    int o, res;
     o = offset & 0xf;
     osm_src = base >> o;
     x = 1 << o;
     switch (operation) {
     case 1: // BTS
-        r = base | x;
+        res = base | x;
         break;
     case 2: // BTR
-        r = base & ~x;
+        res = base & ~x;
         break;
     case 3: // BTC
     default:
-        r = base ^ x;
+        res = base ^ x;
         break;
     }
     osm = 19;
-    return r;
+    return res;
 }
 int Free86::aux_BTS_BTR_BTC(int base, int offset) {
-    int o, r;
+    int o, res;
     o = offset & 0x1f;
     osm_src = base >> o;
     x = 1 << o;
     switch (operation) {
     case 1: // BTS
-        r = base | x;
+        res = base | x;
         break;
     case 2: // BTR
-        r = base & ~x;
+        res = base & ~x;
         break;
     case 3: // BTC
     default:
-        r = base ^ x;
+        res = base ^ x;
         break;
     }
     osm = 20;
-    return r;
+    return res;
 }
+#pragma clang diagnostic pop
 int Free86::aux_BSF16(int dst, int src) {
-    int s, r;
-    r = dst;
+    int s, res;
+    res = dst;
     s = src & 0xffff;
     if (s) {
-        r = 0;
+        res = 0;
         while ((s & 1) == 0) {
-            r++;
+            res++;
             s >>= 1;
         }
         osm_dst = 1;
@@ -1500,16 +1507,16 @@ int Free86::aux_BSF16(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return r;
+    return res;
 }
 int Free86::aux_BSF(int dst, int src) {
-    int s, r;
-    r = dst;
+    int s, res;
+    res = dst;
     s = src;
     if (s) {
-        r = 0;
+        res = 0;
         while ((s & 1) == 0) {
-            r++;
+            res++;
             s >>= 1;
         }
         osm_dst = 1;
@@ -1517,16 +1524,16 @@ int Free86::aux_BSF(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return r;
+    return res;
 }
 int Free86::aux_BSR16(int dst, int src) {
-    int s, r;
-    r = dst;
+    int s, res;
+    res = dst;
     s = src & 0xffff;
     if (s) {
-        r = 15;
+        res = 15;
         while ((s & 0x8000) == 0) {
-            r--;
+            res--;
             s <<= 1;
         }
         osm_dst = 1;
@@ -1534,16 +1541,16 @@ int Free86::aux_BSR16(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return r;
+    return res;
 }
 int Free86::aux_BSR(int dst, int src) {
-    int s, r;
-    r = dst;
+    int s, res;
+    res = dst;
     s = src;
     if (s) {
-        r = 31;
+        res = 31;
         while (s >= 0) {
-            r--;
+            res--;
             s <<= 1;
         }
         osm_dst = 1;
@@ -1551,21 +1558,21 @@ int Free86::aux_BSR(int dst, int src) {
         osm_dst = 0;
     }
     osm = 14;
-    return r;
+    return res;
 }
 void Free86::aux_DIV8(int divisor) {
-    int d, a, q, r;
+    int d, a, q, s;
     d = divisor & 0xff;
     a = regs[0] & 0xffff;
     if ((a >> 8) >= d) {
         abort(0);
     }
     q = a / d;
-    r = a % d;
-    set_lower_word(0, (q & 0xff) | (r << 8));
+    s = a % d;
+    set_lower_word(0, (q & 0xff) | (s << 8));
 }
 void Free86::aux_DIV16(int divisor) {
-    int d, a, q, r;
+    int d, a, q, s;
     d = divisor & 0xffff;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     uint32_t au = a;
@@ -1573,9 +1580,9 @@ void Free86::aux_DIV16(int divisor) {
         abort(0);
     }
     q = au / d;
-    r = au % d;
+    s = au % d;
     set_lower_word(0, q);
-    set_lower_word(2, r);
+    set_lower_word(2, s);
 }
 void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
@@ -1606,7 +1613,7 @@ void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t 
     }
 }
 void Free86::aux_IDIV8(int divisor) {
-    int d, a, q, r;
+    int d, a, q, s;
     d = (divisor << 24) >> 24;
     a = (regs[0] << 16) >> 16;
     if (d == 0) {
@@ -1616,11 +1623,11 @@ void Free86::aux_IDIV8(int divisor) {
     if (((q << 24) >> 24) != q) {
         abort(0);
     }
-    r = a % d;
-    set_lower_word(0, (q & 0xff) | (r << 8));
+    s = a % d;
+    set_lower_word(0, (q & 0xff) | (s << 8));
 }
 void Free86::aux_IDIV16(int divisor) {
-    int d, a, q, r;
+    int d, a, q, s;
     d = (divisor << 16) >> 16;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     if (d == 0) {
@@ -1630,9 +1637,9 @@ void Free86::aux_IDIV16(int divisor) {
     if (((q << 16) >> 16) != q) {
         abort(0);
     }
-    r = a % d;
+    s = a % d;
     set_lower_word(0, q);
-    set_lower_word(2, r);
+    set_lower_word(2, s);
 }
 void Free86::aux_IDIV(int dividend_upper, int dividend_lower, int divisor) {
     int dd_upper, dd_lower, dd_sign, dr_sign;
@@ -1736,6 +1743,7 @@ void Free86::aux_IMUL(int multiplicand, int multiplier) {
 }
 void Free86::multiply(int multiplicand, int multiplier) {
     uint32_t md_lower, md_upper, mr_lower, mr_upper, z;
+    #pragma clang diagnostic ignored "-Wshadow"
     uint64_t x = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (x <= 0xffffffff) {
         y = 0;
@@ -1764,48 +1772,48 @@ void Free86::multiply(int multiplicand, int multiplier) {
     this->x = x;
 }
 int Free86::calculate8(int dst, int src) {
-    int cf, r;
-    r = dst;
+    int cf, res;
+    res = dst;
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        r = ((r + src) << 24) >> 24;
-        osm_dst = r;
+        res = ((res + src) << 24) >> 24;
+        osm_dst = res;
         osm = 0;
         break;
     case 1:
-        r = (((r | src) << 24) >> 24);
-        osm_dst = r;
+        res = (((res | src) << 24) >> 24);
+        osm_dst = res;
         osm = 12;
         break;
     case 2:
         cf = is_CF();
         osm_src = src;
-        r = ((r + src + cf) << 24) >> 24;
-        osm_dst = r;
+        res = ((res + src + cf) << 24) >> 24;
+        osm_dst = res;
         osm = cf ? 3 : 0;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        r = ((r - src - cf) << 24) >> 24;
-        osm_dst = r;
+        res = ((res - src - cf) << 24) >> 24;
+        osm_dst = res;
         osm = cf ? 9 : 6;
         break;
     case 4:
-        r = ((r & src) << 24) >> 24;
-        osm_dst = r;
+        res = ((res & src) << 24) >> 24;
+        osm_dst = res;
         osm = 12;
         break;
     case 5:
         osm_src = src;
-        r = ((r - src) << 24) >> 24;
-        osm_dst = r;
+        res = ((res - src) << 24) >> 24;
+        osm_dst = res;
         osm = 6;
         break;
     case 6:
-        r = ((r ^ src) << 24) >> 24;
-        osm_dst = r;
+        res = ((res ^ src) << 24) >> 24;
+        osm_dst = res;
         osm = 12;
         break;
     case 7:
@@ -1814,126 +1822,126 @@ int Free86::calculate8(int dst, int src) {
         osm = 6;
         break;
     }
-    return r;
+    return res;
 }
 int Free86::calculate16(int dst, int src) {
-    int cf, r;
-    r = dst;
+    int cf, res;
+    res = dst;
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        r = ((r + src) << 16) >> 16;
-        osm_dst = r;
+        res = ((res + src) << 16) >> 16;
+        osm_dst = res;
         osm = 1;
         break;
     case 1:
-        r = (((r | src) << 16) >> 16);
-        osm_dst = r;
+        res = (((res | src) << 16) >> 16);
+        osm_dst = res;
         osm = 13;
         break;
     case 2:
         cf = is_CF();
         osm_src = src;
-        r = ((r + src + cf) << 16) >> 16;
-        osm_dst = r;
+        res = ((res + src + cf) << 16) >> 16;
+        osm_dst = res;
         osm = cf ? 4 : 1;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        r = ((r - src - cf) << 16) >> 16;
-        osm_dst = r;
+        res = ((res - src - cf) << 16) >> 16;
+        osm_dst = res;
         osm = cf ? 10 : 7;
         break;
     case 4:
-        r = ((r & src) << 16) >> 16;
-        osm_dst = r;
+        res = ((res & src) << 16) >> 16;
+        osm_dst = res;
         osm = 13;
         break;
     case 5:
         osm_src = src;
-        r = ((r - src) << 16) >> 16;
-        osm_dst = r;
+        res = ((res - src) << 16) >> 16;
+        osm_dst = res;
         osm = 7;
         break;
     case 6:
-        r = ((r ^ src) << 16) >> 16;
-        osm_dst = r;
+        res = ((res ^ src) << 16) >> 16;
+        osm_dst = res;
         osm = 13;
         break;
     case 7:
         osm_src = src;
-        osm_dst = ((r - src) << 16) >> 16;
+        osm_dst = ((res - src) << 16) >> 16;
         osm = 7;
         break;
     }
-    return r;
+    return res;
 }
 int Free86::calculate(int dst, int src) {
-    int cf, r;
-    r = dst;
+    int cf, res;
+    res = dst;
     switch (operation & 7) {
     case 0:
         osm_src = src;
-        r = r + src;
-        osm_dst = r;
+        res = res + src;
+        osm_dst = res;
         osm = 2;
         break;
     case 1:
-        r = r | src;
-        osm_dst = r;
+        res = res | src;
+        osm_dst = res;
         osm = 14;
         break;
     case 2:
         cf = is_CF();
         osm_src = src;
-        r = r + src + cf;
-        osm_dst = r;
+        res = res + src + cf;
+        osm_dst = res;
         osm = cf ? 5 : 2;
         break;
     case 3:
         cf = is_CF();
         osm_src = src;
-        r = r - src - cf;
-        osm_dst = r;
+        res = res - src - cf;
+        osm_dst = res;
         osm = cf ? 11 : 8;
         break;
     case 4:
-        r = r & src;
-        osm_dst = r;
+        res = res & src;
+        osm_dst = res;
         osm = 14;
         break;
     case 5:
         osm_src = src;
-        r = r - src;
-        osm_dst = r;
+        res = res - src;
+        osm_dst = res;
         osm = 8;
         break;
     case 6:
-        r = r ^ src;
-        osm_dst = r;
+        res = res ^ src;
+        osm_dst = res;
         osm = 14;
         break;
     case 7:
         osm_src = src;
-        osm_dst = r - src;
+        osm_dst = res - src;
         osm = 8;
         break;
     }
-    return r;
+    return res;
 }
 int Free86::shift8(int src, int count) {
-    int c, cf, s, r;
-    s = r = src & 0xff;
+    int c, cf, s, res;
+    s = res = src & 0xff;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
             c = count & 0x7;
-            r = (r << c) | (r >> (8 - c));
+            res = (res << c) | (res >> (8 - c));
             osm_src = compile_eflags(true);
-            osm_src |= r & 0x0001;
+            osm_src |= res & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) << 4) & 0x0800;
+                osm_src |= ((s ^ res) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -1942,11 +1950,11 @@ int Free86::shift8(int src, int count) {
     case 1:
         if (count & 0x1f) {
             c = count & 0x7;
-            r = (r >> c) | (r << (8 - c));
+            res = (res >> c) | (res << (8 - c));
             osm_src = compile_eflags(true);
-            osm_src |= (r >> 7) & 0x0001;
+            osm_src |= (res >> 7) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) << 4) & 0x0800;
+                osm_src |= ((s ^ res) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -1956,14 +1964,14 @@ int Free86::shift8(int src, int count) {
         c = shift8_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
-            r = (r << c) | (cf << (c - 1));
+            res = (res << c) | (cf << (c - 1));
             if (c > 1) {
-                r |= s >> (9 - c);
+                res |= s >> (9 - c);
             }
             osm_src = compile_eflags(true);
             osm_src |= (s >> (8 - c)) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) << 4) & 0x0800;
+                osm_src |= ((s ^ res) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -1973,14 +1981,14 @@ int Free86::shift8(int src, int count) {
         c = shift8_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
-            r = (r >> c) | (cf << (8 - c));
+            res = (res >> c) | (cf << (8 - c));
             if (c > 1) {
-                r |= s << (9 - c);
+                res |= s << (9 - c);
             }
             osm_src = compile_eflags(true);
             osm_src |= (s >> (c - 1)) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) << 4) & 0x0800;
+                osm_src |= ((s ^ res) << 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -1990,43 +1998,43 @@ int Free86::shift8(int src, int count) {
     case 6:
         c = count & 0x1f;
         if (c) {
-            osm_src = r << (c - 1);
-            osm_dst = r = ((r << c) << 24) >> 24;
+            osm_src = res << (c - 1);
+            osm_dst = res = ((res << c) << 24) >> 24;
             osm = 15;
         }
         break;
     case 5:
         c = count & 0x1f;
         if (c) {
-            osm_src = r >> (c - 1);
-            osm_dst = r = ((r >> c) << 24) >> 24;
+            osm_src = res >> (c - 1);
+            osm_dst = res = ((res >> c) << 24) >> 24;
             osm = 18;
         }
         break;
     case 7:
         c = count & 0x1f;
         if (c) {
-            r = (src << 24) >> 24;
-            osm_src = r >> (c - 1);
-            osm_dst = r = ((r >> c) << 24) >> 24;
+            res = (src << 24) >> 24;
+            osm_src = res >> (c - 1);
+            osm_dst = res = ((res >> c) << 24) >> 24;
             osm = 18;
         }
         break;
     }
-    return r;
+    return res;
 }
 int Free86::shift16(int src, int count) {
-    int c, cf, s, r;
-    s = r = src & 0xffff;
+    int c, cf, s, res;
+    s = res = src & 0xffff;
     switch (operation & 7) {
     case 0:
         if (count & 0x1f) {
             c = count & 0xf;
-            r = (r << c) | (r >> (16 - c));
+            res = (res << c) | (res >> (16 - c));
             osm_src = compile_eflags(true);
-            osm_src |= r & 0x0001;
+            osm_src |= res & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 4) & 0x0800;
+                osm_src |= ((s ^ res) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2035,11 +2043,11 @@ int Free86::shift16(int src, int count) {
     case 1:
         if (count & 0x1f) {
             c = count & 0xf;
-            r = (r >> c) | (r << (16 - c));
+            res = (res >> c) | (res << (16 - c));
             osm_src = compile_eflags(true);
-            osm_src |= (r >> 15) & 0x0001;
+            osm_src |= (res >> 15) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 4) & 0x0800;
+                osm_src |= ((s ^ res) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2049,14 +2057,14 @@ int Free86::shift16(int src, int count) {
         c = shift16_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
-            r = (r << c) | (cf << (c - 1));
+            res = (res << c) | (cf << (c - 1));
             if (c > 1) {
-                r |= s >> (17 - c);
+                res |= s >> (17 - c);
             }
             osm_src = compile_eflags(true);
             osm_src |= (s >> (16 - c)) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 4) & 0x0800;
+                osm_src |= ((s ^ res) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2066,14 +2074,14 @@ int Free86::shift16(int src, int count) {
         c = shift16_LUT[count & 0x1f];
         if (c) {
             cf = is_CF();
-            r = (r >> c) | (cf << (16 - c));
+            res = (res >> c) | (cf << (16 - c));
             if (c > 1) {
-                r |= s << (17 - c);
+                res |= s << (17 - c);
             }
             osm_src = compile_eflags(true);
             osm_src |= (s >> (c - 1)) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 4) & 0x0800;
+                osm_src |= ((s ^ res) >> 4) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2083,44 +2091,44 @@ int Free86::shift16(int src, int count) {
     case 6:
         c = count & 0x1f;
         if (c) {
-            osm_src = r << (c - 1);
-            osm_dst = r = ((r << c) << 16) >> 16;
+            osm_src = res << (c - 1);
+            osm_dst = res = ((res << c) << 16) >> 16;
             osm = 16;
         }
         break;
     case 5:
         c = count & 0x1f;
         if (c) {
-            osm_src = r >> (c - 1);
-            osm_dst = r = ((r >> c) << 16) >> 16;
+            osm_src = res >> (c - 1);
+            osm_dst = res = ((res >> c) << 16) >> 16;
             osm = 19;
         }
         break;
     case 7:
         c = count & 0x1f;
         if (c) {
-            r = (src << 16) >> 16;
-            osm_src = r >> (c - 1);
-            osm_dst = r = ((r >> c) << 16) >> 16;
+            res = (src << 16) >> 16;
+            osm_src = res >> (c - 1);
+            osm_dst = res = ((res >> c) << 16) >> 16;
             osm = 19;
         }
         break;
     }
-    return r;
+    return res;
 }
 int Free86::shift(uint32_t src, int count) {
-    uint32_t s, r;
+    uint32_t s, res;
     int c, cf;
-    s = r = src;
+    s = res = src;
     switch (operation & 7) {
     case 0:
         c = count & 0x1f;
         if (c) {
-            r = (r << c) | (r >> (32 - c));
+            res = (res << c) | (res >> (32 - c));
             osm_src = compile_eflags(true);
-            osm_src |= r & 0x0001;
+            osm_src |= res & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 20) & 0x0800;
+                osm_src |= ((s ^ res) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2129,11 +2137,11 @@ int Free86::shift(uint32_t src, int count) {
     case 1:
         c = count & 0x1f;
         if (c) {
-            r = (r >> c) | (r << (32 - c));
+            res = (res >> c) | (res << (32 - c));
             osm_src = compile_eflags(true);
-            osm_src |= (r >> 31) & 0x0001;
+            osm_src |= (res >> 31) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 20) & 0x0800;
+                osm_src |= ((s ^ res) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2143,14 +2151,14 @@ int Free86::shift(uint32_t src, int count) {
         c = count & 0x1f;
         if (c) {
             cf = is_CF();
-            r = (r << c) | (cf << (c - 1));
+            res = (res << c) | (cf << (c - 1));
             if (c > 1) {
-                r |= s >> (33 - c);
+                res |= s >> (33 - c);
             }
             osm_src = compile_eflags(true);
             osm_src |= (s >> (32 - c)) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 20) & 0x0800;
+                osm_src |= ((s ^ res) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2160,14 +2168,14 @@ int Free86::shift(uint32_t src, int count) {
         c = count & 0x1f;
         if (c) {
             cf = is_CF();
-            r = (r >> c) | (cf << (32 - c));
+            res = (res >> c) | (cf << (32 - c));
             if (c > 1) {
-                r |= s << (33 - c);
+                res |= s << (33 - c);
             }
             osm_src = compile_eflags(true);
             osm_src |= (s >> (c - 1)) & 0x0001;
             if (c == 1) {
-                osm_src |= ((s ^ r) >> 20) & 0x0800;
+                osm_src |= ((s ^ res) >> 20) & 0x0800;
             }
             osm_dst = ((osm_src >> 6) & 1) ^ 1;
             osm = 24;
@@ -2177,29 +2185,29 @@ int Free86::shift(uint32_t src, int count) {
     case 6:
         c = count & 0x1f;
         if (c) {
-            osm_src = r << (c - 1);
-            osm_dst = r = r << c;
+            osm_src = res << (c - 1);
+            osm_dst = res = res << c;
             osm = 17;
         }
         break;
     case 5:
         c = count & 0x1f;
         if (c) {
-            osm_src = r >> (c - 1);
-            osm_dst = r = r >> c;
+            osm_src = res >> (c - 1);
+            osm_dst = res = res >> c;
             osm = 20;
         }
         break;
     case 7:
         c = count & 0x1f;
         if (c) {
-            osm_src = (int) r >> (c - 1);
-            osm_dst = r = (int) r >> c;
+            osm_src = (int) res >> (c - 1);
+            osm_dst = res = (int) res >> c;
             osm = 20;
         }
         break;
     }
-    return r;
+    return res;
 }
 void Free86::aux_LDTR(int selector) {
     int dte_lower_dword, dte_upper_dword, index;
@@ -2593,7 +2601,9 @@ void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int ret
 void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
-    int cpl = this->cpl, es, cs, ss, ds, fs, gs;
+    int es, cs, ss, ds, fs, gs;
+    #pragma clang diagnostic ignored "-Wshadow"
+    int cpl = this->cpl;
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = get_addressmask(segs[2].flags);
@@ -3308,6 +3318,7 @@ void Free86::aux_BOUND() {
 }
 void Free86::aux_PUSHA16() {
     lax = SS_base + ((regs[4] - 16) & SS_mask);
+    #pragma clang diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st16_writable_cpl3(r);
@@ -3317,6 +3328,7 @@ void Free86::aux_PUSHA16() {
 }
 void Free86::aux_PUSHA() {
     lax = SS_base + ((regs[4] - 32) & SS_mask);
+    #pragma clang diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st_writable_cpl3(r);
@@ -3326,6 +3338,7 @@ void Free86::aux_PUSHA() {
 }
 void Free86::aux_POPA16() {
     lax = SS_base + (regs[4] & SS_mask);
+    #pragma clang diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             set_lower_word(reg, ld16_readonly_cpl3());
@@ -3336,6 +3349,7 @@ void Free86::aux_POPA16() {
 }
 void Free86::aux_POPA() {
     lax = SS_base + (regs[4] & SS_mask);
+    #pragma clang diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             regs[reg] = ld_readonly_cpl3();

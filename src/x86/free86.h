@@ -134,7 +134,7 @@ class Free86 {
     int tlb_size = 0x100000; // 1M entries per MT
     int tlb_hash; // LA ^ PA (by design, no necessity)
 
-    void tlb_update(uint32_t linear /*data*/, int physical /*key*/, int writable, int user) {
+    void tlb_update(uint32_t linear /*data*/, uint32_t physical /*key*/, int writable, int user) {
         tlb_hash = linear ^ physical; // poor man's XOR hash function
         uint32_t lat20 = linear >> 12; // PD and PT indices (top 20 bits of linear address)
         if (tlb_readonly_cplX[lat20] == -1) {
@@ -367,7 +367,7 @@ class Free86 {
     void set_lower_word(int reg, int word);
 
     void page_translation(int writable, int user);
-    void page_translation(int address, int writable, int user);
+    void page_translation(uint32_t address, int writable, int user);
 
     void segment_translation();
     void offset_to_linear(bool writable);

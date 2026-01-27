@@ -23,7 +23,7 @@ class PC {
     PC(int memory_size);
     ~PC();
 
-    int load(std::string path, int offset = 0);
+    long load(std::string path, int offset = 0);
     void setup();
     void cycle();
 
@@ -248,6 +248,7 @@ class I8259 {
 };
 class PIC {
   public:
+    #pragma clang diagnostic ignored "-Wshadow"
     int irq = 0;
     I8259 *pics[2];
     PIC() {
@@ -451,7 +452,7 @@ class Serial {
         send_char_from_fifo();
     }
     char print_fifo_pop() {
-        return print_fifo.pop();
+        return static_cast<char>(print_fifo.pop());
     }
     void set_irq(int x);
 };

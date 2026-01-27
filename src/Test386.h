@@ -23,15 +23,15 @@ class Test386 {
     ~Test386() {
         delete cpu;
     }
-    int load(std::string path, int offset) {
+    long load(std::string path, int offset) {
         FILE *f = fopen(path.c_str(), "rb");
         fseek(f, 0, SEEK_END);
-        const int size = ftell(f);
+        long size = ftell(f);
         fseek(f, 0, SEEK_SET);
         auto buffer = new uint8_t[size];
         auto _ = fread(buffer, size, 1, f);
-    
-        printf("load %d bytes at 0x%x\n", size, offset);
+
+        printf("load %ld bytes at 0x%x\n", size, offset);
         for (int i = 0; i < size; i++) {
             cpu->st8_direct(offset + i, buffer[i]);
         }
@@ -67,9 +67,9 @@ class Test386 {
                     std::cout << cpu->cycles << std::endl; // tell number of fedex'ed instructions
                     exit(0);
                 }
-            } catch (const Interrupt& i) {
+            } catch (const Interrupt& e) {
                 int mask = 1 << 6;
-                if ((32 > i.id) && (mask & (1 << i.id))) {
+                if ((32 > e.id) && (mask & (1 << e.id))) {
                     std::string status = compile_status_string();
                     int n, linear, physical;
                     linear = cpu->segs[1].base + cpu->eip; // EIP is offset of linear address
@@ -87,12 +87,12 @@ class Test386 {
                         memory += " " + hex((char) cpu->ld8_direct(physical + i));
                     }
                     std::cout
-                        << "interrupt id " << i.id
-                        << ", error code " << i.error_code
+                        << "interrupt id " << e.id
+                        << ", error code " << e.error_code
                         << std::endl << status
                         << std::endl << memory << std::endl;
                 }
-                interrupt = {i.id, i.error_code};
+                interrupt = {e.id, e.error_code};
             } catch (const char *m) {
                 std::cout << m << std::endl;
                 exit(1);

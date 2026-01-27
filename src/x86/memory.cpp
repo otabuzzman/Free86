@@ -129,7 +129,7 @@ void Free86::st16_writable_cplX(int word) {
 }
 void Free86::st_writable_cplX(int dword) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
-    if (tlb_hash | lax & 3) {
+    if ((tlb_hash | lax) & 3) {
         st16_writable_cplX(dword);
         lax += 2;
         st16_writable_cplX(dword >> 16);
@@ -235,14 +235,14 @@ void Free86::push(int dword) {
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 int Free86::pop16() {
-    int x = ld16_stack();
+    int res = ld16_stack();
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2) & SS_mask);
-    return x;
+    return res;
 }
 int Free86::pop() {
-    int x = ld_stack();
+    int res = ld_stack();
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4) & SS_mask);
-    return x;
+    return res;
 }
 int Free86::ld16_stack() {
     lax = SS_base + (regs[4] & SS_mask);

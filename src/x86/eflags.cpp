@@ -2,7 +2,9 @@
 
 bool Free86::is_CF() {
     bool f;
+    #pragma clang diagnostic ignored "-Wshadow"
     int osm;
+    #pragma clang diagnostic ignored "-Wshadow"
     uint32_t osm_dst;
     if (this->osm >= 25) {
         osm = ocm_preserved;
