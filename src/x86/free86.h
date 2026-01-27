@@ -427,20 +427,20 @@ class Free86 {
     void aux_JMPF(int selector, int address);
     void aux_JMPF_real__v86_mode(int selector, int address);
     void aux_JMPF_protected_mode(int selector, int address);
-    void aux_CALLF(bool is_operand_size32, int selector, int address, int return_address);
-    void aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address);
-    void aux_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address);
-    void return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
-    void return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
+    void aux_CALLF(bool o32, int selector, int address, int return_address);
+    void aux_CALLF_real__v86_mode(bool o32, int selector, int address, int return_address);
+    void aux_CALLF_protected_mode(bool o32, int selector, int address, int return_address);
+    void return_real__v86_mode(bool o32, bool is_iret, int return_offset);
+    void return_protected_mode(bool o32, bool is_iret, int return_offset);
     void zero_segment_register(int sreg, int privilege_level);
-    void aux_RETF(bool is_operand_size32, int return_offset);
+    void aux_RETF(bool o32, int return_offset);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
     void raise_interrupt_real__v86_mode(int id, int is_sw, int return_address);
     void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
-    void aux_IRET(bool is_operand_size32);
+    void aux_IRET(bool o32);
 
-    void aux_LAR_LSL(bool is_operand_size32, bool is_lsl);
+    void aux_LAR_LSL(bool o32, bool is_lsl);
     int ld_descriptor_flags(int selector, bool is_lsl);
     void aux_VERR_VERW(int selector, bool is_verw);
     void aux_ARPL();

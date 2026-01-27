@@ -2329,16 +2329,16 @@ void Free86::aux_JMPF_protected_mode(int selector, int address) {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
-void Free86::aux_CALLF(bool is_operand_size32, int selector, int address, int return_address) {
+void Free86::aux_CALLF(bool o32, int selector, int address, int return_address) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        aux_CALLF_real__v86_mode(is_operand_size32, selector, address, return_address);
+        aux_CALLF_real__v86_mode(o32, selector, address, return_address);
     } else {
-        aux_CALLF_protected_mode(is_operand_size32, selector, address, return_address);
+        aux_CALLF_protected_mode(o32, selector, address, return_address);
     }
 }
-void Free86::aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address) {
+void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int address, int return_address) {
     int esp = regs[4];
-    if (is_operand_size32) {
+    if (o32) {
         esp = esp - 4;
         lax = SS_base + (esp & SS_mask);
         st_writable_cpl3(segs[1].selector);
@@ -2359,8 +2359,8 @@ void Free86::aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int 
     segs[1].base = selector << 4;
     update_SSB();
 }
-void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address) {
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
+void Free86::aux_CALLF_protected_mode(bool o32, int selector, int address, int return_address) {
+    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type, gate32;
     int offset, count;
     int ss, esp, start_esp, spl;
     // int Ue, Ve;
@@ -2398,7 +2398,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         esp = start_esp;
         SS_mask = get_addressmask(segs[2].flags);
         SS_base = segs[2].base;
-        if (is_operand_size32) {
+        if (o32) {
             esp = esp - 4;
             lax = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[1].selector);
@@ -2429,13 +2429,13 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         case 5: // task gate
         case 9: // 32 bit task state segment
             throw "fatal: unsupported TSS or task gate in CALL";
-        case 4:  // call gate
-        case 12: // 386 call gate
+        case 4:  // 32 bit call gate
+        case 12: // 32 bit call gate
             break;
         default:
             abort(13, selector & 0xfffc);
         }
-        is_operand_size32 = descriptor_type >> 3;
+        gate32 = descriptor_type >> 3;
         if (dpl < cpl || dpl < rpl) {
             abort(13, selector & 0xfffc);
         }
@@ -2495,7 +2495,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             // Ve = segs[2].base;
             SS_mask = get_addressmask(dte_upper_dword);
             SS_base = compile_dte_base(dte_lower_dword, dte_upper_dword);
-            if (is_operand_size32) {
+            if (gate32) {
                 esp = esp - 4;
                 lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(segs[2].selector);
@@ -2531,7 +2531,7 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
             SS_mask = get_addressmask(segs[2].flags);
             SS_base = segs[2].base;
         }
-        if (is_operand_size32) {
+        if (gate32) {
             esp = esp - 4;
             lax = SS_base + (esp & SS_mask);
             st_writable_cplX(segs[1].selector);
@@ -2553,12 +2553,12 @@ void Free86::aux_CALLF_protected_mode(bool is_operand_size32, int selector, int 
         eip = offset, far = far_start = 0;
     }
 }
-void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset) {
+void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = 0xffff;
-    if (is_operand_size32 == 1) {
+    if (o32) {
         lax = SS_base + (esp & SS_mask);
         stack_eip = ld_readonly_cplX();
         esp = esp + 4;
@@ -2596,13 +2596,13 @@ void Free86::return_real__v86_mode(bool is_operand_size32, bool is_iret, int ret
         } else {
             mask = 0x00000100 | 0x00000200 | 0x00003000 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         }
-        if (is_operand_size32 == 0) {
+        if (o32 == 0) {
             mask &= 0xffff;
         }
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset) {
+void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     int es, cs, ss, ds, fs, gs;
@@ -2611,7 +2611,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     esp = regs[4];
     SS_base = segs[2].base;
     SS_mask = get_addressmask(segs[2].flags);
-    if (is_operand_size32 == 1) {
+    if (o32) {
         lax = SS_base + (esp & SS_mask);
         stack_eip = ld_readonly_cplX();
         esp = esp + 4;
@@ -2707,7 +2707,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
     if (rpl == cpl) {
         set_segment_register(1, cs, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
     } else {
-        if (is_operand_size32 == 1) {
+        if (o32) {
             lax = SS_base + (esp & SS_mask);
             stack_esp = ld_readonly_cplX();
             esp = esp + 4;
@@ -2768,7 +2768,7 @@ void Free86::return_protected_mode(bool is_operand_size32, bool is_iret, int ret
         if (cpl <= iopl) {
             mask |= 0x00000200;
         }
-        if (is_operand_size32 == 0) {
+        if (!o32) {
             mask &= 0xffff;
         }
         set_EFLAGS(stack_eflags, mask);
@@ -2787,11 +2787,11 @@ void Free86::zero_segment_register(int sreg, int privilege_level) {
         }
     }
 }
-void Free86::aux_RETF(bool is_operand_size32, int return_offset) {
+void Free86::aux_RETF(bool o32, int return_offset) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        return_real__v86_mode(is_operand_size32, 0, return_offset);
+        return_real__v86_mode(o32, 0, return_offset);
     } else {
-        return_protected_mode(is_operand_size32, 0, return_offset);
+        return_protected_mode(o32, 0, return_offset);
     }
 }
 void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
@@ -2853,7 +2853,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     dte_upper_dword = ld_readonly_cplX();
     descriptor_type = (dte_upper_dword >> 8) & 0x1f;
     switch (descriptor_type) {
-    case 5: // 16/ 32 bit task gate
+    case 5: // task gate
     case 6: // 16 bit interrupt gate
     case 7: // 16 bit trap gate
         throw "fatal: unsupported gate type";
@@ -3028,7 +3028,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     }
     eflags &= ~(0x00000100 | 0x00004000 | 0x00010000 | 0x00020000);
 }
-void Free86::aux_IRET(bool is_operand_size32) {
+void Free86::aux_IRET(bool o32) {
     if (!is_protected() || (eflags & 0x00020000)) {
         if (eflags & 0x00020000) {
             iopl = (eflags >> 12) & 3;
@@ -3036,16 +3036,16 @@ void Free86::aux_IRET(bool is_operand_size32) {
                 abort(13);
             }
         }
-        return_real__v86_mode(is_operand_size32, 1, 0);
+        return_real__v86_mode(o32, 1, 0);
     } else {
         if (eflags & 0x00004000) {
             throw "fatal: unsupported EFLAGS.NT == 1 in IRET";
         } else {
-            return_protected_mode(is_operand_size32, 1, 0);
+            return_protected_mode(o32, 1, 0);
         }
     }
 }
-void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
+void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     int selector;
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
@@ -3064,7 +3064,7 @@ void Free86::aux_LAR_LSL(bool is_operand_size32, bool is_lsl) {
         osm_src &= ~0x0040;
     } else {
         osm_src |= 0x0040;
-        if (is_operand_size32) {
+        if (o32) {
             regs[reg] = x;
         } else {
             set_lower_word(reg, x);
