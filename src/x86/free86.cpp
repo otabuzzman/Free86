@@ -801,7 +801,7 @@ void Free86::set_CR0(int bits) {
 }
 void Free86::set_CR3(int bits) {
     // if in paging mode must flush tlb
-    if (bits & (1 << 31)) {
+    if (cr0 & (1 << 31)) {
         tlb_flush_all();
     }
     cr3 = bits;
