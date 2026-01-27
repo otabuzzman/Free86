@@ -121,7 +121,7 @@ class Free86 {
    mappings stored in the tables, effectively representing the logical
    size of the TLB.
  */
-    int tlb_pages[2048]{0};
+    uint32_t tlb_pages[2048]{0};
     int tlb_pages_count = 0;
     // mapping tables
     int *tlb_readonly_cplX; // supervisor, any CPL
