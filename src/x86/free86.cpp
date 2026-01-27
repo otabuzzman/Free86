@@ -1185,7 +1185,8 @@ void Free86::set_segment_register_real__v86(int sreg, int selector) {
 }
 void Free86::set_segment_register_protected(int sreg, int selector) {
     SegmentRegister xdt;
-    int dte_lower_dword, dte_upper_dword, index;
+    int dte_lower_dword, dte_upper_dword;
+    uint32_t dti;
     if ((selector & 0xfffc) == 0) { // null selector
         if (sreg == 2) {
             abort(13, 0);
@@ -1197,11 +1198,11 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
         } else {
             xdt = gdt;
         }
-        index = selector & ~7;
-        if ((index + 7) > xdt.limit) {
+        dti = selector & ~7;
+        if ((dti + 7) > xdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        lax = xdt.base + index;
+        lax = xdt.base + dti;
         dte_lower_dword = ld_readonly_cplX();
         lax += 4;
         dte_upper_dword = ld_readonly_cplX();
@@ -1282,7 +1283,8 @@ int Free86::is_segment_accessible(int selector, bool writable) {
 }
 void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     SegmentRegister xdt;
-    int dte_lower_dword, dte_upper_dword, dti;
+    int dte_lower_dword, dte_upper_dword;
+    uint32_t dti;
     descriptor_table_entry[0] = 0;
     descriptor_table_entry[1] = 0;
     if (selector & 0x4) {
@@ -1572,8 +1574,8 @@ void Free86::aux_DIV8(int divisor) {
     set_lower_word(0, (q & 0xff) | (s << 8));
 }
 void Free86::aux_DIV16(int divisor) {
-    int d, a, q, s;
-    d = divisor & 0xffff;
+    int a, q, s;
+    uint32_t d = divisor & 0xffff;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     uint32_t au = a;
     if ((au >> 16) >= d) {
@@ -2210,7 +2212,8 @@ int Free86::shift(uint32_t src, int count) {
     return res;
 }
 void Free86::aux_LDTR(int selector) {
-    int dte_lower_dword, dte_upper_dword, index;
+    int dte_lower_dword, dte_upper_dword;
+    uint32_t dti;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
         ldt.base = 0;
@@ -2219,11 +2222,11 @@ void Free86::aux_LDTR(int selector) {
         if (selector & 0x4) {
             abort(13, selector & 0xfffc);
         }
-        index = selector & ~7;
-        if ((index + 7) > gdt.limit) {
+        dti = selector & ~7;
+        if ((dti + 7) > gdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        lax = gdt.base + index;
+        lax = gdt.base + dti;
         dte_lower_dword = ld_readonly_cplX();
         lax += 4;
         dte_upper_dword = ld_readonly_cplX();
@@ -2238,7 +2241,8 @@ void Free86::aux_LDTR(int selector) {
     ldt.selector = selector;
 }
 void Free86::aux_LTR(int selector) {
-    int dte_lower_dword, dte_upper_dword, index, descriptor_type;
+    int dte_lower_dword, dte_upper_dword, descriptor_type;
+    uint32_t dti;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
         tr.base = 0;
@@ -2248,11 +2252,11 @@ void Free86::aux_LTR(int selector) {
         if (selector & 0x4) {
             abort(13, selector & 0xfffc);
         }
-        index = selector & ~7;
-        if ((index + 7) > gdt.limit) {
+        dti = selector & ~7;
+        if ((dti + 7) > gdt.limit) {
             abort(13, selector & 0xfffc);
         }
-        lax = gdt.base + index;
+        lax = gdt.base + dti;
         dte_lower_dword = ld_readonly_cplX();
         lax += 4;
         dte_upper_dword = ld_readonly_cplX();

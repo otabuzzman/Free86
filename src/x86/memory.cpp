@@ -191,7 +191,7 @@ void Free86::st8_direct(int address, int byte) {
 }
 void Free86::st8_direct(int address, std::string data) {
     auto s = data.c_str();
-    auto l = data.length();
+    int l = static_cast<int>(data.length());
     for (int i = 0; i < l; i++) {
         st8_direct(address++, s[i] & 0xff);
     }

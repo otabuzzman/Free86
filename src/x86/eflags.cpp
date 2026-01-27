@@ -1,5 +1,7 @@
 #include "free86.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wsign-compare" // osm_dst, osm_src
 bool Free86::is_CF() {
     bool f;
     #pragma clang diagnostic ignored "-Wshadow"
@@ -83,6 +85,7 @@ bool Free86::is_CF() {
     }
     return f;
 }
+#pragma clang diagnostic pop
 int Free86::is_PF() {
     if (osm == 24) {
         return (osm_src >> 2) & 1;
@@ -262,6 +265,7 @@ bool Free86::is_BE() { // `below' for signed comparison, PM p. 317
         f = ((osm_dst + osm_src) & 0xffff) <= (osm_src & 0xffff);
         break;
     case 8:
+        #pragma clang diagnostic ignored "-Wsign-compare"
         f = ((uint32_t) osm_dst + osm_src) <= osm_src;
         break;
     case 24:
