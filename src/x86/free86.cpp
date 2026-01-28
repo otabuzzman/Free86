@@ -3091,6 +3091,7 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
             if (dpl < cpl || dpl < rpl) {
                 return -1;
             }
+        }
     } else { // system segment
         descriptor_type = (dte_upper_dword >> 8) & 0xf;
         switch (descriptor_type) {
