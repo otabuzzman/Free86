@@ -141,8 +141,9 @@ func free86PagedMemoryAccess() {
     free86.lax -= 4
     #expect(memory.ld(from: 0x104741) == 0xDEADC0DE)
     #expect(memory.ld(from: 0x104745) == 0xBEEFCAFE)
-    #expect(free86.lax == linear + 0x30)
-    /// load qword linear
+    /// store qword linear/ load physical
+    free86.lax += 0x10
+    try! free86.st64WritableCplX(qword: 0xBEEFCAFE_DEADC0DE)
     #expect(try! free86.ld64ReadonlyCplX() == 0xBEEFCAFE_DEADC0DE)
-    #expect(free86.lax == linear + 0x30)
+    #expect(free86.lax == linear + 0x40)
 }

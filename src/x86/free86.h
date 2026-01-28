@@ -4,12 +4,22 @@
 #include <fstream>
 #include <vector>
 
-typedef struct SegmentRegister {
+struct SegmentRegister {
     int selector;
     uint32_t base;
     uint32_t limit;
     int flags;
-} SegmentRegister;
+    SegmentRegister() : selector(0), base(0), limit(0), flags(0) {}
+    SegmentRegister(int selector, uint32_t base, uint32_t limit, int flags)
+        : selector(selector), base(base), limit(limit), flags(flags) {}
+    SegmentRegister(int selector, uint64_t descriptor)
+        : selector(selector),
+          base(((descriptor >> 16) & 0x0000ffff) |
+               ((descriptor >> 16) & 0x00ff0000) |
+               ((descriptor >> 32) & 0xff000000)),
+          limit((descriptor & 0x0ffff) | ((descriptor >> 32) & 0xf0000)),
+          flags(descriptor >> 32) {}
+};
 
 typedef struct Interrupt {
     int id; // 0-31 termed `Exceptions'
@@ -498,7 +508,8 @@ class Free86 {
     // memory.cpp
     int ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
     int ld16_readonly_cplX();  // ...word
-    int ld_readonly_cplX();  // ...dword from current linear address
+    int ld_readonly_cplX();  // ...dword
+    uint64_t ld64_readonly_cplX();  // ...qword from current linear address
 
     int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
     int ld16_readonly_cpl3(); // ...word
@@ -510,16 +521,19 @@ class Free86 {
 
     void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
     void st16_writable_cplX(int word); // ...word
-    void st_writable_cplX(int dword); // ...dword at current linear address
+    void st_writable_cplX(int dword); // ...dword
+    void st64_writable_cplX(uint64_t qword); // ...qword at current linear address
 
     void st8_writable_cpl3(int byte); // in user WR memory: store byte
     void st16_writable_cpl3(int word); // ...word
     void st_writable_cpl3(int dword); // ...dword at current linear address
 
-    int ld16_direct(int address);
-    int ld_direct(int address); // read/ write dword at memory address, bypass TLB
+    int ld16_direct(int address); // read/ write at memory address, bypass TLB
+    int ld_direct(int address);
+    uint64_t ld64_direct(int address);
     void st16_direct(int address, int byte);
     void st_direct(int address, int dword);
+    void st64_direct(int address, uint64_t qword);
 
     int fetch_data8(); // read byte...
     int fetch_data16(); // ...word...

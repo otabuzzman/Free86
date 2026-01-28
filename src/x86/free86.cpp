@@ -1304,7 +1304,7 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     descriptor_table_entry[1] = dte_upper_dword;
 }
 void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
-    int type, offset, is_386, dte_lower_dword, dte_upper_dword;
+    int type, offset, dte_lower_dword, dte_upper_dword, gate32;
     descriptor_table_entry[0] = 0;
     descriptor_table_entry[1] = 0;
     if (!(tr.flags & (1 << 15))) { // present (P bit)
@@ -1314,13 +1314,13 @@ void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_leve
     if ((type & 7) != 1) { // 0000_10B1 (B bit)
         abort(13, tr.selector & 0xfffc);
     }
-    is_386 = type >> 3; // type 1/ 9 == 286/ 386 TSS (Inroduction to the 80386, p. 50)
-    offset = (privilege_level * 4 + 2) << is_386; // offset of privileged SP in TSS
-    if (offset + (4 << is_386) - 1 > tr.limit) {
+    gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
+    offset = (privilege_level * 4 + 2) << gate32; // offset of privileged SP in TSS
+    if (offset + (4 << gate32) - 1 > tr.limit) {
         abort(10, tr.selector & 0xfffc);
     }
     lax = tr.base + offset;
-    if (is_386 == 0) {
+    if (!gate32) {
         dte_upper_dword = ld16_readonly_cplX(); // privileged SP
         lax += 2;
     } else {
@@ -2827,7 +2827,7 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
 void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
-    int selector, offset, st_error_code, is_interlevel, is_386;
+    int selector, offset, st_error_code, is_interlevel, gate32;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
     st_error_code = 0;
@@ -2932,8 +2932,8 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     } else {
         abort(13, selector & 0xfffc);
     }
-    is_386 = descriptor_type >> 3;
-    if (is_386 == 1) {
+    gate32 = descriptor_type >> 3;
+    if (gate32) {
         if (is_interlevel) {
             if (eflags & 0x00020000) {
                 esp = esp - 4;

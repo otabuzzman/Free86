@@ -33,7 +33,7 @@ extension Free86: PagedMemory {
     }
     func ld64ReadonlyCplX() throws -> QWord {
         let hash = tlbReadonlyCplX[lax.pageTablesIndices]
-        if (((hash | Int(lax)) & 3) != 0) {
+        if (((hash | Int(lax)) & 7) != 0) {
             var qword: QWord = 0
             qword = QWord(try ldReadonlyCplX())
             lax += 4
@@ -147,12 +147,23 @@ extension Free86: PagedMemory {
     func stWritableCplX(dword: DWord) throws {
         let hash = tlbWritableCplX[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
-            try st16WritableCplX(word: Word(dword))
+            try st16WritableCplX(word: Word(truncatingIfNeeded: dword))
             lax += 2
             try st16WritableCplX(word: Word(dword >> 16))
             lax -= 2
         } else {
             memory.st(at: lax ^ DWord(hash), dword: dword)
+        }
+    }
+    func st64WritableCplX(qword: QWord) throws {
+        let hash = tlbWritableCplX[lax.pageTablesIndices]
+        if (((hash | Int(lax)) & 7) != 0) {
+            try stWritableCplX(dword: DWord(truncatingIfNeeded: qword))
+            lax += 4
+            try stWritableCplX(dword: DWord(qword >> 32))
+            lax -= 4
+        } else {
+            memory.st64(at: lax ^ DWord(hash), qword: qword)
         }
     }
     func st8WritableCpl3(byte: Byte) throws {
