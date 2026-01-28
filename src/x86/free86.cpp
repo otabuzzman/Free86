@@ -45,19 +45,19 @@ void Free86::reset() {
     throw Interrupt{id, error_code};
 }
 void Free86::update_SSB() {
-    CS_base = segs[1].base;
-    if (segs[1].flags & (1 << 22)) { // D: default address and operand size 32 bit
+    CS_base = segs[1].shadow.base;
+    if (segs[1].shadow.flags & (1 << 22)) { // D: default address and operand size 32 bit
         ipr_default = 0;
     } else {
         ipr_default = 0x0100 | 0x0080;
     }
-    SS_base = segs[2].base;
-    if (segs[2].flags & (1 << 22)) { // B: 4 GB stack segment size
+    SS_base = segs[2].shadow.base;
+    if (segs[2].shadow.flags & (1 << 22)) { // B: 4 GB stack segment size
         SS_mask = -1;
     } else {
         SS_mask = 0xffff;
     }
-    x86_64_long_mode = (((segs[0].base | CS_base | SS_base | segs[3].base) == 0) && SS_mask == -1);
+    x86_64_long_mode = (((segs[0].shadow.base | CS_base | SS_base | segs[3].shadow.base) == 0) && SS_mask == -1);
 }
 void Free86::fetch_opcode() {
     eip = eip + far - far_start;
@@ -1028,7 +1028,7 @@ void Free86::segment_translation() {
         } else {
             sreg--;
         }
-        lax = lax + segs[sreg].base;
+        lax = lax + segs[sreg].shadow.base;
         return;
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -1113,7 +1113,7 @@ void Free86::segment_translation() {
     } else {
             sreg--;
         }
-    lax = lax + segs[sreg].base;
+    lax = lax + segs[sreg].shadow.base;
     return;
 }
 void Free86::offset_to_linear(bool writable) {
@@ -1137,19 +1137,19 @@ void Free86::offset_to_linear(bool writable) {
     }
     // type checking
     if (sreg == 1) { // CS
-        type_notok = writable || !(segs[sreg].flags & (1 << 9));
+        type_notok = writable || !(segs[sreg].shadow.flags & (1 << 9));
     } else { // data segment
-        type_notok = writable && !(segs[sreg].flags & (1 << 9));
+        type_notok = writable && !(segs[sreg].shadow.flags & (1 << 9));
     }
     if (type_notok) {
         abort(13, 0);
     }
-    la = segs[sreg].base + la;
+    la = segs[sreg].shadow.base + la;
     // limit checking
-    if (segs[sreg].flags & (1 << 10)) { // expand-down segment
-        limit_notok = la < (uint64_t) segs[sreg].base + segs[sreg].limit + 1;
+    if (segs[sreg].shadow.flags & (1 << 10)) { // expand-down segment
+        limit_notok = la < (uint64_t) segs[sreg].shadow.base + segs[sreg].shadow.limit + 1;
     } else {
-        limit_notok = la > (uint64_t) segs[sreg].base + segs[sreg].limit - (stride - 1);
+        limit_notok = la > (uint64_t) segs[sreg].shadow.base + segs[sreg].shadow.limit - (stride - 1);
     }
     if (limit_notok) {
         if (sreg == 2) {
@@ -1179,8 +1179,8 @@ void Free86::set_segment_register_real__v86(int sreg, int selector) {
         set_segment_register(sreg, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
     } else { // real mode
         segs[sreg].selector = selector;
-        segs[sreg].base = selector << 4;
-        segs[sreg].limit = 0xffff;
+        segs[sreg].shadow.base = selector << 4;
+        segs[sreg].shadow.limit = 0xffff;
     }
 }
 void Free86::set_segment_register_protected(int sreg, int selector) {
@@ -1199,10 +1199,10 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
             xdt = gdt;
         }
         dti = selector & ~7;
-        if ((dti + 7) > xdt.limit) {
+        if ((dti + 7) > xdt.shadow.limit) {
             abort(13, selector & 0xfffc);
         }
-        lax = xdt.base + dti;
+        lax = xdt.shadow.base + dti;
         dte_lower_dword = ld_readonly_cplX();
         lax += 4;
         dte_upper_dword = ld_readonly_cplX();
@@ -1293,10 +1293,10 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
         xdt = gdt;
     }
     dti = selector & ~7;
-    if ((dti + 7) > xdt.limit) {
+    if ((dti + 7) > xdt.shadow.limit) {
         return;
     }
-    lax = xdt.base + dti;
+    lax = xdt.shadow.base + dti;
     dte_lower_dword = ld_readonly_cplX();
     lax += 4;
     dte_upper_dword = ld_readonly_cplX();
@@ -1307,19 +1307,19 @@ void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_leve
     int type, offset, dte_lower_dword, dte_upper_dword, gate32;
     descriptor_table_entry[0] = 0;
     descriptor_table_entry[1] = 0;
-    if (!(tr.flags & (1 << 15))) { // present (P bit)
+    if (!(tr.shadow.flags & (1 << 15))) { // present (P bit)
         abort(11, tr.selector & 0xfffc);
     }
-    type = (tr.flags >> 8) & 0xf;
+    type = (tr.shadow.flags >> 8) & 0xf;
     if ((type & 7) != 1) { // 0000_10B1 (B bit)
         abort(13, tr.selector & 0xfffc);
     }
     gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
     offset = (privilege_level * 4 + 2) << gate32; // offset of privileged SP in TSS
-    if (offset + (4 << gate32) - 1 > tr.limit) {
+    if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
         abort(10, tr.selector & 0xfffc);
     }
-    lax = tr.base + offset;
+    lax = tr.shadow.base + offset;
     if (!gate32) {
         dte_upper_dword = ld16_readonly_cplX(); // privileged SP
         lax += 2;
@@ -2216,17 +2216,17 @@ void Free86::aux_LDTR(int selector) {
     uint32_t dti;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
-        ldt.base = 0;
-        ldt.limit = 0;
+        ldt.shadow.base = 0;
+        ldt.shadow.limit = 0;
     } else {
         if (selector & 0x4) {
             abort(13, selector & 0xfffc);
         }
         dti = selector & ~7;
-        if ((dti + 7) > gdt.limit) {
+        if ((dti + 7) > gdt.shadow.limit) {
             abort(13, selector & 0xfffc);
         }
-        lax = gdt.base + dti;
+        lax = gdt.shadow.base + dti;
         dte_lower_dword = ld_readonly_cplX();
         lax += 4;
         dte_upper_dword = ld_readonly_cplX();
@@ -2245,18 +2245,18 @@ void Free86::aux_LTR(int selector) {
     uint32_t dti;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
-        tr.base = 0;
-        tr.limit = 0;
-        tr.flags = 0;
+        tr.shadow.base = 0;
+        tr.shadow.limit = 0;
+        tr.shadow.flags = 0;
     } else {
         if (selector & 0x4) {
             abort(13, selector & 0xfffc);
         }
         dti = selector & ~7;
-        if ((dti + 7) > gdt.limit) {
+        if ((dti + 7) > gdt.shadow.limit) {
             abort(13, selector & 0xfffc);
         }
-        lax = gdt.base + dti;
+        lax = gdt.shadow.base + dti;
         dte_lower_dword = ld_readonly_cplX();
         lax += 4;
         dte_upper_dword = ld_readonly_cplX();
@@ -2283,7 +2283,7 @@ void Free86::aux_JMPF(int selector, int offset) {
 void Free86::aux_JMPF_real__v86_mode(int selector, int offset) {
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
-    segs[1].base = selector << 4;
+    segs[1].shadow.base = selector << 4;
     update_SSB();
 }
 void Free86::aux_JMPF_protected_mode(int selector, int offset) {
@@ -2356,7 +2356,7 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int re
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
-    segs[1].base = selector << 4;
+    segs[1].shadow.base = selector << 4;
     update_SSB();
 }
 void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int return_address) {
@@ -2396,8 +2396,8 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             abort(11, selector & 0xfffc);
         }
         esp = start_esp;
-        SS_mask = get_addressmask(segs[2].flags);
-        SS_base = segs[2].base;
+        SS_mask = get_addressmask(segs[2].shadow.flags);
+        SS_base = segs[2].shadow.base;
         if (o32) {
             esp = esp - 4;
             lax = SS_base + (esp & SS_mask);
@@ -2491,8 +2491,8 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             if (!(dte_upper_dword & (1 << 15))) {
                 abort(10, ss & 0xfffc);
             }
-            // Ue = get_addressmask(segs[2].flags);
-            // Ve = segs[2].base;
+            // Ue = get_addressmask(segs[2].shadow.flags);
+            // Ve = segs[2].shadow.base;
             SS_mask = get_addressmask(dte_upper_dword);
             SS_base = compile_dte_base(dte_lower_dword, dte_upper_dword);
             if (gate32) {
@@ -2528,8 +2528,8 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             set_segment_register(2, ss, SS_base, compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
         } else {
             esp = start_esp;
-            SS_mask = get_addressmask(segs[2].flags);
-            SS_base = segs[2].base;
+            SS_mask = get_addressmask(segs[2].shadow.flags);
+            SS_base = segs[2].shadow.base;
         }
         if (gate32) {
             esp = esp - 4;
@@ -2556,7 +2556,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
 void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
-    SS_base = segs[2].base;
+    SS_base = segs[2].shadow.base;
     SS_mask = 0xffff;
     if (o32) {
         lax = SS_base + (esp & SS_mask);
@@ -2586,7 +2586,7 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
     }
     regs[4] = (regs[4] & ~SS_mask) | ((esp + return_offset) & SS_mask);
     segs[1].selector = cs;
-    segs[1].base = cs << 4;
+    segs[1].shadow.base = cs << 4;
     update_SSB();
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
@@ -2609,8 +2609,8 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     #pragma GCC diagnostic ignored "-Wshadow"
     int cpl = this->cpl;
     esp = regs[4];
-    SS_base = segs[2].base;
-    SS_mask = get_addressmask(segs[2].flags);
+    SS_base = segs[2].shadow.base;
+    SS_mask = get_addressmask(segs[2].shadow.flags);
     if (o32) {
         lax = SS_base + (esp & SS_mask);
         stack_eip = ld_readonly_cplX();
@@ -2779,7 +2779,7 @@ void Free86::zero_segment_register(int sreg, int privilege_level) {
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
     }
-    dte_upper_dword = segs[sreg].flags;
+    dte_upper_dword = segs[sreg].shadow.flags;
     dpl = (dte_upper_dword >> 13) & 3;
     if (!(dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 10))) {
         if (dpl < privilege_level) {
@@ -2803,10 +2803,10 @@ void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, int r
 }
 void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_address) {
     int selector, offset, esp;
-    if (id * 4 + 3 > idt.limit) {
+    if (id * 4 + 3 > idt.shadow.limit) {
         abort(13, id * 8 + 2);
     }
-    lax = idt.base + (id << 2);
+    lax = idt.shadow.base + (id << 2);
     offset = ld16_readonly_cplX();
     lax = lax + 2;
     selector = ld16_readonly_cplX();
@@ -2823,7 +2823,7 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
-    segs[1].base = selector << 4;
+    segs[1].shadow.base = selector << 4;
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
 void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
@@ -2844,10 +2844,10 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
             break;
         }
     }
-    if (id * 8 + 7 > idt.limit) {
+    if (id * 8 + 7 > idt.shadow.limit) {
         abort(13, id * 8 + 2);
     }
-    lax = idt.base + id * 8;
+    lax = idt.shadow.base + id * 8;
     dte_lower_dword = ld_readonly_cplX();
     lax += 4;
     dte_upper_dword = ld_readonly_cplX();
@@ -2925,8 +2925,8 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
             abort(13, gate_selector & 0xfffc);
         }
         dpl = cpl;
-        SS_mask = get_addressmask(segs[2].flags);
-        SS_base = segs[2].base;
+        SS_mask = get_addressmask(segs[2].shadow.flags);
+        SS_base = segs[2].shadow.base;
         esp = regs[4];
         is_interlevel = 0;
     } else {

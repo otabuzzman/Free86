@@ -4,22 +4,35 @@
 #include <fstream>
 #include <vector>
 
-struct SegmentRegister {
-    int selector;
+typedef struct SegmentDescriptor {
     uint32_t base;
     uint32_t limit;
     int flags;
-    SegmentRegister() : selector(0), base(0), limit(0), flags(0) {}
-    SegmentRegister(int selector, uint32_t base, uint32_t limit, int flags)
-        : selector(selector), base(base), limit(limit), flags(flags) {}
-    SegmentRegister(int selector, uint64_t descriptor)
-        : selector(selector),
-          base(((descriptor >> 16) & 0x0000ffff) |
+    SegmentDescriptor(uint32_t base, uint32_t limit, int flags)
+        : base(base), limit(limit), flags(flags) {}
+    SegmentDescriptor(uint64_t descriptor)
+        : base(((descriptor >> 16) & 0x0000ffff) |
                ((descriptor >> 16) & 0x00ff0000) |
                ((descriptor >> 32) & 0xff000000)),
-          limit((descriptor & 0x0ffff) | ((descriptor >> 32) & 0xf0000)),
-          flags(descriptor >> 32) {}
-};
+          limit(((descriptor >> 32) & 0x000f0000) | (descriptor & 0xffff)),
+          flags((descriptor >> 32) & 0x00f0ff00) {}
+    uint64_t qword() {
+        (static_cast<uint64_t>(base) & 0x0000ffff) << 16 |
+        (static_cast<uint64_t>(base) & 0x00ff0000) << 16 |
+        (static_cast<uint64_t>(base) & 0xff000000) << 32 |
+        (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff) |
+        (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32 |
+    }
+} SegmentDescriptor;
+
+typedef struct SegmentRegister {
+    int selector;
+    SegmentDescriptor shadow;
+    SegmentRegister(int selector, SegmentDescriptor shadow)
+        : selector(selector), shadow(shadow) {}
+    SegmentRegister(int selector, uint32_t base, uint32_t limit, int flags)
+        : shadow(SegmentDescriptor(base, limit, flags)) {}
+} SegmentRegister;
 
 typedef struct Interrupt {
     int id; // 0-31 termed `Exceptions'
@@ -308,8 +321,8 @@ class Free86 {
    Variables in the segments state block (SSB) provide shorthand
    access to frequently used segment data.
  */
-    int CS_base; // shortcut for segs[1].base
-    int SS_base; // shortcut for segs[2].base
+    int CS_base; // shortcut for segs[1].shadow.base
+    int SS_base; // shortcut for segs[2].shadow.base
     int SS_mask; // 16/ 32 bit address size mask for SS (from descriptor)
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
