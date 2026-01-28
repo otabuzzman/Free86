@@ -17,21 +17,22 @@ typedef struct SegmentDescriptor {
           limit(((descriptor >> 32) & 0x000f0000) | (descriptor & 0xffff)),
           flags((descriptor >> 32) & 0x00f0ff00) {}
     uint64_t qword() {
-        (static_cast<uint64_t>(base) & 0x0000ffff) << 16 |
-        (static_cast<uint64_t>(base) & 0x00ff0000) << 16 |
-        (static_cast<uint64_t>(base) & 0xff000000) << 32 |
-        (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff) |
-        (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32 |
+        return ((static_cast<uint64_t>(base) & 0x0000ffff) << 16 |
+                (static_cast<uint64_t>(base) & 0x00ff0000) << 16 |
+                (static_cast<uint64_t>(base) & 0xff000000) << 32 |
+                (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff) |
+                (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32);
     }
 } SegmentDescriptor;
 
 typedef struct SegmentRegister {
     int selector;
     SegmentDescriptor shadow;
+    SegmentRegister() : selector(0), shadow(SegmentDescriptor(0, 0, 0)) {}
     SegmentRegister(int selector, SegmentDescriptor shadow)
         : selector(selector), shadow(shadow) {}
     SegmentRegister(int selector, uint32_t base, uint32_t limit, int flags)
-        : shadow(SegmentDescriptor(base, limit, flags)) {}
+        : selector(selector), shadow(SegmentDescriptor(base, limit, flags)) {}
 } SegmentRegister;
 
 typedef struct Interrupt {

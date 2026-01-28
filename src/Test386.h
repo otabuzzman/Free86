@@ -72,7 +72,7 @@ class Test386 {
                 if ((32 > e.id) && (mask & (1 << e.id))) {
                     std::string status = compile_status_string();
                     int n, linear, physical;
-                    linear = cpu->segs[1].base + cpu->eip; // EIP is offset of linear address
+                    linear = cpu->segs[1].shadow.base + cpu->eip; // EIP is offset of linear address
                     if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
                         physical = cpu->tlb_lookup(linear, 0); // physical address
                         n = 4096 - (linear & 0xfff); // print bytes left to end-of-page...
@@ -145,12 +145,12 @@ class Test386 {
         sp = "ESP:" + hex(cpu->regs[4]);
         bp = "EBP:" + hex(cpu->regs[5]);
         flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9, std::string::npos);
-        cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex((int) cpu->segs[1].base) + ":" + hex((int) cpu->segs[1].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].flags, true);
-        ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex((int) cpu->segs[2].base) + ":" + hex((int) cpu->segs[2].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].flags, true);
-        ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex((int) cpu->segs[3].base) + ":" + hex((int) cpu->segs[3].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].flags, true);
-        es = "ES:" + hex((short) cpu->segs[0].selector) + ":" + hex((int) cpu->segs[0].base) + ":" + hex((int) cpu->segs[0].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[0].flags, true);
-        fs = "FS:" + hex((short) cpu->segs[4].selector) + ":" + hex((int) cpu->segs[4].base) + ":" + hex((int) cpu->segs[4].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[4].flags, true);
-        gs = "GS:" + hex((short) cpu->segs[5].selector) + ":" + hex((int) cpu->segs[5].base) + ":" + hex((int) cpu->segs[5].limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[5].flags, true);
+        cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex((int) cpu->segs[1].shadow.base) + ":" + hex((int) cpu->segs[1].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].shadow.flags, true);
+        ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex((int) cpu->segs[2].shadow.base) + ":" + hex((int) cpu->segs[2].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].shadow.flags, true);
+        ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex((int) cpu->segs[3].shadow.base) + ":" + hex((int) cpu->segs[3].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].shadow.flags, true);
+        es = "ES:" + hex((short) cpu->segs[0].selector) + ":" + hex((int) cpu->segs[0].shadow.base) + ":" + hex((int) cpu->segs[0].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[0].shadow.flags, true);
+        fs = "FS:" + hex((short) cpu->segs[4].selector) + ":" + hex((int) cpu->segs[4].shadow.base) + ":" + hex((int) cpu->segs[4].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[4].shadow.flags, true);
+        gs = "GS:" + hex((short) cpu->segs[5].selector) + ":" + hex((int) cpu->segs[5].shadow.base) + ":" + hex((int) cpu->segs[5].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[5].shadow.flags, true);
         cr0 = "CR0:" + bin(cpu->cr0).replace(1, 26, "..");
         cr2 = "CR2:" + hex(cpu->cr2);
         cr3 = "CR3:" + hex(cpu->cr3);

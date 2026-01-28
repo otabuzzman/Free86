@@ -1342,9 +1342,9 @@ int Free86::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
     return limit;
 }
 void Free86::fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword) {
-    segment_register->base = compile_dte_base(dte_lower_dword, dte_upper_dword);
-    segment_register->limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
-    segment_register->flags = dte_upper_dword;
+    segment_register->shadow.base = compile_dte_base(dte_lower_dword, dte_upper_dword);
+    segment_register->shadow.limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
+    segment_register->shadow.flags = dte_upper_dword;
 }
 int Free86::get_addressmask(int dte_upper_dword) {
     if (dte_upper_dword & (1 << 22)) {
