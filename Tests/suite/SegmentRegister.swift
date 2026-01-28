@@ -1,8 +1,8 @@
 import Testing
 @testable import Free86
 
-@Test("segment register index access")
-func segmentRegisterIndexAccess() {
+@Test("segment register index access by name")
+func segmentRegisterIndexAccessByName() {
     let bank = [
         SegmentRegister(0xC0DE, .init(0xC0DECAFE_DEADBEEF)),
         SegmentRegister(0xBEAF, .init(0xDECAFEDE_ADBEEFC0)),
@@ -23,12 +23,9 @@ func segmentRegisterIndexAccess() {
     #expect(bank[.TR] == SegmentRegister(0xDEC0, .init(0xEFC0DECA_FEDEADBE)))
 }
 
-@Test("segment register hidden descriptor access")
-func segmentRegisterHiddenDescriptorAccess() {
-    let segmentRegister = SegmentRegister(0xDEC0, .init(0xEFC0DECA_FEDEADBE))
-
-    #expect(segmentRegister.hidden.base == 0xEFCAFEDE)
-    #expect(segmentRegister.hidden.limit == 0x0ADBEFFF)
-    #expect(segmentRegister.hidden.type == SegmentDescriptorType.CodeExReadConforming.rawValue)
-    #expect(segmentRegister.hidden.dpl  == 2)
+@Test("segment register fields access")
+func segmentRegisterFieldsAccess() {
+    let segmentDescriptor: SegmentDescriptor = .init(0xEFC0DECA_FEDEADBE)
+    let segmentRegister = SegmentRegister(0xDEC0, segmentDescriptor)
+    #expect(segmentRegister.shadow == segmentDescriptor)
 }

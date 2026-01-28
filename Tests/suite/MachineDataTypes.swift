@@ -1,6 +1,14 @@
 import Testing
 @testable import Free86
 
+@Test("machine data type sizes")
+func machineDataTypeSizes() {
+    #expect(Byte.bitWidth == 8)
+    #expect(Word.bitWidth == 16)
+    #expect(DWord.bitWidth == 32)
+    #expect(QWord.bitWidth == 64)
+}
+
 @Test("machine data type upper/ lower half masks")
 func machineDataTypeHalfMasks() {
     #expect(Byte.upperHalfMask == 0xF0)
@@ -51,11 +59,11 @@ func machineDataTypeHalfValues() {
 func machineDataTypeBitValues() {
     #expect(Byte.bitMask(for: 7) == 0x80)
     #expect(Byte.bitMask(for: 0) == 0x01)
-    #expect(Byte.bitMask(for: 3) == 0x08)
+    #expect(Byte.bitMask(for: 5) == 0x20)
 
     #expect(Word.bitMask(for: 15) == 0x8000)
     #expect(Word.bitMask(for: 0) == 0x0001)
-    #expect(Word.bitMask(for: 13) == 0x2000)
+    #expect(Word.bitMask(for: 9) == 0x0200)
 
     #expect(DWord.bitMask(for: 31) == 0x8000_0000)
     #expect(DWord.bitMask(for: 0) == 0x0000_0001)
@@ -63,39 +71,47 @@ func machineDataTypeBitValues() {
 
     #expect(QWord.bitMask(for: 63) == 0x80000000_00000000)
     #expect(QWord.bitMask(for: 0) == 0x00000000_00000001)
-    #expect(QWord.bitMask(for: 17) == 0x00000000_00020000)
+    #expect(QWord.bitMask(for: 33) == 0x00000002_00000000)
 }
 
 @Test("machine data type set/ raise/ clear/ toggle bits")
 func machineDataTypeSetRaiseClearToggleBits() {
-    var byte: Byte = 0b0000_0110
-    var bit = 3
-    #expect(byte.isBitRaised(bit) == false)
-    byte.setBit(bit, 1)
-    #expect(byte == 0b0000_1110)
-    #expect(byte.isBitRaised(bit) == true)
+    var byte: Byte = 0 // 0100_0111_0001_0001
+    byte.raiseBit(0)
+    byte.raiseBit(4)
+    #expect(byte == 0x11)
 
-    bit = 1
-    #expect(byte.isBitRaised(bit) == true)
-    byte.setBit(bit, 0)
-    #expect(byte == 0b0000_1100)
-    #expect(byte.isBitRaised(bit) == false)
+    var word: Word = 0
+    word.lowerHalf = Word(byte)
+    word.setBit(8, 1)
+    word.toggleBit(9)
+    word.toggleBit(10)
+    word.raiseBit(14)
+    #expect(word == 0x4711)
 
-    bit = 4
-    #expect(byte.isBitRaised(bit) == false)
-    byte.raiseBit(bit)
-    #expect(byte == 0b0001_1100)
-    #expect(byte.isBitRaised(bit) == true)
+    var dword: DWord = 0
+    dword.lowerHalf = DWord(word)
+    dword.raiseBit(16)
+    dword.raiseBit(20)
+    dword.setBit(24, 1)
+    dword.toggleBit(25)
+    dword.toggleBit(26)
+    dword.raiseBit(30)
+    #expect(dword == 0x4711_4711)
 
-    bit = 2
-    #expect(byte.isBitRaised(bit) == true)
-    byte.clearBit(bit)
-    #expect(byte == 0b0001_1000)
-    #expect(byte.isBitRaised(bit) == false)
-
-    bit = 0
-    #expect(byte.isBitRaised(bit) == false)
-    byte.toggleBit(bit)
-    #expect(byte == 0b0001_1001)
-    #expect(byte.isBitRaised(bit) == true)
+    var qword: QWord = 0
+    qword.lowerHalf = QWord(dword)
+    qword.raiseBit(32)
+    qword.raiseBit(36)
+    qword.setBit(40, 1)
+    qword.toggleBit(41)
+    qword.toggleBit(42)
+    qword.raiseBit(46)
+    qword.raiseBit(48)
+    qword.raiseBit(52)
+    qword.setBit(56, 1)
+    qword.toggleBit(57)
+    qword.toggleBit(58)
+    qword.raiseBit(62)
+    #expect(qword == 0x4711_4711_4711_4711)
 }

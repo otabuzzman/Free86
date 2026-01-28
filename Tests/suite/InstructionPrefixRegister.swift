@@ -1,21 +1,26 @@
 import Testing
 @testable import Free86
 
-@Test("instruction prefix register flags")
-func instructionPrefixRegisterFlags() {
-    var ipr: DWord = 0xDEADBEAF  // 0b1101_1110_1010_1101_1100_1010_1111_1110
+@Test("instruction prefix register flags positions")
+func instructionPrefixRegisterFlagsPositions() {
+    #expect(InstructionPrefixRegisterFlag.repzStringOperation.rawValue == 4)
+    #expect(InstructionPrefixRegisterFlag.repnzStringOperation.rawValue == 5)
+    #expect(InstructionPrefixRegisterFlag.lockSignal.rawValue == 6)
+    #expect(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue == 7)
+    #expect(InstructionPrefixRegisterFlag.addressSizeOverride.rawValue == 8)
+}
+
+@Test("instruction prefix register set/ check flags")
+func instructionPrefixRegisterSetGetFlags() {
+    var ipr: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(ipr.isFlagRaised(.repzStringOperation) == false)
-    #expect(ipr.isFlagRaised(.repnzStringOperation) == true)
-    #expect(ipr.isFlagRaised(.lockSignal) == false)
-    #expect(ipr.isFlagRaised(.operandSizeOverride) == true)
-    #expect(ipr.isFlagRaised(.addressSizeOverride) == false)
-
-    ipr.setBit(4)
+    ipr.setFlag(.repzStringOperation)
     #expect(ipr.isFlagRaised(.repzStringOperation) == true)
+}
 
-    ipr.setBit(0, 0)
-    #expect(ipr.segmentRegisterIndex == SegmentRegister.Name.GS.rawValue)
-
+@Test("instruction prefix register fields access")
+func instructionPrefixRegisterFieldsAccess() {
+    var ipr: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     ipr &= 0xFF8
     #expect(ipr.segmentRegisterIndex == SegmentRegister.Name.DS.rawValue)
     ipr = ipr & 0xFF8 | 1
@@ -30,10 +35,4 @@ func instructionPrefixRegisterFlags() {
     #expect(ipr.segmentRegisterIndex == SegmentRegister.Name.FS.rawValue)
     ipr = ipr & 0xFF8 | 6
     #expect(ipr.segmentRegisterIndex == SegmentRegister.Name.GS.rawValue)
-
-    #expect(InstructionPrefixRegister.maskFlag(.repzStringOperation)  == 0b00_0001_0000)
-    #expect(InstructionPrefixRegister.maskFlag(.repnzStringOperation) == 0b00_0010_0000)
-    #expect(InstructionPrefixRegister.maskFlag(.lockSignal)           == 0b00_0100_0000)
-    #expect(InstructionPrefixRegister.maskFlag(.operandSizeOverride)  == 0b00_1000_0000)
-    #expect(InstructionPrefixRegister.maskFlag(.addressSizeOverride)  == 0b01_0000_0000)
 }

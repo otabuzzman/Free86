@@ -1,26 +1,27 @@
 import Testing
 @testable import Free86
 
-@Test("control register flags")
-func conrolRegister() {
-    var cr0: DWord = 0xDEADBEAF  // 0b1101_1110_1010_1101_1100_1010_1111_1110
-    #expect(cr0.isFlagRaised(.PE) == true)
-    #expect(cr0.isFlagRaised(.MP) == true)
-    #expect(cr0.isFlagRaised(.EM) == true)
-    #expect(cr0.isFlagRaised(.TS) == true)
-    #expect(cr0.isFlagRaised(.ET) == false)
-    #expect(cr0.isFlagRaised(.WP) == true)
-    #expect(cr0.isFlagRaised(.PG) == true)
-    #expect(cr0.pageDirectoryBase == 0xDEADB000)
+@Test("control register CR0 flags positions")
+func conrolRegister0FlagsPositions() {
+    #expect(CR0Flag.PE.rawValue == 0)
+    #expect(CR0Flag.MP.rawValue == 1)
+    #expect(CR0Flag.EM.rawValue == 2)
+    #expect(CR0Flag.TS.rawValue == 3)
+    #expect(CR0Flag.ET.rawValue == 4)
+    #expect(CR0Flag.WP.rawValue == 16)
+    #expect(CR0Flag.PG.rawValue == 31)
+}
 
-    cr0 &= 0x7FFEFFF0
-    cr0.setBit(4)
-    #expect(cr0.isFlagRaised(.PE) == false)
-    #expect(cr0.isFlagRaised(.MP) == false)
-    #expect(cr0.isFlagRaised(.EM) == false)
-    #expect(cr0.isFlagRaised(.TS) == false)
-    #expect(cr0.isFlagRaised(.ET) == true)
-    #expect(cr0.isFlagRaised(.WP) == false)
-    #expect(cr0.isFlagRaised(.PG) == false)
-    #expect(cr0.pageDirectoryBase == 0x5EACB000)
+@Test("control register CR0 set/ check flags")
+func conrolRegister0SetCheckFlags() {
+    var cr0: CR0 = 0xDEADBEAF  // 0b1101_1110_1010_1101_1100_1011_1010_1111
+    #expect(cr0.isFlagRaised(.PE) == true)
+    cr0.setFlag(.PE, 0)
+    #expect(cr0 == 0xDEADBEAE)
+}
+
+@Test("control register CR3 fields Access")
+func conrolRegister3FieldsAccess() {
+    let cr3: CR3 = 0xCAFEBABE
+    #expect(cr3.pageDirectoryBase == 0xCAFEB000)
 }

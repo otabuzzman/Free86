@@ -1,42 +1,36 @@
 import Testing
 @testable import Free86
 
-@Test("extended flags register")
-func extendedFlagsRegister() {
-    let eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
-    #expect(eflags.isFlagRaised(.CF) == true)
-    #expect(eflags.isFlagRaised(.PF) == true)
-    #expect(eflags.isFlagRaised(.AF) == false)
-    #expect(eflags.isFlagRaised(.ZF) == false)
-    #expect(eflags.isFlagRaised(.SF) == true)
-    #expect(eflags.isFlagRaised(.TF) == false)
-    #expect(eflags.isFlagRaised(.IF) == true)
-    #expect(eflags.isFlagRaised(.DF) == true)
-    #expect(eflags.isFlagRaised(.OF) == true)
-    #expect(eflags.isFlagRaised(.NT) == false)
-    #expect(eflags.isFlagRaised(.RF) == true)
-    #expect(eflags.isFlagRaised(.VM) == false)
+@Test("extended flags register positions")
+func extendedFlagsRegisterPositions() {
+    #expect(EflagsFlag.CF.rawValue == 0)
+    #expect(EflagsFlag.PF.rawValue == 2)
+    #expect(EflagsFlag.AF.rawValue == 4)
+    #expect(EflagsFlag.ZF.rawValue == 6)
+    #expect(EflagsFlag.SF.rawValue == 7)
+    #expect(EflagsFlag.TF.rawValue == 8)
+    #expect(EflagsFlag.IF.rawValue == 9)
+    #expect(EflagsFlag.DF.rawValue == 10)
+    #expect(EflagsFlag.OF.rawValue == 11)
+    #expect(EflagsFlag.NT.rawValue == 14)
+    #expect(EflagsFlag.RF.rawValue == 16)
+    #expect(EflagsFlag.VM.rawValue == 17)
 }
 
-@Test("extended flags register IOPL")
-func extendedFlagsRegisterIopl() {
+@Test("extended flags register set/ check")
+func extendedFlagsRegisterSetCheck() {
+    var eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
+    #expect(eflags.isFlagRaised(.CF) == true)
+    eflags.setFlag(.CF, 0)
+    #expect(eflags == 0xDEADBEAE)
+}
+
+@Test("extended flags register fields access")
+func extendedFlagsRegisterFieldsAccess() {
     var eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(eflags.iopl == 3)
     eflags.iopl = 2
     #expect(eflags.iopl == 2)
     eflags.iopl = 1
     #expect(eflags.iopl == 1)
-
-    #expect(eflags.isFlagRaised(.CF) == true)
-    #expect(eflags.isFlagRaised(.PF) == true)
-    #expect(eflags.isFlagRaised(.AF) == false)
-    #expect(eflags.isFlagRaised(.ZF) == false)
-    #expect(eflags.isFlagRaised(.SF) == true)
-    #expect(eflags.isFlagRaised(.TF) == false)
-    #expect(eflags.isFlagRaised(.IF) == true)
-    #expect(eflags.isFlagRaised(.DF) == true)
-    #expect(eflags.isFlagRaised(.OF) == true)
-    #expect(eflags.isFlagRaised(.NT) == false)
-    #expect(eflags.isFlagRaised(.RF) == true)
-    #expect(eflags.isFlagRaised(.VM) == false)
 }

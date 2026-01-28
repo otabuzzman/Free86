@@ -1,8 +1,8 @@
 import Testing
 @testable import Free86
 
-@Test("general register elements")
-func generalRegisterElements() {
+@Test("general register X/ H/ L set/ get")
+func generalRegisterXHLSetGet() {
     var register: DWord
     register = 0xDEADCAFE
     #expect(register.byteL == 0xFE)
@@ -22,8 +22,8 @@ func generalRegisterElements() {
     #expect(register == 0xC0DEAA55)
 }
 
-@Test("general register index access")
-func generalRegisterIndexAccess() {
+@Test("general register index access by name")
+func generalRegisterIndexAccessByName() {
     let bank = [
         GeneralRegister(0xDEADC0DE),
         GeneralRegister(0xDEADBEAF),

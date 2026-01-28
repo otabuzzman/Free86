@@ -91,7 +91,7 @@ class Free86 {
     var ipr: InstructionPrefixRegister = 0
     var iprDefault: InstructionPrefixRegister {  // reflects D flag (PM (1986), 16.1), also part of SSB (below)
         var ipr = InstructionPrefixRegister(0)
-        if segs[.CS].hidden.isFlagRaised(.D) {
+        if segs[.CS].shadow.isFlagRaised(.D) {
             ipr.setFlag(.addressSizeOverride)
             ipr.setFlag(.operandSizeOverride)
         }
@@ -103,18 +103,18 @@ class Free86 {
     ///   Variables in the segments state block (SSB) provide shorthand
     ///   access to frequently used segment data.
     var csBase: LinearAddress {
-        segs[.CS].hidden.base
+        segs[.CS].shadow.base
     }
     var ssBase: LinearAddress {
-        segs[.SS].hidden.base
+        segs[.SS].shadow.base
     }
     var ssMask: DWord {  // 16/ 32 bit address size mask
-        segs[.SS].hidden.isFlagRaised(.D) ? 0xFFFFFFFF : 0xFFFF
+        segs[.SS].shadow.isFlagRaised(.D) ? 0xFFFFFFFF : 0xFFFF
     }
 
     /// https://en.wikipedia.org/wiki/X86_memory_segmentation
     var x8664LongMode: Bool {
-        segs[.ES].hidden.base | csBase | ssBase | segs[.DS].hidden.base == 0 && ssMask == 0xFFFFFFFF
+        segs[.ES].shadow.base | csBase | ssBase | segs[.DS].shadow.base == 0 && ssMask == 0xFFFFFFFF
     }
     /// end of SSB
 

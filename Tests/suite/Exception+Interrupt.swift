@@ -1,8 +1,8 @@
 import Testing
 @testable import Free86
 
-@Test("cpu exceptions")
-func cpuExceptions() throws {
+@Test("cpu exception numbers")
+func cpuExceptionNumbers() throws {
     #expect(throws: Interrupt(0)) { throw Interrupt(.DE) }
     #expect(throws: Interrupt(1)) { throw Interrupt(.DB) }
     #expect(throws: Interrupt(2)) { throw Interrupt(.NonMaskableInterrupt) }
@@ -21,8 +21,8 @@ func cpuExceptions() throws {
     #expect(throws: Interrupt(16)) { throw Interrupt(.MF) }
 }
 
-@Test("software interrupts")
-func softwareInterrupts() throws {
+@Test("software interrupt numbers and error codes")
+func softwareInterruptNumbersAndErrorCodes() throws {
     #expect(throws: Interrupt(0)) { throw Interrupt(0) }
     #expect(throws: Interrupt(255)) { throw Interrupt(255) }
 
