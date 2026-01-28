@@ -10,18 +10,25 @@ typedef struct SegmentDescriptor {
     int flags;
     SegmentDescriptor(uint32_t base, uint32_t limit, int flags)
         : base(base), limit(limit), flags(flags) {}
-    SegmentDescriptor(uint64_t descriptor)
-        : base(((descriptor >> 16) & 0x0000ffff) |
-               ((descriptor >> 16) & 0x00ff0000) |
-               ((descriptor >> 32) & 0xff000000)),
-          limit(((descriptor >> 32) & 0x000f0000) | (descriptor & 0xffff)),
-          flags((descriptor >> 32) & 0x00f0ff00) {}
+    SegmentDescriptor(uint64_t qword) {
+        base = ((qword >> 16) & 0x0000ffff) |
+               ((qword >> 16) & 0x00ff0000) |
+               ((qword >> 32) & 0xff000000);
+        flags = (qword >> 32) & 0x00f0ff00;
+        limit = ((qword >> 32) & 0x000f0000) | (qword & 0xffff);
+        if (flags & (1 << 23)) {
+            limit = (limit << 12) | 0xfff;
+        }
+    }
     uint64_t qword() {
         return ((static_cast<uint64_t>(base) & 0x0000ffff) << 16 |
                 (static_cast<uint64_t>(base) & 0x00ff0000) << 16 |
                 (static_cast<uint64_t>(base) & 0xff000000) << 32 |
                 (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff) |
                 (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32);
+    }
+    int size_mask() {
+        return (flags & (1 << 22)) ? -1 : 0xffff;
     }
 } SegmentDescriptor;
 
@@ -561,13 +568,13 @@ class Free86 {
 
     // eflags.cpp
     bool is_CF(); // carry (bit 0)
-    int is_PF(); // parity (bit 2)
-    int is_AF(); // adjust (bit 4)
+    bool is_PF(); // parity (bit 2)
+    bool is_AF(); // adjust (bit 4)
     bool is_OF(); // overflow (bit 11)
     bool is_BE(); // below or equal, signed comparison
-    int is_LE(); // less or equal, unsigned comparison
-    int is_LT(); // less than
-    int can_jump(int condition);
+    bool is_LE(); // less or equal, unsigned comparison
+    bool is_LT(); // less than
+    bool can_jump(int condition);
     int compile_eflags(bool shift = false);
 
     int get_EFLAGS();
