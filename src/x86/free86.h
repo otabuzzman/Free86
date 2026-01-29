@@ -35,7 +35,7 @@ typedef struct SegmentDescriptor {
 typedef struct SegmentRegister {
     int selector;
     SegmentDescriptor shadow;
-    SegmentRegister() : selector(0), shadow(SegmentDescriptor(0, 0, 0)) {}
+    SegmentRegister() : selector(0), shadow(SegmentDescriptor(0)) {}
     SegmentRegister(int selector, SegmentDescriptor shadow) : selector(selector), shadow(shadow) {}
 } SegmentRegister;
 

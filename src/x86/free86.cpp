@@ -1243,7 +1243,7 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
     }
 }
 int Free86::is_segment_accessible(int selector, bool writable) {
-    SegmentDescriptor xsd;
+    SegmentDescriptor xsd{0};
     int dte_lower_dword, dte_upper_dword;
     if ((selector & 0xfffc) == 0) {
         return 1;
@@ -2356,7 +2356,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
     int dte_lower_dword, dte_upper_dword, descriptor_type, gate32;
     int gate_selector, gate_offset, gate_parameter_count;
     int ss, esp, start_esp, spl;
-    SegmentDescriptor xsd, cgd, ssd;
+    SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
     uint64_t tss_stack;
     // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
@@ -2601,7 +2601,7 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int dte_lower_dword, dte_upper_dword;
     int es, cs, ss, ds, fs, gs;
-    SegmentDescriptor csd, ssd;
+    SegmentDescriptor csd{0}, ssd{0};
     #pragma GCC diagnostic ignored "-Wshadow"
     int cpl = this->cpl;
     esp = regs[4];
@@ -2826,7 +2826,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     int gate_selector, gate_offset, st_error_code, is_interlevel, gate32;
     int dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
-    SegmentDescriptor gcd, ssd;
+    SegmentDescriptor cgd{0}, ssd{0};
     uint64_t tss_stack;
     st_error_code = 0;
     if (!is_sw && !is_hw) {
@@ -3072,14 +3072,14 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     osm = 24;
 }
 int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
-    SegmentDescriptor xsd;
+    SegmentDescriptor xsd{0};
     int dte_lower_dword, dte_upper_dword, descriptor_type;
     if ((selector & 0xfffc) == 0) {
         return -1;
     }
     xsd = ld_xdt_entry(selector);
-    dte_lower_dword = cgd.qword() & 0xffffffff;
-    dte_upper_dword = (cgd.qword() >> 32) & 0xffffffff;
+    dte_lower_dword = xsd.qword() & 0xffffffff;
+    dte_upper_dword = (xsd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         return -1;
     }
