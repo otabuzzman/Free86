@@ -1355,6 +1355,7 @@ uint64_t Free86::ld_tss_stack(int dpl) {
         lax += 2;
     }
     res |= (static_cast<uint64_t>(ld16_readonly_cplX()) & 0xffff) << 32; // privileged SS
+    return res;
 }
 int Free86::compile_dte_base(int dte_lower_dword, int dte_upper_dword) {
     return (((dte_lower_dword >> 16) & 0xffff) | ((dte_upper_dword & 0xff) << 16) | (dte_upper_dword & 0xff000000));
