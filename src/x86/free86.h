@@ -411,7 +411,6 @@ class Free86 {
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
     void fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword);
-    int get_addressmask(int dte_upper_dword);
 
     int aux_INC8(int data);
     int aux_INC16(int data);
