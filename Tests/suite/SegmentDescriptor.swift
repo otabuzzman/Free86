@@ -12,31 +12,31 @@ func segmentDescriptorFlagsPositions() {
 }
 
 @Test("segment descriptor set/ check flags")
-func conrolRegister0SetCheckFlags() {
-    var segmentDescriptor: segmentDescriptor = SegmentDescriptor(0xC0FEBA5E, 0x00012345, .CodeExOnly, 3)
-    #expect(segmentDescriptor.isFlagRaised(.G) == true)
-    cr0.setFlag(.G, 0)
-    #expect(segmentDescriptor == 0xC07EBA5E)
+func segmentDescriptorSetCheckFlags() {
+    var segmentDescriptor = SegmentDescriptor(0xC0FEBA5E, 0x00012345, .CodeExOnly, 3)
+    #expect(segmentDescriptor.isFlagRaised(.G) == false)
+    segmentDescriptor.setFlag(.G, 1)
+    #expect(segmentDescriptor.upper == 0xC08178FE)
 }
 
 @Test("segment descriptor type values")
 func segmentDescriptorTypeValues() {
     #expect(SegmentDescriptorType.zero.rawValue                         == 0b0_0000)
     #expect(SegmentDescriptorType.TSS16Available.rawValue               == 0b0_0001)
-    #expect(SegmentDescriptorType.LDT                                   == 0b0_0010)
+    #expect(SegmentDescriptorType.LDT.rawValue                          == 0b0_0010)
     #expect(SegmentDescriptorType.TSS16Busy.rawValue                    == 0b0_0011)
-    #expect(SegmentDescriptorType.CallGate16                            == 0b0_0100)
+    #expect(SegmentDescriptorType.CallGate16.rawValue                   == 0b0_0100)
     #expect(SegmentDescriptorType.TaskGate.rawValue                     == 0b0_0101)
-    #expect(SegmentDescriptorType.InterruptGate16                       == 0b0_0110)
-    #expect(SegmentDescriptorType.TrapGate16                            == 0b0_0111)
+    #expect(SegmentDescriptorType.InterruptGate16.rawValue              == 0b0_0110)
+    #expect(SegmentDescriptorType.TrapGate16.rawValue                   == 0b0_0111)
     #expect(SegmentDescriptorType.TSSAvailable.rawValue                 == 0b0_1001)
     #expect(SegmentDescriptorType.TSSBusy.rawValue                      == 0b0_1011)
     #expect(SegmentDescriptorType.CallGate.rawValue                     == 0b0_1100)
     #expect(SegmentDescriptorType.InterruptGate.rawValue                == 0b0_1110)
     #expect(SegmentDescriptorType.TrapGate.rawValue                     == 0b0_1111)
-    #expect(SegmentDescriptorType.DataRO                                == 0b1_0000)
+    #expect(SegmentDescriptorType.DataRO.rawValue                       == 0b1_0000)
     #expect(SegmentDescriptorType.DataROAccessed.rawValue               == 0b1_0001)
-    #expect(SegmentDescriptorType.DataRW                                == 0b1_0010)
+    #expect(SegmentDescriptorType.DataRW.rawValue                       == 0b1_0010)
     #expect(SegmentDescriptorType.DataRWAccessed.rawValue               == 0b1_0011)
     #expect(SegmentDescriptorType.DataROExpandDown.rawValue             == 0b1_0100)
     #expect(SegmentDescriptorType.DataROExpandDownAccessed.rawValue     == 0b1_0101)
@@ -54,12 +54,12 @@ func segmentDescriptorTypeValues() {
 
 @Test("segment descriptor fields access")
 func segmentDescriptorFieldsAccess() {
-    let segmentDescriptor = SegmentDescriptor(0xC0FEBA5E, 0x00012345, .CodeExOnly, 3)
+    var segmentDescriptor = SegmentDescriptor(0xC0FEBA5E, 0x00012345, .CodeExOnly, 3)
     #expect(segmentDescriptor.base  == 0xC0FEBA5E)
     segmentDescriptor.base = 0xDEADBEEF
     #expect(segmentDescriptor.base  == 0xDEADBEEF)
     #expect(segmentDescriptor.limit == 0x00012345)
-    segmentDescriptor.base = 0x00054321
+    segmentDescriptor.limit = 0x00054321
     #expect(segmentDescriptor.limit == 0x00054321)
     #expect(segmentDescriptor.type == 0b0001_1000)
     segmentDescriptor.type = 0b1_0010
