@@ -1303,33 +1303,20 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-void Free86::fill_tss_interlevel(int *descriptor_table_entry, int dpl) {
-    int type, offset, dte_lower_dword, dte_upper_dword, gate32;
-    descriptor_table_entry[0] = 0;
-    descriptor_table_entry[1] = 0;
-    if (!(tr.shadow.flags & (1 << 15))) { // present (P bit)
-        abort(11, tr.selector & 0xfffc);
-    }
-    type = (tr.shadow.flags >> 8) & 0xf;
-    if ((type & 7) != 1) { // 0000_10B1 (B bit)
-        abort(13, tr.selector & 0xfffc);
-    }
-    gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
-    offset = (dpl * 4 + 2) << gate32; // offset of privileged SP in TSS
-    if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
-        abort(10, tr.selector & 0xfffc);
-    }
-    lax = tr.shadow.base + offset;
-    if (gate32) {
-        dte_upper_dword = ld_readonly_cplX(); // privileged ESP
-        lax += 4;
+SegmentDescriptor Free86::ld_xdt_entry(int selector) {
+    SegmentRegister xdt;
+    uint32_t dti;
+    if (selector & 0x4) {
+        xdt = ldt;
     } else {
-        dte_upper_dword = ld16_readonly_cplX(); // privileged SP
-        lax += 2;
+        xdt = gdt;
     }
-    dte_lower_dword = ld16_readonly_cplX(); // privileged SS
-    descriptor_table_entry[0] = dte_lower_dword;
-    descriptor_table_entry[1] = dte_upper_dword;
+    dti = selector & ~7;
+    if ((dti + 7) > xdt.shadow.limit) {
+        return;
+    }
+    lax = xdt.shadow.base + dti;
+	return SegmentDescriptor(ld64_readonly_cplX());
 }
 uint64_t Free86::ld_tss_stack(int dpl) {
     uint64_t res;
@@ -2313,14 +2300,18 @@ void Free86::aux_JMPF_real__v86_mode(int selector, int offset) {
     update_SSB();
 }
 void Free86::aux_JMPF_protected_mode(int selector, int offset) {
+    SegmentDescriptor sd;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    fill_xdt_descriptor(descriptor_table_entry, selector);
-    dte_lower_dword = descriptor_table_entry[0];
-    dte_upper_dword = descriptor_table_entry[1];
+    // fill_xdt_descriptor(descriptor_table_entry, selector);
+    // dte_lower_dword = descriptor_table_entry[0];
+    // dte_upper_dword = descriptor_table_entry[1];
+    sd = ld_xdt_entry(selector);
+    dte_lower_dword = sd.qword() & 0xffffffff;
+    dte_upper_dword = (sd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         abort(13, selector & 0xfffc);
     }
@@ -2389,6 +2380,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type, gate32;
     int gate_selector, gate_offset, gate_parameter_count;
     int ss, esp, start_esp, spl;
+    uint64_t tss_stack;
     // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
@@ -2491,14 +2483,10 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             abort(11, gate_selector & 0xfffc);
         }
         if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
-            uint64_t stack;
             int dte_lower_dword, dte_upper_dword;
-            // fill_tss_interlevel(descriptor_table_entry, dpl);
-            // ss = descriptor_table_entry[0];
-            // esp = descriptor_table_entry[1];
-            stack = ld_tss_stack(dpl);
-            ss = stack >> 32 & 0xffff;
-            esp = stack & 0xffffffff;
+            tss_stack = ld_tss_stack(dpl);
+            ss = tss_stack >> 32 & 0xffff;
+            esp = tss_stack & 0xffffffff;
             if ((ss & 0xfffc) == 0) {
                 abort(10, ss & 0xfffc);
             }
@@ -2860,6 +2848,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     int gate_selector, gate_offset, st_error_code, is_interlevel, gate32;
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
+    uint64_t tss_stack;
     st_error_code = 0;
     if (!is_sw && !is_hw) {
         switch (id) { // with error codes, Intel 64 IA-32 SDM (latest), Vol. 3A, 7.3
@@ -2922,9 +2911,9 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         abort(11, gate_selector & 0xfffc);
     }
     if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
-        fill_tss_interlevel(descriptor_table_entry, dpl);
-        ss = descriptor_table_entry[0];
-        esp = descriptor_table_entry[1];
+        tss_stack = ld_tss_stack(dpl);
+        ss = tss_stack >> 32 & 0xffff;
+        esp = tss_stack & 0xffffffff;
         if ((ss & 0xfffc) == 0) {
             abort(10, ss & 0xfffc);
         }

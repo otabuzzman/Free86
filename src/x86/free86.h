@@ -410,7 +410,7 @@ class Free86 {
     int is_segment_accessible(int selector, bool writable);
 
     void fill_xdt_descriptor(int *descriptor_table_entry, int selector);
-    void fill_tss_interlevel(int *descriptor_table_entry, int dpl);
+    SegmentDescriptor ld_xdt_entry(int selector);
     uint64_t ld_tss_stack(int dpl); // seg:offset
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
