@@ -27,7 +27,7 @@ typedef struct SegmentDescriptor {
                 (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff) |
                 (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32);
     }
-    int size_mask() {
+    int segment_size_mask() {
         return (flags & (1 << 22)) ? -1 : 0xffff;
     }
 } SegmentDescriptor;
@@ -410,7 +410,8 @@ class Free86 {
     int is_segment_accessible(int selector, bool writable);
 
     void fill_xdt_descriptor(int *descriptor_table_entry, int selector);
-    void fill_tss_interlevel(int *descriptor_table_entry, int privilege_level);
+    void fill_tss_interlevel(int *descriptor_table_entry, int dpl);
+    uint64_t ld_tss_stack(int dpl); // seg:offset
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
     int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
     void fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword);

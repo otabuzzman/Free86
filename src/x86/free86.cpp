@@ -1303,7 +1303,7 @@ void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
 }
-void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_level) {
+void Free86::fill_tss_interlevel(int *descriptor_table_entry, int dpl) {
     int type, offset, dte_lower_dword, dte_upper_dword, gate32;
     descriptor_table_entry[0] = 0;
     descriptor_table_entry[1] = 0;
@@ -1315,21 +1315,46 @@ void Free86::fill_tss_interlevel(int *descriptor_table_entry, int privilege_leve
         abort(13, tr.selector & 0xfffc);
     }
     gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
-    offset = (privilege_level * 4 + 2) << gate32; // offset of privileged SP in TSS
+    offset = (dpl * 4 + 2) << gate32; // offset of privileged SP in TSS
     if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
         abort(10, tr.selector & 0xfffc);
     }
     lax = tr.shadow.base + offset;
-    if (!gate32) {
-        dte_upper_dword = ld16_readonly_cplX(); // privileged SP
-        lax += 2;
-    } else {
+    if (gate32) {
         dte_upper_dword = ld_readonly_cplX(); // privileged ESP
         lax += 4;
+    } else {
+        dte_upper_dword = ld16_readonly_cplX(); // privileged SP
+        lax += 2;
     }
     dte_lower_dword = ld16_readonly_cplX(); // privileged SS
     descriptor_table_entry[0] = dte_lower_dword;
     descriptor_table_entry[1] = dte_upper_dword;
+}
+uint64_t Free86::ld_tss_stack(int dpl) {
+    uint64_t res;
+    int type, offset, gate32;
+    if (!(tr.shadow.flags & (1 << 15))) { // present (P bit)
+        abort(11, tr.selector & 0xfffc);
+    }
+    type = (tr.shadow.flags >> 8) & 0xf;
+    if ((type & 7) != 1) { // no 16 bit TSS (available)
+        abort(13, tr.selector & 0xfffc);
+    }
+    gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
+    offset = (dpl * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
+    if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
+        abort(10, tr.selector & 0xfffc);
+    }
+    lax = tr.shadow.base + offset;
+    if (gate32) {
+        res = static_cast<uint64_t>(ld_readonly_cplX()) & 0xffffffff; // privileged ESP
+        lax += 4;
+    } else {
+        res = static_cast<uint64_t>(ld16_readonly_cplX()) & 0xffff; // privileged SP
+        lax += 2;
+    }
+    res |= (static_cast<uint64_t>(ld16_readonly_cplX()) & 0xffff) << 32; // privileged SS
 }
 int Free86::compile_dte_base(int dte_lower_dword, int dte_upper_dword) {
     return (((dte_lower_dword >> 16) & 0xffff) | ((dte_upper_dword & 0xff) << 16) | (dte_upper_dword & 0xff000000));
@@ -2464,11 +2489,15 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         if (!(dte_upper_dword & (1 << 15))) {
             abort(11, gate_selector & 0xfffc);
         }
-        if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, code (or data) segment descriptor
+        if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
+            uint64_t stack;
             int dte_lower_dword, dte_upper_dword;
-            fill_tss_interlevel(descriptor_table_entry, dpl);
-            ss = descriptor_table_entry[0];
-            esp = descriptor_table_entry[1];
+            // fill_tss_interlevel(descriptor_table_entry, dpl);
+            // ss = descriptor_table_entry[0];
+            // esp = descriptor_table_entry[1];
+            stack = ld_tss_stack(dpl);
+            ss = stack >> 32 & 0xffff;
+            esp = stack & 0xffffffff;
             if ((ss & 0xfffc) == 0) {
                 abort(10, ss & 0xfffc);
             }
@@ -2526,7 +2555,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             }
             ss = (ss & ~3) | dpl;
             set_segment_register(2, ss, SS_base, compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
-        } else {
+        } else { // other data/ code segments, or intralevel
             esp = start_esp;
             SS_mask = get_addressmask(segs[2].shadow.flags);
             SS_base = segs[2].shadow.base;
@@ -2891,7 +2920,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     if (!(dte_upper_dword & (1 << 15))) {
         abort(11, gate_selector & 0xfffc);
     }
-    if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, code (or data) segment descriptor
+    if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
         fill_tss_interlevel(descriptor_table_entry, dpl);
         ss = descriptor_table_entry[0];
         esp = descriptor_table_entry[1];
@@ -2920,7 +2949,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         SS_mask = get_addressmask(ss_dte_lower_dword);
         SS_base = compile_dte_base(ss_dte_upper_dword, ss_dte_lower_dword);
         is_interlevel = 1;
-    } else if ((dte_upper_dword & (1 << 10)) || dpl == cpl) {
+    } else if ((dte_upper_dword & (1 << 10)) || dpl == cpl) { // other data/ code segments, or intralevel
         if (eflags & 0x00020000) {
             abort(13, gate_selector & 0xfffc);
         }
