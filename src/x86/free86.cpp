@@ -2825,7 +2825,7 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
 void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
     int gate_selector, gate_offset, st_error_code, is_interlevel, gate32;
     int dte_lower_dword, dte_upper_dword, descriptor_type;
-    int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
+    int ss, esp, spl, ss_dte_lower_dword, ss_dte_upper_dword;
     SegmentDescriptor cgd{0}, ssd{0};
     uint64_t tss_stack;
     st_error_code = 0;
@@ -2902,21 +2902,21 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         ssd = ld_xdt_entry(ss);
         ss_dte_lower_dword = ssd.qword() & 0xffffffff;
         ss_dte_upper_dword = (ssd.qword() >> 32) & 0xffffffff;
-        if (ss_dte_upper_dword == 0 && ss_dte_lower_dword == 0) {
+        if (ss_dte_lower_dword == 0 && ss_dte_upper_dword == 0) {
             abort(10, ss & 0xfffc);
         }
-        spl = (ss_dte_lower_dword >> 13) & 3;
+        spl = (ss_dte_upper_dword >> 13) & 3;
         if (spl != dpl) {
             abort(10, ss & 0xfffc);
         }
-        if (!(ss_dte_lower_dword & (1 << 12)) || (ss_dte_lower_dword & (1 << 11)) || !(ss_dte_lower_dword & (1 << 9))) {
+        if (!(ss_dte_upper_dword & (1 << 12)) || (ss_dte_upper_dword & (1 << 11)) || !(ss_dte_upper_dword & (1 << 9))) {
             abort(10, ss & 0xfffc);
         }
-        if (!(ss_dte_lower_dword & (1 << 15))) {
+        if (!(ss_dte_upper_dword & (1 << 15))) {
             abort(10, ss & 0xfffc);
         }
-        SS_mask = get_addressmask(ss_dte_lower_dword);
-        SS_base = compile_dte_base(ss_dte_upper_dword, ss_dte_lower_dword);
+        SS_mask = get_addressmask(ss_dte_upper_dword);
+        SS_base = compile_dte_base(ss_dte_lower_dword, ss_dte_upper_dword);
         is_interlevel = 1;
     } else if ((dte_upper_dword & (1 << 10)) || dpl == cpl) { // other data/ code segments, or intralevel
         if (eflags & 0x00020000) {
@@ -3014,7 +3014,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
             set_segment_register(5, 0, 0, 0, 0);
         }
         ss = (ss & ~3) | dpl;
-        set_segment_register(2, ss, SS_base, compile_dte_limit(ss_dte_upper_dword, ss_dte_lower_dword), ss_dte_lower_dword);
+        set_segment_register(2, ss, SS_base, compile_dte_limit(ss_dte_lower_dword, ss_dte_upper_dword), ss_dte_upper_dword);
     }
     gate_selector = (gate_selector & ~3) | dpl;
     set_segment_register(1, gate_selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
