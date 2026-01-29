@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("page table entry flags positions")
+@Test("PTE flags positions")
 func pageTableEntryFlagsPositions() {
     #expect(PageTableEntryFlag.P.rawValue == 0)
     #expect(PageTableEntryFlag.W.rawValue == 1)
@@ -10,7 +10,7 @@ func pageTableEntryFlagsPositions() {
     #expect(PageTableEntryFlag.D.rawValue == 6)
 }
 
-@Test("page table entry fields access")
+@Test("PTE fields access")
 func pageTableEntryFieldsAccess() {
     var pageTableEntry: DWord
     pageTableEntry = 0xDEADCAFE  // 0b1101_1110_1010_1101_1100_1010_1111_1110

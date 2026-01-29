@@ -1,12 +1,12 @@
 struct SegmentDescriptor {
     var upper: DWord
     var lower: DWord
-    var bytes: QWord {
+    var qword: QWord {
         QWord(upper) << 32 | QWord(lower)
     }
-    init(_ bytes: QWord) {
-        upper = DWord(bytes >> 32)
-        lower = DWord(truncatingIfNeeded: bytes)
+    init(_ qword: QWord) {
+        upper = DWord(qword >> 32)
+        lower = DWord(truncatingIfNeeded: qword)
     }
 }
 

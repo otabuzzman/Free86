@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("free86 paged memory access")
+@Test("paged memory access")
 func free86PagedMemoryAccess() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     for i in 0..<512 {  // 2MB (512 * 4kB)

@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("cpu exception numbers")
+@Test("exception numbers")
 func cpuExceptionNumbers() throws {
     #expect(throws: Interrupt(0)) { throw Interrupt(.DE) }
     #expect(throws: Interrupt(1)) { throw Interrupt(.DB) }

@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("extended flags register positions")
+@Test("EFLAGS flags positions")
 func extendedFlagsRegisterPositions() {
     #expect(EflagsFlag.CF.rawValue == 0)
     #expect(EflagsFlag.PF.rawValue == 2)
@@ -17,7 +17,7 @@ func extendedFlagsRegisterPositions() {
     #expect(EflagsFlag.VM.rawValue == 17)
 }
 
-@Test("extended flags register set/ check")
+@Test("EFLAGS set/ check flags")
 func extendedFlagsRegisterSetCheck() {
     var eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(eflags.isFlagRaised(.CF) == true)
@@ -25,7 +25,7 @@ func extendedFlagsRegisterSetCheck() {
     #expect(eflags == 0xDEADBEAE)
 }
 
-@Test("extended flags register fields access")
+@Test("EFLAGS fields access")
 func extendedFlagsRegisterFieldsAccess() {
     var eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(eflags.iopl == 3)

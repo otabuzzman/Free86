@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("modR/M byte elements")
+@Test("modR/M byte fields access")
 func modRMByteElements() {
     var modRM: Byte
     modRM = 0b10_100_101
@@ -17,7 +17,7 @@ func modRMByteElements() {
     #expect(modRM.rM == 2)
 }
 
-@Test("SIB byte elements")
+@Test("SIB byte fields access")
 func sibByteElements() {
     var sib: Byte
     sib = 0b10_100_101

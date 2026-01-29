@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("free86 reset function")
+@Test("reset function")
 func free86ResetFunction() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     for i in 0..<512 {  // 2MB (512 * 4kB)

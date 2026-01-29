@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("linear adddress fields access")
+@Test("LA fields access")
 func linearAddressFieldsAccess() {
     var linearAddress: DWord
     linearAddress = 0xDEADCAFE  // 0b1101_1110_1010_1101_1100_1010_1111_1110

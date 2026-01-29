@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("free86 TLB update/ flush")
+@Test("TLB update/ flush")
 func free86TLBUpdateFlush() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     let ramA = RAMBank<DWord>()
@@ -87,7 +87,7 @@ func free86TLBUpdateFlush() {
     #expect(free86.tlbPagesCount == 0)
 }
 
-@Test("free86 page translation")
+@Test("page translation")
 func free86PageTranslation() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     for i in 0..<512 {  // 2MB (512 * 4kB)

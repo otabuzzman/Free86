@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("instruction prefix register flags positions")
+@Test("IPR flags positions")
 func instructionPrefixRegisterFlagsPositions() {
     #expect(InstructionPrefixRegisterFlag.repzStringOperation.rawValue == 4)
     #expect(InstructionPrefixRegisterFlag.repnzStringOperation.rawValue == 5)
@@ -10,7 +10,7 @@ func instructionPrefixRegisterFlagsPositions() {
     #expect(InstructionPrefixRegisterFlag.addressSizeOverride.rawValue == 8)
 }
 
-@Test("instruction prefix register set/ check flags")
+@Test("IPR set/ check flags")
 func instructionPrefixRegisterSetGetFlags() {
     var ipr: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(ipr.isFlagRaised(.repzStringOperation) == false)
@@ -18,7 +18,7 @@ func instructionPrefixRegisterSetGetFlags() {
     #expect(ipr.isFlagRaised(.repzStringOperation) == true)
 }
 
-@Test("instruction prefix register fields access")
+@Test("IPR fields access")
 func instructionPrefixRegisterFieldsAccess() {
     var ipr: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     ipr &= 0xFF8

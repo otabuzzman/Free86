@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("free86 CR0 setter")
+@Test("CR0 setter")
 func free86Cr0Setter() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     let ramA = RAMBank<DWord>()
@@ -65,7 +65,7 @@ func free86Cr0Setter() {
     #expect(free86.tlbPagesCount == 512)  // TLB not flushed
 }
 
-@Test("free86 CR3 setter")
+@Test("CR3 setter")
 func free86Cr3Setter() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     let ramA = RAMBank<DWord>()
@@ -100,7 +100,7 @@ func free86Cr3Setter() {
     #expect(free86.tlbPagesCount == 512)  // TLB not flushed
 }
 
-@Test("free86 CPL setter")
+@Test("CPL setter")
 func free86CplSetter() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     let ramA = RAMBank<DWord>()

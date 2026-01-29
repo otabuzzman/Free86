@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("free86 segments state block")
+@Test("SSB fields access")
 func free86SegmentsStateBlock() {
     let memory = MemoryIO<DWord>(defaultBank: DefaultBank<DWord>())
     for i in 0..<512 {  // 2MB (512 * 4kB)

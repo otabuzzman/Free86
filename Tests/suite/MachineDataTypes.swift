@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-@Test("machine data type sizes")
+@Test("MDT sizes")
 func machineDataTypeSizes() {
     #expect(Byte.bitWidth == 8)
     #expect(Word.bitWidth == 16)
@@ -9,7 +9,7 @@ func machineDataTypeSizes() {
     #expect(QWord.bitWidth == 64)
 }
 
-@Test("machine data type upper/ lower half masks")
+@Test("MDT upper/ lower half masks")
 func machineDataTypeHalfMasks() {
     #expect(Byte.upperHalfMask == 0xF0)
     #expect(Byte.lowerHalfMask == 0x0F)
@@ -24,7 +24,7 @@ func machineDataTypeHalfMasks() {
     #expect(QWord.lowerHalfMask == 0x00000000_FFFFFFFF)
 }
 
-@Test("machine data type upper/ lower half values")
+@Test("MDT upper/ lower half values")
 func machineDataTypeHalfValues() {
     var byte: Byte = 0x5A
     #expect(byte.upperHalf == 0x5)
@@ -55,7 +55,7 @@ func machineDataTypeHalfValues() {
     #expect(qWord == 0x89ABCDEF_01234567)
 }
 
-@Test("machine data type bit masks")
+@Test("MDT bit masks")
 func machineDataTypeBitValues() {
     #expect(Byte.bitMask(for: 7) == 0x80)
     #expect(Byte.bitMask(for: 0) == 0x01)
@@ -74,7 +74,7 @@ func machineDataTypeBitValues() {
     #expect(QWord.bitMask(for: 33) == 0x00000002_00000000)
 }
 
-@Test("machine data type set/ raise/ clear/ toggle bits")
+@Test("MDT set/ raise/ clear/ toggle bits")
 func machineDataTypeSetRaiseClearToggleBits() {
     var byte: Byte = 0 // 0100_0111_0001_0001
     byte.raiseBit(0)
