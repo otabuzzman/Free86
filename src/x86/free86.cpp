@@ -32,10 +32,10 @@ void Free86::reset() {
     eflags = 0x2;
     eip = 0xfff0;
     for (int i = 0 ; i < 7 ; i++) {
-        segs[i] = {0, 0, 0, 0};
+        segs[i] = {0, {0, 0, 0}};
     }
-    segs[1] = {0, 0xffff0000, 0, 0};
-    idt = {0, 0, 0x03ff, 0};
+    segs[1] = {0, {0xffff0000, 0, 0}};
+    idt = {0, {0, 0x3ff, 0}};
     cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
     // emulator state variables
     halted = 0;
@@ -1162,7 +1162,7 @@ void Free86::offset_to_linear(bool writable) {
 }
 #pragma GCC diagnostic ignored "-Wshadow" // base
 void Free86::set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
-    segs[sreg] = {selector, base, limit, flags}; // set register
+    segs[sreg] = {selector, {base, limit, flags}};
     update_SSB(); // emulator state variables
 }
 void Free86::set_segment_register(int sreg, int selector) {
