@@ -1313,10 +1313,10 @@ SegmentDescriptor Free86::ld_xdt_entry(int selector) {
     }
     dti = selector & ~7;
     if ((dti + 7) > xdt.shadow.limit) {
-        return;
+        return 0;
     }
     lax = xdt.shadow.base + dti;
-	return SegmentDescriptor(ld64_readonly_cplX());
+    return SegmentDescriptor(ld64_readonly_cplX());
 }
 uint64_t Free86::ld_tss_stack(int dpl) {
     uint64_t res;
@@ -2300,7 +2300,7 @@ void Free86::aux_JMPF_real__v86_mode(int selector, int offset) {
     update_SSB();
 }
 void Free86::aux_JMPF_protected_mode(int selector, int offset) {
-    SegmentDescriptor sd;
+    SegmentDescriptor sd{0};
     int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
