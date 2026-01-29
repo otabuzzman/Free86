@@ -2345,7 +2345,7 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int re
     update_SSB();
 }
 void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int return_address) {
-    int dte_lower_dword, dte_upper_dword, descriptor_type, gate32;
+    int type, gate32;
     int gate_selector, gate_offset, gate_parameter_count;
     int ss, esp, start_esp, spl;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
@@ -2355,8 +2355,6 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         abort(13, 0);
     }
     xsd = ld_xdt_entry(selector);
-    dte_lower_dword = xsd.qword() & 0xffffffff;
-    dte_upper_dword = (xsd.qword() >> 32) & 0xffffffff;
     if (xsd.qword() == 0) {
         abort(13, selector & 0xfffc);
     }
@@ -2407,10 +2405,10 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         set_segment_register(1, (selector & 0xfffc) | cpl, xsd.base, xsd.limit, xsd.flags);
         eip = offset, far = far_start = 0;
     } else { // system segment
-        descriptor_type = (xsd.flags >> 8) & 0x1f;
+        type = (xsd.flags >> 8) & 0x1f;
         dpl = (xsd.flags >> 13) & 3;
         rpl = selector & 3;
-        switch (descriptor_type) {
+        switch (type) {
         case 1: // 16 bit task state segment
         case 5: // task gate
         case 9: // 32 bit task state segment
@@ -2421,15 +2419,15 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         default:
             abort(13, selector & 0xfffc);
         }
-        gate32 = descriptor_type >> 3;
+        gate32 = type >> 3;
         if (dpl < cpl || dpl < rpl) {
             abort(13, selector & 0xfffc);
         }
         if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        gate_selector = xsd.base & 0xffff;
-        gate_offset = (xsd.flags & 0xffff0000) | (xsd.limit & 0x0000ffff);
+        gate_selector = (xsd.qword() >> 16) & 0xffff; // different fields in call gate
+        gate_offset = ((xsd.qword() >> 32) & 0xffff0000) | (xsd.qword() & 0x0000ffff);
         gate_parameter_count = xsd.flags & 0x1f;
         if ((gate_selector & 0xfffc) == 0) {
             abort(13, 0);
