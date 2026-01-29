@@ -71,4 +71,7 @@ func segmentDescriptorFieldsAccess() {
     #expect(segmentDescriptor.isSystemSegment == false)
     #expect(segmentDescriptor.isDataSegment == true)
     #expect(segmentDescriptor.isCodeSegment == false)
+    #expect(segmentDescriptor.segmentSizeMask == 0xFFFF)
+    segmentDescriptor.setFlag(.D, 1)
+    #expect(segmentDescriptor.segmentSizeMask == 0xFFFFFFFF)
 }

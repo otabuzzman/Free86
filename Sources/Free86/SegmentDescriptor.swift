@@ -1,6 +1,6 @@
 struct SegmentDescriptor {
-    var upper: DWord
-    var lower: DWord
+    var upper: DWord = 0
+    var lower: DWord = 0
     var qword: QWord {
         QWord(upper) << 32 | QWord(lower)
     }
@@ -13,7 +13,6 @@ struct SegmentDescriptor {
 extension SegmentDescriptor {
     init(_ base: LinearAddress, _ limit: DWord, _ type: SegmentDescriptorType, _ dpl: Int) {
         assert(dpl >= 0 && dpl <= 3)
-        self.init(0)
         self.base  = base
         self.limit = limit
         self.type = type.rawValue
@@ -65,6 +64,9 @@ extension SegmentDescriptor {
             upper = upper & ~0x0000_6000 | DWord(newValue << 13)
         }
     }
+    var segmentSizeMask: DWord {
+        self.isFlagRaised(.D) ? 0xFFFFFFFF : 0xFFFF
+    }
 }
 
 extension SegmentDescriptor {
@@ -98,12 +100,12 @@ enum SegmentDescriptorType: DWord {
     case TaskGate                     = 0b0_0101
     case InterruptGate16              = 0b0_0110
     case TrapGate16                   = 0b0_0111
-    // Reserved                         0x0_1000
+    // Reserved                         0b0_1000
     case TSSAvailable                 = 0b0_1001
-    // Reserved                         0x0_1010
+    // Reserved                         0b0_1010
     case TSSBusy                      = 0b0_1011
     case CallGate                     = 0b0_1100
-    // Reserved                         0x0_1101
+    // Reserved                         0b0_1101
     case InterruptGate                = 0b0_1110
     case TrapGate                     = 0b0_1111
     case DataRO                       = 0b1_0000
