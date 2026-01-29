@@ -1244,29 +1244,26 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
 }
 int Free86::is_segment_accessible(int selector, bool writable) {
     SegmentDescriptor xsd{0};
-    int dte_lower_dword, dte_upper_dword;
     if ((selector & 0xfffc) == 0) {
         return 1;
     }
     xsd = ld_xdt_entry(selector);
-    dte_lower_dword = xsd.qword() & 0xffffffff;
-    dte_upper_dword = (xsd.qword() >> 32) & 0xffffffff;
-    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
+    if (xsd.qword() == 0) {
         return 1;
     }
-    if (!(dte_upper_dword & (1 << 12))) {
+    if (!(xsd.flags & (1 << 12))) {
         return 1;
     }
     rpl = selector & 3;
-    dpl = (dte_upper_dword >> 13) & 3;
-    if (dte_upper_dword & (1 << 11)) { // code == 1, data == 0
+    dpl = (xsd.flags >> 13) & 3;
+    if (xsd.flags & (1 << 11)) { // code == 1, data == 0
         if (writable) {
             return 1;
         } else {
-            if (!(dte_upper_dword & (1 << 9))) {
+            if (!(xsd.flags & (1 << 9))) {
                 return 0;
             }
-            if (!(dte_upper_dword & (1 << 10))) {
+            if (!(xsd.flags & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
                     return 1;
                 }
@@ -1276,7 +1273,7 @@ int Free86::is_segment_accessible(int selector, bool writable) {
         if (dpl < cpl || dpl < rpl) {
             return 1;
         }
-        if (writable && !(dte_upper_dword & (1 << 9))) {
+        if (writable && !(xsd.flags & (1 << 9))) {
             return 1;
         }
     }
@@ -2280,23 +2277,19 @@ void Free86::aux_JMPF_real__v86_mode(int selector, int offset) {
 }
 void Free86::aux_JMPF_protected_mode(int selector, int offset) {
     SegmentDescriptor xsd{0};
-    int dte_lower_dword, dte_upper_dword;
-    uint32_t limit;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
     xsd = ld_xdt_entry(selector);
-    dte_lower_dword = xsd.qword() & 0xffffffff;
-    dte_upper_dword = (xsd.qword() >> 32) & 0xffffffff;
-    if (dte_lower_dword == 0 && dte_upper_dword == 0) {
+    if (xsd.qword() == 0) {
         abort(13, selector & 0xfffc);
     }
-    if (dte_upper_dword & (1 << 12)) {
-        if (!(dte_upper_dword & (1 << 11))) {
+    if (xsd.flags & (1 << 12)) {
+        if (!(xsd.flags & (1 << 11))) {
             abort(13, selector & 0xfffc);
         }
-        dpl = (dte_upper_dword >> 13) & 3;
-        if (dte_upper_dword & (1 << 10)) {
+        dpl = (xsd.flags >> 13) & 3;
+        if (xsd.flags & (1 << 10)) {
             if (dpl > cpl) {
                 abort(13, selector & 0xfffc);
             }
@@ -2309,14 +2302,13 @@ void Free86::aux_JMPF_protected_mode(int selector, int offset) {
                 abort(13, selector & 0xfffc);
             }
         }
-        if (!(dte_upper_dword & (1 << 15))) {
+        if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
-        if (offset > limit) {
+        if (offset > xsd.limit) {
             abort(13, selector & 0xfffc);
         }
-        set_segment_register(1, (selector & 0xfffc) | cpl, compile_dte_base(dte_lower_dword, dte_upper_dword), limit,  dte_upper_dword);
+        set_segment_register(1, (selector & 0xfffc) | cpl, xsd.base, xsd.limit, xsd.flags);
         eip = offset, far = far_start = 0;
     } else {
         throw "fatal: unsupported TSS or task gate in JMP";
