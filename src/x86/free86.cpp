@@ -1243,13 +1243,14 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
     }
 }
 int Free86::is_segment_accessible(int selector, bool writable) {
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
+    SegmentDescriptor xsd;
+    int dte_lower_dword, dte_upper_dword;
     if ((selector & 0xfffc) == 0) {
         return 1;
     }
-    fill_xdt_descriptor(descriptor_table_entry, selector);
-    dte_lower_dword = descriptor_table_entry[0];
-    dte_upper_dword = descriptor_table_entry[1];
+    xsd = ld_xdt_entry(selector);
+    dte_lower_dword = xsd.qword() & 0xffffffff;
+    dte_upper_dword = (xsd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         return 1;
     }
@@ -1280,28 +1281,6 @@ int Free86::is_segment_accessible(int selector, bool writable) {
         }
     }
     return 0;
-}
-void Free86::fill_xdt_descriptor(int *descriptor_table_entry, int selector) {
-    SegmentRegister xdt;
-    int dte_lower_dword, dte_upper_dword;
-    uint32_t dti;
-    descriptor_table_entry[0] = 0;
-    descriptor_table_entry[1] = 0;
-    if (selector & 0x4) {
-        xdt = ldt;
-    } else {
-        xdt = gdt;
-    }
-    dti = selector & ~7;
-    if ((dti + 7) > xdt.shadow.limit) {
-        return;
-    }
-    lax = xdt.shadow.base + dti;
-    dte_lower_dword = ld_readonly_cplX();
-    lax += 4;
-    dte_upper_dword = ld_readonly_cplX();
-    descriptor_table_entry[0] = dte_lower_dword;
-    descriptor_table_entry[1] = dte_upper_dword;
 }
 SegmentDescriptor Free86::ld_xdt_entry(int selector) {
     SegmentRegister xdt;
@@ -2300,18 +2279,15 @@ void Free86::aux_JMPF_real__v86_mode(int selector, int offset) {
     update_SSB();
 }
 void Free86::aux_JMPF_protected_mode(int selector, int offset) {
-    SegmentDescriptor sd{0};
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
+    SegmentDescriptor xsd{0};
+    int dte_lower_dword, dte_upper_dword;
     uint32_t limit;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    // fill_xdt_descriptor(descriptor_table_entry, selector);
-    // dte_lower_dword = descriptor_table_entry[0];
-    // dte_upper_dword = descriptor_table_entry[1];
-    sd = ld_xdt_entry(selector);
-    dte_lower_dword = sd.qword() & 0xffffffff;
-    dte_upper_dword = (sd.qword() >> 32) & 0xffffffff;
+    xsd = ld_xdt_entry(selector);
+    dte_lower_dword = xsd.qword() & 0xffffffff;
+    dte_upper_dword = (xsd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         abort(13, selector & 0xfffc);
     }
@@ -2377,17 +2353,18 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int re
     update_SSB();
 }
 void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int return_address) {
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type, gate32;
+    int dte_lower_dword, dte_upper_dword, descriptor_type, gate32;
     int gate_selector, gate_offset, gate_parameter_count;
     int ss, esp, start_esp, spl;
+    SegmentDescriptor xsd, cgd, ssd;
     uint64_t tss_stack;
     // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    fill_xdt_descriptor(descriptor_table_entry, selector);
-    dte_lower_dword = descriptor_table_entry[0];
-    dte_upper_dword = descriptor_table_entry[1];
+    xsd = ld_xdt_entry(selector);
+    dte_lower_dword = xsd.qword() & 0xffffffff;
+    dte_upper_dword = (xsd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         abort(13, selector & 0xfffc);
     }
@@ -2466,9 +2443,9 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         if ((gate_selector & 0xfffc) == 0) {
             abort(13, 0);
         }
-        fill_xdt_descriptor(descriptor_table_entry, gate_selector);
-        dte_lower_dword = descriptor_table_entry[0];
-        dte_upper_dword = descriptor_table_entry[1];
+        cgd = ld_xdt_entry(gate_selector);
+        dte_lower_dword = cgd.qword() & 0xffffffff;
+        dte_upper_dword = (cgd.qword() >> 32) & 0xffffffff;
         if (dte_lower_dword == 0 && dte_upper_dword == 0) {
             abort(13, gate_selector & 0xfffc);
         }
@@ -2484,7 +2461,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         }
         if (!(dte_upper_dword & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
             int dte_lower_dword, dte_upper_dword;
-            tss_stack = ld_tss_stack(dpl);
+            tss_stack = ld_tss_stack(dpl); // seg:offset
             ss = tss_stack >> 32 & 0xffff;
             esp = tss_stack & 0xffffffff;
             if ((ss & 0xfffc) == 0) {
@@ -2493,9 +2470,9 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             if ((ss & 3) != dpl) {
                 abort(10, ss & 0xfffc);
             }
-            fill_xdt_descriptor(descriptor_table_entry, ss);
-            dte_lower_dword = descriptor_table_entry[0];
-            dte_upper_dword = descriptor_table_entry[1];
+            ssd = ld_xdt_entry(ss);
+            dte_lower_dword = ssd.qword() & 0xffffffff;
+            dte_upper_dword = (ssd.qword() >> 32) & 0xffffffff;
             if (dte_lower_dword == 0 && dte_upper_dword == 0) {
                 abort(10, ss & 0xfffc);
             }
@@ -2622,8 +2599,9 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
 }
 void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword;
+    int dte_lower_dword, dte_upper_dword;
     int es, cs, ss, ds, fs, gs;
+    SegmentDescriptor csd, ssd;
     #pragma GCC diagnostic ignored "-Wshadow"
     int cpl = this->cpl;
     esp = regs[4];
@@ -2695,9 +2673,9 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     if ((cs & 0xfffc) == 0) {
         abort(13, cs & 0xfffc);
     }
-    fill_xdt_descriptor(descriptor_table_entry, cs);
-    dte_lower_dword = descriptor_table_entry[0];
-    dte_upper_dword = descriptor_table_entry[1];
+    csd = ld_xdt_entry(cs);
+    dte_lower_dword = csd.qword() & 0xffffffff;
+    dte_upper_dword = (csd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         abort(13, cs & 0xfffc);
     }
@@ -2748,9 +2726,9 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
             if ((ss & 3) != rpl) {
                 abort(13, ss & 0xfffc);
             }
-            fill_xdt_descriptor(descriptor_table_entry, ss);
-            dte_lower_dword = descriptor_table_entry[0];
-            dte_upper_dword = descriptor_table_entry[1];
+            ssd = ld_xdt_entry(ss);
+            dte_lower_dword = ssd.qword() & 0xffffffff;
+            dte_upper_dword = (ssd.qword() >> 32) & 0xffffffff;
             if (dte_lower_dword == 0 && dte_upper_dword == 0) {
                 abort(13, ss & 0xfffc);
             }
@@ -2846,8 +2824,9 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
 }
 void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
     int gate_selector, gate_offset, st_error_code, is_interlevel, gate32;
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
+    int dte_lower_dword, dte_upper_dword, descriptor_type;
     int ss, esp, spl, ss_dte_upper_dword, ss_dte_lower_dword;
+    SegmentDescriptor gcd, ssd;
     uint64_t tss_stack;
     st_error_code = 0;
     if (!is_sw && !is_hw) {
@@ -2894,9 +2873,9 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     if ((gate_selector & 0xfffc) == 0) {
         abort(13, 0);
     }
-    fill_xdt_descriptor(descriptor_table_entry, gate_selector);
-    dte_lower_dword = descriptor_table_entry[0];
-    dte_upper_dword = descriptor_table_entry[1];
+    cgd = ld_xdt_entry(gate_selector);
+    dte_lower_dword = cgd.qword() & 0xffffffff;
+    dte_upper_dword = (cgd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         abort(13, gate_selector & 0xfffc);
     }
@@ -2920,9 +2899,9 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         if ((ss & 3) != dpl) {
             abort(10, ss & 0xfffc);
         }
-        fill_xdt_descriptor(descriptor_table_entry, ss);
-        ss_dte_upper_dword = descriptor_table_entry[0];
-        ss_dte_lower_dword = descriptor_table_entry[1];
+        ssd = ld_xdt_entry(ss);
+        ss_dte_lower_dword = ssd.qword() & 0xffffffff;
+        ss_dte_upper_dword = (ssd.qword() >> 32) & 0xffffffff;
         if (ss_dte_upper_dword == 0 && ss_dte_lower_dword == 0) {
             abort(10, ss & 0xfffc);
         }
@@ -3093,13 +3072,14 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     osm = 24;
 }
 int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
-    int descriptor_table_entry[2], dte_lower_dword, dte_upper_dword, descriptor_type;
+    SegmentDescriptor xsd;
+    int dte_lower_dword, dte_upper_dword, descriptor_type;
     if ((selector & 0xfffc) == 0) {
         return -1;
     }
-    fill_xdt_descriptor(descriptor_table_entry, selector);
-    dte_lower_dword = descriptor_table_entry[0];
-    dte_upper_dword = descriptor_table_entry[1];
+    xsd = ld_xdt_entry(selector);
+    dte_lower_dword = cgd.qword() & 0xffffffff;
+    dte_upper_dword = (cgd.qword() >> 32) & 0xffffffff;
     if (dte_lower_dword == 0 && dte_upper_dword == 0) {
         return -1;
     }

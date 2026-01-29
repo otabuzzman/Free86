@@ -406,7 +406,6 @@ class Free86 {
     void set_segment_register_protected(int sreg, int selector);
     int is_segment_accessible(int selector, bool writable);
 
-    void fill_xdt_descriptor(int *descriptor_table_entry, int selector);
     SegmentDescriptor ld_xdt_entry(int selector);
     uint64_t ld_tss_stack(int dpl); // seg:offset
     int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
