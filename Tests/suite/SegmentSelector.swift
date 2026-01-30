@@ -18,9 +18,12 @@ func segmentSelectorSetCheckFlags() {
 func segmentSelectorFieldsAccess() {
     var segmentSelector: Word
     segmentSelector = 0b1100_1010_1111_1110  // 0xCAFE
+
     #expect(segmentSelector.index == 0b0001_1001_0101_1111)
+
     #expect(segmentSelector.isGDT == false)
     #expect(segmentSelector.isLDT == true)
+
     segmentSelector = 0b1100_1010_1111_1111
     #expect(segmentSelector.rpl == 3)
     segmentSelector = 0b1100_1010_1111_1110
