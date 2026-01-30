@@ -152,9 +152,9 @@ void Free86::st_writable_cplX(int dword) {
 void Free86::st64_writable_cplX(uint64_t qword) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
     if ((tlb_hash | lax) & 7) {
-        st_writable_cplX(qword & 0xffffffff);
+        st_writable_cplX(qword);
         lax += 4;
-        st16_writable_cplX(qword >> 32);
+        st_writable_cplX(qword >> 32);
         lax -= 4;
     } else {
         st64_direct(lax ^ tlb_hash, qword);
@@ -233,8 +233,8 @@ void Free86::st_direct(int address, int dword) {
     memory[address + 3] = dword >> 24;
 }
 void Free86::st64_direct(int address, uint64_t qword) {
-    st_direct(address, static_cast<int>(qword & 0xffffffff));
-    st_direct(address + 4, static_cast<int>(qword >> 32));
+    st_direct(address, qword);
+    st_direct(address + 4, qword >> 32);
 }
 int Free86::fetch_data8() {
     return ld8_direct(far++);

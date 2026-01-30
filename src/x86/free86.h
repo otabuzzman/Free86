@@ -21,11 +21,18 @@ typedef struct SegmentDescriptor {
         }
     }
     uint64_t qword() {
+        #pragma GCC diagnostic ignored "-Wshadow"
+        uint32_t limit;
+        if (flags & (1 << 23)) {
+            limit = this->limit >> 12;
+        } else {
+            limit = this->limit;
+        }
         return ((static_cast<uint64_t>(base) & 0x0000ffff) << 16 |
                 (static_cast<uint64_t>(base) & 0x00ff0000) << 16 |
                 (static_cast<uint64_t>(base) & 0xff000000) << 32 |
-                (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff) |
-                (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32);
+                (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32 |
+                (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff));
     }
     int segment_size_mask() {
         return (flags & (1 << 22)) ? -1 : 0xffff;

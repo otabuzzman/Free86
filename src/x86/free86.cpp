@@ -1185,7 +1185,7 @@ void Free86::set_segment_register_real__v86(int sreg, int selector) {
 }
 void Free86::set_segment_register_protected(int sreg, int selector) {
     SegmentRegister xdt;
-    int dte_lower_dword, dte_upper_dword;
+    SegmentDescriptor xsd{0};
     uint32_t dti;
     if ((selector & 0xfffc) == 0) { // null selector
         if (sreg == 2) {
@@ -1203,43 +1203,41 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
             abort(13, selector & 0xfffc);
         }
         lax = xdt.shadow.base + dti;
-        dte_lower_dword = ld_readonly_cplX();
-        lax += 4;
-        dte_upper_dword = ld_readonly_cplX();
-        if (!(dte_upper_dword & (1 << 12))) {
+        xsd = SegmentDescriptor(ld64_readonly_cplX());
+        if (!(xsd.flags & (1 << 12))) {
             abort(13, selector & 0xfffc);
         }
         rpl = selector & 3;
-        dpl = (dte_upper_dword >> 13) & 3;
+        dpl = (xsd.flags >> 13) & 3;
         if (sreg == 2) {
-            if ((dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 9))) {
+            if ((xsd.flags & (1 << 11)) || !(xsd.flags & (1 << 9))) {
                 abort(13, selector & 0xfffc);
             }
             if (rpl != cpl || dpl != cpl) {
                 abort(13, selector & 0xfffc);
             }
         } else {
-            if ((dte_upper_dword & ((1 << 11) | (1 << 9))) == (1 << 11)) {
+            if ((xsd.flags & ((1 << 11) | (1 << 9))) == (1 << 11)) {
                 abort(13, selector & 0xfffc);
             }
-            if (!(dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 10))) {
+            if (!(xsd.flags & (1 << 11)) || !(xsd.flags & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
                     abort(13, selector & 0xfffc);
                 }
             }
         }
-        if (!(dte_upper_dword & (1 << 15))) {
+        if (!(xsd.flags & (1 << 15))) {
             if (sreg == 2) {
                 abort(12, selector & 0xfffc);
             } else {
                 abort(11, selector & 0xfffc);
             }
         }
-        if (!(dte_upper_dword & (1 << 8))) {
-            dte_upper_dword |= 1 << 8;
-            st_writable_cplX(dte_upper_dword);
+        if (!(xsd.flags & (1 << 8))) {
+            xsd.flags |= 1 << 8;
+            st64_writable_cplX(xsd.qword());
         }
-        set_segment_register(sreg, selector, compile_dte_base(dte_lower_dword, dte_upper_dword), compile_dte_limit(dte_lower_dword, dte_upper_dword), dte_upper_dword);
+        set_segment_register(sreg, selector, xsd.base, xsd.limit, xsd.flags);
     }
 }
 int Free86::is_segment_accessible(int selector, bool writable) {
