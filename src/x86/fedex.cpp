@@ -166,24 +166,24 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 regs[(modRM >> 3) & 7] = rm;
                 goto FETCH_LOOP;
             case 0xa0: // MOV AL,
-                offset_to_linear(false);
+                moffs_to_linear(false);
                 moffs = ld8_readonly_cpl3();
                 regs[0] = (regs[0] & -256) | moffs;
                 goto FETCH_LOOP;
             case 0xa1: // MOV AX,
-                offset_to_linear(false);
+                moffs_to_linear(false);
                 moffs = ld_readonly_cpl3();
                 regs[0] = moffs;
                 goto FETCH_LOOP;
             case 0xa2: // MOV ,AL
-                offset_to_linear(true);
+                moffs_to_linear(true);
                 st8_writable_cpl3(regs[0]);
                 goto FETCH_LOOP;
             case 0xa3: // MOV ,AX
                 if (ipr & 0x0040) { // test386, check LOCK prefix (not allowed)
                     abort(6);
                 }
-                offset_to_linear(true);
+                moffs_to_linear(true);
                 st_writable_cpl3(regs[0]);
                 goto FETCH_LOOP;
             case 0xc6: // MOV
@@ -2454,12 +2454,12 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     set_lower_word(opcode & 7, fetch_data16());
                     goto FETCH_LOOP;
                 case 0x1a1: // MOV AX,
-                    offset_to_linear(false);
+                    moffs_to_linear(false);
                     moffs = ld16_readonly_cpl3();
                     set_lower_word(0, moffs);
                     goto FETCH_LOOP;
                 case 0x1a3: // MOV ,AX
-                    offset_to_linear(true);
+                    moffs_to_linear(true);
                     st16_writable_cpl3(regs[0]);
                     goto FETCH_LOOP;
                 case 0x1c7: // MOV

@@ -405,7 +405,7 @@ class Free86 {
     void page_translation(uint32_t address, int writable, int user);
 
     void segment_translation();
-    void offset_to_linear(bool writable);
+    void moffs_to_linear(bool writable);
 
     void set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
     void set_segment_register(int sreg, int selector);

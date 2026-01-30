@@ -1116,7 +1116,7 @@ void Free86::segment_translation() {
     lax = lax + segs[sreg].shadow.base;
     return;
 }
-void Free86::offset_to_linear(bool writable) {
+void Free86::moffs_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
@@ -2281,8 +2281,7 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int re
     update_SSB();
 }
 void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int return_address) {
-    int type, gate32;
-    int gate_selector, gate_offset, gate_parameter_count;
+    int type, gate32, g_sel, g_off, g_cnt;
     int ss, esp, start_esp, spl;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
     uint64_t tss_stack;
@@ -2362,25 +2361,25 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        gate_selector = (xsd.qword() >> 16) & 0xffff; // different fields in call gate
-        gate_offset = ((xsd.qword() >> 32) & 0xffff0000) | (xsd.qword() & 0x0000ffff);
-        gate_parameter_count = xsd.flags & 0x1f;
-        if ((gate_selector & 0xfffc) == 0) {
+        g_sel = (xsd.qword() >> 16) & 0xffff; // different fields in call gate
+        g_off = ((xsd.qword() >> 32) & 0xffff0000) | (xsd.qword() & 0x0000ffff);
+        g_cnt = xsd.flags & 0x1f;
+        if ((g_sel & 0xfffc) == 0) {
             abort(13, 0);
         }
-        cgd = ld_xdt_entry(gate_selector);
+        cgd = ld_xdt_entry(g_sel);
         if (cgd.qword() == 0) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 12)) || !(cgd.flags & ((1 << 11)))) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         dpl = (cgd.flags >> 13) & 3;
         if (dpl > cpl) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 15))) {
-            abort(11, gate_selector & 0xfffc);
+            abort(11, g_sel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
             tss_stack = ld_tss_stack(dpl); // seg:offset
@@ -2417,7 +2416,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
                 esp = esp - 4;
                 lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(start_esp);
-                for (int i = gate_parameter_count - 1; i >= 0; i--) {
+                for (int i = g_cnt - 1; i >= 0; i--) {
                     // x = Xe(Ve + ((start_esp + i * 4) & Ue));
                     esp = esp - 4;
                     lax = SS_base + (esp & SS_mask);
@@ -2431,7 +2430,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
                 esp = esp - 2;
                 lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(start_esp);
-                for (int i = gate_parameter_count - 1; i >= 0; i--) {
+                for (int i = g_cnt - 1; i >= 0; i--) {
                     // x = Ye(Ve + ((start_esp + i * 2) & Ue));
                     esp = esp - 2;
                     lax = SS_base + (esp & SS_mask);
@@ -2461,11 +2460,11 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(return_address);
         }
-        gate_selector = (gate_selector & ~3) | dpl;
-        set_segment_register(1, gate_selector, cgd.base, cgd.limit, cgd.flags);
+        g_sel = (g_sel & ~3) | dpl;
+        set_segment_register(1, g_sel, cgd.base, cgd.limit, cgd.flags);
         set_cpl(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-        eip = gate_offset, far = far_start = 0;
+        eip = g_off, far = far_start = 0;
     }
 }
 void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
@@ -2737,7 +2736,7 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
 void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
-    int gate_selector, gate_offset, st_error_code, is_interlevel, type, gate32;
+    int g_sel, g_off, st_error_code, is_interlevel, type, gate32;
     int ss, esp, spl;
     SegmentDescriptor isd{0}, cgd{0}, ssd{0};
     uint64_t tss_stack;
@@ -2779,24 +2778,24 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     if (!(isd.flags & (1 << 15))) {
         abort(11, id * 8 + 2);
     }
-    gate_selector = (isd.qword() >> 16) & 0xffff; // different fields in call gate
-    gate_offset = ((isd.qword() >> 32) & 0xffff0000) | (isd.qword() & 0x0000ffff);
-    if ((gate_selector & 0xfffc) == 0) {
+    g_sel = (isd.qword() >> 16) & 0xffff; // different fields in call gate
+    g_off = ((isd.qword() >> 32) & 0xffff0000) | (isd.qword() & 0x0000ffff);
+    if ((g_sel & 0xfffc) == 0) {
         abort(13, 0);
     }
-    cgd = ld_xdt_entry(gate_selector);
+    cgd = ld_xdt_entry(g_sel);
     if (cgd.qword() == 0) {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 12)) || !(cgd.flags & ((1 << 11)))) {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     dpl = (cgd.flags >> 13) & 3;
     if (dpl > cpl) {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 15))) {
-        abort(11, gate_selector & 0xfffc);
+        abort(11, g_sel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
         tss_stack = ld_tss_stack(dpl);
@@ -2827,7 +2826,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         is_interlevel = 1;
     } else if ((cgd.flags & (1 << 10)) || dpl == cpl) { // other data/ code segments, or intralevel
         if (eflags & 0x00020000) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         dpl = cpl;
         SS_base = segs[2].shadow.base;
@@ -2835,7 +2834,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         esp = regs[4];
         is_interlevel = 0;
     } else {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     gate32 = type >> 3;
     if (gate32) {
@@ -2923,11 +2922,11 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         ss = (ss & ~3) | dpl;
         set_segment_register(2, ss, SS_base, ssd.limit, ssd.flags);
     }
-    gate_selector = (gate_selector & ~3) | dpl;
-    set_segment_register(1, gate_selector, cgd.base, cgd.limit, cgd.flags);
+    g_sel = (g_sel & ~3) | dpl;
+    set_segment_register(1, g_sel, cgd.base, cgd.limit, cgd.flags);
     set_cpl(dpl);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-    eip = gate_offset, far = far_start = 0;
+    eip = g_off, far = far_start = 0;
     if ((type & 1) == 0) {
         eflags &= ~0x00000200;
     }
