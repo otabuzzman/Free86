@@ -30,6 +30,17 @@ int Free86::ld_readonly_cplX() {
     }
     return ld_direct(lax ^ tlb_hash);
 }
+uint64_t Free86::ld64_readonly_cplX() {
+    tlb_hash = tlb_readonly_cplX[lax >> 12];
+    if ((tlb_hash | lax) & 7) {
+        uint64_t qword = ld_readonly_cplX() & 0xffffffff;
+        lax += 4;
+        qword |= static_cast<uint64_t>(ld_readonly_cplX()) << 32;
+        lax -= 4;
+        return qword;
+    }
+    return ld64_direct(lax ^ tlb_hash);
+}
 int Free86::ld8_readonly_cpl3() {
     if (is_real__v86()) {
         return ld8_direct(lax);
@@ -138,6 +149,17 @@ void Free86::st_writable_cplX(int dword) {
         st_direct(lax ^ tlb_hash, dword);
     }
 }
+void Free86::st64_writable_cplX(uint64_t qword) {
+    tlb_hash = tlb_writable_cplX[lax >> 12];
+    if ((tlb_hash | lax) & 7) {
+        st_writable_cplX(qword);
+        lax += 4;
+        st_writable_cplX(qword >> 32);
+        lax -= 4;
+    } else {
+        st64_direct(lax ^ tlb_hash, qword);
+    }
+}
 void Free86::st8_writable_cpl3(int byte) {
     if (is_real__v86()) {
         st8_direct(lax, byte);
@@ -186,6 +208,9 @@ int Free86::ld16_direct(int address) {
 int Free86::ld_direct(int address) {
     return memory[address] | (memory[address + 1] << 8) | (memory[address + 2] << 16) | (memory[address + 3] << 24);
 }
+uint64_t Free86::ld64_direct(int address) {
+    return (ld_direct(address) & 0xffffffff) | (static_cast<uint64_t>(ld_direct(address + 4)) << 32);
+}
 void Free86::st8_direct(int address, int byte) {
     memory[address] = byte;
 }
@@ -206,6 +231,10 @@ void Free86::st_direct(int address, int dword) {
     memory[address + 1] = dword >> 8;
     memory[address + 2] = dword >> 16;
     memory[address + 3] = dword >> 24;
+}
+void Free86::st64_direct(int address, uint64_t qword) {
+    st_direct(address, qword);
+    st_direct(address + 4, qword >> 32);
 }
 int Free86::fetch_data8() {
     return ld8_direct(far++);

@@ -86,15 +86,15 @@ bool Free86::is_CF() {
     return f;
 }
 #pragma GCC diagnostic pop
-int Free86::is_PF() {
+bool Free86::is_PF() {
     if (osm == 24) {
         return (osm_src >> 2) & 1;
     } else {
         return parity_LUT[osm_dst & 0xff];
     }
 }
-int Free86::is_AF() {
-    int f;
+bool Free86::is_AF() {
+    bool f;
     switch (osm % 0x1f) {
     case 0:
     case 1:
@@ -277,7 +277,7 @@ bool Free86::is_BE() { // `below' for signed comparison, PM p. 317
     }
     return f;
 }
-int Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
+bool Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
     bool f;
     switch (osm) {
     case 6:
@@ -309,7 +309,7 @@ int Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
     }
     return f;
 }
-int Free86::is_LT() {
+bool Free86::is_LT() {
     bool f;
     switch (osm) {
     case 6:
@@ -341,7 +341,7 @@ int Free86::is_LT() {
     }
     return f;
 }
-int Free86::can_jump(int condition) {
+bool Free86::can_jump(int condition) {
     bool f;
     switch ((condition >> 1) & 7) {
     case 0:
@@ -381,7 +381,7 @@ int Free86::compile_eflags(bool shift) {
         f11 = is_OF() << 11;
     }
     int f2 = is_PF() << 2;
-    int f4 = is_AF();
+    int f4 = is_AF() << 4;
     int f6 = (osm_dst == 0) << 6;
     int f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7;
     return f0 | f2 | f4 | f6 | f7 | f11;

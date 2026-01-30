@@ -291,7 +291,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 } else {
                     sreg--;
                 }
-                lax = lax + segs[sreg].base;
+                lax = lax + segs[sreg].shadow.base;
                 m = ld8_readonly_cpl3();
                 set_lower_byte(0, m);
                 goto FETCH_LOOP;
@@ -1885,11 +1885,11 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         lax += 2;
                         m = ld_readonly_cpl3();
                         if (operation == 2) {
-                            gdt.base = m;
-                            gdt.limit = m16;
+                            gdt.shadow.base = m;
+                            gdt.shadow.limit = m16;
                         } else {
-                            idt.base = m;
-                            idt.limit = m16;
+                            idt.shadow.base = m;
+                            idt.shadow.limit = m16;
                         }
                         break;
                     case 7: // INVLPG (80486)

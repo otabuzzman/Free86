@@ -4,11 +4,46 @@
 #include <fstream>
 #include <vector>
 
-typedef struct SegmentRegister {
-    int selector;
+typedef struct SegmentDescriptor {
     uint32_t base;
     uint32_t limit;
     int flags;
+    SegmentDescriptor(uint32_t base, uint32_t limit, int flags)
+        : base(base), limit(limit), flags(flags) {}
+    SegmentDescriptor(uint64_t qword) {
+        base = ((qword >> 16) & 0x0000ffff) |
+               ((qword >> 16) & 0x00ff0000) |
+               ((qword >> 32) & 0xff000000);
+        flags = (qword >> 32) & 0x00f0ff00;
+        limit = ((qword >> 32) & 0x000f0000) | (qword & 0xffff);
+        if (flags & (1 << 23)) {
+            limit = (limit << 12) | 0xfff;
+        }
+    }
+    uint64_t qword() {
+        #pragma GCC diagnostic ignored "-Wshadow"
+        uint32_t limit;
+        if (flags & (1 << 23)) {
+            limit = this->limit >> 12;
+        } else {
+            limit = this->limit;
+        }
+        return ((static_cast<uint64_t>(base) & 0x0000ffff) << 16 |
+                (static_cast<uint64_t>(base) & 0x00ff0000) << 16 |
+                (static_cast<uint64_t>(base) & 0xff000000) << 32 |
+                (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32 |
+                (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff));
+    }
+    int segment_size_mask() {
+        return (flags & (1 << 22)) ? -1 : 0xffff;
+    }
+} SegmentDescriptor;
+
+typedef struct SegmentRegister {
+    int selector;
+    SegmentDescriptor shadow;
+    SegmentRegister() : selector(0), shadow(SegmentDescriptor(0)) {}
+    SegmentRegister(int selector, SegmentDescriptor shadow) : selector(selector), shadow(shadow) {}
 } SegmentRegister;
 
 typedef struct Interrupt {
@@ -298,8 +333,8 @@ class Free86 {
    Variables in the segments state block (SSB) provide shorthand
    access to frequently used segment data.
  */
-    int CS_base; // shortcut for segs[1].base
-    int SS_base; // shortcut for segs[2].base
+    int CS_base; // shortcut for segs[1].shadow.base
+    int SS_base; // shortcut for segs[2].shadow.base
     int SS_mask; // 16/ 32 bit address size mask for SS (from descriptor)
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
@@ -376,14 +411,9 @@ class Free86 {
     void set_segment_register(int sreg, int selector);
     void set_segment_register_real__v86(int sreg, int selector);
     void set_segment_register_protected(int sreg, int selector);
-    int is_segment_accessible(int selector, bool writable);
 
-    void fill_xdt_descriptor(int *descriptor_table_entry, int selector);
-    void fill_tss_interlevel(int *descriptor_table_entry, int privilege_level);
-    int compile_dte_base(int dte_lower_dword, int dte_upper_dword);
-    int compile_dte_limit(int dte_lower_dword, int dte_upper_dword);
-    void fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword);
-    int get_addressmask(int dte_upper_dword);
+    SegmentDescriptor ld_xdt_entry(int selector);
+    uint64_t ld_tss_stack(int privilege_level); // seg:offset
 
     int aux_INC8(int data);
     int aux_INC16(int data);
@@ -424,25 +454,26 @@ class Free86 {
 
     void aux_LDTR(int selector);
     void aux_LTR(int selector);
-    void aux_JMPF(int selector, int address);
-    void aux_JMPF_real__v86_mode(int selector, int address);
-    void aux_JMPF_protected_mode(int selector, int address);
-    void aux_CALLF(bool is_operand_size32, int selector, int address, int return_address);
-    void aux_CALLF_real__v86_mode(bool is_operand_size32, int selector, int address, int return_address);
-    void aux_CALLF_protected_mode(bool is_operand_size32, int selector, int address, int return_address);
-    void return_real__v86_mode(bool is_operand_size32, bool is_iret, int return_offset);
-    void return_protected_mode(bool is_operand_size32, bool is_iret, int return_offset);
+    void aux_JMPF(int selector, int offset);
+    void aux_JMPF_real__v86_mode(int selector, int offset);
+    void aux_JMPF_protected_mode(int selector, int offset);
+    void aux_CALLF(bool o32, int selector, int offset, int return_address);
+    void aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int return_address);
+    void aux_CALLF_protected_mode(bool o32, int selector, int offset, int return_address);
+    void return_real__v86_mode(bool o32, bool is_iret, int return_offset);
+    void return_protected_mode(bool o32, bool is_iret, int return_offset);
     void zero_segment_register(int sreg, int privilege_level);
-    void aux_RETF(bool is_operand_size32, int return_offset);
+    void aux_RETF(bool o32, int return_offset);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
     void raise_interrupt_real__v86_mode(int id, int is_sw, int return_address);
     void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
-    void aux_IRET(bool is_operand_size32);
+    void aux_IRET(bool o32);
 
-    void aux_LAR_LSL(bool is_operand_size32, bool is_lsl);
+    void aux_LAR_LSL(bool o32, bool is_lsl);
     int ld_descriptor_flags(int selector, bool is_lsl);
     void aux_VERR_VERW(int selector, bool is_verw);
+    int is_segment_accessible(int selector, bool writable);
     void aux_ARPL();
     void aux_CPUID();
     void aux_AAM(int radix);
@@ -498,7 +529,8 @@ class Free86 {
     // memory.cpp
     int ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
     int ld16_readonly_cplX();  // ...word
-    int ld_readonly_cplX();  // ...dword from current linear address
+    int ld_readonly_cplX();  // ...dword
+    uint64_t ld64_readonly_cplX();  // ...qword from current linear address
 
     int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
     int ld16_readonly_cpl3(); // ...word
@@ -510,16 +542,19 @@ class Free86 {
 
     void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
     void st16_writable_cplX(int word); // ...word
-    void st_writable_cplX(int dword); // ...dword at current linear address
+    void st_writable_cplX(int dword); // ...dword
+    void st64_writable_cplX(uint64_t qword); // ...qword at current linear address
 
     void st8_writable_cpl3(int byte); // in user WR memory: store byte
     void st16_writable_cpl3(int word); // ...word
     void st_writable_cpl3(int dword); // ...dword at current linear address
 
-    int ld16_direct(int address);
-    int ld_direct(int address); // read/ write dword at memory address, bypass TLB
+    int ld16_direct(int address); // read/ write at memory address, bypass TLB
+    int ld_direct(int address);
+    uint64_t ld64_direct(int address);
     void st16_direct(int address, int byte);
     void st_direct(int address, int dword);
+    void st64_direct(int address, uint64_t qword);
 
     int fetch_data8(); // read byte...
     int fetch_data16(); // ...word...
@@ -533,13 +568,13 @@ class Free86 {
 
     // eflags.cpp
     bool is_CF(); // carry (bit 0)
-    int is_PF(); // parity (bit 2)
-    int is_AF(); // adjust (bit 4)
+    bool is_PF(); // parity (bit 2)
+    bool is_AF(); // adjust (bit 4)
     bool is_OF(); // overflow (bit 11)
     bool is_BE(); // below or equal, signed comparison
-    int is_LE(); // less or equal, unsigned comparison
-    int is_LT(); // less than
-    int can_jump(int condition);
+    bool is_LE(); // less or equal, unsigned comparison
+    bool is_LT(); // less than
+    bool can_jump(int condition);
     int compile_eflags(bool shift = false);
 
     int get_EFLAGS();

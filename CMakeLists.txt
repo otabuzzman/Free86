@@ -9,7 +9,7 @@ file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 if(APPLE)
     add_compile_options(
       -Weverything
-      -Wno-c++98-compat # probably not harmful...
+      -Wno-c++98-compat
       -Wno-comma
       -Wno-conditional-uninitialized
       -Wno-format
@@ -26,6 +26,11 @@ if(APPLE)
       -Wno-unused-parameter
       -Wno-unused-private-field
       -Wno-unused-variable
+# TODO
+      -Wno-implicit-int-conversion
+#      -Wno-shadow
+#      -Wno-sign-compare
+      -Wno-sign-conversion
     )
     add_compile_definitions(
       _CRT_SECURE_NO_WARNINGS
