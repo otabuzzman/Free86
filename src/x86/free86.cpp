@@ -1292,7 +1292,7 @@ SegmentDescriptor Free86::ld_xdt_entry(int selector) {
     lax = xdt.shadow.base + dti;
     return SegmentDescriptor(ld64_readonly_cplX());
 }
-uint64_t Free86::ld_tss_stack(int dpl) {
+uint64_t Free86::ld_tss_stack(int privilege_level) {
     uint64_t res;
     int type, offset, gate32;
     if (!(tr.shadow.flags & (1 << 15))) { // present (P bit)
@@ -1303,7 +1303,7 @@ uint64_t Free86::ld_tss_stack(int dpl) {
         abort(13, tr.selector & 0xfffc);
     }
     gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
-    offset = (dpl * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
+    offset = (privilege_level * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
     if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
         abort(10, tr.selector & 0xfffc);
     }
@@ -1317,21 +1317,6 @@ uint64_t Free86::ld_tss_stack(int dpl) {
     }
     res |= (static_cast<uint64_t>(ld16_readonly_cplX()) & 0xffff) << 32; // privileged SS
     return res;
-}
-int Free86::compile_dte_base(int dte_lower_dword, int dte_upper_dword) {
-    return (((dte_lower_dword >> 16) & 0xffff) | ((dte_upper_dword & 0xff) << 16) | (dte_upper_dword & 0xff000000));
-}
-int Free86::compile_dte_limit(int dte_lower_dword, int dte_upper_dword) {
-    int limit = (dte_lower_dword & 0xffff) | (dte_upper_dword & 0x000f0000);
-    if (dte_upper_dword & (1 << 23)) {
-        limit = (limit << 12) | 0xfff;
-    }
-    return limit;
-}
-void Free86::fill_segment_register(SegmentRegister *segment_register, int dte_lower_dword, int dte_upper_dword) {
-    segment_register->shadow.base = compile_dte_base(dte_lower_dword, dte_upper_dword);
-    segment_register->shadow.limit = compile_dte_limit(dte_lower_dword, dte_upper_dword);
-    segment_register->shadow.flags = dte_upper_dword;
 }
 int Free86::aux_INC8(int data) {
     if (osm < 25) {
@@ -2192,7 +2177,7 @@ int Free86::shift(uint32_t src, int count) {
     return res;
 }
 void Free86::aux_LDTR(int selector) {
-    int dte_lower_dword, dte_upper_dword;
+    SegmentDescriptor xsd{0};
     uint32_t dti;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
@@ -2207,22 +2192,21 @@ void Free86::aux_LDTR(int selector) {
             abort(13, selector & 0xfffc);
         }
         lax = gdt.shadow.base + dti;
-        dte_lower_dword = ld_readonly_cplX();
-        lax += 4;
-        dte_upper_dword = ld_readonly_cplX();
-        if ((dte_upper_dword & (1 << 12)) || ((dte_upper_dword >> 8) & 0xf) != 2) {
+        xsd = SegmentDescriptor(ld64_readonly_cplX());
+        if ((xsd.flags & (1 << 12)) || ((xsd.flags >> 8) & 0xf) != 2) {
             abort(13, selector & 0xfffc);
         }
-        if (!(dte_upper_dword & (1 << 15))) {
+        if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        fill_segment_register(&ldt, dte_lower_dword, dte_upper_dword);
+        ldt.shadow = xsd;
     }
     ldt.selector = selector;
 }
 void Free86::aux_LTR(int selector) {
-    int dte_lower_dword, dte_upper_dword, type;
+    SegmentDescriptor xsd{0};
     uint32_t dti;
+    int type;
     selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
         tr.shadow.base = 0;
@@ -2237,19 +2221,17 @@ void Free86::aux_LTR(int selector) {
             abort(13, selector & 0xfffc);
         }
         lax = gdt.shadow.base + dti;
-        dte_lower_dword = ld_readonly_cplX();
-        lax += 4;
-        dte_upper_dword = ld_readonly_cplX();
-        type = (dte_upper_dword >> 8) & 0xf;
-        if ((dte_upper_dword & (1 << 12)) || (type != 1 && type != 9)) {
+        xsd = SegmentDescriptor(ld64_readonly_cplX());
+        type = (xsd.flags >> 8) & 0xf;
+        if ((xsd.flags & (1 << 12)) || (type != 1 && type != 9)) {
             abort(13, selector & 0xfffc);
         }
-        if (!(dte_upper_dword & (1 << 15))) {
+        if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        fill_segment_register(&tr, dte_lower_dword, dte_upper_dword);
-        dte_upper_dword |= 1 << 9;
-        st_writable_cplX(dte_upper_dword);
+        tr.shadow = xsd;
+        xsd.flags |= 1 << 9;
+        st64_writable_cplX(xsd.qword());
     }
     tr.selector = selector;
 }
@@ -2740,13 +2722,13 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     }
 }
 void Free86::zero_segment_register(int sreg, int privilege_level) {
-    int dte_upper_dword;
+    int flags;
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
     }
-    dte_upper_dword = segs[sreg].shadow.flags;
-    dpl = (dte_upper_dword >> 13) & 3;
-    if (!(dte_upper_dword & (1 << 11)) || !(dte_upper_dword & (1 << 10))) {
+    flags = segs[sreg].shadow.flags;
+    dpl = (flags >> 13) & 3;
+    if (!(flags & (1 << 11)) || !(flags & (1 << 10))) { // all but conforming code segments
         if (dpl < privilege_level) {
             set_segment_register(sreg, 0, 0, 0, 0);
         }
