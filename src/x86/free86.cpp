@@ -1240,43 +1240,6 @@ void Free86::set_segment_register_protected(int sreg, int selector) {
         set_segment_register(sreg, selector, xsd.base, xsd.limit, xsd.flags);
     }
 }
-int Free86::is_segment_accessible(int selector, bool writable) {
-    SegmentDescriptor xsd{0};
-    if ((selector & 0xfffc) == 0) {
-        return 1;
-    }
-    xsd = ld_xdt_entry(selector);
-    if (xsd.qword() == 0) {
-        return 1;
-    }
-    if (!(xsd.flags & (1 << 12))) {
-        return 1;
-    }
-    rpl = selector & 3;
-    dpl = (xsd.flags >> 13) & 3;
-    if (xsd.flags & (1 << 11)) { // code == 1, data == 0
-        if (writable) {
-            return 1;
-        } else {
-            if (!(xsd.flags & (1 << 9))) {
-                return 0;
-            }
-            if (!(xsd.flags & (1 << 10))) {
-                if (dpl < cpl || dpl < rpl) {
-                    return 1;
-                }
-            }
-        }
-    } else {
-        if (dpl < cpl || dpl < rpl) {
-            return 1;
-        }
-        if (writable && !(xsd.flags & (1 << 9))) {
-            return 1;
-        }
-    }
-    return 0;
-}
 SegmentDescriptor Free86::ld_xdt_entry(int selector) {
     SegmentRegister xdt;
     uint32_t dti;
@@ -3059,20 +3022,55 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
     if (is_lsl) {
         return xsd.limit;
     } else {
-        return xsd.flags & 0x00f0ff00;
+        return xsd.flags;
     }
 }
 void Free86::aux_VERR_VERW(int selector, bool writable) {
-    int ok;
-    ok = is_segment_accessible(selector, writable);
     osm_src = compile_eflags();
-    if (!ok) {
-        osm_src |= 0x0040;
-    } else {
+    if (is_segment_accessible(selector, writable)) {
         osm_src &= ~0x0040;
+    } else {
+        osm_src |= 0x0040;
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
+}
+int Free86::is_segment_accessible(int selector, bool writable) {
+    SegmentDescriptor xsd{0};
+    if ((selector & 0xfffc) == 0) {
+        return 1;
+    }
+    xsd = ld_xdt_entry(selector);
+    if (xsd.qword() == 0) {
+        return 1;
+    }
+    if (!(xsd.flags & (1 << 12))) {
+        return 1;
+    }
+    rpl = selector & 3;
+    dpl = (xsd.flags >> 13) & 3;
+    if (xsd.flags & (1 << 11)) { // code == 1, data == 0
+        if (writable) {
+            return 1;
+        } else {
+            if (!(xsd.flags & (1 << 9))) {
+                return 0;
+            }
+            if (!(xsd.flags & (1 << 10))) {
+                if (dpl < cpl || dpl < rpl) {
+                    return 1;
+                }
+            }
+        }
+    } else {
+        if (dpl < cpl || dpl < rpl) {
+            return 1;
+        }
+        if (writable && !(xsd.flags & (1 << 9))) {
+            return 1;
+        }
+    }
+    return 0;
 }
 void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {

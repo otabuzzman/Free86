@@ -411,7 +411,6 @@ class Free86 {
     void set_segment_register(int sreg, int selector);
     void set_segment_register_real__v86(int sreg, int selector);
     void set_segment_register_protected(int sreg, int selector);
-    int is_segment_accessible(int selector, bool writable);
 
     SegmentDescriptor ld_xdt_entry(int selector);
     uint64_t ld_tss_stack(int privilege_level); // seg:offset
@@ -474,6 +473,7 @@ class Free86 {
     void aux_LAR_LSL(bool o32, bool is_lsl);
     int ld_descriptor_flags(int selector, bool is_lsl);
     void aux_VERR_VERW(int selector, bool is_verw);
+    int is_segment_accessible(int selector, bool writable);
     void aux_ARPL();
     void aux_CPUID();
     void aux_AAM(int radix);
