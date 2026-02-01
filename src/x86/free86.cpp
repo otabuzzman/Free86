@@ -1265,7 +1265,7 @@ uint64_t Free86::ld_tss_stack(int privilege_level) {
     if ((type & 7) != 1) { // no 16 bit TSS (available)
         abort(13, tr.selector & 0xfffc);
     }
-    gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
+    gate32 = type >> 3; // 0/ 1 == 16/ 32 bit gates
     offset = (privilege_level * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
     if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
         abort(10, tr.selector & 0xfffc);
@@ -2962,7 +2962,7 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
         segment_translation();
         selector = ld16_readonly_cpl3();
     }
-    x = ld_descriptor_flags(selector, is_lsl);
+    x = ld_descriptor_fields(selector, is_lsl);
     osm_src = compile_eflags();
     if (x == -1) {
         osm_src &= ~0x0040;
@@ -2977,7 +2977,7 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
+int Free86::ld_descriptor_fields(int selector, bool limit) { // !limit == flags
     SegmentDescriptor xsd{0};
     int type;
     if ((selector & 0xfffc) == 0) {
@@ -3007,7 +3007,7 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
         case 4:  // 16 bit call gate
         case 5:  // task gate
         case 12: // 32 bit call gate
-            if (is_lsl) {
+            if (limit) {
                 return -1;
             }
             break;
@@ -3018,58 +3018,58 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
             return -1;
         }
     }
-    if (is_lsl) {
+    if (limit) {
         return xsd.limit;
     } else {
         return xsd.flags;
     }
 }
-void Free86::aux_VERR_VERW(int selector, bool writable) {
+void Free86::aux_VERR_VERW(int selector, bool writable) { // !writable == readable
     osm_src = compile_eflags();
     if (is_segment_accessible(selector, writable)) {
-        osm_src &= ~0x0040;
-    } else {
         osm_src |= 0x0040;
+    } else {
+        osm_src &= ~0x0040;
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-int Free86::is_segment_accessible(int selector, bool writable) {
+bool Free86::is_segment_accessible(int selector, bool writable) {
     SegmentDescriptor xsd{0};
     if ((selector & 0xfffc) == 0) {
-        return 1;
+        return false;
     }
     xsd = ld_xdt_entry(selector);
     if (xsd.qword() == 0) {
-        return 1;
+        return false;
     }
     if (!(xsd.flags & (1 << 12))) {
-        return 1;
+        return false;
     }
     rpl = selector & 3;
     dpl = (xsd.flags >> 13) & 3;
     if (xsd.flags & (1 << 11)) { // code == 1, data == 0
         if (writable) {
-            return 1;
+            return false;
         } else {
-            if (!(xsd.flags & (1 << 9))) {
-                return 0;
-            }
             if (!(xsd.flags & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
-                    return 1;
+                    return false;
                 }
+            }
+            if (!(xsd.flags & (1 << 9))) {
+                return true;
             }
         }
     } else {
-        if (dpl < cpl || dpl < rpl) {
-            return 1;
-        }
         if (writable && !(xsd.flags & (1 << 9))) {
-            return 1;
+            return false;
+        }
+        if (dpl < cpl || dpl < rpl) {
+            return false;
         }
     }
-    return 0;
+    return true;
 }
 void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {

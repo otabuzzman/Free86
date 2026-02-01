@@ -471,9 +471,9 @@ class Free86 {
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);
-    int ld_descriptor_flags(int selector, bool is_lsl);
+    int ld_descriptor_fields(int selector, bool is_lsl);
     void aux_VERR_VERW(int selector, bool is_verw);
-    int is_segment_accessible(int selector, bool writable);
+    bool is_segment_accessible(int selector, bool writable);
     void aux_ARPL();
     void aux_CPUID();
     void aux_AAM(int radix);
