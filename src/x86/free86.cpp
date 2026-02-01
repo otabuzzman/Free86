@@ -1252,7 +1252,8 @@ SegmentDescriptor Free86::ld_xdt_entry(int selector) {
 }
 uint64_t Free86::ld_tss_stack(int privilege_level) {
     uint64_t res;
-    int type, offset, gate32;
+    uint32_t offset;
+    int type, gate32;
     if (!(tr.shadow.flags & (1 << 15))) { // present (P bit)
         abort(11, tr.selector & 0xfffc);
     }
@@ -2189,20 +2190,20 @@ void Free86::aux_LTR(int selector) {
     }
     tr.selector = selector;
 }
-void Free86::aux_JMPF(int selector, int offset) {
+void Free86::aux_JMPF(int selector, uint32_t offset) {
     if (!is_protected() || (eflags & 0x00020000)) {
         aux_JMPF_real__v86_mode(selector, offset);
     } else {
         aux_JMPF_protected_mode(selector, offset);
     }
 }
-void Free86::aux_JMPF_real__v86_mode(int selector, int offset) {
+void Free86::aux_JMPF_real__v86_mode(int selector, uint32_t offset) {
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_JMPF_protected_mode(int selector, int offset) {
+void Free86::aux_JMPF_protected_mode(int selector, uint32_t offset) {
     SegmentDescriptor xsd{0};
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
@@ -2241,14 +2242,14 @@ void Free86::aux_JMPF_protected_mode(int selector, int offset) {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
-void Free86::aux_CALLF(bool o32, int selector, int offset, int return_address) {
+void Free86::aux_CALLF(bool o32, int selector, uint32_t offset, int return_address) {
     if (!is_protected() || (eflags & 0x00020000)) {
         aux_CALLF_real__v86_mode(o32, selector, offset, return_address);
     } else {
         aux_CALLF_protected_mode(o32, selector, offset, return_address);
     }
 }
-void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int return_address) {
+void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, int return_address) {
     int esp = regs[4];
     if (o32) {
         esp = esp - 4;
@@ -2271,7 +2272,7 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int re
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int return_address) {
+void Free86::aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, int return_address) {
     int type, gate32, g_sel, g_off, g_cnt;
     int ss, esp, start_esp, spl;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
@@ -2458,7 +2459,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         eip = g_off, far = far_start = 0;
     }
 }
-void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
+void Free86::return_real__v86_mode(bool o32, bool is_iret, int release_stack_items) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
@@ -2489,7 +2490,7 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
             esp = esp + 2;
         }
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((esp + return_offset) & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | ((esp + release_stack_items) & SS_mask);
     segs[1].selector = cs;
     segs[1].shadow.base = cs << 4;
     update_SSB();
@@ -2507,7 +2508,7 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
+void Free86::return_protected_mode(bool o32, bool is_iret, int release_stack_items) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
@@ -2605,7 +2606,7 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     if (!(csd.flags & (1 << 15))) {
         abort(11, cs & 0xfffc);
     }
-    esp = esp + return_offset;
+    esp = esp + release_stack_items;
     if (rpl == cpl) {
         set_segment_register(1, cs, csd.base, csd.limit, csd.flags);
     } else {
@@ -2652,7 +2653,7 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
         zero_segment_register(3, rpl);
         zero_segment_register(4, rpl);
         zero_segment_register(5, rpl);
-        esp = stack_esp + return_offset;
+        esp = stack_esp + release_stack_items;
         SS_mask = csd.segment_size_mask();
         set_cpl(rpl);
     }
