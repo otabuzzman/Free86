@@ -77,7 +77,7 @@ class Free86 {
 
     uint64_t cycles;
 
-    int tlb_lookup(uint32_t linear, int writable) {
+    int tlb_lookup(uint32_t linear, bool writable) {
         uint32_t lat20 = linear >> 12; // PDE and PTE indices
         if (writable) {
             tlb_hash = tlb_writable[lat20];
@@ -168,7 +168,7 @@ class Free86 {
     int tlb_size = 0x100000; // 1M entries per MT
     int tlb_hash; // LA ^ PA (by design, no necessity)
 
-    void tlb_update(uint32_t linear /*data*/, uint32_t physical /*key*/, int writable, int user) {
+    void tlb_update(uint32_t linear /*data*/, uint32_t physical /*key*/, bool writable, bool user) {
         tlb_hash = linear ^ physical; // poor man's XOR hash function
         uint32_t lat20 = linear >> 12; // PD and PT indices (top 20 bits of linear address)
         if (tlb_readonly_cplX[lat20] == -1) {
@@ -400,8 +400,8 @@ class Free86 {
     void set_lower_byte(int reg, int byte);
     void set_lower_word(int reg, int word);
 
-    void page_translation(int writable, int user);
-    void page_translation(uint32_t address, int writable, int user);
+    void page_translation(bool writable, bool user);
+    void page_translation(uint32_t address, bool writable, bool user);
 
     void segment_translation();
     void moffs_to_linear(bool writable);
@@ -470,7 +470,7 @@ class Free86 {
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);
-    int ld_descriptor_fields(int selector, bool is_lsl);
+    int ld_descriptor_fields(int selector, bool limit);
     void aux_VERR_VERW(int selector, bool is_verw);
     bool is_segment_accessible(int selector, bool writable);
     void aux_ARPL();

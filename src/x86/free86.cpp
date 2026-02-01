@@ -834,10 +834,10 @@ void Free86::set_lower_byte(int reg, int byte) {
 void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-void Free86::page_translation(int writable, int user) {
+void Free86::page_translation(bool writable, bool user) {
     page_translation(lax, writable, user);
 }
-void Free86::page_translation(uint32_t address, int writable, int user) {
+void Free86::page_translation(uint32_t address, bool writable, bool user) {
     uint32_t pde_address, pde, pte_address, pte, pxe;
     int error_code = 0, supervisor = !user, blank_page;
     if (!is_paging()) {
@@ -874,14 +874,14 @@ void Free86::page_translation(uint32_t address, int writable, int user) {
                     st_direct(pte_address, pte);
                 }
                 // page set dirty and PDE/ PTE both writable or supervisor request
-                writable = 0;
+                writable = false;
                 if ((pte & 0x00000040) && ((pxe & 0x00000002) || supervisor)) {
-                    writable = 1;
+                    writable = true;
                 }
                 // PDE/ PTE both user-accessible
-                user = 0;
+                user = false;
                 if (pxe & 0x00000004) {
-                    user = 1;
+                    user = true;
                 }
                 tlb_update(address & -4096, pte & -4096, writable, user);
                 return;
