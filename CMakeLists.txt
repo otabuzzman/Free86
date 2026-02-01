@@ -28,8 +28,8 @@ if(APPLE)
       -Wno-unused-variable
 # TODO
       -Wno-implicit-int-conversion
-#      -Wno-shadow
-#      -Wno-sign-compare
+      -Wno-shadow
+      -Wno-sign-compare
       -Wno-sign-conversion
     )
     add_compile_definitions(

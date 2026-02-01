@@ -21,7 +21,6 @@ typedef struct SegmentDescriptor {
         }
     }
     uint64_t qword() {
-        #pragma GCC diagnostic ignored "-Wshadow"
         uint32_t limit;
         if (flags & (1 << 23)) {
             limit = this->limit >> 12;

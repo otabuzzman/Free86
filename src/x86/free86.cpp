@@ -76,7 +76,6 @@ void Free86::fetch_opcode() {
     }
 }
 int Free86::instruction_length(int opcode) {
-    #pragma GCC diagnostic ignored "-Wshadow"
     int ipr, operation;
     int stride, n = 1;
     ipr = ipr_default;
@@ -825,8 +824,6 @@ void Free86::set_cpl(int level) {
         tlb_writable = tlb_writable_cplX;
     }
 }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow" // reg
 void Free86::set_lower_byte(int reg, int byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
         regs[reg & 3] = (regs[reg & 3] & -65281) | ((byte & 0xff) << 8);
@@ -837,7 +834,6 @@ void Free86::set_lower_byte(int reg, int byte) {
 void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-#pragma GCC diagnostic pop
 void Free86::page_translation(int writable, int user) {
     page_translation(lax, writable, user);
 }
@@ -1160,7 +1156,6 @@ void Free86::moffs_to_linear(bool writable) {
     }
     lax = static_cast<uint32_t>(la & 0xffffffff);
 }
-#pragma GCC diagnostic ignored "-Wshadow" // base
 void Free86::set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[sreg] = {selector, {base, limit, flags}};
     update_SSB(); // emulator state variables
@@ -1371,8 +1366,6 @@ int Free86::aux_SHLD(int dst, int src, int count) {
     }
     return res;
 }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow" // base
 void Free86::aux_BT16(int base, int offset) {
     osm_src = base >> (offset & 0xf);
     osm = 19;
@@ -1421,7 +1414,6 @@ int Free86::aux_BTS_BTR_BTC(int base, int offset) {
     osm = 20;
     return res;
 }
-#pragma GCC diagnostic pop
 int Free86::aux_BSF16(int dst, int src) {
     int s, res;
     res = dst;
@@ -1673,7 +1665,6 @@ void Free86::aux_IMUL(int multiplicand, int multiplier) {
 }
 void Free86::multiply(int multiplicand, int multiplier) {
     uint32_t md_lower, md_upper, mr_lower, mr_upper, z;
-    #pragma GCC diagnostic ignored "-Wshadow"
     uint64_t x = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (x <= 0xffffffff) {
         y = 0;
@@ -2520,7 +2511,6 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
-    #pragma GCC diagnostic ignored "-Wshadow"
     int cpl = this->cpl;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
@@ -3259,7 +3249,6 @@ void Free86::aux_BOUND() {
 }
 void Free86::aux_PUSHA16() {
     lax = SS_base + ((regs[4] - 16) & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st16_writable_cpl3(r);
@@ -3269,7 +3258,6 @@ void Free86::aux_PUSHA16() {
 }
 void Free86::aux_PUSHA() {
     lax = SS_base + ((regs[4] - 32) & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st_writable_cpl3(r);
@@ -3279,7 +3267,6 @@ void Free86::aux_PUSHA() {
 }
 void Free86::aux_POPA16() {
     lax = SS_base + (regs[4] & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             set_lower_word(reg, ld16_readonly_cpl3());
@@ -3290,7 +3277,6 @@ void Free86::aux_POPA16() {
 }
 void Free86::aux_POPA() {
     lax = SS_base + (regs[4] & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             regs[reg] = ld_readonly_cpl3();
