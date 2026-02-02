@@ -76,7 +76,6 @@ void Free86::fetch_opcode() {
     }
 }
 int Free86::instruction_length(int opcode) {
-    #pragma GCC diagnostic ignored "-Wshadow"
     int ipr, operation;
     int stride, n = 1;
     ipr = ipr_default;
@@ -825,8 +824,6 @@ void Free86::set_cpl(int level) {
         tlb_writable = tlb_writable_cplX;
     }
 }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow" // reg
 void Free86::set_lower_byte(int reg, int byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
         regs[reg & 3] = (regs[reg & 3] & -65281) | ((byte & 0xff) << 8);
@@ -837,11 +834,10 @@ void Free86::set_lower_byte(int reg, int byte) {
 void Free86::set_lower_word(int reg, int word) {
     regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
 }
-#pragma GCC diagnostic pop
-void Free86::page_translation(int writable, int user) {
+void Free86::page_translation(bool writable, bool user) {
     page_translation(lax, writable, user);
 }
-void Free86::page_translation(uint32_t address, int writable, int user) {
+void Free86::page_translation(uint32_t address, bool writable, bool user) {
     uint32_t pde_address, pde, pte_address, pte, pxe;
     int error_code = 0, supervisor = !user, blank_page;
     if (!is_paging()) {
@@ -878,14 +874,14 @@ void Free86::page_translation(uint32_t address, int writable, int user) {
                     st_direct(pte_address, pte);
                 }
                 // page set dirty and PDE/ PTE both writable or supervisor request
-                writable = 0;
+                writable = false;
                 if ((pte & 0x00000040) && ((pxe & 0x00000002) || supervisor)) {
-                    writable = 1;
+                    writable = true;
                 }
                 // PDE/ PTE both user-accessible
-                user = 0;
+                user = false;
                 if (pxe & 0x00000004) {
-                    user = 1;
+                    user = true;
                 }
                 tlb_update(address & -4096, pte & -4096, writable, user);
                 return;
@@ -1116,7 +1112,7 @@ void Free86::segment_translation() {
     lax = lax + segs[sreg].shadow.base;
     return;
 }
-void Free86::offset_to_linear(bool writable) {
+void Free86::moffs_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
@@ -1160,7 +1156,6 @@ void Free86::offset_to_linear(bool writable) {
     }
     lax = static_cast<uint32_t>(la & 0xffffffff);
 }
-#pragma GCC diagnostic ignored "-Wshadow" // base
 void Free86::set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags) {
     segs[sreg] = {selector, {base, limit, flags}};
     update_SSB(); // emulator state variables
@@ -1257,7 +1252,8 @@ SegmentDescriptor Free86::ld_xdt_entry(int selector) {
 }
 uint64_t Free86::ld_tss_stack(int privilege_level) {
     uint64_t res;
-    int type, offset, gate32;
+    uint32_t offset;
+    int type, gate32;
     if (!(tr.shadow.flags & (1 << 15))) { // present (P bit)
         abort(11, tr.selector & 0xfffc);
     }
@@ -1265,7 +1261,7 @@ uint64_t Free86::ld_tss_stack(int privilege_level) {
     if ((type & 7) != 1) { // no 16 bit TSS (available)
         abort(13, tr.selector & 0xfffc);
     }
-    gate32 = type >> 3; // 0/ 1 = 16/ 32 bit gates
+    gate32 = type >> 3; // 0/ 1 == 16/ 32 bit gates
     offset = (privilege_level * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
     if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
         abort(10, tr.selector & 0xfffc);
@@ -1371,8 +1367,6 @@ int Free86::aux_SHLD(int dst, int src, int count) {
     }
     return res;
 }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow" // base
 void Free86::aux_BT16(int base, int offset) {
     osm_src = base >> (offset & 0xf);
     osm = 19;
@@ -1421,7 +1415,6 @@ int Free86::aux_BTS_BTR_BTC(int base, int offset) {
     osm = 20;
     return res;
 }
-#pragma GCC diagnostic pop
 int Free86::aux_BSF16(int dst, int src) {
     int s, res;
     res = dst;
@@ -1673,7 +1666,6 @@ void Free86::aux_IMUL(int multiplicand, int multiplier) {
 }
 void Free86::multiply(int multiplicand, int multiplier) {
     uint32_t md_lower, md_upper, mr_lower, mr_upper, z;
-    #pragma GCC diagnostic ignored "-Wshadow"
     uint64_t x = (uint64_t) multiplicand * (uint32_t) multiplier;
     if (x <= 0xffffffff) {
         y = 0;
@@ -2198,20 +2190,20 @@ void Free86::aux_LTR(int selector) {
     }
     tr.selector = selector;
 }
-void Free86::aux_JMPF(int selector, int offset) {
+void Free86::aux_JMPF(int selector, uint32_t offset) {
     if (!is_protected() || (eflags & 0x00020000)) {
         aux_JMPF_real__v86_mode(selector, offset);
     } else {
         aux_JMPF_protected_mode(selector, offset);
     }
 }
-void Free86::aux_JMPF_real__v86_mode(int selector, int offset) {
+void Free86::aux_JMPF_real__v86_mode(int selector, uint32_t offset) {
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_JMPF_protected_mode(int selector, int offset) {
+void Free86::aux_JMPF_protected_mode(int selector, uint32_t offset) {
     SegmentDescriptor xsd{0};
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
@@ -2250,14 +2242,14 @@ void Free86::aux_JMPF_protected_mode(int selector, int offset) {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
-void Free86::aux_CALLF(bool o32, int selector, int offset, int return_address) {
+void Free86::aux_CALLF(bool o32, int selector, uint32_t offset, int return_address) {
     if (!is_protected() || (eflags & 0x00020000)) {
         aux_CALLF_real__v86_mode(o32, selector, offset, return_address);
     } else {
         aux_CALLF_protected_mode(o32, selector, offset, return_address);
     }
 }
-void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int return_address) {
+void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, int return_address) {
     int esp = regs[4];
     if (o32) {
         esp = esp - 4;
@@ -2280,9 +2272,8 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, int offset, int re
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int return_address) {
-    int type, gate32;
-    int gate_selector, gate_offset, gate_parameter_count;
+void Free86::aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, int return_address) {
+    int type, gate32, g_sel, g_off, g_cnt;
     int ss, esp, start_esp, spl;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
     uint64_t tss_stack;
@@ -2362,25 +2353,25 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
         if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        gate_selector = (xsd.qword() >> 16) & 0xffff; // different fields in call gate
-        gate_offset = ((xsd.qword() >> 32) & 0xffff0000) | (xsd.qword() & 0x0000ffff);
-        gate_parameter_count = xsd.flags & 0x1f;
-        if ((gate_selector & 0xfffc) == 0) {
+        g_sel = (xsd.qword() >> 16) & 0xffff; // different fields in call gate
+        g_off = ((xsd.qword() >> 32) & 0xffff0000) | (xsd.qword() & 0x0000ffff);
+        g_cnt = xsd.flags & 0x1f;
+        if ((g_sel & 0xfffc) == 0) {
             abort(13, 0);
         }
-        cgd = ld_xdt_entry(gate_selector);
+        cgd = ld_xdt_entry(g_sel);
         if (cgd.qword() == 0) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 12)) || !(cgd.flags & ((1 << 11)))) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         dpl = (cgd.flags >> 13) & 3;
         if (dpl > cpl) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 15))) {
-            abort(11, gate_selector & 0xfffc);
+            abort(11, g_sel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
             tss_stack = ld_tss_stack(dpl); // seg:offset
@@ -2417,7 +2408,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
                 esp = esp - 4;
                 lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(start_esp);
-                for (int i = gate_parameter_count - 1; i >= 0; i--) {
+                for (int i = g_cnt - 1; i >= 0; i--) {
                     // x = Xe(Ve + ((start_esp + i * 4) & Ue));
                     esp = esp - 4;
                     lax = SS_base + (esp & SS_mask);
@@ -2431,7 +2422,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
                 esp = esp - 2;
                 lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(start_esp);
-                for (int i = gate_parameter_count - 1; i >= 0; i--) {
+                for (int i = g_cnt - 1; i >= 0; i--) {
                     // x = Ye(Ve + ((start_esp + i * 2) & Ue));
                     esp = esp - 2;
                     lax = SS_base + (esp & SS_mask);
@@ -2461,14 +2452,21 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, int offset, int re
             lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(return_address);
         }
-        gate_selector = (gate_selector & ~3) | dpl;
-        set_segment_register(1, gate_selector, cgd.base, cgd.limit, cgd.flags);
+        g_sel = (g_sel & ~3) | dpl;
+        set_segment_register(1, g_sel, cgd.base, cgd.limit, cgd.flags);
         set_cpl(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-        eip = gate_offset, far = far_start = 0;
+        eip = g_off, far = far_start = 0;
     }
 }
-void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
+void Free86::aux_RETF(bool o32, int return_offset) {
+    if (!is_protected() || (eflags & 0x00020000)) {
+        return_real__v86_mode(o32, 0, return_offset);
+    } else {
+        return_protected_mode(o32, 0, return_offset);
+    }
+}
+void Free86::return_real__v86_mode(bool o32, bool is_iret, int release_stack_items) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
@@ -2499,7 +2497,7 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
             esp = esp + 2;
         }
     }
-    regs[4] = (regs[4] & ~SS_mask) | ((esp + return_offset) & SS_mask);
+    regs[4] = (regs[4] & ~SS_mask) | ((esp + release_stack_items) & SS_mask);
     segs[1].selector = cs;
     segs[1].shadow.base = cs << 4;
     update_SSB();
@@ -2517,11 +2515,10 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, int return_offset) {
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
+void Free86::return_protected_mode(bool o32, bool is_iret, int release_stack_items) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
-    #pragma GCC diagnostic ignored "-Wshadow"
     int cpl = this->cpl;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
@@ -2616,7 +2613,7 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
     if (!(csd.flags & (1 << 15))) {
         abort(11, cs & 0xfffc);
     }
-    esp = esp + return_offset;
+    esp = esp + release_stack_items;
     if (rpl == cpl) {
         set_segment_register(1, cs, csd.base, csd.limit, csd.flags);
     } else {
@@ -2663,7 +2660,7 @@ void Free86::return_protected_mode(bool o32, bool is_iret, int return_offset) {
         zero_segment_register(3, rpl);
         zero_segment_register(4, rpl);
         zero_segment_register(5, rpl);
-        esp = stack_esp + return_offset;
+        esp = stack_esp + release_stack_items;
         SS_mask = csd.segment_size_mask();
         set_cpl(rpl);
     }
@@ -2695,13 +2692,6 @@ void Free86::zero_segment_register(int sreg, int privilege_level) {
         if (dpl < privilege_level) {
             set_segment_register(sreg, 0, 0, 0, 0);
         }
-    }
-}
-void Free86::aux_RETF(bool o32, int return_offset) {
-    if (!is_protected() || (eflags & 0x00020000)) {
-        return_real__v86_mode(o32, 0, return_offset);
-    } else {
-        return_protected_mode(o32, 0, return_offset);
     }
 }
 void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
@@ -2737,7 +2727,7 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
 void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
-    int gate_selector, gate_offset, st_error_code, is_interlevel, type, gate32;
+    int g_sel, g_off, st_error_code, is_interlevel, type, gate32;
     int ss, esp, spl;
     SegmentDescriptor isd{0}, cgd{0}, ssd{0};
     uint64_t tss_stack;
@@ -2779,24 +2769,24 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     if (!(isd.flags & (1 << 15))) {
         abort(11, id * 8 + 2);
     }
-    gate_selector = (isd.qword() >> 16) & 0xffff; // different fields in call gate
-    gate_offset = ((isd.qword() >> 32) & 0xffff0000) | (isd.qword() & 0x0000ffff);
-    if ((gate_selector & 0xfffc) == 0) {
+    g_sel = (isd.qword() >> 16) & 0xffff; // different fields in call gate
+    g_off = ((isd.qword() >> 32) & 0xffff0000) | (isd.qword() & 0x0000ffff);
+    if ((g_sel & 0xfffc) == 0) {
         abort(13, 0);
     }
-    cgd = ld_xdt_entry(gate_selector);
+    cgd = ld_xdt_entry(g_sel);
     if (cgd.qword() == 0) {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 12)) || !(cgd.flags & ((1 << 11)))) {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     dpl = (cgd.flags >> 13) & 3;
     if (dpl > cpl) {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 15))) {
-        abort(11, gate_selector & 0xfffc);
+        abort(11, g_sel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
         tss_stack = ld_tss_stack(dpl);
@@ -2827,7 +2817,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         is_interlevel = 1;
     } else if ((cgd.flags & (1 << 10)) || dpl == cpl) { // other data/ code segments, or intralevel
         if (eflags & 0x00020000) {
-            abort(13, gate_selector & 0xfffc);
+            abort(13, g_sel & 0xfffc);
         }
         dpl = cpl;
         SS_base = segs[2].shadow.base;
@@ -2835,7 +2825,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         esp = regs[4];
         is_interlevel = 0;
     } else {
-        abort(13, gate_selector & 0xfffc);
+        abort(13, g_sel & 0xfffc);
     }
     gate32 = type >> 3;
     if (gate32) {
@@ -2923,11 +2913,11 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         ss = (ss & ~3) | dpl;
         set_segment_register(2, ss, SS_base, ssd.limit, ssd.flags);
     }
-    gate_selector = (gate_selector & ~3) | dpl;
-    set_segment_register(1, gate_selector, cgd.base, cgd.limit, cgd.flags);
+    g_sel = (g_sel & ~3) | dpl;
+    set_segment_register(1, g_sel, cgd.base, cgd.limit, cgd.flags);
     set_cpl(dpl);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-    eip = gate_offset, far = far_start = 0;
+    eip = g_off, far = far_start = 0;
     if ((type & 1) == 0) {
         eflags &= ~0x00000200;
     }
@@ -2963,7 +2953,7 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
         segment_translation();
         selector = ld16_readonly_cpl3();
     }
-    x = ld_descriptor_flags(selector, is_lsl);
+    x = ld_descriptor_fields(selector, is_lsl);
     osm_src = compile_eflags();
     if (x == -1) {
         osm_src &= ~0x0040;
@@ -2978,7 +2968,7 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
+int Free86::ld_descriptor_fields(int selector, bool limit) { // !limit == flags
     SegmentDescriptor xsd{0};
     int type;
     if ((selector & 0xfffc) == 0) {
@@ -3008,7 +2998,7 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
         case 4:  // 16 bit call gate
         case 5:  // task gate
         case 12: // 32 bit call gate
-            if (is_lsl) {
+            if (limit) {
                 return -1;
             }
             break;
@@ -3019,58 +3009,58 @@ int Free86::ld_descriptor_flags(int selector, bool is_lsl) {
             return -1;
         }
     }
-    if (is_lsl) {
+    if (limit) {
         return xsd.limit;
     } else {
         return xsd.flags;
     }
 }
-void Free86::aux_VERR_VERW(int selector, bool writable) {
+void Free86::aux_VERR_VERW(int selector, bool writable) { // !writable == readable
     osm_src = compile_eflags();
     if (is_segment_accessible(selector, writable)) {
-        osm_src &= ~0x0040;
-    } else {
         osm_src |= 0x0040;
+    } else {
+        osm_src &= ~0x0040;
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-int Free86::is_segment_accessible(int selector, bool writable) {
+bool Free86::is_segment_accessible(int selector, bool writable) {
     SegmentDescriptor xsd{0};
     if ((selector & 0xfffc) == 0) {
-        return 1;
+        return false;
     }
     xsd = ld_xdt_entry(selector);
     if (xsd.qword() == 0) {
-        return 1;
+        return false;
     }
     if (!(xsd.flags & (1 << 12))) {
-        return 1;
+        return false;
     }
     rpl = selector & 3;
     dpl = (xsd.flags >> 13) & 3;
     if (xsd.flags & (1 << 11)) { // code == 1, data == 0
         if (writable) {
-            return 1;
+            return false;
         } else {
-            if (!(xsd.flags & (1 << 9))) {
-                return 0;
-            }
             if (!(xsd.flags & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
-                    return 1;
+                    return false;
                 }
+            }
+            if (!(xsd.flags & (1 << 9))) {
+                return true;
             }
         }
     } else {
-        if (dpl < cpl || dpl < rpl) {
-            return 1;
-        }
         if (writable && !(xsd.flags & (1 << 9))) {
-            return 1;
+            return false;
+        }
+        if (dpl < cpl || dpl < rpl) {
+            return false;
         }
     }
-    return 0;
+    return true;
 }
 void Free86::aux_ARPL() {
     if (!is_protected() || (eflags & 0x00020000)) {
@@ -3260,7 +3250,6 @@ void Free86::aux_BOUND() {
 }
 void Free86::aux_PUSHA16() {
     lax = SS_base + ((regs[4] - 16) & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st16_writable_cpl3(r);
@@ -3270,7 +3259,6 @@ void Free86::aux_PUSHA16() {
 }
 void Free86::aux_PUSHA() {
     lax = SS_base + ((regs[4] - 32) & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         r = regs[reg];
         st_writable_cpl3(r);
@@ -3280,7 +3268,6 @@ void Free86::aux_PUSHA() {
 }
 void Free86::aux_POPA16() {
     lax = SS_base + (regs[4] & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             set_lower_word(reg, ld16_readonly_cpl3());
@@ -3291,7 +3278,6 @@ void Free86::aux_POPA16() {
 }
 void Free86::aux_POPA() {
     lax = SS_base + (regs[4] & SS_mask);
-    #pragma GCC diagnostic ignored "-Wshadow"
     for (int reg = 7; reg >= 0; reg--) {
         if (reg != 4) {
             regs[reg] = ld_readonly_cpl3();

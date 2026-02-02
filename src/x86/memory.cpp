@@ -32,7 +32,7 @@ int Free86::ld_readonly_cplX() {
 }
 uint64_t Free86::ld64_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
-    if ((tlb_hash | lax) & 7) {
+    if ((tlb_hash | lax) & 3) {
         uint64_t qword = ld_readonly_cplX() & 0xffffffff;
         lax += 4;
         qword |= static_cast<uint64_t>(ld_readonly_cplX()) << 32;
@@ -151,7 +151,7 @@ void Free86::st_writable_cplX(int dword) {
 }
 void Free86::st64_writable_cplX(uint64_t qword) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
-    if ((tlb_hash | lax) & 7) {
+    if ((tlb_hash | lax) & 3) {
         st_writable_cplX(qword);
         lax += 4;
         st_writable_cplX(qword >> 32);
