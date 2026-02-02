@@ -133,7 +133,7 @@ extension SegmentDescriptor {
 }
 
 extension SegmentDescriptor: Equatable {
-    static func ==(lhs: SegmentDescriptor, rhs: SegmentDescriptor) -> Bool {
+    static func == (lhs: SegmentDescriptor, rhs: SegmentDescriptor) -> Bool {
         lhs.upper == rhs.upper && lhs.lower == rhs.lower
     }
 }

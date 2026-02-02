@@ -28,4 +28,7 @@ extension InstructionPrefixRegister {
         else { return SegmentRegister.Name.DS.rawValue }
         return Int(self & 0x07 - 1)
     }
+    var operandSizeMask: DWord {
+        self.isFlagRaised(.operandSizeOverride) ? 0xFFFF : 0xFFFFFFFF
+    }
 }

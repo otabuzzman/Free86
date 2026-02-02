@@ -35,4 +35,7 @@ func instructionPrefixRegisterFieldsAccess() {
     #expect(ipr.segmentRegisterIndex == SegmentRegister.Name.FS.rawValue)
     ipr = ipr & 0xFF8 | 6
     #expect(ipr.segmentRegisterIndex == SegmentRegister.Name.GS.rawValue)
+    #expect(ipr.operandSizeMask == 0xFFFF)
+    ipr.setFlag(.operandSizeOverride, 0)
+    #expect(ipr.operandSizeMask == 0xFFFFFFFF)
 }

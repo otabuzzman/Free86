@@ -18,7 +18,7 @@ struct SegmentRegister {
 }
 
 extension SegmentRegister: Equatable {
-    static func ==(lhs: SegmentRegister, rhs: SegmentRegister) -> Bool {
+    static func == (lhs: SegmentRegister, rhs: SegmentRegister) -> Bool {
         lhs.selector == rhs.selector && lhs.shadow == rhs.shadow
     }
 }
