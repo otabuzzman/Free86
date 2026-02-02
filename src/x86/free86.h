@@ -350,7 +350,7 @@ class Free86 {
     int m, m16; // any data from memory not derived from modRM
     int ind, imm, imm16, moffs; // indirect, immediate and offset
     int ind1st, ind2nd, imm1st, imm2nd; // 1st/ 2nds of above
-    int x, y, XS_mask; // address size mask for effective DS
+    int x, y, XS_mask; // operand size mask
 
     // clang-format off
     const std::vector<int> parity_LUT = {
