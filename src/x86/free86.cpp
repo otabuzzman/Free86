@@ -2459,6 +2459,13 @@ void Free86::aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, i
         eip = g_off, far = far_start = 0;
     }
 }
+void Free86::aux_RETF(bool o32, int return_offset) {
+    if (!is_protected() || (eflags & 0x00020000)) {
+        return_real__v86_mode(o32, 0, return_offset);
+    } else {
+        return_protected_mode(o32, 0, return_offset);
+    }
+}
 void Free86::return_real__v86_mode(bool o32, bool is_iret, int release_stack_items) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
@@ -2685,13 +2692,6 @@ void Free86::zero_segment_register(int sreg, int privilege_level) {
         if (dpl < privilege_level) {
             set_segment_register(sreg, 0, 0, 0, 0);
         }
-    }
-}
-void Free86::aux_RETF(bool o32, int return_offset) {
-    if (!is_protected() || (eflags & 0x00020000)) {
-        return_real__v86_mode(o32, 0, return_offset);
-    } else {
-        return_protected_mode(o32, 0, return_offset);
     }
 }
 void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {

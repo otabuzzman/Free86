@@ -459,10 +459,10 @@ class Free86 {
     void aux_CALLF(bool o32, int selector, uint32_t offset, int return_address);
     void aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, int return_address);
     void aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, int return_address);
+    void aux_RETF(bool o32, int release_stack_items);
     void return_real__v86_mode(bool o32, bool is_iret, int release_stack_items);
     void return_protected_mode(bool o32, bool is_iret, int release_stack_items);
     void zero_segment_register(int sreg, int privilege_level);
-    void aux_RETF(bool o32, int release_stack_items);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
     void raise_interrupt_real__v86_mode(int id, int is_sw, int return_address);

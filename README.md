@@ -9,11 +9,11 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - Test and debug register handling
 
 **Branches**
-- `master`: the original repository fixed for Visual Studio Code
-- `test386`: fixed to additionally pass Test386 suite
-- `refactor`: rework of code structure and naming conventions
+- `master`: Original repository fixed for Visual Studio Code
+- `test386`: Fixed to additionally pass Test386 suite
+- `refactor`: Rework of code structure and naming conventions
 
-**Linos (also Cygwin, WSL)**
+**Build on Linos (also WSL)**
 - Install C++, CMake
 - Run commands
   ```
@@ -31,11 +31,11 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   exe/free86
   ```
 
-**MacOS**
+**Build on MacOS**
 - Install CMake, Xcode, Xcode Command Line Tools
 - Run same commands as for Linos
 
-**Winos**
+**Build Winos**
 - Install CMake, nmake, Visual Studio Community /w C++
 - Run commands
   ```
@@ -53,7 +53,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   exe\free86
   ```
 
-**Winos/ Cygwin**
+**Build Winos/ Cygwin**
 - Install development tools, cmake
 - Run same commands as for Linos
 
@@ -83,6 +83,6 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   Results comparison should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF bit.
 
 **Acknowledgements**
-- parent repository [CPU-386-cpp](https://github.com/kxkx5150/CPU-80386-cpp) of this fork
+- Parent repository [CPU-386-cpp](https://github.com/kxkx5150/CPU-80386-cpp) of this fork
 - CPU-386-cpp might derive from [jslinux-deobfuscated](https://github.com/levskaya/jslinux-deobfuscated)
 - jslinux-deobfuscated makes [JSLinux](https://bellard.org/jslinux/tech.html) from Fabrice Bellard readable
