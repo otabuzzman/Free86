@@ -290,7 +290,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 } else {
                     sreg--;
                 }
-                lax = lax + segs[sreg].shadow.base;
+                lax = segs[sreg].shadow.base + lax;
                 m = ld8_readonly_cpl3();
                 set_lower_byte(0, m);
                 goto FETCH_LOOP;

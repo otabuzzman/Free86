@@ -1024,7 +1024,7 @@ void Free86::segment_translation() {
         } else {
             sreg--;
         }
-        lax = lax + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + lax;
         return;
     }
     switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -1109,7 +1109,7 @@ void Free86::segment_translation() {
     } else {
             sreg--;
         }
-    lax = lax + segs[sreg].shadow.base;
+    lax = segs[sreg].shadow.base + lax;
     return;
 }
 void Free86::moffs_to_linear(bool writable) {

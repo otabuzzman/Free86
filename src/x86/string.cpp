@@ -19,7 +19,7 @@ void Free86::aux_INSB() {
             return;
         }
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st8_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 0)) & XS_mask);
         regs[1] = ecx = (ecx & ~XS_mask) | ((ecx - 1) & XS_mask);
@@ -28,7 +28,7 @@ void Free86::aux_INSB() {
         }
     } else {
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st8_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 0)) & XS_mask);
     }
@@ -57,7 +57,7 @@ void Free86::aux_OUTSB() {
         if ((ecx & XS_mask) == 0) {
             return;
         }
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld8_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 0)) & XS_mask);
@@ -66,7 +66,7 @@ void Free86::aux_OUTSB() {
             far = far_start;
         }
     } else {
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld8_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 0)) & XS_mask);
@@ -87,8 +87,8 @@ void Free86::aux_MOVSB() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -119,7 +119,7 @@ void Free86::aux_STOSB() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -151,8 +151,8 @@ void Free86::aux_CMPSB() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
@@ -201,7 +201,7 @@ void Free86::aux_LODSB() {
         sreg--;
     }
     esi = regs[6];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -228,7 +228,7 @@ void Free86::aux_SCASB() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
@@ -276,7 +276,7 @@ void Free86::aux_INSW() {
             return;
         }
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st16_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 1)) & XS_mask);
         regs[1] = ecx = (ecx & ~XS_mask) | ((ecx - 1) & XS_mask);
@@ -285,7 +285,7 @@ void Free86::aux_INSW() {
         }
     } else {
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st16_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 1)) & XS_mask);
     }
@@ -314,7 +314,7 @@ void Free86::aux_OUTSW() {
         if ((ecx & XS_mask) == 0) {
             return;
         }
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld16_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 1)) & XS_mask);
@@ -323,7 +323,7 @@ void Free86::aux_OUTSW() {
             far = far_start;
         }
     } else {
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld16_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 1)) & XS_mask);
@@ -344,8 +344,8 @@ void Free86::aux_MOVSW() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -376,7 +376,7 @@ void Free86::aux_STOSW() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -408,8 +408,8 @@ void Free86::aux_CMPSW() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
@@ -458,7 +458,7 @@ void Free86::aux_LODSW() {
         sreg--;
     }
     esi = regs[6];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -485,7 +485,7 @@ void Free86::aux_SCASW() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
@@ -533,7 +533,7 @@ void Free86::aux_INS16() {
             return;
         }
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st16_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 1)) & XS_mask);
         regs[1] = ecx = (ecx & ~XS_mask) | ((ecx - 1) & XS_mask);
@@ -542,7 +542,7 @@ void Free86::aux_INS16() {
         }
     } else {
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st16_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 1)) & XS_mask);
     }
@@ -571,7 +571,7 @@ void Free86::aux_OUTS16() {
         if ((ecx & XS_mask) == 0) {
             return;
         }
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld16_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 1)) & XS_mask);
@@ -580,7 +580,7 @@ void Free86::aux_OUTS16() {
             far = far_start;
         }
     } else {
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld16_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 1)) & XS_mask);
@@ -601,8 +601,8 @@ void Free86::aux_MOVS16() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -633,7 +633,7 @@ void Free86::aux_STOS16() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -665,8 +665,8 @@ void Free86::aux_CMPS16() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
@@ -715,7 +715,7 @@ void Free86::aux_LODS16() {
         sreg--;
     }
     esi = regs[6];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -742,7 +742,7 @@ void Free86::aux_SCAS16() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
@@ -790,7 +790,7 @@ void Free86::aux_INSD() {
             return;
         }
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 2)) & XS_mask);
         regs[1] = ecx = (ecx & ~XS_mask) | ((ecx - 1) & XS_mask);
@@ -799,7 +799,7 @@ void Free86::aux_INSD() {
         }
     } else {
         ind = io_read(edx);
-        lax = (edi & XS_mask) + segs[0].shadow.base;
+        lax = segs[0].shadow.base + (edi & XS_mask);
         st_writable_cpl3(ind);
         regs[7] = (edi & ~XS_mask) | ((edi + (df << 2)) & XS_mask);
     }
@@ -828,7 +828,7 @@ void Free86::aux_OUTSD() {
         if ((ecx & XS_mask) == 0) {
             return;
         }
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 2)) & XS_mask);
@@ -837,7 +837,7 @@ void Free86::aux_OUTSD() {
             far = far_start;
         }
     } else {
-        lax = (esi & XS_mask) + segs[sreg].shadow.base;
+        lax = segs[sreg].shadow.base + (esi & XS_mask);
         ind = ld_readonly_cpl3();
         io_write(edx, ind);
         regs[6] = (esi & ~XS_mask) | ((esi + (df << 2)) & XS_mask);
@@ -858,8 +858,8 @@ void Free86::aux_MOVSD() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -890,7 +890,7 @@ void Free86::aux_STOSD() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -922,8 +922,8 @@ void Free86::aux_CMPSD() {
     }
     esi = regs[6];
     edi = regs[7];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
-    la = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
+    la = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
@@ -972,7 +972,7 @@ void Free86::aux_LODSD() {
         sreg--;
     }
     esi = regs[6];
-    lax = (esi & XS_mask) + segs[sreg].shadow.base;
+    lax = segs[sreg].shadow.base + (esi & XS_mask);
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
         if ((ecx & XS_mask) == 0) {
@@ -999,7 +999,7 @@ void Free86::aux_SCASD() {
         XS_mask = -1;
     }
     edi = regs[7];
-    lax = (edi & XS_mask) + segs[0].shadow.base;
+    lax = segs[0].shadow.base + (edi & XS_mask);
     operation = 7;
     if (ipr & (0x0010 | 0x0020)) {
         ecx = regs[1];
