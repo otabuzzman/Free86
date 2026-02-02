@@ -32,10 +32,13 @@ class Free86 {
     ///
     ///   The fetch address register (FAR, aka MAR) stores the physical memory
     ///   address of the next byte to be retrieved in the current fetch cycle.
-    var far: DWord = 0        // fetch address register (FAR, aka MAR)
+    var far: DWord = 0       // fetch address register (FAR, aka MAR)
     var farStart: DWord = 0  // first fetch address of current cycle
 
-    var opcode: Int = 0
+    var opcode: Int = 0  // sort of fetch data register (FDR, aka MDR)
+
+    /// direction flag (used by string instructions)
+    var df: Int = 0  // values 1/ -1 reflect EFLAGS.DF false/ true
 
     var dpl: Int = 0  // descriptor privilege level
     var rpl: Int = 0  // requested privilege level
@@ -70,6 +73,77 @@ class Free86 {
     /// current mapping tables (user or supervisor)
     var tlbReadonly: UnsafeMutablePointer<Int>
     var tlbWritable: UnsafeMutablePointer<Int>
+
+    /// Operand Size Mode
+    ///
+    /// The operand size mode (OSM) of an instruction defines how each status flag modified by
+    /// the instruction is calculated from the source and destination operands of the instruction.
+    /// Instructions with multiple operand sizes may have multiple OSM or share an OSM with some
+    /// or all sizes. OSM is specific to this emulator and not part of the processor architecture,
+    /// from which it was derived. There are 31 OSMs, which are encoded by integers 0 to 30.
+    //                           +-------+----+----+-----------+
+    //                           |  (implicit) OSM             |
+    // +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
+    // | instruction | condition | 8 bit | 16 | 32 | condition | OF | SF | ZF | AF | PF | CF |
+    // +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
+    // | AAA         |           | (i)24 |    |    |           | -  | -  | -  | TM | -  | M  |
+    // | AAS         |           | (i)24 |    |    |           | -  | -  | -  | TM | -  | M  |
+    // | AAD         |           |   12  |    |    |           | -  | M  | M  | -  | M  | -  |
+    // | AAM         |           |   12  |    |    |           | -  | M  | M  | -  | M  | -  |
+    // | DAA         |           | (i)24 |    |    |           | -  | M  | M  | TM | M  | TM |
+    // | DAS         |           | (i)24 |    |    |           | -  | M  | M  | TM | M  | TM |
+    // | ADC         |           |    0  |  1 |  2 | CF 0      | M  | M  | M  | M  | M  | TM |
+    // | ADC         |           |    3  |  4 |  5 | CF 1      | M  | M  | M  | M  | M  | TM |
+    // | ADD         |           |    0  |  1 |  2 |           | M  | M  | M  | M  | M  | M  |
+    // | ADD         |           |       |    |  8 | OP 0x81,  | M  | M  | M  | M  | M  | M  |
+    // |             |           |       |    |    | OP 0x83   | M  | M  | M  | M  | M  | M  |
+    // | SBB         |           |    6  |  7 |  8 | CF 0      | M  | M  | M  | M  | M  | TM |
+    // | SBB         |           |    9  | 10 | 11 | CF 1      | M  | M  | M  | M  | M  | TM |
+    // | SUB         |           |    6  |  7 |  8 |           | M  | M  | M  | M  | M  | M  |
+    // | CMP         |           |    6  |  7 |  8 |           | M  | M  | M  | M  | M  | M  |
+    // | CMPS        |           |       |    |    |           | M  | M  | M  | M  | M  | M  |
+    // | SCAS        |           |       |    |    |           | M  | M  | M  | M  | M  | M  |
+    // | NEG         |           |       |    |    |           | M  | M  | M  | M  | M  | M  |
+    // | DEC         |           |   28  | 29 | 30 |           | M  | M  | M  | M  | M  | U  |
+    // | INC         |           |   25  | 26 | 27 |           | M  | M  | M  | M  | M  | U  |
+    // | IMUL        |           |   21  | 22 | 23 |           | M  | -  | -  | -  | -  | M  |
+    // | MUL         |           |   21  | 22 | 23 |           | M  | -  | -  | -  | -  | M  |
+    // | RCL/RCR     | count  1  |   24  | 24 | 24 |           | M  | U  | U  | U  | U  | TM |
+    // | RCL/RCR     | count >1  |   24  | 24 | 24 |           | -  | U  | U  | U  | U  | TM |
+    // | ROL/ROR     | count  1  |   24  | 24 | 24 |           | M  | U  | U  | U  | U  | M  |
+    // | ROL/ROR     | count >1  |   24  | 24 | 24 |           | -  | U  | U  | U  | U  | M  |
+    // | SAR/SHR     | count  1  |   18  | 19 | 20 |           | M  | M  | M  | -  | M  | M  |
+    // | SAR/SHR     | count >1  |   18  | 19 | 20 |           | -  | M  | M  | -  | M  | M  |
+    // | SAL/SHL     | count  1  |   15  | 16 | 17 |           | M  | M  | M  | -  | M  | M  |
+    // | SAL/SHL     | count >1  |   15  | 16 | 17 |           | -  | M  | M  | -  | M  | M  |
+    // | SHLD        |           |       | 19 | 17 |           | -  | M  | M  | -  | M  | M  |
+    // | SHRD        |           |       | 19 | 20 |           | -  | M  | M  | -  | M  | M  |
+    // | BSF/BSR     |           |       |    | 14 |           | -  | -  | M  | -  | -  | -  |
+    // | BT/BT[SRC]  |           |       | 19 | 20 |           | -  | -  | -  | -  | -  | M  |
+    // | AND         |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+    // | OR          |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+    // | TEST        |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+    // | XOR         |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
+    // +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
+    //                                                                 (PM (1986), Appendix C)
+    // 0 : instruction resets,
+    // T : tests,
+    // M : modifies flag,
+    // U : leaves flag undefined,
+    // - : does not affect flag.
+    var osm: Int = 0
+    var osm_src: Int = 0
+    var osm_dst: Int = 0
+
+    /// osm_preserved/ osm_dst_preserved preserve OMS/ destination of instruction
+    /// before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
+    /// which is not modified by INC/ DEC. CF calculation after one or more
+    /// successive INC/ DEC is therefore based on the values for OSM, source and
+    /// destination before INC/ DEC. It is not necessary to also preserve source,
+    /// since INC/ DEC do not store the implicit value 1 in `osm_src', which therefore
+    /// remains valid.
+    var ocm_preserved: Int = 0
+    var ocm_dst_preserved: Int = 0
 
     /// Instruction prefix register
     ///

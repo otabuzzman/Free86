@@ -57,6 +57,7 @@ let package = Package(
                 "OpcodePrograms/Free86+twoByte.swift",    // no tests
                 "OpcodePrograms/Instruction+oneByte.swift",  // no tests
                 "OpcodePrograms/Instruction+twoByte.swift",  // no tests
+                "LookupTables/Free86+LUT.swift",  // no tests
                 "MachineDataTypes.swift",
                 "GeneralRegister.swift",
                 "SegmentRegister.swift",
