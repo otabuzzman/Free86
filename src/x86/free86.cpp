@@ -928,15 +928,15 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f:
-            lax = (fetch_data8() << 24) >> 24;
+            x = (static_cast<int>(fetch_data8()) << 24) >> 24;
             base = modRM & 7;
-            lax = regs[base] + lax;
+            lax = regs[base] + x;
             break;
         case 0x0c:
             sib = fetch_data8();
-            lax = (fetch_data8() << 24) >> 24;
+            x = (static_cast<int>(fetch_data8()) << 24) >> 24;
             base = sib & 7;
-            lax = regs[base] + lax;
+            lax = regs[base] + x;
             index = (sib >> 3) & 7;
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
@@ -976,7 +976,7 @@ void Free86::segment_translation() {
                 lax = 0;
                 break;
             case 1:
-                lax = (fetch_data8() << 24) >> 24;
+                lax = (static_cast<int>(fetch_data8()) << 24) >> 24;
                 break;
             default:
                 lax = fetch_data16();
@@ -1062,15 +1062,15 @@ void Free86::segment_translation() {
         case 0x0d:
         case 0x0e:
         case 0x0f: // 2-byte instruction escape
-            lax = (fetch_data8() << 24) >> 24;
+            x = (static_cast<int>(fetch_data8()) << 24) >> 24;
             base = modRM & 7;
-            lax = regs[base] + lax;
+            lax = regs[base] + x;
             break;
         case 0x0c:
             sib = fetch_data8();
-            lax = (fetch_data8() << 24) >> 24;
+            x = (static_cast<int>(fetch_data8()) << 24) >> 24;
             base = sib & 7;
-            lax = regs[base] + lax;
+            lax = regs[base] + x;
             index = (sib >> 3) & 7;
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));

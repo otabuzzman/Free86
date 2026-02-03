@@ -541,21 +541,21 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    imm = (fetch_data8() << 24) >> 24;
-                    osm_src = imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    osm_src = x;
                     osm_dst = rm - osm_src;
                     osm = 8;
                 } else {
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        imm = (fetch_data8() << 24) >> 24;
-                        regs[rM] = calculate(regs[rM], imm);
+                        x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                        regs[rM] = calculate(regs[rM], x);
                     } else {
                         segment_translation();
-                        imm = (fetch_data8() << 24) >> 24;
+                        x = (static_cast<int>(fetch_data8()) << 24) >> 24;
                         rm = ld_writable_cpl3();
-                        x = calculate(rm, imm);
-                        st_writable_cpl3(x);
+                        y = calculate(rm, x);
+                        st_writable_cpl3(y);
                     }
                 }
                 goto FETCH_LOOP;
@@ -613,8 +613,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     segment_translation();
                     rm = ld_readonly_cpl3();
                 }
-                imm = (fetch_data8() << 24) >> 24;
-                aux_IMUL(rm, imm);
+                y = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                aux_IMUL(rm, y);
                 regs[reg] = x;
                 goto FETCH_LOOP;
             case 0x84: // TEST
@@ -976,13 +976,13 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0x6a: // PUSH
-                imm = (fetch_data8() << 24) >> 24;
+                x = (static_cast<int>(fetch_data8()) << 24) >> 24;
                 if (x86_64_long_mode) {
                     lax = regs[4] - 4;
-                    st_writable_cpl3(imm);
+                    st_writable_cpl3(x);
                     regs[4] = lax;
                 } else {
-                    push(imm);
+                    push(x);
                 }
                 goto FETCH_LOOP;
             case 0xc8: // ENTER
@@ -1192,8 +1192,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0xeb: // JMP
-                imm = (fetch_data8() << 24) >> 24;
-                far = far + imm;
+                x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                far = far + x;
                 goto FETCH_LOOP;
             case 0xe9: // JMP
                 imm = fetch_data();
@@ -1210,128 +1210,128 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0x70: // JO
                 if (is_OF()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x71: // JNO
                 if (!is_OF()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x72: // JB
                 if (is_CF()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x73: // JNB
                 if (!is_CF()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x74: // JZ
                 if (osm_dst == 0) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x75: // JNZ
                 if (!(osm_dst == 0)) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x76: // JBE
                 if (is_BE()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x77: // JNBE
                 if (!is_BE()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x78: // JS
                 if (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x79: // JNS
                 if (!(osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7a: // JP
                 if (is_PF()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7b: // JNP
                 if (!is_PF()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7c: // JL
                 if (is_LT()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7d: // JNL
                 if (!is_LT()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7e: // JLE
                 if (is_LE()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7f: // JNLE
                 if (!is_LE()) {
-                    imm = (fetch_data8() << 24) >> 24;
-                    far = far + imm;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    far = far + x;
                 } else {
                     far = far + 1;
                 }
@@ -1339,7 +1339,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xe0: // LOOPNE
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
-                imm = (fetch_data8() << 24) >> 24;
+                z = (static_cast<int>(fetch_data8()) << 24) >> 24;
                 ipr_os_mask = (ipr & 0x0080) ? 0xffff : -1;
                 x = (regs[1] - 1) & ipr_os_mask;
                 regs[1] = (regs[1] & ~ipr_os_mask) | x;
@@ -1353,20 +1353,22 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 if (x && y) {
                     if (ipr & 0x0100) {
-                        eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
+                        eip = (eip + far - far_start + z) & 0xffff;
+                        far = far_start = 0;
                     } else {
-                        far = far + imm;
+                        far = far + z;
                     }
                 }
                 goto FETCH_LOOP;
             case 0xe3: // JCXZ
-                imm = (fetch_data8() << 24) >> 24;
+                x = (static_cast<int>(fetch_data8()) << 24) >> 24;
                 ipr_os_mask = (ipr & 0x0080) ? 0xffff : -1;
                 if ((regs[1] & ipr_os_mask) == 0) {
                     if (ipr & 0x0100) {
-                        eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
+                        eip = (eip + far - far_start + x) & 0xffff;
+                        far = far_start = 0;
                     } else {
-                        far = far + imm;
+                        far = far + x;
                     }
                 }
                 goto FETCH_LOOP;
@@ -1374,7 +1376,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 imm = (fetch_data16() << 16) >> 16;
                 m = ld_stack();
                 regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + imm) & SS_mask);
-                eip = m, far = far_start = 0;
+                eip = m;
+                far = far_start = 0;
                 goto FETCH_LOOP;
             case 0xc3: // RET
                 if (x86_64_long_mode) {
@@ -2586,18 +2589,18 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     operation = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        imm = (fetch_data8() << 24) >> 24;
-                        set_lower_word(rM, calculate16(regs[rM], imm));
+                        x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                        set_lower_word(rM, calculate16(regs[rM], x));
                     } else {
                         segment_translation();
-                        imm = (fetch_data8() << 24) >> 24;
+                        y = (static_cast<int>(fetch_data8()) << 24) >> 24;
                         if (operation != 7) {
                             rm = ld16_writable_cpl3();
-                            x = calculate16(rm, imm);
+                            x = calculate16(rm, y);
                             st16_writable_cpl3(x);
                         } else {
                             rm = ld16_readonly_cpl3();
-                            calculate16(rm, imm);
+                            calculate16(rm, y);
                         }
                     }
                     goto FETCH_LOOP;
@@ -2632,8 +2635,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld16_readonly_cpl3();
                     }
-                    imm = (fetch_data8() << 24) >> 24;
-                    aux_IMUL16(rm, imm);
+                    y = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    aux_IMUL16(rm, y);
                     set_lower_word(reg, x);
                     goto FETCH_LOOP;
                 case 0x169: // IMUL
@@ -2844,8 +2847,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     push16(imm);
                     goto FETCH_LOOP;
                 case 0x16a: // PUSH
-                    imm = (fetch_data8() << 24) >> 24;
-                    push16(imm);
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    push16(x);
                     goto FETCH_LOOP;
                 case 0x1c8: // ENTER
                     aux_ENTER16();
@@ -2941,19 +2944,22 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             rm = ld16_readonly_cpl3();
                         }
-                        eip = rm, far = far_start = 0;
+                        eip = rm;
+                        far = far_start = 0;
                         break;
                     default:
                         abort(6);
                     }
                     goto FETCH_LOOP;
                 case 0x1eb: // JMP
-                    imm = (fetch_data8() << 24) >> 24;
-                    eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    eip = (eip + far - far_start + x) & 0xffff;
+                    far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x1e9: // JMP
                     imm = fetch_data16();
-                    eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
+                    eip = (eip + far - far_start + imm) & 0xffff;
+                    far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x170: // JO
                 case 0x171: // JNO
@@ -2971,25 +2977,29 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x17d: // JNL
                 case 0x17e: // JLE
                 case 0x17f: // JNLE
-                    imm = (fetch_data8() << 24) >> 24;
+                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
                     if (can_jump(opcode & 0xf)) {
-                        eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
+                        eip = (eip + far - far_start + x) & 0xffff;
+                        far = far_start = 0;
                     }
                     goto FETCH_LOOP;
                 case 0x1c2: // RET
                     imm = (fetch_data16() << 16) >> 16;
                     m = ld16_stack();
                     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + imm) & SS_mask);
-                    eip = m, far = far_start = 0;
+                    eip = m;
+                    far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x1c3: // RET
                     m = pop16();
-                    eip = m, far = far_start = 0;
+                    eip = m;
+                    far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x1e8: // CALL
                     imm = fetch_data16();
                     push16((eip + far - far_start));
-                    eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
+                    eip = (eip + far - far_start + imm) & 0xffff;
+                    far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x162: // BOUND
                     aux_BOUND16();

@@ -236,7 +236,7 @@ void Free86::st64_direct(int address, uint64_t qword) {
     st_direct(address, qword);
     st_direct(address + 4, qword >> 32);
 }
-int Free86::fetch_data8() {
+uint32_t Free86::fetch_data8() {
     return ld8_direct(far++);
 }
 int Free86::fetch_data16() {

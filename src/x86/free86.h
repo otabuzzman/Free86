@@ -344,13 +344,13 @@ class Free86 {
     // auxiliary variables for inter-method exchange
     int operation; // bits 5..3 of opcode or modR/M byte
     uint32_t lax;  // linear address exchange register
-    int modRM, reg, rM;   // mod field (modRM >> 6) inline
-    int sib, base, index; // scale field (sib >> 6) inline
+    uint32_t modRM, reg, rM;   // mod field (modRM >> 6) inline
+    uint32_t sib, base, index; // scale field (sib >> 6) inline
     int r;  // data from register derived from modRM
     int rm; // data from register or memory derived from modRM
     int m, m16; // any data from memory not derived from modRM
     int imm, imm16, moffs; // immediate and offset
-    int x, y; // signed helpers
+    int x, y, z; // signed helper
 
     // clang-format off
     const std::vector<int> parity_LUT = {
@@ -555,7 +555,7 @@ class Free86 {
     void st_direct(int address, int dword);
     void st64_direct(int address, uint64_t qword);
 
-    int fetch_data8(); // read byte...
+    uint32_t fetch_data8(); // read byte...
     int fetch_data16(); // ...word...
     int fetch_data(); // ...dword at FAR, update FAR
     void push16(int word);
