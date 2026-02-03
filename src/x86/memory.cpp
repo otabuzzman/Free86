@@ -1,6 +1,6 @@
 #include "free86.h"
 
-int Free86::ld8_readonly_cplX() {
+uint32_t Free86::ld8_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
     if (tlb_hash == 0xffffffff) {
         page_translation(0, 0);
@@ -8,7 +8,7 @@ int Free86::ld8_readonly_cplX() {
     }
     return ld8_direct(lax ^ tlb_hash);
 }
-int Free86::ld16_readonly_cplX() {
+uint32_t Free86::ld16_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
     if ((tlb_hash | lax) & 1) {
         int word = ld8_readonly_cplX();
@@ -19,7 +19,7 @@ int Free86::ld16_readonly_cplX() {
     }
     return ld16_direct(lax ^ tlb_hash);
 }
-int Free86::ld_readonly_cplX() {
+uint32_t Free86::ld_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
     if ((tlb_hash | lax) & 3) {
         int dword = ld16_readonly_cplX();
@@ -41,7 +41,7 @@ uint64_t Free86::ld64_readonly_cplX() {
     }
     return ld64_direct(lax ^ tlb_hash);
 }
-int Free86::ld8_readonly_cpl3() {
+uint32_t Free86::ld8_readonly_cpl3() {
     if (is_real__v86()) {
         return ld8_direct(lax);
     }
@@ -52,7 +52,7 @@ int Free86::ld8_readonly_cpl3() {
     }
     return ld8_direct(lax ^ tlb_hash);
 }
-int Free86::ld16_readonly_cpl3() {
+uint32_t Free86::ld16_readonly_cpl3() {
     if (is_real__v86()) {
         return ld16_direct(lax);
     }
@@ -66,7 +66,7 @@ int Free86::ld16_readonly_cpl3() {
     }
     return ld16_direct(lax ^ tlb_hash);
 }
-int Free86::ld_readonly_cpl3() {
+uint32_t Free86::ld_readonly_cpl3() {
     if (is_real__v86()) {
         return ld_direct(lax);
     }
@@ -80,7 +80,7 @@ int Free86::ld_readonly_cpl3() {
     }
     return ld_direct(lax ^ tlb_hash);
 }
-int Free86::ld8_writable_cpl3() {
+uint32_t Free86::ld8_writable_cpl3() {
     if (is_real__v86()) {
         return ld8_direct(lax);
     }
@@ -91,7 +91,7 @@ int Free86::ld8_writable_cpl3() {
     }
     return ld8_direct(lax ^ tlb_hash);
 }
-int Free86::ld16_writable_cpl3() {
+uint32_t Free86::ld16_writable_cpl3() {
     if (is_real__v86()) {
         return ld16_direct(lax);
     }
@@ -105,7 +105,7 @@ int Free86::ld16_writable_cpl3() {
     }
     return ld16_direct(lax ^ tlb_hash);
 }
-int Free86::ld_writable_cpl3() {
+uint32_t Free86::ld_writable_cpl3() {
     if (is_real__v86()) {
         return ld_direct(lax);
     }
@@ -119,7 +119,7 @@ int Free86::ld_writable_cpl3() {
     }
     return ld_direct(lax ^ tlb_hash);
 }
-void Free86::st8_writable_cplX(int byte) {
+void Free86::st8_writable_cplX(uint32_t byte) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
     if (tlb_hash == 0xffffffff) {
         page_translation(1, 0);
@@ -127,7 +127,7 @@ void Free86::st8_writable_cplX(int byte) {
     }
     st8_direct(lax ^ tlb_hash, byte);
 }
-void Free86::st16_writable_cplX(int word) {
+void Free86::st16_writable_cplX(uint32_t word) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
     if ((tlb_hash | lax) & 1) {
          st8_writable_cplX(word);
@@ -138,7 +138,7 @@ void Free86::st16_writable_cplX(int word) {
         st16_direct(lax ^ tlb_hash, word);
     }
 }
-void Free86::st_writable_cplX(int dword) {
+void Free86::st_writable_cplX(uint32_t dword) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
     if ((tlb_hash | lax) & 3) {
         st16_writable_cplX(dword);
@@ -160,7 +160,7 @@ void Free86::st64_writable_cplX(uint64_t qword) {
         st64_direct(lax ^ tlb_hash, qword);
     }
 }
-void Free86::st8_writable_cpl3(int byte) {
+void Free86::st8_writable_cpl3(uint32_t byte) {
     if (is_real__v86()) {
         st8_direct(lax, byte);
     } 
@@ -171,7 +171,7 @@ void Free86::st8_writable_cpl3(int byte) {
     }
     st8_direct(lax ^ tlb_hash, byte);
 }
-void Free86::st16_writable_cpl3(int word) {
+void Free86::st16_writable_cpl3(uint32_t word) {
     if (is_real__v86()) {
         st16_direct(lax, word);
     }
@@ -185,7 +185,7 @@ void Free86::st16_writable_cpl3(int word) {
         st16_direct(lax ^ tlb_hash, word);
     }
 }
-void Free86::st_writable_cpl3(int dword) {
+void Free86::st_writable_cpl3(uint32_t dword) {
     if (is_real__v86()) {
         st_direct(lax, dword);
     }
@@ -199,22 +199,22 @@ void Free86::st_writable_cpl3(int dword) {
         st_direct(lax ^ tlb_hash, dword);
     }
 }
-int Free86::ld8_direct(int address) {
+uint32_t Free86::ld8_direct(uint32_t address) {
     return memory[address];
 }
-int Free86::ld16_direct(int address) {
+uint32_t Free86::ld16_direct(uint32_t address) {
     return memory[address] | (memory[address + 1] << 8);
 }
-int Free86::ld_direct(int address) {
+uint32_t Free86::ld_direct(uint32_t address) {
     return memory[address] | (memory[address + 1] << 8) | (memory[address + 2] << 16) | (memory[address + 3] << 24);
 }
-uint64_t Free86::ld64_direct(int address) {
+uint64_t Free86::ld64_direct(uint32_t address) {
     return (ld_direct(address) & 0xffffffff) | (static_cast<uint64_t>(ld_direct(address + 4)) << 32);
 }
-void Free86::st8_direct(int address, int byte) {
+void Free86::st8_direct(uint32_t address, uint32_t byte) {
     memory[address] = byte;
 }
-void Free86::st8_direct(int address, std::string data) {
+void Free86::st8_direct(uint32_t address, std::string data) {
     auto s = data.c_str();
     int l = static_cast<int>(data.length());
     for (int i = 0; i < l; i++) {
@@ -222,30 +222,30 @@ void Free86::st8_direct(int address, std::string data) {
     }
     st8_direct(address, 0);
 }
-void Free86::st16_direct(int address, int word) {
+void Free86::st16_direct(uint32_t address, uint32_t word) {
     memory[address] = word;
     memory[address + 1] = word >> 8;
 }
-void Free86::st_direct(int address, int dword) {
+void Free86::st_direct(uint32_t address, uint32_t dword) {
     memory[address] = dword;
     memory[address + 1] = dword >> 8;
     memory[address + 2] = dword >> 16;
     memory[address + 3] = dword >> 24;
 }
-void Free86::st64_direct(int address, uint64_t qword) {
+void Free86::st64_direct(uint32_t address, uint64_t qword) {
     st_direct(address, qword);
     st_direct(address + 4, qword >> 32);
 }
 uint32_t Free86::fetch_data8() {
     return ld8_direct(far++);
 }
-int Free86::fetch_data16() {
-    int word = fetch_data8();
+uint32_t Free86::fetch_data16() {
+    uint32_t word = fetch_data8();
     word |= fetch_data8() << 8;
     return word;
 }
-int Free86::fetch_data() {
-    int dword = fetch_data8();
+uint32_t Free86::fetch_data() {
+    uint32_t dword = fetch_data8();
     dword |= fetch_data8() << 8;
     dword |= fetch_data8() << 16;
     dword |= fetch_data8() << 24;

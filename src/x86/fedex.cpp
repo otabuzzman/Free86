@@ -1373,9 +1373,9 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0xc2: // RET
-                imm = (fetch_data16() << 16) >> 16;
+                x = (static_cast<int>(fetch_data16()) << 16) >> 16;
                 m = ld_stack();
-                regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + imm) & SS_mask);
+                regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + x) & SS_mask);
                 eip = m;
                 far = far_start = 0;
                 goto FETCH_LOOP;
@@ -1415,8 +1415,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0xca: // RET
-                imm = (fetch_data16() << 16) >> 16;
-                aux_RETF((((ipr >> 8) & 1) ^ 1), imm);
+                x = (static_cast<int>(fetch_data16()) << 16) >> 16;
+                aux_RETF((((ipr >> 8) & 1) ^ 1), x);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -2984,9 +2984,9 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     goto FETCH_LOOP;
                 case 0x1c2: // RET
-                    imm = (fetch_data16() << 16) >> 16;
+                    x = (static_cast<int>(fetch_data16()) << 16) >> 16;
                     m = ld16_stack();
-                    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + imm) & SS_mask);
+                    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + x) & SS_mask);
                     eip = m;
                     far = far_start = 0;
                     goto FETCH_LOOP;

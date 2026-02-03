@@ -1116,7 +1116,7 @@ void Free86::moffs_to_linear(bool writable) {
     uint64_t la;
     int sreg, stride, type_notok, limit_notok;
     if (ipr & 0x0080) {
-        la = fetch_data16() & 0xffff;
+        la = fetch_data16();
         stride = 2; // 16 bit mode
     } else {
         la = fetch_data() & 0xffffffff;

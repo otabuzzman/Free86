@@ -111,9 +111,9 @@ class Free86 {
     void fetch_decode_execute(uint64_t cycles, Interrupt& interrupt);
 
     // memory.cpp
-    int ld8_direct(int address); // read/ write at physical memory address (bypass TLB)
-    void st8_direct(int address, int byte);
-    void st8_direct(int address, std::string data);
+    uint32_t ld8_direct(uint32_t address); // read/ write at physical memory address (bypass TLB)
+    void st8_direct(uint32_t address, uint32_t byte);
+    void st8_direct(uint32_t address, std::string data);
 
   private:
     uint32_t eip_linear;
@@ -526,38 +526,37 @@ class Free86 {
     void aux_SCASD();
 
     // memory.cpp
-    int ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
-    int ld16_readonly_cplX();  // ...word
-    int ld_readonly_cplX();  // ...dword
+    uint32_t ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
+    uint32_t ld16_readonly_cplX();  // ...word
+    uint32_t ld_readonly_cplX();  // ...dword
     uint64_t ld64_readonly_cplX();  // ...qword from current linear address
 
-    int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
-    int ld16_readonly_cpl3(); // ...word
-    int ld_readonly_cpl3(); // ...dword from current linear address
+    uint32_t ld8_readonly_cpl3(); // from user RO memory: load (return) byte
+    uint32_t ld16_readonly_cpl3(); // ...word
+    uint32_t ld_readonly_cpl3(); // ...dword from current linear address
 
-    int ld8_writable_cpl3(); // from user WR memory: load (return) byte
-    int ld16_writable_cpl3(); // ...word
-    int ld_writable_cpl3(); // ...dword from current linear address
+    uint32_t ld8_writable_cpl3(); // from user WR memory: load (return) byte
+    uint32_t ld16_writable_cpl3(); // ...word
+    uint32_t ld_writable_cpl3(); // ...dword from current linear address
 
-    void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
-    void st16_writable_cplX(int word); // ...word
-    void st_writable_cplX(int dword); // ...dword
+    void st8_writable_cplX(uint32_t byte); // in supervisor WR memory: store byte
+    void st16_writable_cplX(uint32_t word); // ...word
+    void st_writable_cplX(uint32_t dword); // ...dword
     void st64_writable_cplX(uint64_t qword); // ...qword at current linear address
 
-    void st8_writable_cpl3(int byte); // in user WR memory: store byte
-    void st16_writable_cpl3(int word); // ...word
-    void st_writable_cpl3(int dword); // ...dword at current linear address
+    void st8_writable_cpl3(uint32_t byte); // in user WR memory: store byte
+    void st16_writable_cpl3(uint32_t word); // ...word
+    void st_writable_cpl3(uint32_t dword); // ...dword at current linear address
 
-    int ld16_direct(int address); // read/ write at memory address, bypass TLB
-    int ld_direct(int address);
-    uint64_t ld64_direct(int address);
-    void st16_direct(int address, int byte);
-    void st_direct(int address, int dword);
-    void st64_direct(int address, uint64_t qword);
-
+    uint32_t ld16_direct(uint32_t address); // read/ write at memory address, bypass TLB
+    uint32_t ld_direct(uint32_t address);
+    uint64_t ld64_direct(uint32_t address);
+    void st16_direct(uint32_t address, uint32_t byte);
+    void st_direct(uint32_t address, uint32_t dword);
+    void st64_direct(uint32_t address, uint64_t qword);
     uint32_t fetch_data8(); // read byte...
-    int fetch_data16(); // ...word...
-    int fetch_data(); // ...dword at FAR, update FAR
+    uint32_t fetch_data16(); // ...word...
+    uint32_t fetch_data(); // ...dword at FAR, update FAR
     void push16(int word);
     void push(int dword);
     int pop16();
