@@ -98,8 +98,8 @@ class Free86 {
     virtual int get_irq() = 0;
     virtual int get_iid() = 0;
 
-    virtual int io_read(int port) = 0;
-    virtual void io_write(int port, int data) = 0;
+    virtual uint32_t io_read(uint32_t port) = 0;
+    virtual void io_write(uint32_t port, uint32_t data) = 0;
 
     // x86.cpp
     Free86(uint32_t memory_size);

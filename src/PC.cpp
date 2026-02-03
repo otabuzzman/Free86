@@ -160,8 +160,8 @@ int WiredCPU::get_irq() {
 int WiredCPU::get_iid() {
     return pic->get_hard_intno();
 }
-int WiredCPU::io_read(int port) {
-    int _port = port & (1024 - 1);
+uint32_t WiredCPU::io_read(uint32_t port) {
+    uint32_t _port = port & (1024 - 1);
     switch (_port) {
     case 0x70:
     case 0x71:
@@ -194,8 +194,8 @@ int WiredCPU::io_read(int port) {
         return 0xff;
     }
 }
-void WiredCPU::io_write(int port, int data) {
-    int _port = port & (1024 - 1);
+void WiredCPU::io_write(uint32_t port, uint32_t data) {
+    uint32_t _port = port & (1024 - 1);
     switch (_port) {
     case 0x80: // POST
         break;

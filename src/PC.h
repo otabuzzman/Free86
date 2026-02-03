@@ -714,8 +714,8 @@ class WiredCPU : public Free86 {
     }
     int get_irq() override;
     int get_iid() override;
-    int io_read(int port) override;
-    void io_write(int port, int data) override;
+    uint32_t io_read(uint32_t port) override;
+    void io_write(uint32_t port, uint32_t data) override;
 };
 
 #endif // PC_H

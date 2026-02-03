@@ -112,7 +112,7 @@ void Free86::aux_MOVSB() {
     }
 }
 void Free86::aux_STOSB() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {

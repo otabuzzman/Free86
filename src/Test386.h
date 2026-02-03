@@ -11,8 +11,8 @@ class PlainCPU : public Free86 {
     ~PlainCPU() override {}
     int get_irq() override { return 0; }
     int get_iid() override { return 0; }
-    int io_read(int port) override;
-    void io_write(int port, int data) override;
+    uint32_t io_read(uint32_t port) override;
+    void io_write(uint32_t port, uint32_t data) override;
 };
 
 class Test386 {
@@ -221,13 +221,13 @@ class Test386 {
     std::string history[history_size];
 };
 
-int PlainCPU::io_read(int port) {
-    int _port = port & (1024 - 1);
+uint32_t PlainCPU::io_read(uint32_t port) {
+    uint32_t _port = port & (1024 - 1);
     printf("*** ioport_read 0x%04x\n", _port);
     return 0xff;
 }
-void PlainCPU::io_write(int port, int data) {
-    int _port = port & (1024 - 1);
+void PlainCPU::io_write(uint32_t port, uint32_t data) {
+    uint32_t _port = port & (1024 - 1);
     if (_port == 0x0190) { // default POST_PORT in test386
         printf("*** ioport_write 0x%04x : 0x%08x\n", _port, data);
     } else { // any other value considered OUT_PORT
