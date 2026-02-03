@@ -628,7 +628,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 reg = (modRM >> 3) & 7;
                 r = regs[reg & 3] >> ((reg & 4) << 1);
-                osm_dst = ((rm & r) << 24) >> 24;
+                osm_dst = (static_cast<int>(rm & r) << 24) >> 24;
                 osm = 12;
                 goto FETCH_LOOP;
             case 0x85: // TEST
@@ -666,7 +666,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld8_readonly_cpl3();
                     }
                     imm = fetch_data8();
-                    osm_dst = ((rm & imm) << 24) >> 24;
+                    osm_dst = (static_cast<int>(rm & imm) << 24) >> 24;
                     osm = 12;
                     break;
                 case 2: // NOT
@@ -1805,7 +1805,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld8_readonly_cpl3();
                     }
-                    regs[reg] = (rm << 24) >> 24;
+                    regs[reg] = (static_cast<int>(rm) << 24) >> 24;
                     goto FETCH_LOOP;
                 case 0xbf: // MOVSX
                     modRM = fetch_data8();
@@ -1816,7 +1816,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld16_readonly_cpl3();
                     }
-                    regs[reg] = (rm << 16) >> 16;
+                    regs[reg] = (static_cast<int>(rm) << 16) >> 16;
                     goto FETCH_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     if (!is_protected() || (eflags & 0x00020000)) {
@@ -1902,7 +1902,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             abort(6);
                         }
                         segment_translation();
-                        tlb_flush_page(lax & -4096);
+                        tlb_flush_page(lax & 0xfffff000);
                         break;
                     default:
                         abort(6);
@@ -2661,7 +2661,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld16_readonly_cpl3();
                     }
                     r = regs[(modRM >> 3) & 7];
-                    osm_dst = ((rm & r) << 16) >> 16;
+                    osm_dst = (static_cast<int>(rm & r) << 16) >> 16;
                     osm = 13;
                     goto FETCH_LOOP;
                 case 0x1a9: // TEST
@@ -2681,7 +2681,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             rm = ld16_readonly_cpl3();
                         }
                         imm = fetch_data16();
-                        osm_dst = ((rm & imm) << 16) >> 16;
+                        osm_dst = (static_cast<int>(rm & imm) << 16) >> 16;
                         osm = 13;
                         break;
                     case 2: // NOT
@@ -3263,7 +3263,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             rm = ld8_readonly_cpl3();
                         }
-                        set_lower_word(reg, ((rm << 24) >> 24));
+                        set_lower_word(reg, ((static_cast<int>(rm) << 24) >> 24));
                         goto FETCH_LOOP;
                     case 0x1af: // IMUL
                         modRM = fetch_data8();

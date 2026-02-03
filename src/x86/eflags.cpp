@@ -368,25 +368,25 @@ bool Free86::can_jump(int condition) {
     }
     return f ^ (condition & 1);
 }
-int Free86::compile_eflags(bool shift) {
-    int f0 = 0, f11 = 0;
+uint32_t Free86::compile_eflags(bool shift) {
+    uint32_t f0 = 0, f11 = 0;
     if (!shift) {
         f0 = is_CF() << 0;
         f11 = is_OF() << 11;
     }
-    int f2 = is_PF() << 2;
-    int f4 = is_AF() << 4;
-    int f6 = (osm_dst == 0) << 6;
-    int f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7;
+    uint32_t f2 = is_PF() << 2;
+    uint32_t f4 = is_AF() << 4;
+    uint32_t f6 = (osm_dst == 0) << 6;
+    uint32_t f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7;
     return f0 | f2 | f4 | f6 | f7 | f11;
 }
-int Free86::get_EFLAGS() {
-    int bits = compile_eflags();
+uint32_t Free86::get_EFLAGS() {
+    uint32_t bits = compile_eflags();
     bits |= df & 0x00000400;
     bits |= eflags;
     return bits;
 }
-void Free86::set_EFLAGS(int bits, int mask) {
+void Free86::set_EFLAGS(uint32_t bits, uint32_t mask) {
     osm_src = bits & (0x0800 | 0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001);
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;

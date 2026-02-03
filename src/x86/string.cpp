@@ -1,7 +1,7 @@
 #include "free86.h"
 
 void Free86::aux_INSB() {
-    int ecx, edx, edi;
+    uint32_t ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -9,7 +9,7 @@ void Free86::aux_INSB() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     edx = regs[2] & 0xffff;
@@ -34,7 +34,7 @@ void Free86::aux_INSB() {
     }
 }
 void Free86::aux_OUTSB() {
-    int ecx, edx, esi, sreg;
+    uint32_t ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -42,7 +42,7 @@ void Free86::aux_OUTSB() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -73,11 +73,11 @@ void Free86::aux_OUTSB() {
     }
 }
 void Free86::aux_MOVSB() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -116,7 +116,7 @@ void Free86::aux_STOSB() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);
@@ -137,11 +137,11 @@ void Free86::aux_STOSB() {
     }
 }
 void Free86::aux_CMPSB() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -188,11 +188,11 @@ void Free86::aux_CMPSB() {
     }
 }
 void Free86::aux_LODSB() {
-    int ecx, esi, sreg;
+    uint32_t ecx, esi, sreg;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -221,11 +221,11 @@ void Free86::aux_LODSB() {
     }
 }
 void Free86::aux_SCASB() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);
@@ -258,7 +258,7 @@ void Free86::aux_SCASB() {
     }
 }
 void Free86::aux_INSW() {
-    int ecx, edx, edi;
+    uint32_t ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -266,7 +266,7 @@ void Free86::aux_INSW() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     edx = regs[2] & 0xffff;
@@ -291,7 +291,7 @@ void Free86::aux_INSW() {
     }
 }
 void Free86::aux_OUTSW() {
-    int ecx, edx, esi, sreg;
+    uint32_t ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -299,7 +299,7 @@ void Free86::aux_OUTSW() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -330,11 +330,11 @@ void Free86::aux_OUTSW() {
     }
 }
 void Free86::aux_MOVSW() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -369,11 +369,11 @@ void Free86::aux_MOVSW() {
     }
 }
 void Free86::aux_STOSW() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);
@@ -394,11 +394,11 @@ void Free86::aux_STOSW() {
     }
 }
 void Free86::aux_CMPSW() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -445,11 +445,11 @@ void Free86::aux_CMPSW() {
     }
 }
 void Free86::aux_LODSW() {
-    int ecx, esi, sreg;
+    uint32_t ecx, esi, sreg;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -478,11 +478,11 @@ void Free86::aux_LODSW() {
     }
 }
 void Free86::aux_SCASW() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);
@@ -515,7 +515,7 @@ void Free86::aux_SCASW() {
     }
 }
 void Free86::aux_INS16() {
-    int ecx, edx, edi;
+    uint32_t ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -523,7 +523,7 @@ void Free86::aux_INS16() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     edx = regs[2] & 0xffff;
@@ -548,7 +548,7 @@ void Free86::aux_INS16() {
     }
 }
 void Free86::aux_OUTS16() {
-    int ecx, edx, esi, sreg;
+    uint32_t ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -556,7 +556,7 @@ void Free86::aux_OUTS16() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -587,11 +587,11 @@ void Free86::aux_OUTS16() {
     }
 }
 void Free86::aux_MOVS16() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -626,11 +626,11 @@ void Free86::aux_MOVS16() {
     }
 }
 void Free86::aux_STOS16() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);
@@ -651,11 +651,11 @@ void Free86::aux_STOS16() {
     }
 }
 void Free86::aux_CMPS16() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -702,11 +702,11 @@ void Free86::aux_CMPS16() {
     }
 }
 void Free86::aux_LODS16() {
-    int ecx, esi, sreg;
+    uint32_t ecx, esi, sreg;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -735,11 +735,11 @@ void Free86::aux_LODS16() {
     }
 }
 void Free86::aux_SCAS16() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);
@@ -772,7 +772,7 @@ void Free86::aux_SCAS16() {
     }
 }
 void Free86::aux_INSD() {
-    int ecx, edx, edi;
+    uint32_t ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -780,7 +780,7 @@ void Free86::aux_INSD() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     edx = regs[2] & 0xffff;
@@ -805,7 +805,7 @@ void Free86::aux_INSD() {
     }
 }
 void Free86::aux_OUTSD() {
-    int ecx, edx, esi, sreg;
+    uint32_t ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
         abort(13);
@@ -813,7 +813,7 @@ void Free86::aux_OUTSD() {
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -844,11 +844,11 @@ void Free86::aux_OUTSD() {
     }
 }
 void Free86::aux_MOVSD() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -883,11 +883,11 @@ void Free86::aux_MOVSD() {
     }
 }
 void Free86::aux_STOSD() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);
@@ -908,11 +908,11 @@ void Free86::aux_STOSD() {
     }
 }
 void Free86::aux_CMPSD() {
-    int ecx, edi, esi, sreg, la;
+    uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -959,11 +959,11 @@ void Free86::aux_CMPSD() {
     }
 }
 void Free86::aux_LODSD() {
-    int ecx, esi, sreg;
+    uint32_t ecx, esi, sreg;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -992,11 +992,11 @@ void Free86::aux_LODSD() {
     }
 }
 void Free86::aux_SCASD() {
-    int ecx, edi;
+    uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
     } else {
-        ipr_os_mask = -1;
+        ipr_os_mask = 0xffffffff;
     }
     edi = regs[7];
     lax = segs[0].shadow.base + (edi & ipr_os_mask);

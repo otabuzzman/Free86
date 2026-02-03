@@ -54,7 +54,7 @@ class Free86 {
   public:
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     uint32_t regs[8];
-    int eflags;
+    uint32_t eflags;
 
     uint32_t eip;
 
@@ -66,10 +66,10 @@ class Free86 {
     SegmentRegister tr;  // task register
     SegmentRegister idt; // IDT register
 
-    int cr0;
-    int cr2;
-    int cr3;
-    int cr4; // 80486
+    uint32_t cr0;
+    uint32_t cr2;
+    uint32_t cr3;
+    uint32_t cr4; // 80486
 
     int cpl; // current privilege level register
 
@@ -126,7 +126,7 @@ class Free86 {
     uint32_t far;       // fetch address register (FAR, aka MAR)
     uint32_t far_start; // first fetch address of current cycle
 
-    int opcode; // sort of fetch data register (FDR, aka MDR)
+    uint32_t opcode; // sort of fetch data register (FDR, aka MDR)
 
     int df; // values 1/ -1 reflect EFLAGS.DF false/ true (string instructions)
 
@@ -323,10 +323,10 @@ class Free86 {
    0x0080 address-size override prefix  (0x67)
    0x0100 operand-size override prefix  (0x66)
  */
-    int ipr; // instruction prefix register
-    int ipr_default; // reflects D flag (PM (1986), 16.1)
+    uint32_t ipr; // instruction prefix register
+    uint32_t ipr_default; // reflects D flag (PM (1986), 16.1)
                      // also belongs to the SSB (below)
-    int ipr_os_mask; // operand size override prefix size mask
+    uint32_t ipr_os_mask; // operand size override prefix size mask
 /*
    Segments state block
 
@@ -346,10 +346,9 @@ class Free86 {
     uint32_t lax;  // linear address exchange register
     uint32_t modRM, reg, rM;   // mod field (modRM >> 6) inline
     uint32_t sib, base, index; // scale field (sib >> 6) inline
-    int r;  // data from register derived from modRM
-    int rm; // data from register or memory derived from modRM
-    int m, m16; // any data from memory not derived from modRM
-    int imm, imm16, moffs; // immediate and offset
+    uint32_t r, rm;  // register or register/ memory operands from modRM
+    uint32_t m, m16; // 32/ 16 bit memory operands not from modRM
+    uint32_t imm, imm16, moffs; // 32/ 16 bit immediate and offset operands
     int x, y, z; // signed helper
 
     // clang-format off
@@ -387,18 +386,18 @@ class Free86 {
     void update_SSB();
     void fetch_opcode();
 
-    int instruction_length(int opcode);
+    int instruction_length(uint32_t opcode);
     int modRM_bytes_number();
 
-    void set_CR0(int bits);
-    void set_CR3(int bits);
+    void set_CR0(uint32_t bits);
+    void set_CR3(uint32_t bits);
     bool is_real__v86();
     bool is_protected();
     bool is_paging(); // PG && PE set
     void set_cpl(int level);
 
-    void set_lower_byte(int reg, int byte);
-    void set_lower_word(int reg, int word);
+    void set_lower_byte(int reg, uint32_t byte);
+    void set_lower_word(int reg, uint32_t word);
 
     void page_translation(bool writable, bool user);
     void page_translation(uint32_t address, bool writable, bool user);
@@ -557,12 +556,12 @@ class Free86 {
     uint32_t fetch_data8(); // read byte...
     uint32_t fetch_data16(); // ...word...
     uint32_t fetch_data(); // ...dword at FAR, update FAR
-    void push16(int word);
-    void push(int dword);
-    int pop16();
-    int pop();
-    int ld16_stack();
-    int ld_stack();
+    void push16(uint32_t word);
+    void push(uint32_t dword);
+    uint32_t pop16();
+    uint32_t pop();
+    uint32_t ld16_stack();
+    uint32_t ld_stack();
 
     // eflags.cpp
     bool is_CF(); // carry (bit 0)
@@ -573,9 +572,9 @@ class Free86 {
     bool is_LE(); // less or equal, unsigned comparison
     bool is_LT(); // less than
     bool can_jump(int condition);
-    int compile_eflags(bool shift = false);
+    uint32_t compile_eflags(bool shift = false);
 
-    int get_EFLAGS();
-    void set_EFLAGS(int bits, int mask);
+    uint32_t get_EFLAGS();
+    void set_EFLAGS(uint32_t bits, uint32_t mask);
 };
 #endif // FREE86_H

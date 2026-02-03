@@ -75,8 +75,8 @@ void Free86::fetch_opcode() {
         far++; // adjust FAR for upcomming fetches from buffer
     }
 }
-int Free86::instruction_length(int opcode) {
-    int ipr, operation;
+int Free86::instruction_length(uint32_t opcode) {
+    uint32_t ipr, operation;
     int stride, n = 1;
     ipr = ipr_default;
     if (ipr & 0x0100) {
@@ -791,14 +791,14 @@ int Free86::modRM_bytes_number() {
     }
     return n;
 }
-void Free86::set_CR0(int bits) {
+void Free86::set_CR0(uint32_t bits) {
     // if changing flags 31, 16, or 0, must flush tlb
     if ((bits & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
         tlb_flush_all();
     }
     cr0 = bits | (1 << 4); // keep bit 4 set to 1 (80387 present)
 }
-void Free86::set_CR3(int bits) {
+void Free86::set_CR3(uint32_t bits) {
     // if in paging mode must flush tlb
     if (cr0 & (1 << 31)) {
         tlb_flush_all();
@@ -824,15 +824,15 @@ void Free86::set_cpl(int level) {
         tlb_writable = tlb_writable_cplX;
     }
 }
-void Free86::set_lower_byte(int reg, int byte) {
+void Free86::set_lower_byte(int reg, uint32_t byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
-        regs[reg & 3] = (regs[reg & 3] & -65281) | ((byte & 0xff) << 8);
+        regs[reg & 3] = (regs[reg & 3] & 0xffff00ff) | ((byte & 0xff) << 8);
     } else { // set AL, CL, DL, BL
-        regs[reg & 3] = (regs[reg & 3] & -256) | (byte & 0xff);
+        regs[reg & 3] = (regs[reg & 3] & 0xffffff00) | (byte & 0xff);
     }
 }
-void Free86::set_lower_word(int reg, int word) {
-    regs[reg] = (regs[reg] & -65536) | (word & 0xffff);
+void Free86::set_lower_word(int reg, uint32_t word) {
+    regs[reg] = (regs[reg] & 0xffff0000) | (word & 0xffff);
 }
 void Free86::page_translation(bool writable, bool user) {
     page_translation(lax, writable, user);
@@ -841,11 +841,11 @@ void Free86::page_translation(uint32_t address, bool writable, bool user) {
     uint32_t pde_address, pde, pte_address, pte, pxe;
     int error_code = 0, supervisor = !user, blank_page;
     if (!is_paging()) {
-        tlb_update(address & -4096, address & -4096, 1, 0);
+        tlb_update(address & 0xfffff000, address & 0xfffff000, 1, 0);
         return;
     }
     // paging enabled
-    pde_address = (cr3 & -4096) + ((address >> 20) & 0xffc);
+    pde_address = (cr3 & 0xfffff000) + ((address >> 20) & 0xffc);
     pde = ld_direct(pde_address);
     if (pde & 0x00000001) { // page referenced by PDE is present
         pte_address = (pde & -4096) + ((address >> 10) & 0xffc);
