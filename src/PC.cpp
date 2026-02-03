@@ -12,7 +12,7 @@
 
 #include "PC.h"
 
-PC::PC(int memory_size)
+PC::PC(uint32_t memory_size)
 {
     this->cpu = new WiredCPU(memory_size);
 #ifndef NO_SDL
@@ -30,11 +30,11 @@ PC::~PC()
     delete cpu;
 }
 
-long PC::load(std::string path, int offset)
+size_t PC::load(std::string path, int offset)
 {
     FILE *f = fopen(path.c_str(), "rb");
     fseek(f, 0, SEEK_END);
-    long size = ftell(f);
+    size_t size = static_cast<size_t>(ftell(f));
     fseek(f, 0, SEEK_SET);
     auto buffer = new uint8_t[size];
     auto _ = fread(buffer, size, 1, f);
@@ -52,7 +52,7 @@ void PC::setup()
 {
     load("bin/linuxstart.bin",             0x00010000); // custom bootloader
     load("bin/vmlinux-2.6.20.bin",         0x00100000); // Linux kernel
-    long initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
+    size_t initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
 
     int cmdline_addr = 0x0f800;
     std::string cmdline = "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1";

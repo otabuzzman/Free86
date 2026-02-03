@@ -53,11 +53,11 @@ void Free86::update_SSB() {
     }
     SS_base = segs[2].shadow.base;
     if (segs[2].shadow.flags & (1 << 22)) { // B: 4 GB stack segment size
-        SS_mask = -1;
+        SS_mask = 0xffffffff;
     } else {
         SS_mask = 0xffff;
     }
-    x86_64_long_mode = (((segs[0].shadow.base | CS_base | SS_base | segs[3].shadow.base) == 0) && SS_mask == -1);
+    x86_64_long_mode = (((segs[0].shadow.base | CS_base | SS_base | segs[3].shadow.base) == 0) && SS_mask == 0xffffffff);
 }
 void Free86::fetch_opcode() {
     eip = eip + far - far_start;
@@ -2242,14 +2242,14 @@ void Free86::aux_JMPF_protected_mode(int selector, uint32_t offset) {
         throw "fatal: unsupported TSS or task gate in JMP";
     }
 }
-void Free86::aux_CALLF(bool o32, int selector, uint32_t offset, int return_address) {
+void Free86::aux_CALLF(bool o32, int selector, uint32_t offset, uint32_t return_address) {
     if (!is_protected() || (eflags & 0x00020000)) {
         aux_CALLF_real__v86_mode(o32, selector, offset, return_address);
     } else {
         aux_CALLF_protected_mode(o32, selector, offset, return_address);
     }
 }
-void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, int return_address) {
+void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, uint32_t return_address) {
     int esp = regs[4];
     if (o32) {
         esp = esp - 4;
@@ -2272,7 +2272,7 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, i
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, int return_address) {
+void Free86::aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, uint32_t return_address) {
     int type, gate32, g_sel, g_off, g_cnt;
     int ss, esp, start_esp, spl;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
@@ -2694,14 +2694,14 @@ void Free86::zero_segment_register(int sreg, int privilege_level) {
         }
     }
 }
-void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address) {
+void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
     if (is_protected()) {
         raise_interrupt_protected_mode(id, error_code, is_hw, is_sw, return_address);
     } else {
         raise_interrupt_real__v86_mode(id, is_sw, return_address);
     }
 }
-void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_address) {
+void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address) {
     int selector, offset, esp;
     if (id * 4 + 3 > idt.shadow.limit) {
         abort(13, id * 8 + 2);
@@ -2726,7 +2726,7 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, int return_addres
     segs[1].shadow.base = selector << 4;
     eflags &= ~(0x00000100 | 0x00000200 | 0x00010000 | 0x00040000);
 }
-void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address) {
+void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
     int g_sel, g_off, st_error_code, is_interlevel, type, gate32;
     int ss, esp, spl;
     SegmentDescriptor isd{0}, cgd{0}, ssd{0};

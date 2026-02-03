@@ -2779,14 +2779,13 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x1d3: // G2 (ROL ROR RCL RCR SHL SHR SAL SAR),CL
                     modRM = fetch_data8();
                     operation = (modRM >> 3) & 7;
-                    ind = regs[1] & 0xff;
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        set_lower_word(rM, shift16(regs[rM], ind));
+                        set_lower_word(rM, shift16(regs[rM], regs[1] & 0xff));
                     } else {
                         segment_translation();
                         rm = ld16_writable_cpl3();
-                        x = shift16(rm, ind);
+                        x = shift16(rm, regs[1] & 0xff);
                         st16_writable_cpl3(x);
                     }
                     goto FETCH_LOOP;

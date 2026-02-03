@@ -20,10 +20,10 @@ class WiredCPU;
 
 class PC {
   public:
-    PC(int memory_size);
+    PC(uint32_t memory_size);
     ~PC();
 
-    long load(std::string path, int offset = 0);
+    size_t load(std::string path, int offset = 0);
     void setup();
     void cycle();
 
@@ -698,7 +698,7 @@ class WiredCPU : public Free86 {
     PIC *pic = nullptr;
     PIT *pit = nullptr;
     Serial *serial = nullptr;
-    WiredCPU(int memory_size) : Free86(memory_size) {
+    WiredCPU(uint32_t memory_size) : Free86(memory_size) {
         cmos = new CMOS();
         kbd = new KBD();
         pic = new PIC();

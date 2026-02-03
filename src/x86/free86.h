@@ -33,8 +33,8 @@ typedef struct SegmentDescriptor {
                 (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32 |
                 (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff));
     }
-    int segment_size_mask() {
-        return (flags & (1 << 22)) ? -1 : 0xffff;
+    uint32_t segment_size_mask() {
+        return (flags & (1 << 22)) ? 0xffffffff : 0xffff;
     }
 } SegmentDescriptor;
 
@@ -84,7 +84,7 @@ class Free86 {
         } else {
             tlb_hash = tlb_readonly[lat20];
         }
-        if (tlb_hash == -1) {
+        if (tlb_hash == 0xffffffff) {
             page_translation(linear, writable, cpl == 3);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
@@ -332,9 +332,9 @@ class Free86 {
    Variables in the segments state block (SSB) provide shorthand
    access to frequently used segment data.
  */
-    int CS_base; // shortcut for segs[1].shadow.base
-    int SS_base; // shortcut for segs[2].shadow.base
-    int SS_mask; // 16/ 32 bit address size mask for SS (from descriptor)
+    uint32_t CS_base; // shortcut for segs[1].shadow.base
+    uint32_t SS_base; // shortcut for segs[2].shadow.base
+    uint32_t SS_mask; // 16/ 32 bit address size mask for SS (from descriptor)
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
@@ -456,17 +456,17 @@ class Free86 {
     void aux_JMPF(int selector, uint32_t offset);
     void aux_JMPF_real__v86_mode(int selector, uint32_t offset);
     void aux_JMPF_protected_mode(int selector, uint32_t offset);
-    void aux_CALLF(bool o32, int selector, uint32_t offset, int return_address);
-    void aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, int return_address);
-    void aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, int return_address);
+    void aux_CALLF(bool o32, int selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, uint32_t return_address);
     void aux_RETF(bool o32, int release_stack_items);
     void return_real__v86_mode(bool o32, bool is_iret, int release_stack_items);
     void return_protected_mode(bool o32, bool is_iret, int release_stack_items);
     void zero_segment_register(int sreg, int privilege_level);
 
-    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
-    void raise_interrupt_real__v86_mode(int id, int is_sw, int return_address);
-    void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
+    void raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address);
+    void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);
