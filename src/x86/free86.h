@@ -53,7 +53,7 @@ typedef struct Interrupt {
 class Free86 {
   public:
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-    int regs[8];
+    uint32_t regs[8];
     int eflags;
 
     uint32_t eip;

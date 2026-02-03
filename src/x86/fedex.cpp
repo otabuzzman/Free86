@@ -645,7 +645,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0xa8: // TEST
                 imm = fetch_data8();
-                osm_dst = ((regs[0] & imm) << 24) >> 24;
+                osm_dst = (static_cast<int>(regs[0] & imm) << 24) >> 24;
                 osm = 12;
                 goto FETCH_LOOP;
             case 0xa9: // TEST
@@ -905,10 +905,10 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0x98: // CBW
-                regs[0] = (regs[0] << 16) >> 16;
+                regs[0] = (static_cast<int>(regs[0]) << 16) >> 16;
                 goto FETCH_LOOP;
             case 0x99: // CWD
-                regs[2] = regs[0] >> 31;
+                regs[2] = static_cast<int>(regs[0]) >> 31;
                 goto FETCH_LOOP;
             case 0x50: // PUSH A
             case 0x51: // PUSH C
@@ -2666,7 +2666,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     goto FETCH_LOOP;
                 case 0x1a9: // TEST
                     imm = fetch_data16();
-                    osm_dst = ((regs[0] & imm) << 16) >> 16;
+                    osm_dst = (static_cast<int>(regs[0] & imm) << 16) >> 16;
                     osm = 13;
                     goto FETCH_LOOP;
                 case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
@@ -2793,10 +2793,10 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     goto FETCH_LOOP;
                 case 0x198: // CBW
-                    set_lower_word(0, (regs[0] << 24) >> 24);
+                    set_lower_word(0, (static_cast<int>(regs[0]) << 24) >> 24);
                     goto FETCH_LOOP;
                 case 0x199: // CWD
-                    set_lower_word(2, (regs[0] << 16) >> 31);
+                    set_lower_word(2, (static_cast<int>(regs[0]) << 16) >> 31);
                     goto FETCH_LOOP;
                 case 0x190: // NOP
                     goto FETCH_LOOP;

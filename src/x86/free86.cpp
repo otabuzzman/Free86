@@ -1538,7 +1538,7 @@ void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t 
 void Free86::aux_IDIV8(int divisor) {
     int d, a, q, s;
     d = (divisor << 24) >> 24;
-    a = (regs[0] << 16) >> 16;
+    a = (static_cast<int>(regs[0]) << 16) >> 16;
     if (d == 0) {
         abort(0);
     }
@@ -3224,11 +3224,11 @@ void Free86::aux_BOUND16() {
         abort(6);
     }
     segment_translation();
-    x = (ld16_readonly_cpl3() << 16) >> 16;
+    x = (static_cast<int>(ld16_readonly_cpl3()) << 16) >> 16;
     lax = lax + 2;
-    y = (ld16_readonly_cpl3() << 16) >> 16;
+    y = (static_cast<int>(ld16_readonly_cpl3()) << 16) >> 16;
     reg = (modRM >> 3) & 7;
-    r = (regs[reg] << 16) >> 16;
+    r = (static_cast<int>(regs[reg]) << 16) >> 16;
     if (r < x || r > y) {
         abort(5);
     }
