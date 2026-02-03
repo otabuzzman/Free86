@@ -326,6 +326,7 @@ class Free86 {
     int ipr; // instruction prefix register
     int ipr_default; // reflects D flag (PM (1986), 16.1)
                      // also belongs to the SSB (below)
+    int ipr_os_mask; // operand size override prefix size mask
 /*
    Segments state block
 
@@ -348,9 +349,8 @@ class Free86 {
     int r;  // data from register derived from modRM
     int rm; // data from register or memory derived from modRM
     int m, m16; // any data from memory not derived from modRM
-    int ind, imm, imm16, moffs; // indirect, immediate and offset
-    int ind1st, ind2nd, imm1st, imm2nd; // 1st/ 2nds of above
-    int x, y, ipr_os_mask; // operand size override prefix size mask
+    int imm, imm16, moffs; // immediate and offset
+    int x, y; // signed helpers
 
     // clang-format off
     const std::vector<int> parity_LUT = {

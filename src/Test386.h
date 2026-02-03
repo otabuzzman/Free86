@@ -23,10 +23,10 @@ class Test386 {
     ~Test386() {
         delete cpu;
     }
-    long load(std::string path, int offset) {
+    size_t load(std::string path, int offset) {
         FILE *f = fopen(path.c_str(), "rb");
         fseek(f, 0, SEEK_END);
-        long size = ftell(f);
+        size_t size = static_cast<size_t>(ftell(f));
         fseek(f, 0, SEEK_SET);
         auto buffer = new uint8_t[size];
         auto _ = fread(buffer, size, 1, f);
@@ -146,12 +146,12 @@ class Test386 {
         sp = "ESP:" + hex(cpu->regs[4]);
         bp = "EBP:" + hex(cpu->regs[5]);
         flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9, std::string::npos);
-        cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex((int) cpu->segs[1].shadow.base) + ":" + hex((int) cpu->segs[1].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].shadow.flags, true);
-        ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex((int) cpu->segs[2].shadow.base) + ":" + hex((int) cpu->segs[2].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].shadow.flags, true);
-        ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex((int) cpu->segs[3].shadow.base) + ":" + hex((int) cpu->segs[3].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].shadow.flags, true);
-        es = "ES:" + hex((short) cpu->segs[0].selector) + ":" + hex((int) cpu->segs[0].shadow.base) + ":" + hex((int) cpu->segs[0].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[0].shadow.flags, true);
-        fs = "FS:" + hex((short) cpu->segs[4].selector) + ":" + hex((int) cpu->segs[4].shadow.base) + ":" + hex((int) cpu->segs[4].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[4].shadow.flags, true);
-        gs = "GS:" + hex((short) cpu->segs[5].selector) + ":" + hex((int) cpu->segs[5].shadow.base) + ":" + hex((int) cpu->segs[5].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[5].shadow.flags, true);
+        cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex(cpu->segs[1].shadow.base) + ":" + hex(cpu->segs[1].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].shadow.flags, true);
+        ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex(cpu->segs[2].shadow.base) + ":" + hex(cpu->segs[2].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].shadow.flags, true);
+        ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex(cpu->segs[3].shadow.base) + ":" + hex(cpu->segs[3].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].shadow.flags, true);
+        es = "ES:" + hex((short) cpu->segs[0].selector) + ":" + hex(cpu->segs[0].shadow.base) + ":" + hex(cpu->segs[0].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[0].shadow.flags, true);
+        fs = "FS:" + hex((short) cpu->segs[4].selector) + ":" + hex(cpu->segs[4].shadow.base) + ":" + hex(cpu->segs[4].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[4].shadow.flags, true);
+        gs = "GS:" + hex((short) cpu->segs[5].selector) + ":" + hex(cpu->segs[5].shadow.base) + ":" + hex(cpu->segs[5].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[5].shadow.flags, true);
         cr0 = "CR0:" + bin(cpu->cr0).replace(1, 26, "..");
         cr2 = "CR2:" + hex(cpu->cr2);
         cr3 = "CR3:" + hex(cpu->cr3);
@@ -191,6 +191,9 @@ class Test386 {
     std::string bin(int bits, bool divide = false) {
         return bin((short)(bits >> 16), divide) + (divide ? "_" : "") + bin((short)(bits & 0xffff), divide);
     }
+    std::string bin(uint32_t bits, bool divide = false) {
+        return bin((short)(bits >> 16), divide) + (divide ? "_" : "") + bin((short)(bits & 0xffff), divide);
+    }
     std::string hex(char bits) {
         std::string result = ""; char numerals[] = "0123456789ABCDEF";
         return result + numerals[((bits >> 4) & 0xf)] + numerals[bits & 0xf];
@@ -199,6 +202,9 @@ class Test386 {
         return hex((char)(bits >> 8)) + hex((char)(bits & 0xff));
     }
     std::string hex(int bits) {
+        return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
+    }
+    std::string hex(uint32_t bits) {
         return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
     }
 /*

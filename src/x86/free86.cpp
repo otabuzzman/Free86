@@ -930,13 +930,13 @@ void Free86::segment_translation() {
         case 0x0f:
             lax = (fetch_data8() << 24) >> 24;
             base = modRM & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             break;
         case 0x0c:
             sib = fetch_data8();
             lax = (fetch_data8() << 24) >> 24;
             base = sib & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             index = (sib >> 3) & 7;
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
@@ -946,7 +946,7 @@ void Free86::segment_translation() {
             sib = fetch_data8();
             lax = fetch_data();
             base = sib & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             index = (sib >> 3) & 7;
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
@@ -962,7 +962,7 @@ void Free86::segment_translation() {
         default:
             lax = fetch_data();
             base = modRM & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             break;
         }
         return;
@@ -1064,13 +1064,13 @@ void Free86::segment_translation() {
         case 0x0f: // 2-byte instruction escape
             lax = (fetch_data8() << 24) >> 24;
             base = modRM & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             break;
         case 0x0c:
             sib = fetch_data8();
             lax = (fetch_data8() << 24) >> 24;
             base = sib & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             index = (sib >> 3) & 7;
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
@@ -1080,7 +1080,7 @@ void Free86::segment_translation() {
             sib = fetch_data8();
             lax = fetch_data();
             base = sib & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             index = (sib >> 3) & 7;
             if (index != 4) {
                 lax = lax + (regs[index] << (sib >> 6));
@@ -1096,7 +1096,7 @@ void Free86::segment_translation() {
         default:
             lax = fetch_data();
             base = modRM & 7;
-            lax = lax + regs[base];
+            lax = regs[base] + lax;
             break;
         }
     sreg = ipr & 0x000f;
@@ -3224,12 +3224,12 @@ void Free86::aux_BOUND16() {
         abort(6);
     }
     segment_translation();
-    imm1st = (ld16_readonly_cpl3() << 16) >> 16;
+    x = (ld16_readonly_cpl3() << 16) >> 16;
     lax = lax + 2;
-    imm2nd = (ld16_readonly_cpl3() << 16) >> 16;
+    y = (ld16_readonly_cpl3() << 16) >> 16;
     reg = (modRM >> 3) & 7;
     r = (regs[reg] << 16) >> 16;
-    if (r < imm1st || r > imm2nd) {
+    if (r < x || r > y) {
         abort(5);
     }
 }
@@ -3239,12 +3239,12 @@ void Free86::aux_BOUND() {
         abort(6);
     }
     segment_translation();
-    imm1st = ld_readonly_cpl3();
+    x = ld_readonly_cpl3();
     lax = lax + 4;
-    imm2nd = ld_readonly_cpl3();
+    y = ld_readonly_cpl3();
     reg = (modRM >> 3) & 7;
     r = regs[reg];
-    if (r < imm1st || r > imm2nd) {
+    if (r < x || r > y) {
         abort(5);
     }
 }
