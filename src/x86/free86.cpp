@@ -1,16 +1,16 @@
 #include "free86.h"
 
-Free86::Free86(int memory_size) {
+Free86::Free86(uint32_t memory_size) {
     this->memory_size = memory_size;
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
     memory = static_cast<uint8_t*>(calloc(1, memory_size + ((15 + 3) & ~3)));
-    tlb_readonly_cplX = new int[tlb_size];
-    tlb_writable_cplX = new int[tlb_size];
-    tlb_readonly_cpl3 = new int[tlb_size];
-    tlb_writable_cpl3 = new int[tlb_size];
-    for (int i = 0; i < tlb_size; i++) {
+    tlb_readonly_cplX = new uint32_t[tlb_size];
+    tlb_writable_cplX = new uint32_t[tlb_size];
+    tlb_readonly_cpl3 = new uint32_t[tlb_size];
+    tlb_writable_cpl3 = new uint32_t[tlb_size];
+    for (uint32_t i = 0; i < tlb_size; i++) {
         tlb_clear(i);
     }
     reset();

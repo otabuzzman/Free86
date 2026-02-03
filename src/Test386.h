@@ -71,7 +71,8 @@ class Test386 {
                 int mask = 1 << 6;
                 if ((32 > e.id) && (mask & (1 << e.id))) {
                     std::string status = compile_status_string();
-                    int n, linear, physical;
+                    uint32_t linear, physical;
+                    int n;
                     linear = cpu->segs[1].shadow.base + cpu->eip; // EIP is offset of linear address
                     if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
                         physical = cpu->tlb_lookup(linear, 0); // physical address

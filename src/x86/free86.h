@@ -77,7 +77,7 @@ class Free86 {
 
     uint64_t cycles;
 
-    int tlb_lookup(uint32_t linear, bool writable) {
+    uint32_t tlb_lookup(uint32_t linear, bool writable) {
         uint32_t lat20 = linear >> 12; // PDE and PTE indices
         if (writable) {
             tlb_hash = tlb_writable[lat20];
@@ -102,7 +102,7 @@ class Free86 {
     virtual void io_write(int port, int data) = 0;
 
     // x86.cpp
-    Free86(int memory_size);
+    Free86(uint32_t memory_size);
     virtual ~Free86();
 
     void reset();
@@ -137,7 +137,7 @@ class Free86 {
     uint64_t cycles_requested;
     uint64_t cycles_remaining;
 
-    int memory_size;
+    uint32_t memory_size;
     uint8_t *memory;
 
 /*
@@ -158,20 +158,20 @@ class Free86 {
     uint32_t tlb_pages[2048]{0};
     int tlb_pages_count = 0;
     // mapping tables
-    int *tlb_readonly_cplX; // supervisor, any CPL
-    int *tlb_writable_cplX;
-    int *tlb_readonly_cpl3; // user, CPL == 3
-    int *tlb_writable_cpl3;
+    uint32_t *tlb_readonly_cplX; // supervisor, any CPL
+    uint32_t *tlb_writable_cplX;
+    uint32_t *tlb_readonly_cpl3; // user, CPL == 3
+    uint32_t *tlb_writable_cpl3;
     // current mapping tables (user or supervisor)
-    int *tlb_readonly;
-    int *tlb_writable;
+    uint32_t *tlb_readonly;
+    uint32_t *tlb_writable;
     int tlb_size = 0x100000; // 1M entries per MT
-    int tlb_hash; // LA ^ PA (by design, no necessity)
+    uint32_t tlb_hash; // LA ^ PA (by design, no necessity)
 
     void tlb_update(uint32_t linear /*data*/, uint32_t physical /*key*/, bool writable, bool user) {
         tlb_hash = linear ^ physical; // poor man's XOR hash function
         uint32_t lat20 = linear >> 12; // PD and PT indices (top 20 bits of linear address)
-        if (tlb_readonly_cplX[lat20] == -1) {
+        if (tlb_readonly_cplX[lat20] == 0xffffffff) { // new entry
             if (tlb_pages_count >= 2048) { // flush TLB if full
                 // if present, keep PTE immediately preceding this PTE to improve performance
                 tlb_flush_all(lat20 - 1);
@@ -184,18 +184,18 @@ class Free86 {
         if (writable) {
             tlb_writable_cplX[lat20] = tlb_hash;
         } else {
-            tlb_writable_cplX[lat20] = -1;
+            tlb_writable_cplX[lat20] = 0xffffffff;
         }
         if (user) {
             tlb_readonly_cpl3[lat20] = tlb_hash;
             if (writable) {
                 tlb_writable_cpl3[lat20] = tlb_hash;
             } else {
-                tlb_writable_cpl3[lat20] = -1;
+                tlb_writable_cpl3[lat20] = 0xffffffff;
             }
         } else {
-            tlb_readonly_cpl3[lat20] = -1;
-            tlb_writable_cpl3[lat20] = -1;
+            tlb_readonly_cpl3[lat20] = 0xffffffff;
+            tlb_writable_cpl3[lat20] = 0xffffffff;
         }
     }
     void tlb_flush_page(uint32_t linear) {
@@ -222,10 +222,10 @@ class Free86 {
         tlb_pages_count = n;
     }
     void tlb_clear(uint32_t lat20) {
-        tlb_readonly_cplX[lat20] = -1;
-        tlb_writable_cplX[lat20] = -1;
-        tlb_readonly_cpl3[lat20] = -1;
-        tlb_writable_cpl3[lat20] = -1;
+        tlb_readonly_cplX[lat20] = 0xffffffff;
+        tlb_writable_cplX[lat20] = 0xffffffff;
+        tlb_readonly_cpl3[lat20] = 0xffffffff;
+        tlb_writable_cpl3[lat20] = 0xffffffff;
     }
 
 /*

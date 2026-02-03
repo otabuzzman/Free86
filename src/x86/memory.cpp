@@ -2,7 +2,7 @@
 
 int Free86::ld8_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
-    if (tlb_hash == -1) {
+    if (tlb_hash == 0xffffffff) {
         page_translation(0, 0);
         tlb_hash = tlb_readonly_cplX[lax >> 12];
     }
@@ -46,7 +46,7 @@ int Free86::ld8_readonly_cpl3() {
         return ld8_direct(lax);
     }
     tlb_hash = tlb_readonly[lax >> 12];
-    if (tlb_hash == -1) {
+    if (tlb_hash == 0xffffffff) {
         page_translation(0, cpl == 3);
         tlb_hash = tlb_readonly[lax >> 12];
     }
@@ -85,7 +85,7 @@ int Free86::ld8_writable_cpl3() {
         return ld8_direct(lax);
     }
     tlb_hash = tlb_writable[lax >> 12];
-    if (tlb_hash == -1) {
+    if (tlb_hash == 0xffffffff) {
         page_translation(1, cpl == 3);
         tlb_hash = tlb_writable[lax >> 12];
     }
@@ -121,7 +121,7 @@ int Free86::ld_writable_cpl3() {
 }
 void Free86::st8_writable_cplX(int byte) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
-    if (tlb_hash == -1) {
+    if (tlb_hash == 0xffffffff) {
         page_translation(1, 0);
         tlb_hash = tlb_writable_cplX[lax >> 12];
     }
@@ -165,7 +165,7 @@ void Free86::st8_writable_cpl3(int byte) {
         st8_direct(lax, byte);
     } 
     tlb_hash = tlb_writable[lax >> 12];
-    if (tlb_hash == -1) {
+    if (tlb_hash == 0xffffffff) {
         page_translation(1, cpl == 3);
         tlb_hash = tlb_writable[lax >> 12];
     }
