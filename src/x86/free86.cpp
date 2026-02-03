@@ -5,7 +5,7 @@ Free86::Free86(int memory_size) {
     // size plus maximum possible number of bytes per instruction,
     // rounded up to the nearest multiple of 32 bits, as buffer
     // for instructions that span page boundaries.
-    memory = (uint8_t *) calloc(1, memory_size + ((15 + 3) & ~3));
+    memory = static_cast<uint8_t*>(calloc(1, memory_size + ((15 + 3) & ~3)));
     tlb_readonly_cplX = new int[tlb_size];
     tlb_writable_cplX = new int[tlb_size];
     tlb_readonly_cpl3 = new int[tlb_size];
@@ -1143,9 +1143,9 @@ void Free86::moffs_to_linear(bool writable) {
     la = segs[sreg].shadow.base + la;
     // limit checking
     if (segs[sreg].shadow.flags & (1 << 10)) { // expand-down segment
-        limit_notok = la < (uint64_t) segs[sreg].shadow.base + segs[sreg].shadow.limit + 1;
+        limit_notok = la < static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1;
     } else {
-        limit_notok = la > (uint64_t) segs[sreg].shadow.base + segs[sreg].shadow.limit - (stride - 1);
+        limit_notok = la > static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit - (stride - 1);
     }
     if (limit_notok) {
         if (sreg == 2) {
