@@ -1376,8 +1376,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 x = (static_cast<int>(fetch_data16()) << 16) >> 16;
                 m = ld_stack();
                 regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + x) & SS_mask);
-                eip = m;
-                far = far_start = 0;
+                eip = m, far = far_start = 0;
                 goto FETCH_LOOP;
             case 0xc3: // RET
                 if (x86_64_long_mode) {
@@ -2944,8 +2943,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             rm = ld16_readonly_cpl3();
                         }
-                        eip = rm;
-                        far = far_start = 0;
+                        eip = rm, far = far_start = 0;
                         break;
                     default:
                         abort(6);
@@ -2987,13 +2985,11 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     x = (static_cast<int>(fetch_data16()) << 16) >> 16;
                     m = ld16_stack();
                     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + x) & SS_mask);
-                    eip = m;
-                    far = far_start = 0;
+                    eip = m, far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x1c3: // RET
                     m = pop16();
-                    eip = m;
-                    far = far_start = 0;
+                    eip = m, far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x1e8: // CALL
                     imm = fetch_data16();
@@ -3211,7 +3207,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     case 0x18f: // JNLE
                         imm = fetch_data16();
                         if (can_jump(opcode & 0xf)) {
-                            eip = (eip + far - far_start + imm) & 0xffff, far = far_start = 0;
+                            eip = (eip + far - far_start + imm) & 0xffff;
+                            far = far_start = 0;
                         }
                         goto FETCH_LOOP;
                     case 0x140: // CMOVx (80486)
