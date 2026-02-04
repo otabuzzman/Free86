@@ -18,19 +18,19 @@ void Free86::aux_INSB() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st8_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        st8_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st8_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        st8_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
 void Free86::aux_OUTSB() {
@@ -58,18 +58,18 @@ void Free86::aux_OUTSB() {
             return;
         }
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld8_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
+        ua = ld8_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld8_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
+        ua = ld8_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
 void Free86::aux_MOVSB() {
@@ -94,21 +94,21 @@ void Free86::aux_MOVSB() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld8_readonly_cpl3();
+        ua = ld8_readonly_cpl3();
         lax = la;
-        st8_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        st8_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld8_readonly_cpl3();
+        ua = ld8_readonly_cpl3();
         lax = la;
-        st8_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        st8_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
 void Free86::aux_STOSB() {
@@ -126,14 +126,14 @@ void Free86::aux_STOSB() {
             return;
         }
         st8_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         st8_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
 void Free86::aux_CMPSB() {
@@ -159,12 +159,12 @@ void Free86::aux_CMPSB() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld8_readonly_cpl3();
+        ua = ld8_readonly_cpl3();
         lax = la;
-        y = ld8_readonly_cpl3();
-        calculate8(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        ub = ld8_readonly_cpl3();
+        calculate8(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -179,12 +179,12 @@ void Free86::aux_CMPSB() {
             far = far_start;
         }
     } else {
-        x = ld8_readonly_cpl3();
+        ua = ld8_readonly_cpl3();
         lax = la;
-        y = ld8_readonly_cpl3();
-        calculate8(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        ub = ld8_readonly_cpl3();
+        calculate8(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
 void Free86::aux_LODSB() {
@@ -207,17 +207,17 @@ void Free86::aux_LODSB() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld8_readonly_cpl3();
-        regs[0] = (regs[0] & -256) | x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
+        ua = ld8_readonly_cpl3();
+        regs[0] = (regs[0] & -256) | ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld8_readonly_cpl3();
-        regs[0] = (regs[0] & -256) | x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 0)) & ipr_os_mask);
+        ua = ld8_readonly_cpl3();
+        regs[0] = (regs[0] & -256) | ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
 void Free86::aux_SCASB() {
@@ -235,9 +235,9 @@ void Free86::aux_SCASB() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld8_readonly_cpl3();
-        calculate8(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        ua = ld8_readonly_cpl3();
+        calculate8(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -252,9 +252,9 @@ void Free86::aux_SCASB() {
             far = far_start;
         }
     } else {
-        x = ld8_readonly_cpl3();
-        calculate8(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 0)) & ipr_os_mask);
+        ua = ld8_readonly_cpl3();
+        calculate8(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
 void Free86::aux_INSW() {
@@ -275,19 +275,19 @@ void Free86::aux_INSW() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st16_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st16_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_OUTSW() {
@@ -315,18 +315,18 @@ void Free86::aux_OUTSW() {
             return;
         }
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld16_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld16_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_MOVSW() {
@@ -351,21 +351,21 @@ void Free86::aux_MOVSW() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        st16_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        st16_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_STOSW() {
@@ -383,14 +383,14 @@ void Free86::aux_STOSW() {
             return;
         }
         st16_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         st16_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_CMPSW() {
@@ -416,12 +416,12 @@ void Free86::aux_CMPSW() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        y = ld16_readonly_cpl3();
-        calculate16(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ub = ld16_readonly_cpl3();
+        calculate16(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -436,12 +436,12 @@ void Free86::aux_CMPSW() {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        y = ld16_readonly_cpl3();
-        calculate16(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ub = ld16_readonly_cpl3();
+        calculate16(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_LODSW() {
@@ -464,17 +464,17 @@ void Free86::aux_LODSW() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
-        regs[0] = x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        regs[0] = ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
-        regs[0] = x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        regs[0] = ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_SCASW() {
@@ -492,9 +492,9 @@ void Free86::aux_SCASW() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
-        calculate16(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        calculate16(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -509,9 +509,9 @@ void Free86::aux_SCASW() {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
-        calculate16(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        calculate16(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_INS16() {
@@ -532,19 +532,19 @@ void Free86::aux_INS16() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st16_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st16_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_OUTS16() {
@@ -572,18 +572,18 @@ void Free86::aux_OUTS16() {
             return;
         }
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld16_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld16_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_MOVS16() {
@@ -608,21 +608,21 @@ void Free86::aux_MOVS16() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        st16_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        st16_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        st16_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_STOS16() {
@@ -640,14 +640,14 @@ void Free86::aux_STOS16() {
             return;
         }
         st16_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         st16_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_CMPS16() {
@@ -673,12 +673,12 @@ void Free86::aux_CMPS16() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        y = ld16_readonly_cpl3();
-        calculate16(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ub = ld16_readonly_cpl3();
+        calculate16(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -693,12 +693,12 @@ void Free86::aux_CMPS16() {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
+        ua = ld16_readonly_cpl3();
         lax = la;
-        y = ld16_readonly_cpl3();
-        calculate16(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ub = ld16_readonly_cpl3();
+        calculate16(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_LODS16() {
@@ -721,17 +721,17 @@ void Free86::aux_LODS16() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
-        regs[0] = (regs[0] & -65536) | x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        regs[0] = (regs[0] & -65536) | ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
-        regs[0] = (regs[0] & -65536) | x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        regs[0] = (regs[0] & -65536) | ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_SCAS16() {
@@ -749,9 +749,9 @@ void Free86::aux_SCAS16() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld16_readonly_cpl3();
-        calculate16(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        calculate16(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -766,9 +766,9 @@ void Free86::aux_SCAS16() {
             far = far_start;
         }
     } else {
-        x = ld16_readonly_cpl3();
-        calculate16(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 1)) & ipr_os_mask);
+        ua = ld16_readonly_cpl3();
+        calculate16(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
 void Free86::aux_INSD() {
@@ -789,19 +789,19 @@ void Free86::aux_INSD() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        st_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = io_read(edx);
+        ua = io_read(edx);
         lax = segs[0].shadow.base + (edi & ipr_os_mask);
-        st_writable_cpl3(x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        st_writable_cpl3(ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
     }
 }
 void Free86::aux_OUTSD() {
@@ -829,18 +829,18 @@ void Free86::aux_OUTSD() {
             return;
         }
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
+        ua = ld_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         lax = segs[sreg].shadow.base + (esi & ipr_os_mask);
-        x = ld_readonly_cpl3();
-        io_write(edx, x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
+        ua = ld_readonly_cpl3();
+        io_write(edx, ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
     }
 }
 void Free86::aux_MOVSD() {
@@ -865,21 +865,21 @@ void Free86::aux_MOVSD() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld_readonly_cpl3();
+        ua = ld_readonly_cpl3();
         lax = la;
-        st_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        st_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld_readonly_cpl3();
+        ua = ld_readonly_cpl3();
         lax = la;
-        st_writable_cpl3(x);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        st_writable_cpl3(ua);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
     }
 }
 void Free86::aux_STOSD() {
@@ -897,14 +897,14 @@ void Free86::aux_STOSD() {
             return;
         }
         st_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
         st_writable_cpl3(regs[0]);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
     }
 }
 void Free86::aux_CMPSD() {
@@ -930,12 +930,12 @@ void Free86::aux_CMPSD() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld_readonly_cpl3();
+        ua = ld_readonly_cpl3();
         lax = la;
-        y = ld_readonly_cpl3();
-        calculate(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        ub = ld_readonly_cpl3();
+        calculate(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -950,12 +950,12 @@ void Free86::aux_CMPSD() {
             far = far_start;
         }
     } else {
-        x = ld_readonly_cpl3();
+        ua = ld_readonly_cpl3();
         lax = la;
-        y = ld_readonly_cpl3();
-        calculate(x, y);
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        ub = ld_readonly_cpl3();
+        calculate(ua, ub);
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
     }
 }
 void Free86::aux_LODSD() {
@@ -978,17 +978,17 @@ void Free86::aux_LODSD() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld_readonly_cpl3();
-        regs[0] = x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
+        ua = ld_readonly_cpl3();
+        regs[0] = ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
             far = far_start;
         }
     } else {
-        x = ld_readonly_cpl3();
-        regs[0] = x;
-        regs[6] = (esi & ~ipr_os_mask) | ((esi + (df << 2)) & ipr_os_mask);
+        ua = ld_readonly_cpl3();
+        regs[0] = ua;
+        regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
     }
 }
 void Free86::aux_SCASD() {
@@ -1006,9 +1006,9 @@ void Free86::aux_SCASD() {
         if ((ecx & ipr_os_mask) == 0) {
             return;
         }
-        x = ld_readonly_cpl3();
-        calculate(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        ua = ld_readonly_cpl3();
+        calculate(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ipr & 0x0010) {
             if (!(osm_dst == 0)) {
@@ -1023,8 +1023,8 @@ void Free86::aux_SCASD() {
             far = far_start;
         }
     } else {
-        x = ld_readonly_cpl3();
-        calculate(regs[0], x);
-        regs[7] = (edi & ~ipr_os_mask) | ((edi + (df << 2)) & ipr_os_mask);
+        ua = ld_readonly_cpl3();
+        calculate(regs[0], ua);
+        regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 2)) & ipr_os_mask);
     }
 }

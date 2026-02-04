@@ -325,7 +325,7 @@ class Free86 {
  */
     uint32_t ipr; // instruction prefix register
     uint32_t ipr_default; // reflects D flag (PM (1986), 16.1)
-                     // also belongs to the SSB (below)
+                          // also belongs to the SSB (below)
     uint32_t ipr_os_mask; // operand size override prefix size mask
 /*
    Segments state block
@@ -346,10 +346,12 @@ class Free86 {
     uint32_t lax;  // linear address exchange register
     uint32_t modRM, reg, rM;   // mod field (modRM >> 6) inline
     uint32_t sib, base, index; // scale field (sib >> 6) inline
-    uint32_t r, rm;  // register or register/ memory operands from modRM
-    uint32_t m, m16; // 32/ 16 bit memory operands not from modRM
-    uint32_t imm, imm16, moffs; // 32/ 16 bit immediate and offset operands
+    uint32_t r, rm;  // register or register/ memory refered by modRM
+    uint32_t m, m16; // 32/ 16 bit memory operands from memory
+    uint32_t imm, imm16, moffs; // immediate/ offset operands
     int x, y, z; // signed helper
+    int sa, sb, sc; // signed helper
+    uint32_t ua, ub, uc; // unsigned helper
 
     // clang-format off
     const std::vector<int> parity_LUT = {

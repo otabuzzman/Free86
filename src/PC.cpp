@@ -162,25 +162,26 @@ int WiredCPU::get_iid() {
 }
 uint32_t WiredCPU::io_read(uint32_t port) {
     int _port = static_cast<int>(port) & (1024 - 1);
+    int _data;
     switch (_port) {
     case 0x70:
     case 0x71:
-        return cmos->ioport_read(_port);
+        _data = cmos->ioport_read(_port);
     case 0x64:
-        return kbd->read_status(_port);
+        _data = kbd->read_status(_port);
     case 0x20:
     case 0x21:
-        return pic->pics[0]->ioport_read(_port);
+        _data = pic->pics[0]->ioport_read(_port);
     case 0xa0:
     case 0xa1:
-        return pic->pics[1]->ioport_read(_port);
+        _data = pic->pics[1]->ioport_read(_port);
     case 0x40:
     case 0x41:
     case 0x42:
     case 0x43:
-        return pit->ioport_read(_port);
+        _data = pit->ioport_read(_port);
     case 0x61:
-        return pit->speaker_ioport_read(_port);
+        _data = pit->speaker_ioport_read(_port);
     case 0x3f8:
     case 0x3f9:
     case 0x3fa:
@@ -189,10 +190,11 @@ uint32_t WiredCPU::io_read(uint32_t port) {
     case 0x3fd:
     case 0x3fe:
     case 0x3ff:
-        return serial->ioport_read(_port);
+        _data = serial->ioport_read(_port);
     default:
-        return 0xff;
+        _data = 0xff;
     }
+    return static_cast<uint32_t>(_data);
 }
 void WiredCPU::io_write(uint32_t port, uint32_t data) {
     int _port = static_cast<int>(port) & (1024 - 1);
