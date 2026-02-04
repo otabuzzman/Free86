@@ -33,7 +33,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (ipr == ipr_default) {
                     instruction_length(opcode);
                 }
-                ipr = (ipr & ~0x000f) | (((opcode >> 3) & 3) + 1);
+                ipr = (ipr & ~0x000fu) | (((opcode >> 3) & 3) + 1);
                 opcode = fetch_data8();
                 opcode |= ipr & 0x0100;
                 break;
@@ -42,7 +42,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (ipr == ipr_default) {
                     instruction_length(opcode);
                 }
-                ipr = (ipr & ~0x000f) | ((opcode & 7) + 1);
+                ipr = (ipr & ~0x000fu) | ((opcode & 7) + 1);
                 opcode = fetch_data8();
                 opcode |= ipr & 0x0100;
                 break;
@@ -75,7 +75,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     instruction_length(opcode);
                 }
                 if (ipr_default & 0x0100) {
-                    ipr &= ~0x0100;
+                    ipr &= ~0x0100u;
                 } else {
                     ipr |= 0x0100;
                 }
@@ -87,7 +87,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     instruction_length(opcode);
                 }
                 if (ipr_default & 0x0080) {
-                    ipr &= ~0x0080;
+                    ipr &= ~0x0080u;
                 } else {
                     ipr |= 0x0080;
                 }
@@ -105,7 +105,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 imm = fetch_data8();
                 opcode &= 7;
                 hL = (opcode & 4) << 1;
-                regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << hL)) | ((imm & 0xff) << hL);
+                regs[opcode & 3] = (regs[opcode & 3] & ~(0xffu << hL)) | ((imm & 0xffu) << hL);
                 goto FETCH_LOOP;
             case 0xb8: // MOV A
             case 0xb9: // MOV C
@@ -125,7 +125,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
                     hL = (rM & 4) << 1;
-                    regs[rM & 3] = (regs[rM & 3] & ~(0xff << hL)) | ((r & 0xff) << hL);
+                    regs[rM & 3] = (regs[rM & 3] & ~(0xffu << hL)) | ((r & 0xffu) << hL);
                 } else {
                     segment_translation();
                     st8_writable_cpl3(r);
@@ -152,7 +152,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 reg = (modRM >> 3) & 7;
                 hL = (reg & 4) << 1;
-                regs[reg & 3] = (regs[reg & 3] & ~(0xff << hL)) | ((rm & 0xff) << hL);
+                regs[reg & 3] = (regs[reg & 3] & ~(0xffu << hL)) | ((rm & 0xffu) << hL);
                 goto FETCH_LOOP;
             case 0x8b: // MOV
                 modRM = fetch_data8();
@@ -541,20 +541,20 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    osm_src = x;
+                    ua = sign_extend_byte(fetch_data8());
+                    osm_src = ua;
                     osm_dst = rm - osm_src;
                     osm = 8;
                 } else {
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                        regs[rM] = calculate(regs[rM], x);
+                        ua = sign_extend_byte(fetch_data8());
+                        regs[rM] = calculate(regs[rM], ua);
                     } else {
                         segment_translation();
-                        x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                        ua = sign_extend_byte(fetch_data8());
                         rm = ld_writable_cpl3();
-                        y = calculate(rm, x);
+                        y = calculate(rm, ua);
                         st_writable_cpl3(y);
                     }
                 }
@@ -613,8 +613,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     segment_translation();
                     rm = ld_readonly_cpl3();
                 }
-                y = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                aux_IMUL(rm, y);
+                ub = sign_extend_byte(fetch_data8());
+                aux_IMUL(rm, ub);
                 regs[reg] = x;
                 goto FETCH_LOOP;
             case 0x84: // TEST
@@ -628,7 +628,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 reg = (modRM >> 3) & 7;
                 r = regs[reg & 3] >> ((reg & 4) << 1);
-                osm_dst = (static_cast<int>(rm & r) << 24) >> 24;
+                osm_dst = sign_extend_byte(rm & r);
                 osm = 12;
                 goto FETCH_LOOP;
             case 0x85: // TEST
@@ -645,7 +645,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0xa8: // TEST
                 imm = fetch_data8();
-                osm_dst = (static_cast<int>(regs[0] & imm) << 24) >> 24;
+                osm_dst = sign_extend_byte(regs[0] & imm);
                 osm = 12;
                 goto FETCH_LOOP;
             case 0xa9: // TEST
@@ -666,7 +666,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld8_readonly_cpl3();
                     }
                     imm = fetch_data8();
-                    osm_dst = (static_cast<int>(rm & imm) << 24) >> 24;
+                    osm_dst = sign_extend_byte(rm & imm);
                     osm = 12;
                     break;
                 case 2: // NOT
@@ -976,13 +976,13 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0x6a: // PUSH
-                x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                ua = sign_extend_byte(fetch_data8());
                 if (x86_64_long_mode) {
                     lax = regs[4] - 4;
-                    st_writable_cpl3(x);
+                    st_writable_cpl3(ua);
                     regs[4] = lax;
                 } else {
-                    push(x);
+                    push(ua);
                 }
                 goto FETCH_LOOP;
             case 0xc8: // ENTER
@@ -1002,11 +1002,11 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if ((eflags & 0x00020000) && iopl != 3) {
                     abort(13);
                 }
-                x = get_EFLAGS() & ~(0x00010000 | 0x00020000);
+                ua = get_EFLAGS() & ~(0x00010000u | 0x00020000u);
                 if (((ipr >> 8) & 1) ^ 1) {
-                    push(x);
+                    push(ua);
                 } else {
-                    push16(x);
+                    push16(ua);
                 }
                 goto FETCH_LOOP;
             case 0x9d: // POPF
@@ -1051,7 +1051,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if ((modRM >> 6) == 3) {
                     abort(6);
                 }
-                ipr = (ipr & ~0x000f) | (6 + 1);
+                ipr = (ipr & ~0x000fu) | (6 + 1);
                 segment_translation();
                 regs[(modRM >> 3) & 7] = lax;
                 goto FETCH_LOOP;
@@ -1192,8 +1192,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0xeb: // JMP
-                x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                far = far + x;
+                ua = sign_extend_byte(fetch_data8());
+                far = far + ua;
                 goto FETCH_LOOP;
             case 0xe9: // JMP
                 imm = fetch_data();
@@ -1210,128 +1210,128 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0x70: // JO
                 if (is_OF()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x71: // JNO
                 if (!is_OF()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x72: // JB
                 if (is_CF()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x73: // JNB
                 if (!is_CF()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x74: // JZ
                 if (osm_dst == 0) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x75: // JNZ
                 if (!(osm_dst == 0)) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x76: // JBE
                 if (is_BE()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x77: // JNBE
                 if (!is_BE()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x78: // JS
                 if (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x79: // JNS
                 if (!(osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7a: // JP
                 if (is_PF()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7b: // JNP
                 if (!is_PF()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7c: // JL
                 if (is_LT()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7d: // JNL
                 if (!is_LT()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7e: // JLE
                 if (is_LE()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
                 goto FETCH_LOOP;
             case 0x7f: // JNLE
                 if (!is_LE()) {
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    far = far + x;
+                    ua = sign_extend_byte(fetch_data8());
+                    far = far + ua;
                 } else {
                     far = far + 1;
                 }
@@ -1339,7 +1339,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xe0: // LOOPNE
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
-                z = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                uc = sign_extend_byte(fetch_data8());
                 ipr_os_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
                 x = (regs[1] - 1) & ipr_os_mask;
                 regs[1] = (regs[1] & ~ipr_os_mask) | x;
@@ -1353,22 +1353,22 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 if (x && y) {
                     if (ipr & 0x0100) {
-                        eip = (eip + far - far_start + z) & 0xffff;
+                        eip = (eip + far - far_start + uc) & 0xffff;
                         far = far_start = 0;
                     } else {
-                        far = far + z;
+                        far = far + uc;
                     }
                 }
                 goto FETCH_LOOP;
             case 0xe3: // JCXZ
-                x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                ua = sign_extend_byte(fetch_data8());
                 ipr_os_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
                 if ((regs[1] & ipr_os_mask) == 0) {
                     if (ipr & 0x0100) {
-                        eip = (eip + far - far_start + x) & 0xffff;
+                        eip = (eip + far - far_start + ua) & 0xffff;
                         far = far_start = 0;
                     } else {
-                        far = far + x;
+                        far = far + ua;
                     }
                 }
                 goto FETCH_LOOP;
@@ -1461,7 +1461,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 osm = 24;
                 goto FETCH_LOOP;
             case 0xf8: // CLC
-                osm_src = compile_eflags() & ~0x0001;
+                osm_src = compile_eflags() & ~0x0001u;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto FETCH_LOOP;
@@ -1481,7 +1481,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (cpl > iopl) {
                     abort(13);
                 }
-                eflags &= ~0x00000200;
+                eflags &= ~0x00000200u;
                 goto FETCH_LOOP;
             case 0xfb: // STI
                 iopl = (eflags >> 12) & 3;
@@ -1804,7 +1804,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld8_readonly_cpl3();
                     }
-                    regs[reg] = (static_cast<int>(rm) << 24) >> 24;
+                    regs[reg] = sign_extend_byte(rm);
                     goto FETCH_LOOP;
                 case 0xbf: // MOVSX
                     modRM = fetch_data8();
@@ -1969,7 +1969,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     if (cpl != 0) {
                         abort(13);
                     }
-                    set_CR0(cr0 & ~(1 << 3));
+                    set_CR0(cr0 & ~(1u << 3));
                     goto FETCH_LOOP;
                 case 0x23: // MOV
                     if (cpl != 0) {
@@ -2588,18 +2588,18 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     operation = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
                         rM = modRM & 7;
-                        x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                        set_lower_word(rM, calculate16(regs[rM], x));
+                        ua = sign_extend_byte(fetch_data8());
+                        set_lower_word(rM, calculate16(regs[rM], ua));
                     } else {
                         segment_translation();
-                        y = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                        ub = sign_extend_byte(fetch_data8());
                         if (operation != 7) {
                             rm = ld16_writable_cpl3();
-                            x = calculate16(rm, y);
+                            x = calculate16(rm, ub);
                             st16_writable_cpl3(x);
                         } else {
                             rm = ld16_readonly_cpl3();
-                            calculate16(rm, y);
+                            calculate16(rm, ub);
                         }
                     }
                     goto FETCH_LOOP;
@@ -2634,8 +2634,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld16_readonly_cpl3();
                     }
-                    y = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    aux_IMUL16(rm, y);
+                    ub = sign_extend_byte(fetch_data8());
+                    aux_IMUL16(rm, ub);
                     set_lower_word(reg, x);
                     goto FETCH_LOOP;
                 case 0x169: // IMUL
@@ -2792,7 +2792,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     goto FETCH_LOOP;
                 case 0x198: // CBW
-                    set_lower_word(0, (static_cast<int>(regs[0]) << 24) >> 24);
+                    set_lower_word(0, sign_extend_byte(regs[0] & 0xff));
                     goto FETCH_LOOP;
                 case 0x199: // CWD
                     set_lower_word(2, (static_cast<int>(regs[0]) << 16) >> 31);
@@ -2846,8 +2846,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     push16(imm);
                     goto FETCH_LOOP;
                 case 0x16a: // PUSH
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    push16(x);
+                    ua = sign_extend_byte(fetch_data8());
+                    push16(ua);
                     goto FETCH_LOOP;
                 case 0x1c8: // ENTER
                     aux_ENTER16();
@@ -2872,7 +2872,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     if ((modRM >> 6) == 3) {
                         abort(6);
                     }
-                    ipr = (ipr & ~0x000f) | (6 + 1);
+                    ipr = (ipr & ~0x000fu) | (6 + 1);
                     segment_translation();
                     set_lower_word((modRM >> 3) & 7, lax);
                     goto FETCH_LOOP;
@@ -2950,8 +2950,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     goto FETCH_LOOP;
                 case 0x1eb: // JMP
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                    eip = (eip + far - far_start + x) & 0xffff;
+                    ua = sign_extend_byte(fetch_data8());
+                    eip = (eip + far - far_start + ua) & 0xffff;
                     far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x1e9: // JMP
@@ -2975,16 +2975,16 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x17d: // JNL
                 case 0x17e: // JLE
                 case 0x17f: // JNLE
-                    x = (static_cast<int>(fetch_data8()) << 24) >> 24;
+                    ua = sign_extend_byte(fetch_data8());
                     if (can_jump(opcode & 0xf)) {
-                        eip = (eip + far - far_start + x) & 0xffff;
+                        eip = (eip + far - far_start + ua) & 0xffff;
                         far = far_start = 0;
                     }
                     goto FETCH_LOOP;
                 case 0x1c2: // RET
-                    x = (static_cast<int>(fetch_data16()) << 16) >> 16;
+                    ua = sign_extend_word(fetch_data16());
                     m = ld16_stack();
-                    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + x) & SS_mask);
+                    regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 2 + ua) & SS_mask);
                     eip = m, far = far_start = 0;
                     goto FETCH_LOOP;
                 case 0x1c3: // RET
@@ -3260,7 +3260,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             rm = ld8_readonly_cpl3();
                         }
-                        set_lower_word(reg, ((static_cast<int>(rm) << 24) >> 24));
+                        set_lower_word(reg, sign_extend_byte(rm));
                         goto FETCH_LOOP;
                     case 0x1af: // IMUL
                         modRM = fetch_data8();

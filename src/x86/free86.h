@@ -7,8 +7,8 @@
 typedef struct SegmentDescriptor {
     uint32_t base;
     uint32_t limit;
-    int flags;
-    SegmentDescriptor(uint32_t base, uint32_t limit, int flags)
+    uint32_t flags;
+    SegmentDescriptor(uint32_t base, uint32_t limit, uint32_t flags)
         : base(base), limit(limit), flags(flags) {}
     SegmentDescriptor(uint64_t qword) {
         base = ((qword >> 16) & 0x0000ffff) |
@@ -39,10 +39,10 @@ typedef struct SegmentDescriptor {
 } SegmentDescriptor;
 
 typedef struct SegmentRegister {
-    int selector;
+    uint32_t selector;
     SegmentDescriptor shadow;
     SegmentRegister() : selector(0), shadow(SegmentDescriptor(0)) {}
-    SegmentRegister(int selector, SegmentDescriptor shadow) : selector(selector), shadow(shadow) {}
+    SegmentRegister(uint32_t selector, SegmentDescriptor shadow) : selector(selector), shadow(shadow) {}
 } SegmentRegister;
 
 typedef struct Interrupt {
@@ -342,8 +342,8 @@ class Free86 {
     // end of SSB
 
     // auxiliary variables for inter-method exchange
-    int operation; // bits 5..3 of opcode or modR/M byte
     uint32_t lax;  // linear address exchange register
+    uint32_t operation; // bits 5..3 of opcode or modR/M byte
     uint32_t modRM, reg, rM;   // mod field (modRM >> 6) inline
     uint32_t sib, base, index; // scale field (sib >> 6) inline
     uint32_t r, rm;  // register or register/ memory refered by modRM
@@ -400,6 +400,8 @@ class Free86 {
 
     void set_lower_byte(int reg, uint32_t byte);
     void set_lower_word(int reg, uint32_t word);
+    uint32_t sign_extend_byte(uint32_t byte);
+    uint32_t sign_extend_word(uint32_t word);
 
     void page_translation(bool writable, bool user);
     void page_translation(uint32_t address, bool writable, bool user);
@@ -407,12 +409,12 @@ class Free86 {
     void segment_translation();
     void moffs_to_linear(bool writable);
 
-    void set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
-    void set_segment_register(int sreg, int selector);
-    void set_segment_register_real__v86(int sreg, int selector);
-    void set_segment_register_protected(int sreg, int selector);
+    void set_segment_register(int sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags);
+    void set_segment_register(int sreg, uint32_t selector);
+    void set_segment_register_real__v86(int sreg, uint32_t selector);
+    void set_segment_register_protected(int sreg, uint32_t selector);
 
-    SegmentDescriptor ld_xdt_entry(int selector);
+    SegmentDescriptor ld_xdt_entry(uint32_t selector);
     uint64_t ld_tss_stack(int privilege_level); // seg:offset
 
     int aux_INC8(int data);
@@ -444,22 +446,22 @@ class Free86 {
     void aux_IMUL(int multiplicand, int multiplier);
     void multiply(int multiplicand, int multiplier);
 
-    int calculate8(int dst, int src);
-    int calculate16(int dst, int src);
-    int calculate(int dst, int src);
+    uint32_t calculate8(uint32_t dst, uint32_t src);
+    uint32_t calculate16(uint32_t dst, uint32_t src);
+    uint32_t calculate(uint32_t dst, uint32_t src);
 
-    int shift8(int src, int count);
-    int shift16(int src, int count);
-    int shift(uint32_t src, int count);
+    uint32_t shift8(uint32_t src, int count);
+    uint32_t shift16(uint32_t src, int count);
+    uint32_t shift(uint32_t src, int count);
 
-    void aux_LDTR(int selector);
-    void aux_LTR(int selector);
-    void aux_JMPF(int selector, uint32_t offset);
-    void aux_JMPF_real__v86_mode(int selector, uint32_t offset);
-    void aux_JMPF_protected_mode(int selector, uint32_t offset);
-    void aux_CALLF(bool o32, int selector, uint32_t offset, uint32_t return_address);
-    void aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, uint32_t return_address);
-    void aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, uint32_t return_address);
+    void aux_LDTR(uint32_t selector);
+    void aux_LTR(uint32_t selector);
+    void aux_JMPF(uint32_t selector, uint32_t offset);
+    void aux_JMPF_real__v86_mode(uint32_t selector, uint32_t offset);
+    void aux_JMPF_protected_mode(uint32_t selector, uint32_t offset);
+    void aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
     void aux_RETF(bool o32, int release_stack_items);
     void return_real__v86_mode(bool o32, bool is_iret, int release_stack_items);
     void return_protected_mode(bool o32, bool is_iret, int release_stack_items);
@@ -471,9 +473,9 @@ class Free86 {
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);
-    int ld_descriptor_fields(int selector, bool limit);
-    void aux_VERR_VERW(int selector, bool is_verw);
-    bool is_segment_accessible(int selector, bool writable);
+    int ld_descriptor_fields(uint32_t selector, bool limit);
+    void aux_VERR_VERW(uint32_t selector, bool is_verw);
+    bool is_segment_accessible(uint32_t selector, bool writable);
     void aux_ARPL();
     void aux_CPUID();
     void aux_AAM(int radix);
