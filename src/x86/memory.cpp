@@ -11,7 +11,7 @@ uint32_t Free86::ld8_readonly_cplX() {
 uint32_t Free86::ld16_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
     if ((tlb_hash | lax) & 1) {
-        int word = ld8_readonly_cplX();
+        uint32_t word = ld8_readonly_cplX();
         lax++;
         word |= ld8_readonly_cplX() << 8;
         lax--;
@@ -22,7 +22,7 @@ uint32_t Free86::ld16_readonly_cplX() {
 uint32_t Free86::ld_readonly_cplX() {
     tlb_hash = tlb_readonly_cplX[lax >> 12];
     if ((tlb_hash | lax) & 3) {
-        int dword = ld16_readonly_cplX();
+        uint32_t dword = ld16_readonly_cplX();
         lax += 2;
         dword |= ld16_readonly_cplX() << 16;
         lax -= 2;
@@ -58,7 +58,7 @@ uint32_t Free86::ld16_readonly_cpl3() {
     }
     tlb_hash = tlb_readonly[lax >> 12];
     if ((tlb_hash | lax) & 1) {
-        int word = ld8_readonly_cpl3();
+        uint32_t word = ld8_readonly_cpl3();
         lax++;
         word |= ld8_readonly_cpl3() << 8;
         lax--;
@@ -72,7 +72,7 @@ uint32_t Free86::ld_readonly_cpl3() {
     }
     tlb_hash = tlb_readonly[lax >> 12];
         if ((tlb_hash | lax) & 3) {
-        int dword = ld16_readonly_cpl3();
+        uint32_t dword = ld16_readonly_cpl3();
         lax += 2;
         dword |= ld16_readonly_cpl3() << 16;
         lax -= 2;
@@ -97,7 +97,7 @@ uint32_t Free86::ld16_writable_cpl3() {
     }
     tlb_hash = tlb_writable[lax >> 12];
     if ((tlb_hash | lax) & 1) {
-        int word = ld8_writable_cpl3();
+        uint32_t word = ld8_writable_cpl3();
         lax++;
         word |= ld8_writable_cpl3() << 8;
         lax--;
@@ -111,7 +111,7 @@ uint32_t Free86::ld_writable_cpl3() {
     }
     tlb_hash = tlb_writable[lax >> 12];
         if ((tlb_hash | lax) & 3) {
-        int dword = ld16_writable_cpl3();
+        uint32_t dword = ld16_writable_cpl3();
         lax += 2;
         dword |= ld16_writable_cpl3() << 16;
         lax -= 2;

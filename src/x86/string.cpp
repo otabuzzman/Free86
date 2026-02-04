@@ -208,7 +208,7 @@ void Free86::aux_LODSB() {
             return;
         }
         ua = ld8_readonly_cpl3();
-        regs[0] = (regs[0] & -256) | ua;
+        regs[0] = (regs[0] & 0xffffff00) | ua;
         regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
@@ -216,7 +216,7 @@ void Free86::aux_LODSB() {
         }
     } else {
         ua = ld8_readonly_cpl3();
-        regs[0] = (regs[0] & -256) | ua;
+        regs[0] = (regs[0] & 0xffffff00) | ua;
         regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 0)) & ipr_os_mask);
     }
 }
@@ -722,7 +722,7 @@ void Free86::aux_LODS16() {
             return;
         }
         ua = ld16_readonly_cpl3();
-        regs[0] = (regs[0] & -65536) | ua;
+        regs[0] = (regs[0] & 0xffff0000) | ua;
         regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
         regs[1] = ecx = (ecx & ~ipr_os_mask) | ((ecx - 1) & ipr_os_mask);
         if (ecx & ipr_os_mask) {
@@ -730,7 +730,7 @@ void Free86::aux_LODS16() {
         }
     } else {
         ua = ld16_readonly_cpl3();
-        regs[0] = (regs[0] & -65536) | ua;
+        regs[0] = (regs[0] & 0xffff0000) | ua;
         regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }

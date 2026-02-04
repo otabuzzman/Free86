@@ -848,7 +848,7 @@ void Free86::page_translation(uint32_t address, bool writable, bool user) {
     pde_address = (cr3 & 0xfffff000) + ((address >> 20) & 0xffc);
     pde = ld_direct(pde_address);
     if (pde & 0x00000001) { // page referenced by PDE is present
-        pte_address = (pde & -4096) + ((address >> 10) & 0xffc);
+        pte_address = (pde & 0xfffff000) + ((address >> 10) & 0xffc);
         pte = ld_direct(pte_address);
         if (pte & 0x00000001) { // page referenced by PTE is present
             pxe = pde & pte;
@@ -883,7 +883,7 @@ void Free86::page_translation(uint32_t address, bool writable, bool user) {
                 if (pxe & 0x00000004) {
                     user = true;
                 }
-                tlb_update(address & -4096, pte & -4096, writable, user);
+                tlb_update(address & 0xfffff000, pte & 0xfffff000, writable, user);
                 return;
             }
         }

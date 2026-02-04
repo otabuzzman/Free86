@@ -167,7 +167,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xa0: // MOV AL,
                 moffs_to_linear(false);
                 moffs = ld8_readonly_cpl3();
-                regs[0] = (regs[0] & -256) | moffs;
+                regs[0] = (regs[0] & 0xffffff00) | moffs;
                 goto FETCH_LOOP;
             case 0xa1: // MOV AX,
                 moffs_to_linear(false);
@@ -1340,7 +1340,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
                 z = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                ipr_os_mask = (ipr & 0x0080) ? 0xffff : -1;
+                ipr_os_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
                 x = (regs[1] - 1) & ipr_os_mask;
                 regs[1] = (regs[1] & ~ipr_os_mask) | x;
                 opcode &= 3;
@@ -1362,7 +1362,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0xe3: // JCXZ
                 x = (static_cast<int>(fetch_data8()) << 24) >> 24;
-                ipr_os_mask = (ipr & 0x0080) ? 0xffff : -1;
+                ipr_os_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
                 if ((regs[1] & ipr_os_mask) == 0) {
                     if (ipr & 0x0100) {
                         eip = (eip + far - far_start + x) & 0xffff;
