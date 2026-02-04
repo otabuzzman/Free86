@@ -23,7 +23,7 @@ class PC {
     PC(uint32_t memory_size);
     ~PC();
 
-    size_t load(std::string path, int offset = 0);
+    size_t load(std::string path, uint32_t offset = 0);
     void setup();
     void cycle();
 

@@ -23,7 +23,7 @@ class Test386 {
     ~Test386() {
         delete cpu;
     }
-    size_t load(std::string path, int offset) {
+    size_t load(std::string path, uint32_t offset) {
         FILE *f = fopen(path.c_str(), "rb");
         fseek(f, 0, SEEK_END);
         size_t size = static_cast<size_t>(ftell(f));
@@ -31,8 +31,8 @@ class Test386 {
         auto buffer = new uint8_t[size];
         auto _ = fread(buffer, size, 1, f);
 
-        printf("load %ld bytes at 0x%x\n", size, offset);
-        for (int i = 0; i < size; i++) {
+        printf("load %lu bytes at 0x%x\n", size, offset);
+        for (size_t i = 0; i < size; i++) {
             cpu->st8_direct(offset + i, buffer[i]);
         }
         fclose(f);
