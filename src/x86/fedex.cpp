@@ -4,7 +4,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
     int sreg, hL; // H (0x80) or L (0x00) byte selector
     if (halted) {
         if (get_irq() != 0 && (eflags & 0x00000200)) {
-            halted = 0;
+            halted = false;
         } else {
             return;
         }
@@ -1506,7 +1506,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if (cpl != 0) {
                     abort(13);
                 }
-                halted = 1;
+                halted = true;
                 goto OUTER_LOOP;
             case 0xa4: // MOVSB
                 aux_MOVSB();

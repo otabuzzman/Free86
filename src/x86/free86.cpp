@@ -38,7 +38,7 @@ void Free86::reset() {
     idt = {0, {0, 0x3ff, 0}};
     cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
     // emulator state variables
-    halted = 0;
+    halted = false;
 }
 [[noreturn]] void Free86::abort(int id, int error_code) {
     this->cycles += cycles_requested - cycles_remaining;
@@ -793,7 +793,7 @@ int Free86::modRM_bytes_number() {
 }
 void Free86::set_CR0(uint32_t bits) {
     // if changing flags 31, 16, or 0, must flush tlb
-    if ((bits & ((1 << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1 << 31) | (1 << 16) | (1 << 0)))) {
+    if ((bits & ((1u << 31) | (1 << 16) | (1 << 0))) != (cr0 & ((1u << 31) | (1 << 16) | (1 << 0)))) {
         tlb_flush_all();
     }
     cr0 = bits | (1 << 4); // keep bit 4 set to 1 (80387 present)
