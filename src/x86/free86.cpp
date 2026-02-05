@@ -1622,7 +1622,7 @@ void Free86::aux_MUL(uint32_t multiplicand, uint32_t multiplier) {
     osm = 23;
 }
 void Free86::aux_IMUL8(uint32_t multiplicand, uint32_t multiplier) {
-    int md, mr;
+    uint32_t md, mr;
     md = sign_extend_byte(multiplicand);
     mr = sign_extend_byte(multiplier);
     ua = md * mr;
@@ -1631,7 +1631,7 @@ void Free86::aux_IMUL8(uint32_t multiplicand, uint32_t multiplier) {
     osm = 21;
 }
 void Free86::aux_IMUL16(uint32_t multiplicand, uint32_t multiplier) {
-    int md, mr;
+    uint32_t md, mr;
     md = sign_extend_word(multiplicand);
     mr = sign_extend_word(multiplier);
     ua = md * mr;
@@ -3224,12 +3224,12 @@ void Free86::aux_BOUND16() {
         abort(6);
     }
     segment_translation();
-    x = (static_cast<int32_t>(ld16_readonly_cpl3()) << 16) >> 16;
+    ua = sign_extend_word(ld16_readonly_cpl3());
     lax = lax + 2;
-    y = (static_cast<int32_t>(ld16_readonly_cpl3()) << 16) >> 16;
+    ub = sign_extend_word(ld16_readonly_cpl3());
     reg = (modRM >> 3) & 7;
-    r = (static_cast<int32_t>(regs[reg]) << 16) >> 16;
-    if (r < x || r > y) {
+    r = sign_extend_word(regs[reg]);
+    if (r < ua || r > ub) {
         abort(5);
     }
 }
@@ -3239,12 +3239,12 @@ void Free86::aux_BOUND() {
         abort(6);
     }
     segment_translation();
-    x = ld_readonly_cpl3();
+    ua = ld_readonly_cpl3();
     lax = lax + 4;
-    y = ld_readonly_cpl3();
+    ub = ld_readonly_cpl3();
     reg = (modRM >> 3) & 7;
     r = regs[reg];
-    if (r < x || r > y) {
+    if (r < ua || r > ub) {
         abort(5);
     }
 }
