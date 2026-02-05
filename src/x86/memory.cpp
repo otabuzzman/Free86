@@ -203,13 +203,13 @@ uint32_t Free86::ld8_direct(uint32_t address) {
     return memory[address];
 }
 uint32_t Free86::ld16_direct(uint32_t address) {
-    return memory[address] | (memory[address + 1] << 8);
+    return ld8_direct(address) | ld8_direct(address + 1) << 8;
 }
 uint32_t Free86::ld_direct(uint32_t address) {
-    return memory[address] | (static_cast<uint32_t>(memory[address + 1]) << 8) | (static_cast<uint32_t>(memory[address + 2]) << 16) | (static_cast<uint32_t>(memory[address + 3]) << 24);
+    return ld16_direct(address) | ld16_direct(address + 2) << 16;
 }
 uint64_t Free86::ld64_direct(uint32_t address) {
-    return (ld_direct(address) & 0xffffffff) | (static_cast<uint64_t>(ld_direct(address + 4)) << 32);
+    return (ld_direct(address) & 0xffffffff) | static_cast<uint64_t>(ld_direct(address + 4)) << 32;
 }
 void Free86::st8_direct(uint32_t address, uint32_t byte) {
     memory[address] = byte;

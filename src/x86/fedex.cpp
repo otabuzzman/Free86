@@ -905,10 +905,10 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0x98: // CBW
-                regs[0] = (static_cast<int32_t>(regs[0]) << 16) >> 16;
+                regs[0] = sign_extend_word(regs[0]);
                 goto FETCH_LOOP;
             case 0x99: // CWD
-                regs[2] = static_cast<int32_t>(regs[0]) >> 31;
+                regs[2] = sign_shift_right(regs[0], 31);
                 goto FETCH_LOOP;
             case 0x50: // PUSH A
             case 0x51: // PUSH C
@@ -1815,7 +1815,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld16_readonly_cpl3();
                     }
-                    regs[reg] = (static_cast<int32_t>(rm) << 16) >> 16;
+                    regs[reg] = sign_extend_word(rm);
                     goto FETCH_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     if (!is_protected() || (eflags & 0x00020000)) {
@@ -2660,12 +2660,12 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld16_readonly_cpl3();
                     }
                     r = regs[(modRM >> 3) & 7];
-                    osm_dst = (static_cast<int32_t>(rm & r) << 16) >> 16;
+                    osm_dst = sign_extend_word(rm & r);
                     osm = 13;
                     goto FETCH_LOOP;
                 case 0x1a9: // TEST
                     imm = fetch_data16();
-                    osm_dst = (static_cast<int32_t>(regs[0] & imm) << 16) >> 16;
+                    osm_dst = sign_extend_word(regs[0] & imm);
                     osm = 13;
                     goto FETCH_LOOP;
                 case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
@@ -2680,7 +2680,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             rm = ld16_readonly_cpl3();
                         }
                         imm = fetch_data16();
-                        osm_dst = (static_cast<int32_t>(rm & imm) << 16) >> 16;
+                        osm_dst = sign_extend_word(rm & imm);
                         osm = 13;
                         break;
                     case 2: // NOT

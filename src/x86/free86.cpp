@@ -1665,7 +1665,7 @@ void Free86::aux_IMUL(uint32_t multiplicand, uint32_t multiplier) {
         }
     }
     osm_dst = ua;
-    osm_src = ub - (static_cast<int32_t>(ua) >> 31);
+    osm_src = ub - sign_shift_right(ua, 31);
     osm = 23;
 }
 void Free86::multiply(uint32_t multiplicand, uint32_t multiplier) {
@@ -2127,8 +2127,8 @@ uint32_t Free86::shift(uint32_t src, uint32_t count) {
     case 7:
         c = count & 0x1f;
         if (c) {
-            osm_src = static_cast<uint32_t>(static_cast<int32_t>(res) >> (c - 1));
-            osm_dst = res = static_cast<uint32_t>(static_cast<int32_t>(res) >> c);
+            osm_src = sign_shift_right(res, c - 1);
+            osm_dst = res = sign_shift_right(res, c);
             osm = 20;
         }
         break;
