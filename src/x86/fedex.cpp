@@ -804,8 +804,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_DIV(regs[2], regs[0], rm);
-                    regs[0] = x;
-                    regs[2] = y;
+                    regs[0] = ua;
+                    regs[2] = ub;
                     break;
                 case 7: // IDIV AL/X
                     if ((modRM >> 6) == 3) {
@@ -815,8 +815,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_IDIV(regs[2], regs[0], rm);
-                    regs[0] = x;
-                    regs[2] = y;
+                    regs[0] = ua;
+                    regs[2] = ub;
                     break;
                 default:
                     abort(6);
@@ -905,10 +905,10 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0x98: // CBW
-                regs[0] = (static_cast<int>(regs[0]) << 16) >> 16;
+                regs[0] = (static_cast<int32_t>(regs[0]) << 16) >> 16;
                 goto FETCH_LOOP;
             case 0x99: // CWD
-                regs[2] = static_cast<int>(regs[0]) >> 31;
+                regs[2] = static_cast<int32_t>(regs[0]) >> 31;
                 goto FETCH_LOOP;
             case 0x50: // PUSH A
             case 0x51: // PUSH C
@@ -1373,7 +1373,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0xc2: // RET
-                x = (static_cast<int>(fetch_data16()) << 16) >> 16;
+                x = (static_cast<int32_t>(fetch_data16()) << 16) >> 16;
                 m = ld_stack();
                 regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 4 + x) & SS_mask);
                 eip = m, far = far_start = 0;
@@ -1414,7 +1414,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0xca: // RET
-                x = (static_cast<int>(fetch_data16()) << 16) >> 16;
+                x = (static_cast<int32_t>(fetch_data16()) << 16) >> 16;
                 aux_RETF((((ipr >> 8) & 1) ^ 1), x);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
@@ -1815,7 +1815,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld16_readonly_cpl3();
                     }
-                    regs[reg] = (static_cast<int>(rm) << 16) >> 16;
+                    regs[reg] = (static_cast<int32_t>(rm) << 16) >> 16;
                     goto FETCH_LOOP;
                 case 0x00: // G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
                     if (!is_protected() || (eflags & 0x00020000)) {
@@ -2660,12 +2660,12 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld16_readonly_cpl3();
                     }
                     r = regs[(modRM >> 3) & 7];
-                    osm_dst = (static_cast<int>(rm & r) << 16) >> 16;
+                    osm_dst = (static_cast<int32_t>(rm & r) << 16) >> 16;
                     osm = 13;
                     goto FETCH_LOOP;
                 case 0x1a9: // TEST
                     imm = fetch_data16();
-                    osm_dst = (static_cast<int>(regs[0] & imm) << 16) >> 16;
+                    osm_dst = (static_cast<int32_t>(regs[0] & imm) << 16) >> 16;
                     osm = 13;
                     goto FETCH_LOOP;
                 case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
@@ -2680,7 +2680,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             rm = ld16_readonly_cpl3();
                         }
                         imm = fetch_data16();
-                        osm_dst = (static_cast<int>(rm & imm) << 16) >> 16;
+                        osm_dst = (static_cast<int32_t>(rm & imm) << 16) >> 16;
                         osm = 13;
                         break;
                     case 2: // NOT
@@ -2795,7 +2795,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     set_lower_word(0, sign_extend_byte(regs[0] & 0xff));
                     goto FETCH_LOOP;
                 case 0x199: // CWD
-                    set_lower_word(2, (static_cast<int>(regs[0]) << 16) >> 31);
+                    set_lower_word(2, (static_cast<int32_t>(regs[0]) << 16) >> 31);
                     goto FETCH_LOOP;
                 case 0x190: // NOP
                     goto FETCH_LOOP;

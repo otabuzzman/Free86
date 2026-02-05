@@ -835,10 +835,10 @@ void Free86::set_lower_word(uint32_t reg, uint32_t word) {
     regs[reg] = (regs[reg] & 0xffff0000) | (word & 0xffff);
 }
 uint32_t Free86::sign_extend_byte(uint32_t byte) {
-    return static_cast<uint32_t>(static_cast<int>(byte << 24) >> 24);
+    return static_cast<uint32_t>(static_cast<int32_t>(byte << 24) >> 24);
 }
 uint32_t Free86::sign_extend_word(uint32_t word) {
-    return static_cast<uint32_t>(static_cast<int>(word << 16) >> 16);
+    return static_cast<uint32_t>(static_cast<int32_t>(word << 16) >> 16);
 }
 void Free86::page_translation(bool writable, bool user) {
     page_translation(lax, writable, user);
@@ -1371,11 +1371,11 @@ uint32_t Free86::aux_SHLD(uint32_t dst, uint32_t src, uint32_t count) {
     }
     return res;
 }
-void Free86::aux_BT16(int base, int offset) {
+void Free86::aux_BT16(uint32_t base, uint32_t offset) {
     osm_src = base >> (offset & 0xf);
     osm = 19;
 }
-void Free86::aux_BT(int base, int offset) {
+void Free86::aux_BT(uint32_t base, uint32_t offset) {
     osm_src = base >> (offset & 0x1f);
     osm = 20;
 }
@@ -1487,8 +1487,8 @@ uint32_t Free86::aux_BSR(uint32_t dst, uint32_t src) {
     osm = 14;
     return res;
 }
-void Free86::aux_DIV8(int divisor) {
-    int d, a, q, s;
+void Free86::aux_DIV8(uint32_t divisor) {
+    uint32_t d, a, q, s;
     d = divisor & 0xff;
     a = regs[0] & 0xffff;
     if ((a >> 8) >= d) {
@@ -1498,8 +1498,8 @@ void Free86::aux_DIV8(int divisor) {
     s = a % d;
     set_lower_word(0, (q & 0xff) | (s << 8));
 }
-void Free86::aux_DIV16(int divisor) {
-    int a, q, s;
+void Free86::aux_DIV16(uint32_t divisor) {
+    uint32_t a, q, s;
     uint32_t d = divisor & 0xffff;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     uint32_t au = a;
@@ -1513,8 +1513,7 @@ void Free86::aux_DIV16(int divisor) {
 }
 void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
-    uint32_t dd_upper, dd_lower;
-    int dd_sign;
+    uint32_t dd_upper, dd_lower, dd_sign;
     dd_upper = dividend_upper;
     dd_lower = dividend_lower;
     if (dd_upper >= divisor) {
@@ -1522,8 +1521,8 @@ void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t 
     }
     if (dd_upper <= 0x200000) {
         a = dd_upper * 4294967296 + dd_lower;
-        y = a % divisor;
-        x = a / divisor;
+        ub = a % divisor;
+        ua = a / divisor;
     } else {
         for (int i = 0; i < 32; i++) {
             dd_sign = dd_upper >> 31;
@@ -1535,14 +1534,14 @@ void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t 
                 dd_lower = dd_lower << 1;
             }
         }
-        y = dd_upper;
-        x = dd_lower;
+        ub = dd_upper;
+        ua = dd_lower;
     }
 }
-void Free86::aux_IDIV8(int divisor) {
+void Free86::aux_IDIV8(uint32_t divisor) {
     int d, a, q, s;
-    d = (divisor << 24) >> 24;
-    a = (static_cast<int>(regs[0]) << 16) >> 16;
+    d = (static_cast<int32_t>(divisor) << 24) >> 24;
+    a = (static_cast<int32_t>(regs[0]) << 16) >> 16;
     if (d == 0) {
         abort(0);
     }
@@ -1553,9 +1552,9 @@ void Free86::aux_IDIV8(int divisor) {
     s = a % d;
     set_lower_word(0, (q & 0xff) | (s << 8));
 }
-void Free86::aux_IDIV16(int divisor) {
+void Free86::aux_IDIV16(uint32_t divisor) {
     int d, a, q, s;
-    d = (divisor << 16) >> 16;
+    d = (static_cast<int32_t>(divisor) << 16) >> 16;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     if (d == 0) {
         abort(0);
@@ -1568,22 +1567,22 @@ void Free86::aux_IDIV16(int divisor) {
     set_lower_word(0, q);
     set_lower_word(2, s);
 }
-void Free86::aux_IDIV(int dividend_upper, int dividend_lower, int divisor) {
-    int dd_upper, dd_lower, dd_sign, dr_sign;
+void Free86::aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
+    uint32_t dd_upper, dd_lower, dd_sign, dr_sign;
     dd_upper = dividend_upper;
     dd_lower = dividend_lower;
-    if (dd_upper < 0) {
+    if (dd_upper & 0x80000000) {
         dd_sign = 1;
         dd_upper = ~dd_upper;
-        dd_lower = -dd_lower;
+        dd_lower = ~dd_lower + 1;
         if (dd_lower == 0) {
             dd_upper = dd_upper + 1;
         }
     } else {
         dd_sign = 0;
     }
-    if (divisor < 0) {
-        divisor = -divisor;
+    if (divisor & 0x80000000) {
+        divisor = ~divisor + 1;
         dr_sign = 1;
     } else {
         dr_sign = 0;
@@ -1591,17 +1590,17 @@ void Free86::aux_IDIV(int dividend_upper, int dividend_lower, int divisor) {
     aux_DIV(dd_upper, dd_lower, divisor);
     dr_sign ^= dd_sign;
     if (dr_sign) {
-        if (x > 0x80000000) {
+        if (ua > 0x80000000) {
             abort(0);
         }
-        x = -x;
+        ua = ~ua + 1;
     } else {
-        if (x >= 0x80000000) {
+        if (ua >= 0x80000000) {
             abort(0);
         }
     }
     if (dd_sign) {
-        y = -y;
+        ub = ~ub + 1;
     }
 }
 void Free86::aux_MUL8(int multiplicand, int multiplier) {
@@ -3228,11 +3227,11 @@ void Free86::aux_BOUND16() {
         abort(6);
     }
     segment_translation();
-    x = (static_cast<int>(ld16_readonly_cpl3()) << 16) >> 16;
+    x = (static_cast<int32_t>(ld16_readonly_cpl3()) << 16) >> 16;
     lax = lax + 2;
-    y = (static_cast<int>(ld16_readonly_cpl3()) << 16) >> 16;
+    y = (static_cast<int32_t>(ld16_readonly_cpl3()) << 16) >> 16;
     reg = (modRM >> 3) & 7;
-    r = (static_cast<int>(regs[reg]) << 16) >> 16;
+    r = (static_cast<int32_t>(regs[reg]) << 16) >> 16;
     if (r < x || r > y) {
         abort(5);
     }
