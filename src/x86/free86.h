@@ -421,17 +421,17 @@ class Free86 {
     uint32_t aux_INC16(uint32_t word);
     uint32_t aux_DEC8(uint32_t byte);
     uint32_t aux_DEC16(uint32_t word);
-    uint32_t aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, int count);
-    uint32_t aux_SHRD(uint32_t dst, uint32_t src, int count);
-    uint32_t aux_SHLD(uint32_t dst, uint32_t src, int count);
+    uint32_t aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, uint32_t count);
+    uint32_t aux_SHRD(uint32_t dst, uint32_t src, uint32_t count);
+    uint32_t aux_SHLD(uint32_t dst, uint32_t src, uint32_t count);
     void aux_BT16(int base, int offset);
     void aux_BT(int base, int offset);
-    int aux_BTS16_BTR16_BTC16(int base, int offset);
-    int aux_BTS_BTR_BTC(int base, int offset);
-    int aux_BSF16(int dst, int src);
-    int aux_BSF(int dst, int src);
-    int aux_BSR16(int dst, int src);
-    int aux_BSR(int dst, int src);
+    uint32_t aux_BTS16_BTR16_BTC16(uint32_t base, uint32_t offset);
+    uint32_t aux_BTS_BTR_BTC(uint32_t base, uint32_t offset);
+    uint32_t aux_BSF16(uint32_t dst, uint32_t src);
+    uint32_t aux_BSF(uint32_t dst, uint32_t src);
+    uint32_t aux_BSR16(uint32_t dst, uint32_t src);
+    uint32_t aux_BSR(uint32_t dst, uint32_t src);
     void aux_DIV8(int divisor);
     void aux_DIV16(int divisor);
     void aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
@@ -450,9 +450,9 @@ class Free86 {
     uint32_t calculate16(uint32_t dst, uint32_t src);
     uint32_t calculate(uint32_t dst, uint32_t src);
 
-    uint32_t shift8(uint32_t src, int count);
-    uint32_t shift16(uint32_t src, int count);
-    uint32_t shift(uint32_t src, int count);
+    uint32_t shift8(uint32_t src, uint32_t count);
+    uint32_t shift16(uint32_t src, uint32_t count);
+    uint32_t shift(uint32_t src, uint32_t count);
 
     void aux_LDTR(uint32_t selector);
     void aux_LTR(uint32_t selector);

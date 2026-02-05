@@ -1317,7 +1317,7 @@ uint32_t Free86::aux_DEC16(uint32_t word) {
     osm = 29;
     return osm_dst;
 }
-uint32_t Free86::aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, int count) {
+uint32_t Free86::aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, uint32_t count) {
     uint32_t c, s, res;
     res = dst;
     c = count & 0x1f;
@@ -1345,7 +1345,7 @@ uint32_t Free86::aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, int count) {
     }
     return res;
 }
-uint32_t Free86::aux_SHRD(uint32_t dst, uint32_t src, int count) {
+uint32_t Free86::aux_SHRD(uint32_t dst, uint32_t src, uint32_t count) {
     uint32_t c, res;
     res = dst;
     c = count & 0x1f;
@@ -1358,7 +1358,7 @@ uint32_t Free86::aux_SHRD(uint32_t dst, uint32_t src, int count) {
     }
     return res;
 }
-uint32_t Free86::aux_SHLD(uint32_t dst, uint32_t src, int count) {
+uint32_t Free86::aux_SHLD(uint32_t dst, uint32_t src, uint32_t count) {
     uint32_t c, res;
     res = dst;
     c = count & 0x1f;
@@ -1379,48 +1379,48 @@ void Free86::aux_BT(int base, int offset) {
     osm_src = base >> (offset & 0x1f);
     osm = 20;
 }
-int Free86::aux_BTS16_BTR16_BTC16(int base, int offset) {
-    int o, res;
+uint32_t Free86::aux_BTS16_BTR16_BTC16(uint32_t base, uint32_t offset) {
+    uint32_t o, res;
     o = offset & 0xf;
     osm_src = base >> o;
-    x = 1 << o;
+    ua = 1 << o;
     switch (operation) {
     case 1: // BTS
-        res = base | x;
+        res = base | ua;
         break;
     case 2: // BTR
-        res = base & ~x;
+        res = base & ~ua;
         break;
     case 3: // BTC
     default:
-        res = base ^ x;
+        res = base ^ ua;
         break;
     }
     osm = 19;
     return res;
 }
-int Free86::aux_BTS_BTR_BTC(int base, int offset) {
-    int o, res;
+uint32_t Free86::aux_BTS_BTR_BTC(uint32_t base, uint32_t offset) {
+    uint32_t o, res;
     o = offset & 0x1f;
     osm_src = base >> o;
-    x = 1 << o;
+    ua = 1 << o;
     switch (operation) {
     case 1: // BTS
-        res = base | x;
+        res = base | ua;
         break;
     case 2: // BTR
-        res = base & ~x;
+        res = base & ~ua;
         break;
     case 3: // BTC
     default:
-        res = base ^ x;
+        res = base ^ ua;
         break;
     }
     osm = 20;
     return res;
 }
-int Free86::aux_BSF16(int dst, int src) {
-    int s, res;
+uint32_t Free86::aux_BSF16(uint32_t dst, uint32_t src) {
+    uint32_t s, res;
     res = dst;
     s = src & 0xffff;
     if (s) {
@@ -1436,15 +1436,15 @@ int Free86::aux_BSF16(int dst, int src) {
     osm = 14;
     return res;
 }
-int Free86::aux_BSF(int dst, int src) {
-    int s, res;
+uint32_t Free86::aux_BSF(uint32_t dst, uint32_t src) {
+    uint32_t res;
     res = dst;
-    s = src;
-    if (s) {
+    sa = static_cast<int32_t>(src);
+    if (sa) {
         res = 0;
-        while ((s & 1) == 0) {
+        while ((sa & 1) == 0) {
             res++;
-            s >>= 1;
+            sa >>= 1;
         }
         osm_dst = 1;
     } else {
@@ -1453,8 +1453,8 @@ int Free86::aux_BSF(int dst, int src) {
     osm = 14;
     return res;
 }
-int Free86::aux_BSR16(int dst, int src) {
-    int s, res;
+uint32_t Free86::aux_BSR16(uint32_t dst, uint32_t src) {
+    uint32_t s, res;
     res = dst;
     s = src & 0xffff;
     if (s) {
@@ -1470,15 +1470,15 @@ int Free86::aux_BSR16(int dst, int src) {
     osm = 14;
     return res;
 }
-int Free86::aux_BSR(int dst, int src) {
-    int s, res;
+uint32_t Free86::aux_BSR(uint32_t dst, uint32_t src) {
+    uint32_t res;
     res = dst;
-    s = src;
-    if (s) {
+    sa = static_cast<int32_t>(src);
+    if (sa) {
         res = 31;
-        while (s >= 0) {
+        while ((sa & 0x80000000) == 0) {
             res--;
-            s <<= 1;
+            sa <<= 1;
         }
         osm_dst = 1;
     } else {
@@ -1856,7 +1856,7 @@ uint32_t Free86::calculate(uint32_t dst, uint32_t src) {
     }
     return res;
 }
-uint32_t Free86::shift8(uint32_t src, int count) {
+uint32_t Free86::shift8(uint32_t src, uint32_t count) {
     uint32_t c, cf, s, res;
     s = res = src & 0xff;
     switch (operation & 7) {
@@ -1949,7 +1949,7 @@ uint32_t Free86::shift8(uint32_t src, int count) {
     }
     return res;
 }
-uint32_t Free86::shift16(uint32_t src, int count) {
+uint32_t Free86::shift16(uint32_t src, uint32_t count) {
     uint32_t c, cf, s, res;
     s = res = src & 0xffff;
     switch (operation & 7) {
@@ -2042,7 +2042,7 @@ uint32_t Free86::shift16(uint32_t src, int count) {
     }
     return res;
 }
-uint32_t Free86::shift(uint32_t src, int count) {
+uint32_t Free86::shift(uint32_t src, uint32_t count) {
     uint32_t s, res;
     uint32_t c, cf;
     s = res = src;

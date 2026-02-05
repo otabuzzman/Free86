@@ -2076,8 +2076,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             imm = fetch_data8();
                             rm = ld_writable_cpl3();
-                            x = aux_BTS_BTR_BTC(rm, imm);
-                            st_writable_cpl3(x);
+                            ua = aux_BTS_BTR_BTC(rm, imm);
+                            st_writable_cpl3(ua);
                         }
                         break;
                     default:
@@ -2109,8 +2109,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         lax = lax + ((r >> 5) << 2);
                         rm = ld_writable_cpl3();
-                        x = aux_BTS_BTR_BTC(rm, r);
-                        st_writable_cpl3(x);
+                        ua = aux_BTS_BTR_BTC(rm, r);
+                        st_writable_cpl3(ua);
                     }
                     goto FETCH_LOOP;
                 case 0xbc: // BSF
@@ -3365,8 +3365,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                                 segment_translation();
                                 imm = fetch_data8();
                                 rm = ld16_writable_cpl3();
-                                x = aux_BTS16_BTR16_BTC16(rm, imm);
-                                st16_writable_cpl3(x);
+                                ua = aux_BTS16_BTR16_BTC16(rm, imm);
+                                st16_writable_cpl3(ua);
                             }
                             break;
                         default:
@@ -3398,8 +3398,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             lax = lax + (((r & 0xffff) >> 4) << 1);
                             rm = ld16_writable_cpl3();
-                            x = aux_BTS16_BTR16_BTC16(rm, r);
-                            st16_writable_cpl3(x);
+                            ua = aux_BTS16_BTR16_BTC16(rm, r);
+                            st16_writable_cpl3(ua);
                         }
                         goto FETCH_LOOP;
                     case 0x1bc: // BSF
@@ -3414,11 +3414,11 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         }
                         r = regs[reg];
                         if (opcode & 1) {
-                            x = aux_BSR16(r, rm);
+                            ua = aux_BSR16(r, rm);
                         } else {
-                            x = aux_BSF16(r, rm);
+                            ua = aux_BSF16(r, rm);
                         }
-                        set_lower_word(reg, x);
+                        set_lower_word(reg, ua);
                         goto FETCH_LOOP;
                     case 0x1b1: // CMPXCHG (40486)
                         operation = 5;
