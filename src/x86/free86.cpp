@@ -800,7 +800,7 @@ void Free86::set_CR0(uint32_t bits) {
 }
 void Free86::set_CR3(uint32_t bits) {
     // if in paging mode must flush tlb
-    if (cr0 & (1 << 31)) {
+    if (cr0 & (1u << 31)) {
         tlb_flush_all();
     }
     cr3 = bits;
@@ -809,10 +809,10 @@ bool Free86::is_real__v86() {
     return !is_protected();
 }
 bool Free86::is_protected() {
-    return cr0 & (1 << 0);
+    return cr0 & (1u << 0);
 }
 bool Free86::is_paging() {
-    return (cr0 & (1 << 31)) && is_protected();
+    return (cr0 & (1u << 31)) && is_protected();
 }
 void Free86::set_cpl(int level) {
     cpl = level;
