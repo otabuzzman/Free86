@@ -824,14 +824,14 @@ void Free86::set_cpl(int level) {
         tlb_writable = tlb_writable_cplX;
     }
 }
-void Free86::set_lower_byte(int reg, uint32_t byte) {
+void Free86::set_lower_byte(uint32_t reg, uint32_t byte) {
     if (reg & 4) { // ESP, EBP, ESI, EDI: set AH, CH, DH, BH
         regs[reg & 3] = (regs[reg & 3] & 0xffff00ff) | ((byte & 0xff) << 8);
     } else { // set AL, CL, DL, BL
         regs[reg & 3] = (regs[reg & 3] & 0xffffff00) | (byte & 0xff);
     }
 }
-void Free86::set_lower_word(int reg, uint32_t word) {
+void Free86::set_lower_word(uint32_t reg, uint32_t word) {
     regs[reg] = (regs[reg] & 0xffff0000) | (word & 0xffff);
 }
 uint32_t Free86::sign_extend_byte(uint32_t byte) {

@@ -398,8 +398,8 @@ class Free86 {
     bool is_paging(); // PG && PE set
     void set_cpl(int level);
 
-    void set_lower_byte(int reg, uint32_t byte);
-    void set_lower_word(int reg, uint32_t word);
+    void set_lower_byte(uint32_t reg, uint32_t byte);
+    void set_lower_word(uint32_t reg, uint32_t word);
     uint32_t sign_extend_byte(uint32_t byte);
     uint32_t sign_extend_word(uint32_t word);
 
