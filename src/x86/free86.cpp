@@ -65,12 +65,12 @@ void Free86::fetch_opcode() {
     far = far_start = tlb_lookup(eip_linear, 0);
     opcode = fetch_data8();
     int page_offset = eip_linear & 0xfff;
-    x = instruction_length(opcode);
-    if ((page_offset + x) > 4096) { // instruction extends page boundary
+    int n = instruction_length(opcode);
+    if ((page_offset + n) > 4096) { // instruction extends page boundary
         far = far_start = memory_size; // point FAR to buffer on top of memory
-        for (y = 0; y < x; y++) {      // copy instruction bytewise to buffer
-            lax = eip_linear + y;      // paged memory functions expect address in LAX
-            st8_direct(far + y, ld8_readonly_cpl3()); // copy [LAX] to physical [FAR]
+        for (ua = 0; ua < n; ua++) {      // copy instruction bytewise to buffer
+            lax = eip_linear + ua;      // paged memory functions expect address in LAX
+            st8_direct(far + ua, ld8_readonly_cpl3()); // copy [LAX] to physical [FAR]
         }
         far++; // adjust FAR for upcomming fetches from buffer
     }
@@ -840,6 +840,9 @@ uint32_t Free86::sign_extend_byte(uint32_t byte) {
 uint32_t Free86::sign_extend_word(uint32_t word) {
     return static_cast<uint32_t>(static_cast<int32_t>(word << 16) >> 16);
 }
+uint32_t Free86::sign_shift_right(uint32_t dword, int count) {
+    return static_cast<uint32_t>(static_cast<int32_t>(dword) >> count);
+}
 void Free86::page_translation(bool writable, bool user) {
     page_translation(lax, writable, user);
 }
@@ -1324,22 +1327,22 @@ uint32_t Free86::aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, uint32_t count) {
     if (c) {
         if (operation == 0) { // SHLD
             s = src & 0xffff;
-            x = s | (res << 16);
-            osm_src = x >> (32 - c);
-            x = x << c;
+            ua = s | (res << 16);
+            osm_src = sign_shift_right(ua, 32 - c);
+            ua = ua << c;
             if (c > 16) {
-                x |= s << (c - 16);
+                ua |= s << (c - 16);
             }
-            osm_dst = res = x >> 16;
+            osm_dst = res = sign_shift_right(ua, 16);
             osm = 19;
         } else { // SHRD
-            x = (res & 0xffff) | (src << 16);
-            osm_src = x >> (c - 1);
-            x = x >> c;
+            ua = (res & 0xffff) | (src << 16);
+            osm_src = sign_shift_right(ua, c - 1);
+            ua = ua >> c;
             if (c > 16) {
-                x |= src << (32 - c);
+                ua |= src << (32 - c);
             }
-            osm_dst = res = sign_extend_word(x);
+            osm_dst = res = sign_extend_word(ua);
             osm = 19;
         }
     }
@@ -1438,13 +1441,14 @@ uint32_t Free86::aux_BSF16(uint32_t dst, uint32_t src) {
 }
 uint32_t Free86::aux_BSF(uint32_t dst, uint32_t src) {
     uint32_t res;
+    uint64_t s;
     res = dst;
-    sa = static_cast<int32_t>(src);
-    if (sa) {
+    s = src & 0xffffffff;
+    if (s) {
         res = 0;
-        while ((sa & 1) == 0) {
+        while ((s & 1) == 0) {
             res++;
-            sa >>= 1;
+            s >>= 1;
         }
         osm_dst = 1;
     } else {
@@ -1473,12 +1477,12 @@ uint32_t Free86::aux_BSR16(uint32_t dst, uint32_t src) {
 uint32_t Free86::aux_BSR(uint32_t dst, uint32_t src) {
     uint32_t res;
     res = dst;
-    sa = static_cast<int32_t>(src);
-    if (sa) {
+    ua = src;
+    if (ua) {
         res = 31;
-        while ((sa & 0x80000000) == 0) {
+        while ((ua & 0x80000000) == 0) {
             res--;
-            sa <<= 1;
+            ua <<= 1;
         }
         osm_dst = 1;
     } else {
@@ -2459,14 +2463,14 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
         eip = g_off, far = far_start = 0;
     }
 }
-void Free86::aux_RETF(bool o32, int release_stack_items) {
+void Free86::aux_RETF(bool o32, uint32_t release_stack_items) {
     if (!is_protected() || (eflags & 0x00020000)) {
         return_real__v86_mode(o32, 0, release_stack_items);
     } else {
         return_protected_mode(o32, 0, release_stack_items);
     }
 }
-void Free86::return_real__v86_mode(bool o32, bool is_iret, int release_stack_items) {
+void Free86::return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items) {
     int cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
@@ -2515,7 +2519,7 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, int release_stack_ite
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::return_protected_mode(bool o32, bool is_iret, int release_stack_items) {
+void Free86::return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items) {
     int esp, stack_esp, stack_eip, stack_eflags = 0;
     int es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
@@ -2953,16 +2957,16 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
         segment_translation();
         selector = ld16_readonly_cpl3();
     }
-    x = ld_descriptor_fields(selector, is_lsl);
+    ua = ld_descriptor_fields(selector, is_lsl);
     osm_src = compile_eflags();
-    if (x == -1) {
+    if (ua == -1) {
         osm_src &= ~0x0040;
     } else {
         osm_src |= 0x0040;
         if (o32) {
-            regs[reg] = x;
+            regs[reg] = ua;
         } else {
-            set_lower_word(reg, x);
+            set_lower_word(reg, ua);
         }
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
@@ -3077,11 +3081,11 @@ void Free86::aux_ARPL() {
     r = regs[(modRM >> 3) & 7];
     osm_src = compile_eflags();
     if ((rm & 3) < (r & 3)) {
-        x = (rm & ~3u) | (r & 3);
+        ua = (rm & ~3u) | (r & 3);
         if ((modRM >> 6) == 3) {
-            set_lower_word(rM, x);
+            set_lower_word(rM, ua);
         } else {
-            st16_writable_cpl3(x);
+            st16_writable_cpl3(ua);
         }
         osm_src |= 0x0040;
     } else {

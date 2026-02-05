@@ -349,7 +349,6 @@ class Free86 {
     uint32_t r, rm;  // register or register/ memory refered by modRM
     uint32_t m, m16; // 32/ 16 bit memory operands from memory
     uint32_t imm, imm16, moffs; // immediate/ offset operands
-    int x, y, z; // signed helper
     int sa, sb, sc; // signed helper
     uint32_t ua, ub, uc; // unsigned helper
 
@@ -402,6 +401,7 @@ class Free86 {
     void set_lower_word(uint32_t reg, uint32_t word);
     uint32_t sign_extend_byte(uint32_t byte);
     uint32_t sign_extend_word(uint32_t word);
+    uint32_t sign_shift_right(uint32_t dword, int count);
 
     void page_translation(bool writable, bool user);
     void page_translation(uint32_t address, bool writable, bool user);
@@ -462,9 +462,9 @@ class Free86 {
     void aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
     void aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
     void aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
-    void aux_RETF(bool o32, int release_stack_items);
-    void return_real__v86_mode(bool o32, bool is_iret, int release_stack_items);
-    void return_protected_mode(bool o32, bool is_iret, int release_stack_items);
+    void aux_RETF(bool o32, uint32_t release_stack_items);
+    void return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items);
+    void return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items);
     void zero_segment_register(int sreg, int privilege_level);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
