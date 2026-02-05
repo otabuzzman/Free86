@@ -333,13 +333,13 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
                     osm_src = r;
-                    osm_dst = regs[rM] = regs[rM] + osm_src;
+                    osm_dst = regs[rM] = regs[rM] + r;
                     osm = 2;
                 } else {
                     segment_translation();
                     rm = ld_writable_cpl3();
                     osm_src = r;
-                    osm_dst = rm = rm + osm_src;
+                    osm_dst = rm = rm + r;
                     osm = 2;
                     st_writable_cpl3(rm);
                 }
@@ -370,13 +370,13 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if ((modRM >> 6) == 3) {
                     rM = modRM & 7;
                     osm_src = r;
-                    osm_dst = regs[rM] - osm_src;
+                    osm_dst = regs[rM] - r;
                     osm = 8;
                 } else {
                     segment_translation();
                     rm = ld_readonly_cpl3();
                     osm_src = r;
-                    osm_dst = rm - osm_src;
+                    osm_dst = rm - r;
                     osm = 8;
                 }
                 goto FETCH_LOOP;
@@ -410,7 +410,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     rm = ld_readonly_cpl3();
                 }
                 osm_src = rm;
-                osm_dst = regs[reg] = regs[reg] + osm_src;
+                osm_dst = regs[reg] = regs[reg] + rm;
                 osm = 2;
                 goto FETCH_LOOP;
             case 0x0b: // OR
@@ -441,7 +441,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     rm = ld_readonly_cpl3();
                 }
                 osm_src = rm;
-                osm_dst = regs[reg] - osm_src;
+                osm_dst = regs[reg] - rm;
                 osm = 8;
                 goto FETCH_LOOP;
             case 0x04: // ADD
@@ -459,7 +459,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0x05: // ADD
                 imm = fetch_data();
                 osm_src = imm;
-                osm_dst = regs[0] = regs[0] + osm_src;
+                osm_dst = regs[0] = regs[0] + imm;
                 osm = 2;
                 goto FETCH_LOOP;
             case 0x0d: // OR
@@ -479,7 +479,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0x3d: // CMP
                 imm = fetch_data();
                 osm_src = imm;
-                osm_dst = regs[0] - osm_src;
+                osm_dst = regs[0] - imm;
                 osm = 8;
                 goto FETCH_LOOP;
             case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
@@ -515,7 +515,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     imm = fetch_data();
                     osm_src = imm;
-                    osm_dst = rm - osm_src;
+                    osm_dst = rm - imm;
                     osm = 8;
                 } else {
                     if ((modRM >> 6) == 3) {
@@ -543,7 +543,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     ua = sign_extend_byte(fetch_data8());
                     osm_src = ua;
-                    osm_dst = rm - osm_src;
+                    osm_dst = rm - ua;
                     osm = 8;
                 } else {
                     if ((modRM >> 6) == 3) {
