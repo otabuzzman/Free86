@@ -478,8 +478,8 @@ class Free86 {
     bool is_segment_accessible(uint32_t selector, bool writable);
     void aux_ARPL();
     void aux_CPUID();
-    void aux_AAM(int radix);
-    void aux_AAD(int radix);
+    void aux_AAM(uint32_t radix);
+    void aux_AAD(uint32_t radix);
     void aux_AAA();
     void aux_AAS();
     void aux_DAA();

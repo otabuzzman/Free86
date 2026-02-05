@@ -3107,8 +3107,8 @@ void Free86::aux_CPUID() {
         break;
     }
 }
-void Free86::aux_AAM(int radix) {
-    int al, ah;
+void Free86::aux_AAM(uint32_t radix) {
+    uint32_t al, ah;
     if (radix == 0) {
         abort(0);
     }
@@ -3119,8 +3119,8 @@ void Free86::aux_AAM(int radix) {
     osm_dst = (al << 24) >> 24;
     osm = 12;
 }
-void Free86::aux_AAD(int radix) {
-    int al, ah;
+void Free86::aux_AAD(uint32_t radix) {
+    uint32_t al, ah;
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
     al = (ah * radix + al) & 0xff;
