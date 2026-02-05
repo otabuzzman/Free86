@@ -1603,98 +1603,95 @@ void Free86::aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t
         ub = ~ub + 1;
     }
 }
-void Free86::aux_MUL8(int multiplicand, int multiplier) {
-    int md, mr;
-    md = multiplicand & 0xff;
-    mr = multiplier & 0xff;
-    x = (md & 0xff) * (mr & 0xff);
-    osm_src = x >> 8;
-    osm_dst = (x << 24) >> 24;
+void Free86::aux_MUL8(uint32_t multiplicand, uint32_t multiplier) {
+    ua = (multiplicand & 0xff) * (multiplier & 0xff);
+    osm_src = ua >> 8;
+    osm_dst = sign_extend_byte(ua);
     osm = 21;
 }
-void Free86::aux_MUL16(int multiplicand, int multiplier) {
-    x = (multiplicand & 0xffff) * (multiplier & 0xffff);
-    osm_src = x >> 16;
-    osm_dst = (x << 16) >> 16;
+void Free86::aux_MUL16(uint32_t multiplicand, uint32_t multiplier) {
+    ua = (multiplicand & 0xffff) * (multiplier & 0xffff);
+    osm_src = ua >> 16;
+    osm_dst = sign_extend_word(ua);
     osm = 22;
 }
-void Free86::aux_MUL(int multiplicand, int multiplier) {
+void Free86::aux_MUL(uint32_t multiplicand, uint32_t multiplier) {
     multiply(multiplicand, multiplier);
-    osm_dst = x;
-    osm_src = y;
+    osm_dst = ua;
+    osm_src = ub;
     osm = 23;
 }
-void Free86::aux_IMUL8(int multiplicand, int multiplier) {
+void Free86::aux_IMUL8(uint32_t multiplicand, uint32_t multiplier) {
     int md, mr;
-    md = (multiplicand << 24) >> 24;
-    mr = (multiplier << 24) >> 24;
-    x = md * mr;
-    osm_dst = (x << 24) >> 24;
-    osm_src = x != osm_dst;
+    md = sign_extend_byte(multiplicand);
+    mr = sign_extend_byte(multiplier);
+    ua = md * mr;
+    osm_dst = sign_extend_byte(ua);
+    osm_src = ua != osm_dst;
     osm = 21;
 }
-void Free86::aux_IMUL16(int multiplicand, int multiplier) {
+void Free86::aux_IMUL16(uint32_t multiplicand, uint32_t multiplier) {
     int md, mr;
-    md = (multiplicand << 16) >> 16;
-    mr = (multiplier << 16) >> 16;
-    x = md * mr;
-    osm_dst = (x << 16) >> 16;
-    osm_src = x != osm_dst;
+    md = sign_extend_word(multiplicand);
+    mr = sign_extend_word(multiplier);
+    ua = md * mr;
+    osm_dst = sign_extend_word(ua);
+    osm_src = ua != osm_dst;
     osm = 22;
 }
-void Free86::aux_IMUL(int multiplicand, int multiplier) {
-    int md, mr, s;
+void Free86::aux_IMUL(uint32_t multiplicand, uint32_t multiplier) {
+    uint32_t md, mr, s;
     md = multiplicand;
     mr = multiplier;
     s = 0;
-    if (md < 0) {
-        md = -md;
+    if (md & 0x80000000) {
+        md = ~md + 1;
         s = 1;
     }
-    if (mr < 0) {
-        mr = -mr;
+    if (mr & 0x80000000) {
+        mr = ~mr + 1;
         s ^= 1;
     }
     multiply(md, mr);
     if (s) {
-        y = ~y;
-        x = -x;
-        if (x == 0) {
-            y = y + 1;
+        ub = ~ub;
+        ua = ~ua + 1;
+        if (ua == 0) {
+            ub = ub + 1;
         }
     }
-    osm_dst = x;
-    osm_src = y - (x >> 31);
+    osm_dst = ua;
+    osm_src = ub - (static_cast<int32_t>(ua) >> 31);
     osm = 23;
 }
-void Free86::multiply(int multiplicand, int multiplier) {
+void Free86::multiply(uint32_t multiplicand, uint32_t multiplier) {
     uint32_t md_lower, md_upper, mr_lower, mr_upper, z;
-    uint64_t x = (uint64_t) multiplicand * (uint32_t) multiplier;
+    uint64_t x = (uint64_t) multiplicand * multiplier;
     if (x <= 0xffffffff) {
-        y = 0;
+        ub = 0;
     } else {
         md_lower = multiplicand & 0xffff;
-        md_upper = (uint32_t) multiplicand >> 16;
+        md_upper = multiplicand >> 16;
         mr_lower = multiplier & 0xffff;
-        mr_upper = (uint32_t) multiplier >> 16;
+        mr_upper = multiplier >> 16;
         x = md_lower * mr_lower;
-        y = md_upper * mr_upper;
-        z = md_lower * mr_upper;
-        x += (z & 0xffff) << 16;
-        y += z >> 16;
+        ub = md_upper * mr_upper;
+        uc = md_lower * mr_upper;
+        x += (uc & 0xffff) << 16;
+        ub += uc >> 16;
         if (x >= 4294967296) {
             x -= 4294967296;
-            y++;
+            ub++;
         }
-        z = md_upper * mr_lower;
-        x += (z & 0xffff) << 16;
-        y += z >> 16;
+        uc = md_upper * mr_lower;
+        x += (uc & 0xffff) << 16;
+        ub += uc >> 16;
         if (x >= 4294967296) {
             x -= 4294967296;
-            y++;
+            ub++;
         }
     }
-    this->x = x;
+    ua = static_cast<uint32_t>(x & 0xffffffff);
 }
 uint32_t Free86::calculate8(uint32_t dst, uint32_t src) {
     uint32_t cf, res;

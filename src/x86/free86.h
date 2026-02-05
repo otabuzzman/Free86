@@ -438,13 +438,13 @@ class Free86 {
     void aux_IDIV8(uint32_t divisor);
     void aux_IDIV16(uint32_t divisor);
     void aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
-    void aux_MUL8(int multiplicand, int multiplier);
-    void aux_MUL16(int multiplicand, int multiplier);
-    void aux_MUL(int multiplicand, int multiplier);
-    void aux_IMUL8(int multiplicand, int multiplier);
-    void aux_IMUL16(int multiplicand, int multiplier);
-    void aux_IMUL(int multiplicand, int multiplier);
-    void multiply(int multiplicand, int multiplier);
+    void aux_MUL8(uint32_t multiplicand, uint32_t multiplier);
+    void aux_MUL16(uint32_t multiplicand, uint32_t multiplier);
+    void aux_MUL(uint32_t multiplicand, uint32_t multiplier);
+    void aux_IMUL8(uint32_t multiplicand, uint32_t multiplier);
+    void aux_IMUL16(uint32_t multiplicand, uint32_t multiplier);
+    void aux_IMUL(uint32_t multiplicand, uint32_t multiplier);
+    void multiply(uint32_t multiplicand, uint32_t multiplier);
 
     uint32_t calculate8(uint32_t dst, uint32_t src);
     uint32_t calculate16(uint32_t dst, uint32_t src);

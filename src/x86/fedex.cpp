@@ -602,7 +602,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 imm = fetch_data();
                 aux_IMUL(rm, imm);
-                regs[reg] = x;
+                regs[reg] = ua;
                 goto FETCH_LOOP;
             case 0x6b: // IMUL
                 modRM = fetch_data8();
@@ -615,7 +615,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 ub = sign_extend_byte(fetch_data8());
                 aux_IMUL(rm, ub);
-                regs[reg] = x;
+                regs[reg] = ua;
                 goto FETCH_LOOP;
             case 0x84: // TEST
                 modRM = fetch_data8();
@@ -700,7 +700,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld8_readonly_cpl3();
                     }
                     aux_MUL8(regs[0], rm);
-                    set_lower_word(0, x);
+                    set_lower_word(0, ua);
                     break;
                 case 5: // IMUL AL/X
                     if ((modRM >> 6) == 3) {
@@ -711,7 +711,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld8_readonly_cpl3();
                     }
                     aux_IMUL8(regs[0], rm);
-                    set_lower_word(0, x);
+                    set_lower_word(0, ua);
                     break;
                 case 6: // DIV AL/X
                     if ((modRM >> 6) == 3) {
@@ -782,8 +782,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_MUL(regs[0], rm);
-                    regs[0] = x;
-                    regs[2] = y;
+                    regs[0] = ua;
+                    regs[2] = ub;
                     break;
                 case 5: // IMUL AL/X
                     if ((modRM >> 6) == 3) {
@@ -793,8 +793,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_IMUL(regs[0], rm);
-                    regs[0] = x;
-                    regs[2] = y;
+                    regs[0] = ua;
+                    regs[2] = ub;
                     break;
                 case 6: // DIV AL/X
                     if ((modRM >> 6) == 3) {
@@ -2139,7 +2139,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         rm = ld_readonly_cpl3();
                     }
                     aux_IMUL(regs[reg], rm);
-                    regs[reg] = x;
+                    regs[reg] = ua;
                     goto FETCH_LOOP;
                 case 0x31: // RDTSC (80486)
                     if ((cr4 & (1 << 2)) && cpl != 0) {
@@ -2636,7 +2636,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     ub = sign_extend_byte(fetch_data8());
                     aux_IMUL16(rm, ub);
-                    set_lower_word(reg, x);
+                    set_lower_word(reg, ua);
                     goto FETCH_LOOP;
                 case 0x169: // IMUL
                     modRM = fetch_data8();
@@ -2649,7 +2649,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     }
                     imm = fetch_data16();
                     aux_IMUL16(rm, imm);
-                    set_lower_word(reg, x);
+                    set_lower_word(reg, ua);
                     goto FETCH_LOOP;
                 case 0x185: // TEST
                     modRM = fetch_data8();
@@ -2714,8 +2714,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             rm = ld16_readonly_cpl3();
                         }
                         aux_MUL16(regs[0], rm);
-                        set_lower_word(0, x);
-                        set_lower_word(2, x >> 16);
+                        set_lower_word(0, ua);
+                        set_lower_word(2, ua >> 16);
                         break;
                     case 5: // IMUL AL/X
                         if ((modRM >> 6) == 3) {
@@ -2725,8 +2725,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             rm = ld16_readonly_cpl3();
                         }
                         aux_IMUL16(regs[0], rm);
-                        set_lower_word(0, x);
-                        set_lower_word(2, x >> 16);
+                        set_lower_word(0, ua);
+                        set_lower_word(2, ua >> 16);
                         break;
                     case 6: // DIV AL/X
                         if ((modRM >> 6) == 3) {
@@ -3272,7 +3272,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             rm = ld16_readonly_cpl3();
                         }
                         aux_IMUL16(regs[reg], rm);
-                        set_lower_word(reg, x);
+                        set_lower_word(reg, ua);
                         goto FETCH_LOOP;
                     case 0x1c1: // XADD (80486)
                         operation = 0;
