@@ -2004,8 +2004,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         imm = fetch_data8();
                         rm = ld_writable_cpl3();
-                        x = aux_SHLD(rm, r, imm);
-                        st_writable_cpl3(x);
+                        ua = aux_SHLD(rm, r, imm);
+                        st_writable_cpl3(ua);
                     }
                     goto FETCH_LOOP;
                 case 0xa5: // SHLD
@@ -2017,8 +2017,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     } else {
                         segment_translation();
                         rm = ld_writable_cpl3();
-                        x = aux_SHLD(rm, r, regs[1]);
-                        st_writable_cpl3(x);
+                        ua = aux_SHLD(rm, r, regs[1]);
+                        st_writable_cpl3(ua);
                     }
                     goto FETCH_LOOP;
                 case 0xac: // SHRD
@@ -2032,8 +2032,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         imm = fetch_data8();
                         rm = ld_writable_cpl3();
-                        x = aux_SHRD(rm, r, imm);
-                        st_writable_cpl3(x);
+                        ua = aux_SHRD(rm, r, imm);
+                        st_writable_cpl3(ua);
                     }
                     goto FETCH_LOOP;
                 case 0xad: // SHRD
@@ -2045,8 +2045,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     } else {
                         segment_translation();
                         rm = ld_writable_cpl3();
-                        x = aux_SHRD(rm, r, regs[1]);
-                        st_writable_cpl3(x);
+                        ua = aux_SHRD(rm, r, regs[1]);
+                        st_writable_cpl3(ua);
                     }
                     goto FETCH_LOOP;
                 case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
@@ -3319,8 +3319,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             imm = fetch_data8();
                             rm = ld16_writable_cpl3();
-                            x = aux_SHRD16_SHLD16(rm, r, imm);
-                            st16_writable_cpl3(x);
+                            ua = aux_SHRD16_SHLD16(rm, r, imm);
+                            st16_writable_cpl3(ua);
                         }
                         goto FETCH_LOOP;
                     case 0x1a5: // SHLD
@@ -3334,8 +3334,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         } else {
                             segment_translation();
                             rm = ld16_writable_cpl3();
-                            x = aux_SHRD16_SHLD16(rm, r, regs[1]);
-                            st16_writable_cpl3(x);
+                            ua = aux_SHRD16_SHLD16(rm, r, regs[1]);
+                            st16_writable_cpl3(ua);
                         }
                         goto FETCH_LOOP;
                     case 0x1ba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)

@@ -421,9 +421,9 @@ class Free86 {
     uint32_t aux_INC16(uint32_t word);
     uint32_t aux_DEC8(uint32_t byte);
     uint32_t aux_DEC16(uint32_t word);
-    int aux_SHRD16_SHLD16(int dst, int src, int count);
-    int aux_SHRD(int dst, int src, int count);
-    int aux_SHLD(int dst, int src, int count);
+    uint32_t aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, int count);
+    uint32_t aux_SHRD(uint32_t dst, uint32_t src, int count);
+    uint32_t aux_SHLD(uint32_t dst, uint32_t src, int count);
     void aux_BT16(int base, int offset);
     void aux_BT(int base, int offset);
     int aux_BTS16_BTR16_BTC16(int base, int offset);

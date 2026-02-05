@@ -1317,8 +1317,8 @@ uint32_t Free86::aux_DEC16(uint32_t word) {
     osm = 29;
     return osm_dst;
 }
-int Free86::aux_SHRD16_SHLD16(int dst, int src, int count) {
-    int c, s, res;
+uint32_t Free86::aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, int count) {
+    uint32_t c, s, res;
     res = dst;
     c = count & 0x1f;
     if (c) {
@@ -1339,34 +1339,34 @@ int Free86::aux_SHRD16_SHLD16(int dst, int src, int count) {
             if (c > 16) {
                 x |= src << (32 - c);
             }
-            osm_dst = res = (x << 16) >> 16;
+            osm_dst = res = sign_extend_word(x);
             osm = 19;
         }
     }
     return res;
 }
-int Free86::aux_SHRD(int dst, int src, int count) {
-    int c, res;
+uint32_t Free86::aux_SHRD(uint32_t dst, uint32_t src, int count) {
+    uint32_t c, res;
     res = dst;
     c = count & 0x1f;
     if (c) {
         osm_src = res >> (c - 1);
-        uint32_t lval = (uint32_t) res >> c;
-        uint32_t rval = (uint32_t) src << (32 - c);
-        osm_dst = res = lval | rval;
+        ua = res >> c;
+        ub = src << (32 - c);
+        osm_dst = res = ua | ub;
         osm = 20;
     }
     return res;
 }
-int Free86::aux_SHLD(int dst, int src, int count) {
-    int c, res;
+uint32_t Free86::aux_SHLD(uint32_t dst, uint32_t src, int count) {
+    uint32_t c, res;
     res = dst;
     c = count & 0x1f;
     if (c) {
         osm_src = res << (c - 1);
-        uint32_t lval = res << c;
-        uint32_t rval = (uint32_t) src >> (32 - c);
-        osm_dst = res = lval | rval;
+        ua = res << c;
+        ub = src >> (32 - c);
+        osm_dst = res = ua | ub;
         osm = 17;
     }
     return res;
