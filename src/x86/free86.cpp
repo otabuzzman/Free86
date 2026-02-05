@@ -1281,39 +1281,39 @@ uint64_t Free86::ld_tss_stack(int privilege_level) {
     res |= (static_cast<uint64_t>(ld16_readonly_cplX()) & 0xffff) << 32; // privileged SS
     return res;
 }
-int Free86::aux_INC8(int data) {
+uint32_t Free86::aux_INC8(uint32_t byte) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = ((data + 1) << 24) >> 24;
+    osm_dst = sign_extend_byte(byte + 1);
     osm = 25;
     return osm_dst;
 }
-int Free86::aux_INC16(int data) {
+uint32_t Free86::aux_INC16(uint32_t word) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = ((data + 1) << 16) >> 16;
+    osm_dst = sign_extend_word(word + 1);
     osm = 26;
     return osm_dst;
 }
-int Free86::aux_DEC8(int data) {
+uint32_t Free86::aux_DEC8(uint32_t byte) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = ((data - 1) << 24) >> 24;
+    osm_dst = sign_extend_byte(byte - 1);
     osm = 28;
     return osm_dst;
 }
-int Free86::aux_DEC16(int data) {
+uint32_t Free86::aux_DEC16(uint32_t word) {
     if (osm < 25) {
         ocm_preserved = osm;
         ocm_dst_preserved = osm_dst;
     }
-    osm_dst = ((data - 1) << 16) >> 16;
+    osm_dst = sign_extend_word(word - 1);
     osm = 29;
     return osm_dst;
 }

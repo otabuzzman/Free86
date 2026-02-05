@@ -417,10 +417,10 @@ class Free86 {
     SegmentDescriptor ld_xdt_entry(uint32_t selector);
     uint64_t ld_tss_stack(int privilege_level); // seg:offset
 
-    int aux_INC8(int data);
-    int aux_INC16(int data);
-    int aux_DEC8(int data);
-    int aux_DEC16(int data);
+    uint32_t aux_INC8(uint32_t byte);
+    uint32_t aux_INC16(uint32_t word);
+    uint32_t aux_DEC8(uint32_t byte);
+    uint32_t aux_DEC16(uint32_t word);
     int aux_SHRD16_SHLD16(int dst, int src, int count);
     int aux_SHRD(int dst, int src, int count);
     int aux_SHLD(int dst, int src, int count);

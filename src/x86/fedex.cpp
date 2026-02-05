@@ -1066,8 +1066,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     } else {
                         segment_translation();
                         rm = ld8_writable_cpl3();
-                        x = aux_INC8(rm);
-                        st8_writable_cpl3(x);
+                        ua = aux_INC8(rm);
+                        st8_writable_cpl3(ua);
                     }
                     break;
                 case 1: // DEC
@@ -1077,8 +1077,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     } else {
                         segment_translation();
                         rm = ld8_writable_cpl3();
-                        x = aux_DEC8(rm);
-                        st8_writable_cpl3(x);
+                        ua = aux_DEC8(rm);
+                        st8_writable_cpl3(ua);
                     }
                     break;
                 default:
@@ -2887,8 +2887,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         } else {
                             segment_translation();
                             rm = ld16_writable_cpl3();
-                            x = aux_INC16(rm);
-                            st16_writable_cpl3(x);
+                            ua = aux_INC16(rm);
+                            st16_writable_cpl3(ua);
                         }
                         break;
                     case 1: // DEC
@@ -2898,8 +2898,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         } else {
                             segment_translation();
                             rm = ld16_writable_cpl3();
-                            x = aux_DEC16(rm);
-                            st16_writable_cpl3(x);
+                            ua = aux_DEC16(rm);
+                            st16_writable_cpl3(ua);
                         }
                         break;
                     case 2: // CALL
