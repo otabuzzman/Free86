@@ -290,8 +290,8 @@ class Free86 {
    - : does not affect flag.
  */
     int osm;
-    int osm_src;
-    int osm_dst;
+    uint32_t osm_src;
+    uint32_t osm_dst;
 /*
    `osm_preserved'/ `osm_dst_preserved' preserve OMS/ destination of instruction
    before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
@@ -302,7 +302,7 @@ class Free86 {
    remains valid.
  */
     int ocm_preserved;
-    int ocm_dst_preserved;
+    uint32_t ocm_dst_preserved;
 
 /*
    Instruction prefix register

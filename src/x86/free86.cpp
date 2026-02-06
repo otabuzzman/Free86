@@ -1670,7 +1670,7 @@ void Free86::aux_IMUL(uint32_t multiplicand, uint32_t multiplier) {
 }
 void Free86::multiply(uint32_t multiplicand, uint32_t multiplier) {
     uint32_t md_lower, md_upper, mr_lower, mr_upper, z;
-    uint64_t x = (uint64_t) multiplicand * multiplier;
+    uint64_t x = static_cast<uint64_t>(multiplicand) * multiplier;
     if (x <= 0xffffffff) {
         ub = 0;
     } else {

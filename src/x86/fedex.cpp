@@ -1273,7 +1273,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0x78: // JS
-                if (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) {
+                if (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000 ? 1 : 0)) {
                     ua = sign_extend_byte(fetch_data8());
                     far = far + ua;
                 } else {
@@ -1281,7 +1281,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 }
                 goto FETCH_LOOP;
             case 0x79: // JNS
-                if (!(osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0))) {
+                if (!(osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000 ? 1 : 0))) {
                     ua = sign_extend_byte(fetch_data8());
                     far = far + ua;
                 } else {
