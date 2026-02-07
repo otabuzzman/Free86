@@ -1261,7 +1261,7 @@ SegmentDescriptor Free86::ld_xdt_entry(uint32_t selector) {
     lax = xdt.shadow.base + dti;
     return SegmentDescriptor(ld64_readonly_cplX());
 }
-uint64_t Free86::ld_tss_stack(int level) {
+uint64_t Free86::ld_tss_stack(uint32_t level) {
     uint64_t res;
     uint32_t offset;
     int type, gate32;

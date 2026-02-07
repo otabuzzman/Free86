@@ -414,7 +414,7 @@ class Free86 {
     void set_segment_register_protected(uint32_t sreg, uint32_t selector);
 
     SegmentDescriptor ld_xdt_entry(uint32_t selector);
-    uint64_t ld_tss_stack(int privilege_level); // seg:offset
+    uint64_t ld_tss_stack(uint32_t level); // seg:offset
 
     uint32_t aux_INC8(uint32_t byte);
     uint32_t aux_INC16(uint32_t word);
