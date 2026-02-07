@@ -817,7 +817,7 @@ bool Free86::is_protected() {
 bool Free86::is_paging() {
     return (cr0 & (1u << 31)) && is_protected();
 }
-void Free86::set_cpl(int level) {
+void Free86::set_cpl(uint32_t level) {
     cpl = level;
     if (cpl == 3) {
         tlb_readonly = tlb_readonly_cpl3;
@@ -2520,10 +2520,10 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stac
     }
 }
 void Free86::return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items) {
-    uint32_t esp, stack_esp, stack_eip, stack_eflags = 0;
+    uint32_t cpl, esp, stack_esp, stack_eip, stack_eflags = 0;
     uint32_t es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
-    int cpl = this->cpl;
+    cpl = this->cpl;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
     SS_mask = segs[2].shadow.segment_size_mask();
@@ -2685,7 +2685,7 @@ void Free86::return_protected_mode(bool o32, bool is_iret, uint32_t release_stac
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::zero_segment_register(uint32_t sreg, int level) {
+void Free86::zero_segment_register(uint32_t sreg, uint32_t level) {
     uint32_t flags;
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS

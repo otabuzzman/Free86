@@ -71,7 +71,7 @@ class Free86 {
     uint32_t cr3;
     uint32_t cr4; // 80486
 
-    int cpl; // current privilege level register
+    uint32_t cpl; // current privilege level register
 
     bool halted;
 
@@ -130,9 +130,9 @@ class Free86 {
 
     int df; // values 1/ -1 reflect EFLAGS.DF false/ true (string instructions)
 
-    int dpl;  // descriptor privilege level
-    int rpl;  // requested privilege level
-    int iopl; // IO privilege level
+    uint32_t dpl;  // descriptor privilege level
+    uint32_t rpl;  // requested privilege level
+    uint32_t iopl; // IO privilege level
 
     uint64_t cycles_requested;
     uint64_t cycles_remaining;
@@ -352,7 +352,7 @@ class Free86 {
     uint32_t ua, ub, uc; // unsigned helper
 
     // clang-format off
-    const std::vector<int> parity_LUT = {
+    const std::vector<uint32_t> parity_LUT = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -370,11 +370,11 @@ class Free86 {
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
     };
-    const std::vector<int> shift8_LUT  = {
+    const std::vector<uint32_t> shift8_LUT  = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6,
         7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4
     };
-    const std::vector<int> shift16_LUT = {
+    const std::vector<uint32_t> shift16_LUT = {
          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
         16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
     };
@@ -394,7 +394,7 @@ class Free86 {
     bool is_real__v86();
     bool is_protected();
     bool is_paging(); // PG && PE set
-    void set_cpl(int level);
+    void set_cpl(uint32_t level);
 
     void set_lower_byte(uint32_t reg, uint32_t byte);
     void set_lower_word(uint32_t reg, uint32_t word);
@@ -464,7 +464,7 @@ class Free86 {
     void aux_RETF(bool o32, uint32_t release_stack_items);
     void return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items);
     void return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items);
-    void zero_segment_register(uint32_t sreg, int level);
+    void zero_segment_register(uint32_t sreg, uint32_t level);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
     void raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address);
