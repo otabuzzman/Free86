@@ -1,11 +1,14 @@
 #include "free86.h"
 
 Free86::Free86(uint32_t memory_size) {
+    if (memory_size % 4) {
+        throw "memory size not a multiple of 4";
+    }
     this->memory_size = memory_size;
     // size plus maximum possible number of bytes per instruction,
-    // rounded up to the nearest multiple of 32 bits, as buffer
+    // rounded up to the nearest multiple of 4 bytes, as buffer
     // for instructions that span page boundaries.
-    memory = static_cast<uint8_t*>(calloc(1, memory_size + ((15 + 3) & ~3u)));
+    memory = static_cast<uint8_t*>(calloc(1, memory_size + 16));
     tlb_readonly_cplX = new uint32_t[tlb_size];
     tlb_writable_cplX = new uint32_t[tlb_size];
     tlb_readonly_cpl3 = new uint32_t[tlb_size];
@@ -1123,7 +1126,8 @@ void Free86::segment_translation() {
 }
 void Free86::moffs_to_linear(bool writable) {
     uint64_t la;
-    int sreg, stride, type_notok, limit_notok;
+    uint32_t sreg, stride;
+    int type_notok, limit_notok;
     if (ipr & 0x0080) {
         la = fetch_data16();
         stride = 2; // 16 bit mode
@@ -1165,18 +1169,18 @@ void Free86::moffs_to_linear(bool writable) {
     }
     lax = static_cast<uint32_t>(la & 0xffffffff);
 }
-void Free86::set_segment_register(int sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags) {
+void Free86::set_segment_register(uint32_t sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags) {
     segs[sreg] = {selector, {base, limit, flags}};
     update_SSB(); // emulator state variables
 }
-void Free86::set_segment_register(int sreg, uint32_t selector) {
+void Free86::set_segment_register(uint32_t sreg, uint32_t selector) {
     if (is_protected()) {
         set_segment_register_protected(sreg, selector);
     } else { // real or v86 mode
         set_segment_register_real__v86(sreg, selector);
     }
 }
-void Free86::set_segment_register_real__v86(int sreg, uint32_t selector) {
+void Free86::set_segment_register_real__v86(uint32_t sreg, uint32_t selector) {
     if (eflags & 0x00020000) { // v86 mode
         set_segment_register(sreg, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
     } else { // real mode
@@ -1185,7 +1189,7 @@ void Free86::set_segment_register_real__v86(int sreg, uint32_t selector) {
         segs[sreg].shadow.limit = 0xffff;
     }
 }
-void Free86::set_segment_register_protected(int sreg, uint32_t selector) {
+void Free86::set_segment_register_protected(uint32_t sreg, uint32_t selector) {
     SegmentRegister xdt;
     SegmentDescriptor xsd{0};
     uint32_t dti;
@@ -1257,7 +1261,7 @@ SegmentDescriptor Free86::ld_xdt_entry(uint32_t selector) {
     lax = xdt.shadow.base + dti;
     return SegmentDescriptor(ld64_readonly_cplX());
 }
-uint64_t Free86::ld_tss_stack(int privilege_level) {
+uint64_t Free86::ld_tss_stack(int level) {
     uint64_t res;
     uint32_t offset;
     int type, gate32;
@@ -1269,7 +1273,7 @@ uint64_t Free86::ld_tss_stack(int privilege_level) {
         abort(13, tr.selector & 0xfffc);
     }
     gate32 = type >> 3; // 0/ 1 == 16/ 32 bit gates
-    offset = (privilege_level * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
+    offset = (level * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
     if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
         abort(10, tr.selector & 0xfffc);
     }
@@ -1440,8 +1444,8 @@ uint32_t Free86::aux_BSF16(uint32_t dst, uint32_t src) {
     return res;
 }
 uint32_t Free86::aux_BSF(uint32_t dst, uint32_t src) {
-    uint32_t res;
     uint64_t s;
+    uint32_t res;
     res = dst;
     s = src & 0xffffffff;
     if (s) {
@@ -1503,8 +1507,8 @@ void Free86::aux_DIV8(uint32_t divisor) {
     set_lower_word(0, (q & 0xff) | (s << 8));
 }
 void Free86::aux_DIV16(uint32_t divisor) {
-    uint32_t a, q, s;
-    uint32_t d = divisor & 0xffff;
+    uint32_t d, a, q, s;
+    d = divisor & 0xffff;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     uint32_t au = a;
     if ((au >> 16) >= d) {
@@ -1517,29 +1521,29 @@ void Free86::aux_DIV16(uint32_t divisor) {
 }
 void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
     uint64_t a;
-    uint32_t dd_upper, dd_lower, dd_sign;
-    dd_upper = dividend_upper;
-    dd_lower = dividend_lower;
-    if (dd_upper >= divisor) {
+    uint32_t d6du, d6dl, d6ds;
+    d6du = dividend_upper;
+    d6dl = dividend_lower;
+    if (d6du >= divisor) {
         abort(0);
     }
-    if (dd_upper <= 0x200000) {
-        a = dd_upper * 4294967296 + dd_lower;
+    if (d6du <= 0x200000) {
+        a = d6du * 4294967296 + d6dl;
         ub = a % divisor;
         ua = a / divisor;
     } else {
         for (int i = 0; i < 32; i++) {
-            dd_sign = dd_upper >> 31;
-            dd_upper = (dd_upper << 1) | (dd_lower >> 31);
-            if (dd_sign || (dd_upper >= divisor)) {
-                dd_upper = dd_upper - divisor;
-                dd_lower = (dd_lower << 1) | 1;
+            d6ds = d6du >> 31;
+            d6du = (d6du << 1) | (d6dl >> 31);
+            if (d6ds || (d6du >= divisor)) {
+                d6du = d6du - divisor;
+                d6dl = (d6dl << 1) | 1;
             } else {
-                dd_lower = dd_lower << 1;
+                d6dl = d6dl << 1;
             }
         }
-        ub = dd_upper;
-        ua = dd_lower;
+        ub = d6du;
+        ua = d6dl;
     }
 }
 void Free86::aux_IDIV8(uint32_t divisor) {
@@ -1572,28 +1576,28 @@ void Free86::aux_IDIV16(uint32_t divisor) {
     set_lower_word(2, s);
 }
 void Free86::aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
-    uint32_t dd_upper, dd_lower, dd_sign, dr_sign;
-    dd_upper = dividend_upper;
-    dd_lower = dividend_lower;
-    if (dd_upper & 0x80000000) {
-        dd_sign = 1;
-        dd_upper = ~dd_upper;
-        dd_lower = ~dd_lower + 1;
-        if (dd_lower == 0) {
-            dd_upper = dd_upper + 1;
+    uint32_t d6du, d6dl, d6ds, d5rs;
+    d6du = dividend_upper;
+    d6dl = dividend_lower;
+    if (d6du & 0x80000000) {
+        d6ds = 1;
+        d6du = ~d6du;
+        d6dl = ~d6dl + 1;
+        if (d6dl == 0) {
+            d6du = d6du + 1;
         }
     } else {
-        dd_sign = 0;
+        d6ds = 0;
     }
     if (divisor & 0x80000000) {
         divisor = ~divisor + 1;
-        dr_sign = 1;
+        d5rs = 1;
     } else {
-        dr_sign = 0;
+        d5rs = 0;
     }
-    aux_DIV(dd_upper, dd_lower, divisor);
-    dr_sign ^= dd_sign;
-    if (dr_sign) {
+    aux_DIV(d6du, d6dl, divisor);
+    d5rs ^= d6ds;
+    if (d5rs) {
         if (ua > 0x80000000) {
             abort(0);
         }
@@ -1603,7 +1607,7 @@ void Free86::aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t
             abort(0);
         }
     }
-    if (dd_sign) {
+    if (d6ds) {
         ub = ~ub + 1;
     }
 }
@@ -1626,37 +1630,37 @@ void Free86::aux_MUL(uint32_t multiplicand, uint32_t multiplier) {
     osm = 23;
 }
 void Free86::aux_IMUL8(uint32_t multiplicand, uint32_t multiplier) {
-    uint32_t md, mr;
-    md = sign_extend_byte(multiplicand);
-    mr = sign_extend_byte(multiplier);
-    ua = md * mr;
+    uint32_t m10d, m8r;
+    m10d = sign_extend_byte(multiplicand);
+    m8r = sign_extend_byte(multiplier);
+    ua = m10d * m8r;
     osm_dst = sign_extend_byte(ua);
     osm_src = ua != osm_dst;
     osm = 21;
 }
 void Free86::aux_IMUL16(uint32_t multiplicand, uint32_t multiplier) {
-    uint32_t md, mr;
-    md = sign_extend_word(multiplicand);
-    mr = sign_extend_word(multiplier);
-    ua = md * mr;
+    uint32_t m10d, m8r;
+    m10d = sign_extend_word(multiplicand);
+    m8r = sign_extend_word(multiplier);
+    ua = m10d * m8r;
     osm_dst = sign_extend_word(ua);
     osm_src = ua != osm_dst;
     osm = 22;
 }
 void Free86::aux_IMUL(uint32_t multiplicand, uint32_t multiplier) {
-    uint32_t md, mr, s;
-    md = multiplicand;
-    mr = multiplier;
+    uint32_t m10d, m8r, s;
+    m10d = multiplicand;
+    m8r = multiplier;
     s = 0;
-    if (md & 0x80000000) {
-        md = ~md + 1;
+    if (m10d & 0x80000000) {
+        m10d = ~m10d + 1;
         s = 1;
     }
-    if (mr & 0x80000000) {
-        mr = ~mr + 1;
+    if (m8r & 0x80000000) {
+        m8r = ~m8r + 1;
         s ^= 1;
     }
-    multiply(md, mr);
+    multiply(m10d, m8r);
     if (s) {
         ub = ~ub;
         ua = ~ua + 1;
@@ -1669,25 +1673,25 @@ void Free86::aux_IMUL(uint32_t multiplicand, uint32_t multiplier) {
     osm = 23;
 }
 void Free86::multiply(uint32_t multiplicand, uint32_t multiplier) {
-    uint32_t md_lower, md_upper, mr_lower, mr_upper, z;
     uint64_t x = static_cast<uint64_t>(multiplicand) * multiplier;
+    uint32_t m10du, m10dl, m8ru, m8rl, z;
     if (x <= 0xffffffff) {
         ub = 0;
     } else {
-        md_lower = multiplicand & 0xffff;
-        md_upper = multiplicand >> 16;
-        mr_lower = multiplier & 0xffff;
-        mr_upper = multiplier >> 16;
-        x = md_lower * mr_lower;
-        ub = md_upper * mr_upper;
-        uc = md_lower * mr_upper;
+        m10dl = multiplicand & 0xffff;
+        m10du = multiplicand >> 16;
+        m8rl = multiplier & 0xffff;
+        m8ru = multiplier >> 16;
+        x = m10dl * m8rl;
+        ub = m10du * m8ru;
+        uc = m10dl * m8ru;
         x += (uc & 0xffff) << 16;
         ub += uc >> 16;
         if (x >= 4294967296) {
             x -= 4294967296;
             ub++;
         }
-        uc = md_upper * mr_lower;
+        uc = m10du * m8rl;
         x += (uc & 0xffff) << 16;
         ub += uc >> 16;
         if (x >= 4294967296) {
@@ -2043,8 +2047,7 @@ uint32_t Free86::shift16(uint32_t src, uint32_t count) {
     return res;
 }
 uint32_t Free86::shift(uint32_t src, uint32_t count) {
-    uint32_t s, res;
-    uint32_t c, cf;
+    uint32_t c, cf, s, res;
     s = res = src;
     switch (operation & 7) {
     case 0:
@@ -2166,7 +2169,6 @@ void Free86::aux_LTR(uint32_t selector) {
     SegmentDescriptor xsd{0};
     uint32_t dti;
     int type;
-    selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
         tr.shadow.base = 0;
         tr.shadow.limit = 0;
@@ -2254,7 +2256,7 @@ void Free86::aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t re
     }
 }
 void Free86::aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
-    int esp = regs[4];
+    uint32_t esp = regs[4];
     if (o32) {
         esp = esp - 4;
         lax = SS_base + (esp & SS_mask);
@@ -2277,9 +2279,9 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offs
     update_SSB();
 }
 void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
-    int type, gate32, g_sel, g_off, g_cnt;
-    int ss, esp, start_esp, spl;
+    uint32_t ss, esp, esp_start, spl, gsel, goff, gpac;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
+    int type, gate32;
     uint64_t tss_stack;
     // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
@@ -2289,7 +2291,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
     if (xsd.qword() == 0) {
         abort(13, selector & 0xfffc);
     }
-    start_esp = regs[4];
+    esp_start = regs[4];
     if (xsd.flags & (1 << 12)) { // code/ data segment
         if (!(xsd.flags & (1 << 11))) {
             abort(13, selector & 0xfffc);
@@ -2311,7 +2313,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
         if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        esp = start_esp;
+        esp = esp_start;
         SS_base = segs[2].shadow.base;
         SS_mask = segs[2].shadow.segment_size_mask();
         if (o32) {
@@ -2357,25 +2359,25 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
         if (!(xsd.flags & (1 << 15))) {
             abort(11, selector & 0xfffc);
         }
-        g_sel = (xsd.qword() >> 16) & 0xffff; // different fields in call gate
-        g_off = ((xsd.qword() >> 32) & 0xffff0000) | (xsd.qword() & 0x0000ffff);
-        g_cnt = xsd.flags & 0x1f;
-        if ((g_sel & 0xfffc) == 0) {
+        gsel = (xsd.qword() >> 16) & 0xffff; // different fields in call gate
+        goff = ((xsd.qword() >> 32) & 0xffff0000) | (xsd.qword() & 0x0000ffff);
+        gpac = xsd.flags & 0x1f;
+        if ((gsel & 0xfffc) == 0) {
             abort(13, 0);
         }
-        cgd = ld_xdt_entry(g_sel);
+        cgd = ld_xdt_entry(gsel);
         if (cgd.qword() == 0) {
-            abort(13, g_sel & 0xfffc);
+            abort(13, gsel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 12)) || !(cgd.flags & ((1 << 11)))) {
-            abort(13, g_sel & 0xfffc);
+            abort(13, gsel & 0xfffc);
         }
         dpl = (cgd.flags >> 13) & 3;
         if (dpl > cpl) {
-            abort(13, g_sel & 0xfffc);
+            abort(13, gsel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 15))) {
-            abort(11, g_sel & 0xfffc);
+            abort(11, gsel & 0xfffc);
         }
         if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
             tss_stack = ld_tss_stack(dpl); // seg:offset
@@ -2411,9 +2413,9 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
                 st_writable_cplX(segs[2].selector);
                 esp = esp - 4;
                 lax = SS_base + (esp & SS_mask);
-                st_writable_cplX(start_esp);
-                for (int i = g_cnt - 1; i >= 0; i--) {
-                    // x = Xe(Ve + ((start_esp + i * 4) & Ue));
+                st_writable_cplX(esp_start);
+                for (int i = gpac - 1; i >= 0; i--) {
+                    // x = Xe(Ve + ((esp_start + i * 4) & Ue));
                     esp = esp - 4;
                     lax = SS_base + (esp & SS_mask);
                     st_writable_cplX(0);
@@ -2425,9 +2427,9 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
                 st16_writable_cplX(segs[2].selector);
                 esp = esp - 2;
                 lax = SS_base + (esp & SS_mask);
-                st16_writable_cplX(start_esp);
-                for (int i = g_cnt - 1; i >= 0; i--) {
-                    // x = Ye(Ve + ((start_esp + i * 2) & Ue));
+                st16_writable_cplX(esp_start);
+                for (int i = gpac - 1; i >= 0; i--) {
+                    // x = Ye(Ve + ((esp_start + i * 2) & Ue));
                     esp = esp - 2;
                     lax = SS_base + (esp & SS_mask);
                     st16_writable_cplX(0);
@@ -2437,7 +2439,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
             ss = (ss & ~3u) | dpl;
             set_segment_register(2, ss, SS_base, ssd.limit, ssd.flags);
         } else { // other data/ code segments, or intralevel
-            esp = start_esp;
+            esp = esp_start;
             SS_base = segs[2].shadow.base;
             SS_mask = segs[2].shadow.segment_size_mask();
         }
@@ -2456,11 +2458,11 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
             lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(return_address);
         }
-        g_sel = (g_sel & ~3u) | dpl;
-        set_segment_register(1, g_sel, cgd.base, cgd.limit, cgd.flags);
+        gsel = (gsel & ~3u) | dpl;
+        set_segment_register(1, gsel, cgd.base, cgd.limit, cgd.flags);
         set_cpl(dpl);
         regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-        eip = g_off, far = far_start = 0;
+        eip = goff, far = far_start = 0;
     }
 }
 void Free86::aux_RETF(bool o32, uint32_t release_stack_items) {
@@ -2471,7 +2473,7 @@ void Free86::aux_RETF(bool o32, uint32_t release_stack_items) {
     }
 }
 void Free86::return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items) {
-    int cs, esp, stack_eip, stack_eflags;
+    uint32_t cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
     SS_mask = 0xffff;
@@ -2507,11 +2509,9 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stac
     update_SSB();
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
-        int mask;
+        uint32_t mask = 0x00000100 | 0x00000200 | 0x00003000 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         if (eflags & 0x00020000) {
             mask = 0x00000100 | 0x00000200 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
-        } else {
-            mask = 0x00000100 | 0x00000200 | 0x00003000 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         }
         if (o32 == 0) {
             mask &= 0xffff;
@@ -2520,8 +2520,8 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stac
     }
 }
 void Free86::return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items) {
-    int esp, stack_esp, stack_eip, stack_eflags = 0;
-    int es, cs, ss, ds, fs, gs;
+    uint32_t esp, stack_esp, stack_eip, stack_eflags = 0;
+    uint32_t es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
     int cpl = this->cpl;
     esp = regs[4];
@@ -2671,7 +2671,7 @@ void Free86::return_protected_mode(bool o32, bool is_iret, uint32_t release_stac
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = stack_eip, far = far_start = 0;
     if (is_iret) {
-        int mask = 0x00000100 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
+        uint32_t mask = 0x00000100 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         if (cpl == 0) {
             mask |= 0x00003000;
         }
@@ -2685,15 +2685,15 @@ void Free86::return_protected_mode(bool o32, bool is_iret, uint32_t release_stac
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::zero_segment_register(int sreg, int privilege_level) {
-    int flags;
+void Free86::zero_segment_register(uint32_t sreg, int level) {
+    uint32_t flags;
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS
     }
     flags = segs[sreg].shadow.flags;
     dpl = (flags >> 13) & 3;
     if (!(flags & (1 << 11)) || !(flags & (1 << 10))) { // all but conforming code segments
-        if (dpl < privilege_level) {
+        if (dpl < level) {
             set_segment_register(sreg, 0, 0, 0, 0);
         }
     }
@@ -2706,7 +2706,7 @@ void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint3
     }
 }
 void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address) {
-    int selector, offset, esp;
+    uint32_t selector, offset, esp;
     if (id * 4 + 3 > idt.shadow.limit) {
         abort(13, id * 8 + 2);
     }
@@ -2731,11 +2731,11 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_a
     eflags &= ~(0x00000100u | 0x00000200u | 0x00010000u | 0x00040000u);
 }
 void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
-    int g_sel, g_off, st_error_code, is_interlevel, type, gate32;
-    int ss, esp, spl;
+    uint32_t ss, esp, spl, stack_error_code, gsel, goff;
     SegmentDescriptor isd{0}, cgd{0}, ssd{0};
+    int is_interlevel, type, gate32;
     uint64_t tss_stack;
-    st_error_code = 0;
+    stack_error_code = 0;
     if (!is_sw && !is_hw) {
         switch (id) { // with error codes, Intel 64 IA-32 SDM (latest), Vol. 3A, 7.3
         case 8:  // double exception
@@ -2745,7 +2745,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         case 13: // general protection
         case 14: // page fault
         case 17: // alignment check (80486)
-            st_error_code = 1;
+            stack_error_code = 1;
             break;
         }
     }
@@ -2773,24 +2773,24 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
     if (!(isd.flags & (1 << 15))) {
         abort(11, id * 8 + 2);
     }
-    g_sel = (isd.qword() >> 16) & 0xffff; // different fields in call gate
-    g_off = ((isd.qword() >> 32) & 0xffff0000) | (isd.qword() & 0x0000ffff);
-    if ((g_sel & 0xfffc) == 0) {
+    gsel = (isd.qword() >> 16) & 0xffff; // different fields in call gate
+    goff = ((isd.qword() >> 32) & 0xffff0000) | (isd.qword() & 0x0000ffff);
+    if ((gsel & 0xfffc) == 0) {
         abort(13, 0);
     }
-    cgd = ld_xdt_entry(g_sel);
+    cgd = ld_xdt_entry(gsel);
     if (cgd.qword() == 0) {
-        abort(13, g_sel & 0xfffc);
+        abort(13, gsel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 12)) || !(cgd.flags & ((1 << 11)))) {
-        abort(13, g_sel & 0xfffc);
+        abort(13, gsel & 0xfffc);
     }
     dpl = (cgd.flags >> 13) & 3;
     if (dpl > cpl) {
-        abort(13, g_sel & 0xfffc);
+        abort(13, gsel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 15))) {
-        abort(11, g_sel & 0xfffc);
+        abort(11, gsel & 0xfffc);
     }
     if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
         tss_stack = ld_tss_stack(dpl);
@@ -2821,7 +2821,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         is_interlevel = 1;
     } else if ((cgd.flags & (1 << 10)) || dpl == cpl) { // other data/ code segments, or intralevel
         if (eflags & 0x00020000) {
-            abort(13, g_sel & 0xfffc);
+            abort(13, gsel & 0xfffc);
         }
         dpl = cpl;
         SS_base = segs[2].shadow.base;
@@ -2829,7 +2829,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         esp = regs[4];
         is_interlevel = 0;
     } else {
-        abort(13, g_sel & 0xfffc);
+        abort(13, gsel & 0xfffc);
     }
     gate32 = type >> 3;
     if (gate32) {
@@ -2864,7 +2864,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         esp = esp - 4;
         lax = SS_base + (esp & SS_mask);
         st_writable_cplX(is_sw ? return_address : eip);
-        if (st_error_code) {
+        if (stack_error_code) {
             esp = esp - 4;
             lax = SS_base + (esp & SS_mask);
             st_writable_cplX(error_code);
@@ -2901,7 +2901,7 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         esp = esp - 2;
         lax = SS_base + (esp & SS_mask);
         st16_writable_cplX(is_sw ? return_address : eip);
-        if (st_error_code) {
+        if (stack_error_code) {
             esp = esp - 2;
             lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(error_code);
@@ -2917,11 +2917,11 @@ void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, i
         ss = (ss & ~3u) | dpl;
         set_segment_register(2, ss, SS_base, ssd.limit, ssd.flags);
     }
-    g_sel = (g_sel & ~3u) | dpl;
-    set_segment_register(1, g_sel, cgd.base, cgd.limit, cgd.flags);
+    gsel = (gsel & ~3u) | dpl;
+    set_segment_register(1, gsel, cgd.base, cgd.limit, cgd.flags);
     set_cpl(dpl);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-    eip = g_off, far = far_start = 0;
+    eip = goff, far = far_start = 0;
     if ((type & 1) == 0) {
         eflags &= ~0x00000200u;
     }
@@ -2945,7 +2945,7 @@ void Free86::aux_IRET(bool o32) {
     }
 }
 void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
-    int selector;
+    uint32_t selector;
     if (!is_protected() || (eflags & 0x00020000)) {
         abort(6);
     }
@@ -2960,7 +2960,7 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     ua = ld_descriptor_fields(selector, is_lsl);
     osm_src = compile_eflags();
     if (ua == -1) {
-        osm_src &= ~0x0040;
+        osm_src &= ~0x0040u;
     } else {
         osm_src |= 0x0040;
         if (o32) {
@@ -3024,7 +3024,7 @@ void Free86::aux_VERR_VERW(uint32_t selector, bool writable) { // !writable == r
     if (is_segment_accessible(selector, writable)) {
         osm_src |= 0x0040;
     } else {
-        osm_src &= ~0x0040;
+        osm_src &= ~0x0040u;
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
@@ -3089,7 +3089,7 @@ void Free86::aux_ARPL() {
         }
         osm_src |= 0x0040;
     } else {
-        osm_src &= ~0x0040;
+        osm_src &= ~0x0040u;
     }
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
@@ -3133,7 +3133,7 @@ void Free86::aux_AAD(uint32_t radix) {
     osm = 12;
 }
 void Free86::aux_AAA() {
-    int of, al, ah, f4, flags;
+    uint32_t of, al, ah, f4, flags;
     flags = compile_eflags();
     f4 = flags & 0x0010;
     al = regs[0] & 0xff;
@@ -3144,7 +3144,7 @@ void Free86::aux_AAA() {
         ah = (ah + 1 + of) & 0xff;
         flags |= 0x0001 | 0x0010;
     } else {
-        flags &= ~(0x0001 | 0x0010);
+        flags &= ~(0x0001u | 0x0010u);
         al &= 0x0f;
     }
     regs[0] = (regs[0] & ~0xffffu) | al | (ah << 8);
@@ -3153,7 +3153,7 @@ void Free86::aux_AAA() {
     osm = 24;
 }
 void Free86::aux_AAS() {
-    int of, al, ah, f4, flags;
+    uint32_t of, al, ah, f4, flags;
     flags = compile_eflags();
     f4 = flags & 0x0010; // AF
     al = regs[0] & 0xff;
@@ -3164,7 +3164,7 @@ void Free86::aux_AAS() {
         ah = (ah - 1 - of) & 0xff;
         flags |= 0x0001 | 0x0010;
     } else {
-        flags &= ~(0x0001 | 0x0010);
+        flags &= ~(0x0001u | 0x0010u);
         al &= 0x0f;
     }
     regs[0] = (regs[0] & ~0xffffu) | al | (ah << 8);
@@ -3173,7 +3173,7 @@ void Free86::aux_AAS() {
     osm = 24;
 }
 void Free86::aux_DAA() {
-    int al, f0, f4, flags;
+    uint32_t al, f0, f4, flags;
     flags = compile_eflags();
     f0 = flags & 0x0001;
     f4 = flags & 0x0010;
@@ -3196,7 +3196,7 @@ void Free86::aux_DAA() {
     osm = 24;
 }
 void Free86::aux_DAS() {
-    int al, of, f0, f4, flags;
+    uint32_t al, of, f0, f4, flags;
     flags = compile_eflags();
     f0 = flags & 0x0001;
     f4 = flags & 0x0010;
@@ -3291,21 +3291,21 @@ void Free86::aux_POPA() {
     regs[4] = (regs[4] & ~SS_mask) | ((regs[4] + 32) & SS_mask);
 }
 void Free86::aux_LEAVE16() {
-    int ebp;
+    uint32_t ebp;
     ebp = regs[5];
     lax = SS_base + (ebp & SS_mask);
     set_lower_word(5, ld16_readonly_cpl3());
     regs[4] = (regs[4] & ~SS_mask) | ((ebp + 2) & SS_mask);
 }
 void Free86::aux_LEAVE() {
-    int ebp;
+    uint32_t ebp;
     ebp = regs[5];
     lax = SS_base + (ebp & SS_mask);
     regs[5] = ld_readonly_cpl3();
     regs[4] = (regs[4] & ~SS_mask) | ((ebp + 4) & SS_mask);
 }
 void Free86::aux_ENTER16() {
-    int esp, ebp, exp;
+    uint32_t esp, ebp, exp;
     imm16 = fetch_data16();
     imm = fetch_data8();
     imm &= 0x1f;
@@ -3336,7 +3336,7 @@ void Free86::aux_ENTER16() {
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
 void Free86::aux_ENTER() {
-    int esp, ebp, exp;
+    uint32_t esp, ebp, exp;
     imm16 = fetch_data16();
     imm = fetch_data8();
     imm &= 0x1f;
@@ -3366,7 +3366,7 @@ void Free86::aux_ENTER() {
     regs[5] = (regs[5] & ~SS_mask) | (exp & SS_mask);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
 }
-void Free86::ld_far_pointer16(int sreg) {
+void Free86::ld_far_pointer16(uint32_t sreg) {
     modRM = fetch_data8();
     reg = (modRM >> 3) & 7;
     segment_translation();
@@ -3376,7 +3376,7 @@ void Free86::ld_far_pointer16(int sreg) {
     set_segment_register(sreg, imm16);
     set_lower_word(reg, imm);
 }
-void Free86::ld_far_pointer(int sreg) {
+void Free86::ld_far_pointer(uint32_t sreg) {
     modRM = fetch_data8();
     reg = (modRM >> 3) & 7;
     segment_translation();

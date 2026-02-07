@@ -1,7 +1,7 @@
 #include "free86.h"
 
 void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
-    int sreg, hL; // H (0x80) or L (0x00) byte selector
+    uint32_t sreg, hL; // H (0x80) or L (0x00) byte selector
     if (halted) {
         if (get_irq() != 0 && (eflags & 0x00000200)) {
             halted = false;

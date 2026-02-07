@@ -16,6 +16,7 @@ if(APPLE)
       -Wno-missing-noreturn
       -Wno-missing-prototypes
       -Wno-missing-variable-declarations
+      -Wno-old-style-cast
       -Wno-padded
       -Wno-poison-system-directories
       -Wno-reserved-identifier

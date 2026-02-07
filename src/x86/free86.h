@@ -408,10 +408,10 @@ class Free86 {
     void segment_translation();
     void moffs_to_linear(bool writable);
 
-    void set_segment_register(int sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags);
-    void set_segment_register(int sreg, uint32_t selector);
-    void set_segment_register_real__v86(int sreg, uint32_t selector);
-    void set_segment_register_protected(int sreg, uint32_t selector);
+    void set_segment_register(uint32_t sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags);
+    void set_segment_register(uint32_t sreg, uint32_t selector);
+    void set_segment_register_real__v86(uint32_t sreg, uint32_t selector);
+    void set_segment_register_protected(uint32_t sreg, uint32_t selector);
 
     SegmentDescriptor ld_xdt_entry(uint32_t selector);
     uint64_t ld_tss_stack(int privilege_level); // seg:offset
@@ -464,7 +464,7 @@ class Free86 {
     void aux_RETF(bool o32, uint32_t release_stack_items);
     void return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items);
     void return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items);
-    void zero_segment_register(int sreg, int privilege_level);
+    void zero_segment_register(uint32_t sreg, int level);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
     void raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address);
@@ -493,8 +493,8 @@ class Free86 {
     void aux_LEAVE();
     void aux_ENTER16();
     void aux_ENTER();
-    void ld_far_pointer16(int sreg);
-    void ld_far_pointer(int sreg);
+    void ld_far_pointer16(uint32_t sreg);
+    void ld_far_pointer(uint32_t sreg);
 
     // string.cpp
     void aux_INS16();
