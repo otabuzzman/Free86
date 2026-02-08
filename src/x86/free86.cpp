@@ -1226,7 +1226,7 @@ void Free86::set_segment_register_protected(uint32_t sreg, uint32_t selector) {
             if ((xsd.flags & ((1 << 11) | (1 << 9))) == (1 << 11)) {
                 abort(13, selector & 0xfffc);
             }
-            if (!(xsd.flags & (1 << 11)) || !(xsd.flags & (1 << 10))) {
+            if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) { // if non-conforming code segments
                 if (dpl < cpl || dpl < rpl) {
                     abort(13, selector & 0xfffc);
                 }
@@ -2972,22 +2972,23 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;
 }
-int Free86::ld_descriptor_fields(uint32_t selector, bool limit) { // !limit == flags
+uint32_t Free86::ld_descriptor_fields(uint32_t selector, bool limit) { // !limit == flags
     SegmentDescriptor xsd{0};
+    uint32_t notok = 0x80000000;
     int type;
     if ((selector & 0xfffc) == 0) {
-        return -1;
+        return notok;
     }
     xsd = ld_xdt_entry(selector);
     if (xsd.qword() == 0) {
-        return -1;
+        return notok;
     }
     rpl = selector & 3;
     dpl = (xsd.flags >> 13) & 3;
     if (xsd.flags & (1 << 12)) { // code/ data segment
-        if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) { // conforming code segments excluded
+        if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) { // if non-conforming code segments
             if (dpl < cpl || dpl < rpl) {
-                return -1;
+                return notok;
             }
         }
     } else { // system segment
@@ -3003,14 +3004,14 @@ int Free86::ld_descriptor_fields(uint32_t selector, bool limit) { // !limit == f
         case 5:  // task gate
         case 12: // 32 bit call gate
             if (limit) {
-                return -1;
+                return notok;
             }
             break;
         default:
-            return -1;
+            return notok;
         }
         if (dpl < cpl || dpl < rpl) {
-            return -1;
+            return notok;
         }
     }
     if (limit) {

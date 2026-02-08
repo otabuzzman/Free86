@@ -472,7 +472,7 @@ class Free86 {
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);
-    int ld_descriptor_fields(uint32_t selector, bool limit);
+    uint32_t ld_descriptor_fields(uint32_t selector, bool limit);
     void aux_VERR_VERW(uint32_t selector, bool is_verw);
     bool is_segment_accessible(uint32_t selector, bool writable);
     void aux_ARPL();
