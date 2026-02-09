@@ -51,7 +51,7 @@ bool Free86::is_CF() {
     case 12:
     case 13:
     case 14:
-        f = 0;
+        f = false;
         break;
     case 15:
         f = (osm_src >> 7) & 1;
@@ -118,7 +118,7 @@ bool Free86::is_AF() {
     case 12:
     case 13:
     case 14:
-        f = 0;
+        f = false ;
         break;
     case 15:
     case 16:
@@ -129,7 +129,7 @@ bool Free86::is_AF() {
     case 21:
     case 22:
     case 23:
-        f = 0;
+        f = false;
         break;
     case 24:
         f = osm_src & 0x10;
@@ -145,7 +145,7 @@ bool Free86::is_AF() {
         f = (osm_dst ^ (osm_dst + 1)) & 0x10;
         break;
     default:
-        f = 0;
+        f = false;
         break;
     }
     return f;
@@ -204,7 +204,7 @@ bool Free86::is_OF() {
     case 12:
     case 13:
     case 14:
-        f = 0;
+        f = false;
         break;
     case 15:
     case 18:

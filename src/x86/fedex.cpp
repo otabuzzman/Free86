@@ -1345,7 +1345,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 regs[1] = (regs[1] & ~ipr_os_mask) | ua;
                 opcode &= 3;
                 if (opcode == 0) {
-                    ub = !(osm_dst == 0);
+                    ub = osm_dst != 0;
                 } else if (opcode == 1) {
                     ub = osm_dst == 0;
                 } else {

@@ -1127,7 +1127,7 @@ void Free86::segment_translation() {
 void Free86::moffs_to_linear(bool writable) {
     uint64_t la;
     uint32_t sreg, stride;
-    int type_notok, limit_notok;
+    bool type_notok, limit_notok;
     if (ipr & 0x0080) {
         la = fetch_data16();
         stride = 2; // 16 bit mode
