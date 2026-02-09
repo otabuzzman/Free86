@@ -349,7 +349,7 @@ class Free86 {
     uint32_t r, rm;  // register or register/ memory refered by modRM
     uint32_t m, m16; // 32/ 16 bit memory operands from memory
     uint32_t imm, imm16, moffs; // immediate/ offset operands
-    uint32_t ua, ub, uc; // unsigned helper
+    uint32_t u, v, w; // intermediate results
 
     // clang-format off
     const std::vector<uint32_t> parity_LUT = {
