@@ -152,7 +152,7 @@ void Free86::st_writable_cplX(uint32_t dword) {
 void Free86::st64_writable_cplX(uint64_t qword) {
     tlb_hash = tlb_writable_cplX[lax >> 12];
     if ((tlb_hash | lax) & 3) {
-        st_writable_cplX(qword);
+        st_writable_cplX(qword & 0xffffffff);
         lax += 4;
         st_writable_cplX(qword >> 32);
         lax -= 4;
@@ -212,7 +212,7 @@ uint64_t Free86::ld64_direct(uint32_t address) {
     return (ld_direct(address) & 0xffffffff) | static_cast<uint64_t>(ld_direct(address + 4)) << 32;
 }
 void Free86::st8_direct(uint32_t address, uint32_t byte) {
-    memory[address] = byte;
+    memory[address] = byte & 0xff;
 }
 void Free86::st8_direct(uint32_t address, std::string data) {
     auto s = data.c_str();
@@ -223,18 +223,18 @@ void Free86::st8_direct(uint32_t address, std::string data) {
     st8_direct(address, 0);
 }
 void Free86::st16_direct(uint32_t address, uint32_t word) {
-    memory[address] = word;
-    memory[address + 1] = word >> 8;
+    memory[address] = word & 0xff;
+    memory[address + 1] = (word >> 8) & 0xff;
 }
 void Free86::st_direct(uint32_t address, uint32_t dword) {
-    memory[address] = dword;
-    memory[address + 1] = dword >> 8;
-    memory[address + 2] = dword >> 16;
-    memory[address + 3] = dword >> 24;
+    memory[address] = dword & 0xff;
+    memory[address + 1] = (dword >> 8) & 0xff;
+    memory[address + 2] = (dword >> 16) & 0xff;
+    memory[address + 3] = (dword >> 24) & 0xff;
 }
 void Free86::st64_direct(uint32_t address, uint64_t qword) {
-    st_direct(address, qword);
-    st_direct(address + 4, qword >> 32);
+    st_direct(address, qword & 0xffffffff);
+    st_direct(address + 4, (qword >> 32) & 0xffffffff);
 }
 uint32_t Free86::fetch_data8() {
     return ld8_direct(far++);

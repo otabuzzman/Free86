@@ -26,7 +26,7 @@ if(APPLE)
       -Wno-unused-parameter
       -Wno-unused-private-field
       -Wno-unused-variable
-# TODO
+# careful with these...
       -Wno-implicit-int-conversion
       -Wno-shadow
       -Wno-sign-compare

@@ -13,7 +13,7 @@ Free86::Free86(uint32_t memory_size) {
     tlb_writable_cplX = new uint32_t[tlb_size];
     tlb_readonly_cpl3 = new uint32_t[tlb_size];
     tlb_writable_cpl3 = new uint32_t[tlb_size];
-    for (uint32_t i = 0; i < tlb_size; i++) {
+    for (int i = 0; i < tlb_size; i++) {
         tlb_clear(i);
     }
     reset();
@@ -71,15 +71,16 @@ void Free86::fetch_opcode() {
     int n = instruction_length(opcode);
     if ((page_offset + n) > 4096) { // instruction extends page boundary
         far = far_start = memory_size; // point FAR to buffer on top of memory
-        for (ua = 0; ua < n; ua++) {      // copy instruction bytewise to buffer
-            lax = eip_linear + ua;      // paged memory functions expect address in LAX
+        for (ua = 0; ua < n; ua++) { // copy instruction bytewise to buffer
+            lax = eip_linear + ua;   // paged memory functions expect address in LAX
             st8_direct(far + ua, ld8_readonly_cpl3()); // copy [LAX] to physical [FAR]
         }
         far++; // adjust FAR for upcomming fetches from buffer
     }
 }
 int Free86::instruction_length(uint32_t opcode) {
-    uint32_t ipr, operation, stride, n = 1;
+    uint32_t ipr, operation;
+    int stride, n = 1;
     ipr = ipr_default;
     if (ipr & 0x0100) {
         stride = 2;
@@ -727,10 +728,10 @@ int Free86::instruction_length(uint32_t opcode) {
     }
 FETCH_LOOP:
     ;
-    return static_cast<int>(n);
+    return n;
 }
 int Free86::modRM_bytes_number() {
-    uint32_t n = 0;
+    int n = 0;
     if (ipr & 0x0080) {
         switch (modRM >> 6) {
         case 0:
@@ -791,7 +792,7 @@ int Free86::modRM_bytes_number() {
             break;
         }
     }
-    return static_cast<int>(n);
+    return n;
 }
 void Free86::set_CR0(uint32_t bits) {
     // if changing flags 31, 16, or 0, must flush tlb

@@ -266,7 +266,7 @@ bool Free86::is_BE() { // `below' for signed comparison, PM p. 317
         f = (osm_src & (0x0040 | 0x0001)) != 0;
         break;
     default:
-        f = is_CF() | (osm_dst == 0);
+        f = is_CF() || (osm_dst == 0);
         break;
     }
     return f;
@@ -300,7 +300,7 @@ bool Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
         f = (((osm_src >> 7) ^ (osm_src >> 11)) | (osm_src >> 6)) & 1;
         break;
     default:
-        f = (osm_dst < 0) ^ is_OF() | (osm_dst == 0);
+        f = ((osm_dst < 0) ^ is_OF()) | (osm_dst == 0);
         break;
     }
     return f;
