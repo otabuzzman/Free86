@@ -51,6 +51,9 @@ extension SegmentDescriptor {
             upper = upper & 0xFFF0_FFFF | newValue & 0x000F_0000
         }
     }
+    var flags: DWord {
+        upper & 0x00F0_FF00
+    }
     var type: DWord {
         get { (upper & 0x0000_1F00) >> 8 }
         set { upper = upper & 0xFFFF_E0FF | DWord(newValue) << 8 }

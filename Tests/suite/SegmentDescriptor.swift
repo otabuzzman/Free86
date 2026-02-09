@@ -61,6 +61,10 @@ func segmentDescriptorFieldsAccess() {
     #expect(segmentDescriptor.limit == 0x00012345)
     segmentDescriptor.limit = 0x00054321
     #expect(segmentDescriptor.limit == 0x00054321)
+    #expect(segmentDescriptor.flags == 0x00007800)
+    segmentDescriptor.setFlag(.G, 1)
+    #expect(segmentDescriptor.flags == 0x00807800)
+    segmentDescriptor.setFlag(.G, 0)
     #expect(segmentDescriptor.type == 0b0001_1000)
     segmentDescriptor.type = 0b1_0010
     #expect(segmentDescriptor.type == 0b1_0010)
