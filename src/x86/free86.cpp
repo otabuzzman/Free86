@@ -2278,7 +2278,7 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offs
     update_SSB();
 }
 void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
-    uint32_t ss, esp, esp_start, spl, gsel, goff, gpac;
+    uint32_t ss, esp, esp_start, spl, gsel, goff, gpac, OS_base, OS_mask;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
     int type, gate32;
     uint64_t tss_stack;
