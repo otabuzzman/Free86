@@ -12,7 +12,7 @@
 
 #include "PC.h"
 
-PC::PC(int memory_size)
+PC::PC(uint32_t memory_size)
 {
     this->cpu = new WiredCPU(memory_size);
 #ifndef NO_SDL
@@ -30,17 +30,17 @@ PC::~PC()
     delete cpu;
 }
 
-long PC::load(std::string path, int offset)
+size_t PC::load(std::string path, uint32_t offset)
 {
     FILE *f = fopen(path.c_str(), "rb");
     fseek(f, 0, SEEK_END);
-    long size = ftell(f);
+    size_t size = static_cast<size_t>(ftell(f));
     fseek(f, 0, SEEK_SET);
     auto buffer = new uint8_t[size];
     auto _ = fread(buffer, size, 1, f);
 
-    printf("load %ld bytes at 0x%x\n", size, offset);
-    for (int i = 0; i < size; i++) {
+    printf("load %lu bytes at 0x%x\n", size, offset);
+    for (size_t i = 0; i < size; i++) {
         cpu->st8_direct(offset + i, buffer[i]);
     }
     fclose(f);
@@ -50,11 +50,11 @@ long PC::load(std::string path, int offset)
 
 void PC::setup()
 {
-    load("bin/linuxstart.bin",             0x00010000); // custom bootloader
-    load("bin/vmlinux-2.6.20.bin",         0x00100000); // Linux kernel
-    long initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
+    load("bin/linuxstart.bin",     0x00010000); // custom bootloader
+    load("bin/vmlinux-2.6.20.bin", 0x00100000); // Linux kernel
+    size_t initrd_size = load("bin/root.bin", 0x00400000); // initial ramdisk (root fs)
 
-    int cmdline_addr = 0x0f800;
+    uint32_t cmdline_addr = 0x0f800;
     std::string cmdline = "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1";
 
     // set memory state
@@ -160,27 +160,34 @@ int WiredCPU::get_irq() {
 int WiredCPU::get_iid() {
     return pic->get_hard_intno();
 }
-int WiredCPU::io_read(int port) {
-    int _port = port & (1024 - 1);
+uint32_t WiredCPU::io_read(uint32_t port) {
+    int _port = static_cast<int>(port) & (1024 - 1);
+    int _data;
     switch (_port) {
     case 0x70:
     case 0x71:
-        return cmos->ioport_read(_port);
+        _data = cmos->ioport_read(_port);
+        break;
     case 0x64:
-        return kbd->read_status(_port);
+        _data = kbd->read_status(_port);
+        break;
     case 0x20:
     case 0x21:
-        return pic->pics[0]->ioport_read(_port);
+        _data = pic->pics[0]->ioport_read(_port);
+        break;
     case 0xa0:
     case 0xa1:
-        return pic->pics[1]->ioport_read(_port);
+        _data = pic->pics[1]->ioport_read(_port);
+        break;
     case 0x40:
     case 0x41:
     case 0x42:
     case 0x43:
-        return pit->ioport_read(_port);
+        _data = pit->ioport_read(_port);
+        break;
     case 0x61:
-        return pit->speaker_ioport_read(_port);
+        _data = pit->speaker_ioport_read(_port);
+        break;
     case 0x3f8:
     case 0x3f9:
     case 0x3fa:
@@ -189,34 +196,38 @@ int WiredCPU::io_read(int port) {
     case 0x3fd:
     case 0x3fe:
     case 0x3ff:
-        return serial->ioport_read(_port);
+        _data = serial->ioport_read(_port);
+        break;
     default:
-        return 0xff;
+        _data = 0xff;
+        break;
     }
+    return static_cast<uint32_t>(_data);
 }
-void WiredCPU::io_write(int port, int data) {
-    int _port = port & (1024 - 1);
+void WiredCPU::io_write(uint32_t port, uint32_t data) {
+    int _port = static_cast<int>(port) & (1024 - 1);
+    int _data = static_cast<int>(data);
     switch (_port) {
     case 0x80: // POST
         break;
     case 0x70:
     case 0x71:
-        cmos->ioport_write(_port, data);
+        cmos->ioport_write(_port, _data);
         break;
     case 0x64:
-        kbd->write_command(_port, data);
+        kbd->write_command(_port, _data);
         break;
     case 0x20:
     case 0x21:
         try {
-            pic->pics[0]->ioport_write(_port, data);
+            pic->pics[0]->ioport_write(_port, _data);
         } catch (const char *) {
         }
         break;
     case 0xa0:
     case 0xa1:
         try {
-            pic->pics[1]->ioport_write(_port, data);
+            pic->pics[1]->ioport_write(_port, _data);
         } catch (const char *) {
         }
         break;
@@ -224,10 +235,10 @@ void WiredCPU::io_write(int port, int data) {
     case 0x41:
     case 0x42:
     case 0x43:
-        pit->ioport_write(_port, data);
+        pit->ioport_write(_port, _data);
         break;
     case 0x61:
-        pit->speaker_ioport_write(_port, data);
+        pit->speaker_ioport_write(_port, _data);
         break;
     case 0x3f8:
     case 0x3f9:
@@ -237,7 +248,7 @@ void WiredCPU::io_write(int port, int data) {
     case 0x3fd:
     case 0x3fe:
     case 0x3ff:
-        serial->ioport_write(_port, data);
+        serial->ioport_write(_port, _data);
         break;
     }
 }

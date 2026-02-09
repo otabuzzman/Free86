@@ -20,10 +20,10 @@ class WiredCPU;
 
 class PC {
   public:
-    PC(int memory_size);
+    PC(uint32_t memory_size);
     ~PC();
 
-    long load(std::string path, int offset = 0);
+    size_t load(std::string path, uint32_t offset = 0);
     void setup();
     void cycle();
 
@@ -698,7 +698,7 @@ class WiredCPU : public Free86 {
     PIC *pic = nullptr;
     PIT *pit = nullptr;
     Serial *serial = nullptr;
-    WiredCPU(int memory_size) : Free86(memory_size) {
+    WiredCPU(uint32_t memory_size) : Free86(memory_size) {
         cmos = new CMOS();
         kbd = new KBD();
         pic = new PIC();
@@ -714,8 +714,8 @@ class WiredCPU : public Free86 {
     }
     int get_irq() override;
     int get_iid() override;
-    int io_read(int port) override;
-    void io_write(int port, int data) override;
+    uint32_t io_read(uint32_t port) override;
+    void io_write(uint32_t port, uint32_t data) override;
 };
 
 #endif // PC_H

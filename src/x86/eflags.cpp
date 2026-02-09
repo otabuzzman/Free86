@@ -51,7 +51,7 @@ bool Free86::is_CF() {
     case 12:
     case 13:
     case 14:
-        f = 0;
+        f = false;
         break;
     case 15:
         f = (osm_src >> 7) & 1;
@@ -94,31 +94,31 @@ bool Free86::is_AF() {
     case 0:
     case 1:
     case 2:
-        x = osm_dst - osm_src;
-        f = (osm_dst ^ x ^ osm_src) & 0x10;
+        ua = osm_dst - osm_src;
+        f = (osm_dst ^ ua ^ osm_src) & 0x10;
         break;
     case 3:
     case 4:
     case 5:
-        x = osm_dst - osm_src - 1;
-        f = (osm_dst ^ x ^ osm_src) & 0x10;
+        ua = osm_dst - osm_src - 1;
+        f = (osm_dst ^ ua ^ osm_src) & 0x10;
         break;
     case 6:
     case 7:
     case 8:
-        x = osm_dst + osm_src;
-        f = (osm_dst ^ x ^ osm_src) & 0x10;
+        ua = osm_dst + osm_src;
+        f = (osm_dst ^ ua ^ osm_src) & 0x10;
         break;
     case 9:
     case 10:
     case 11:
-        x = osm_dst + osm_src + 1;
-        f = (osm_dst ^ x ^ osm_src) & 0x10;
+        ua = osm_dst + osm_src + 1;
+        f = (osm_dst ^ ua ^ osm_src) & 0x10;
         break;
     case 12:
     case 13:
     case 14:
-        f = 0;
+        f = false ;
         break;
     case 15:
     case 16:
@@ -129,7 +129,7 @@ bool Free86::is_AF() {
     case 21:
     case 22:
     case 23:
-        f = 0;
+        f = false;
         break;
     case 24:
         f = osm_src & 0x10;
@@ -145,7 +145,7 @@ bool Free86::is_AF() {
         f = (osm_dst ^ (osm_dst + 1)) & 0x10;
         break;
     default:
-        f = 0;
+        f = false;
         break;
     }
     return f;
@@ -154,57 +154,57 @@ bool Free86::is_OF() {
     bool f;
     switch (osm % 0x1f) {
     case 0:
-        x = osm_dst - osm_src;
-        f = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 7) & 1;
+        ua = osm_dst - osm_src;
+        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 7) & 1;
         break;
     case 1:
-        x = osm_dst - osm_src;
-        f = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 15) & 1;
+        ua = osm_dst - osm_src;
+        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 15) & 1;
         break;
     case 2:
-        x = osm_dst - osm_src;
-        f = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 31) & 1;
+        ua = osm_dst - osm_src;
+        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 31) & 1;
         break;
     case 3:
-        x = osm_dst - osm_src - 1;
-        f = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 7) & 1;
+        ua = osm_dst - osm_src - 1;
+        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 7) & 1;
         break;
     case 4:
-        x = osm_dst - osm_src - 1;
-        f = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 15) & 1;
+        ua = osm_dst - osm_src - 1;
+        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 15) & 1;
         break;
     case 5:
-        x = osm_dst - osm_src - 1;
-        f = (((x ^ osm_src ^ -1) & (x ^ osm_dst)) >> 31) & 1;
+        ua = osm_dst - osm_src - 1;
+        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 31) & 1;
         break;
     case 6:
-        x = osm_dst + osm_src;
-        f = (((x ^ osm_src) & (x ^ osm_dst)) >> 7) & 1;
+        ua = osm_dst + osm_src;
+        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 7) & 1;
         break;
     case 7:
-        x = osm_dst + osm_src;
-        f = (((x ^ osm_src) & (x ^ osm_dst)) >> 15) & 1;
+        ua = osm_dst + osm_src;
+        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 15) & 1;
         break;
     case 8:
-        x = osm_dst + osm_src;
-        f = (((x ^ osm_src) & (x ^ osm_dst)) >> 31) & 1;
+        ua = osm_dst + osm_src;
+        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 31) & 1;
         break;
     case 9:
-        x = osm_dst + osm_src + 1;
-        f = (((x ^ osm_src) & (x ^ osm_dst)) >> 7) & 1;
+        ua = osm_dst + osm_src + 1;
+        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 7) & 1;
         break;
     case 10:
-        x = osm_dst + osm_src + 1;
-        f = (((x ^ osm_src) & (x ^ osm_dst)) >> 15) & 1;
+        ua = osm_dst + osm_src + 1;
+        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 15) & 1;
         break;
     case 11:
-        x = osm_dst + osm_src + 1;
-        f = (((x ^ osm_src) & (x ^ osm_dst)) >> 31) & 1;
+        ua = osm_dst + osm_src + 1;
+        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 31) & 1;
         break;
     case 12:
     case 13:
     case 14:
-        f = 0;
+        f = false;
         break;
     case 15:
     case 18:
@@ -233,7 +233,7 @@ bool Free86::is_OF() {
         f = (osm_dst & 0xffff) == 0x8000;
         break;
     case 27:
-        f = osm_dst == -2147483648;
+        f = osm_dst == 0x80000000;
         break;
     case 28:
         f = (osm_dst & 0xff) == 0x7f;
@@ -260,18 +260,20 @@ bool Free86::is_BE() { // `below' for signed comparison, PM p. 317
         f = ((osm_dst + osm_src) & 0xffff) <= (osm_src & 0xffff);
         break;
     case 8:
-        f = ((uint32_t) osm_dst + osm_src) <= osm_src;
+        f = (osm_dst + osm_src) <= osm_src;
         break;
     case 24:
         f = (osm_src & (0x0040 | 0x0001)) != 0;
         break;
     default:
-        f = is_CF() | (osm_dst == 0);
+        f = is_CF() || (osm_dst == 0);
         break;
     }
     return f;
 }
 bool Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
+    int osm_dst = static_cast<int>(this->osm_dst); // signed arithmetic easier here
+    int osm_src = static_cast<int>(this->osm_src);
     bool f;
     switch (osm) {
     case 6:
@@ -298,12 +300,14 @@ bool Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
         f = (((osm_src >> 7) ^ (osm_src >> 11)) | (osm_src >> 6)) & 1;
         break;
     default:
-        f = (((osm_dst < 0)) ^ is_OF()) | (osm_dst == 0);
+        f = ((osm_dst < 0) ^ is_OF()) | (osm_dst == 0);
         break;
     }
     return f;
 }
 bool Free86::is_LT() {
+    int osm_dst = static_cast<int>(this->osm_dst); // signed arithmetic easier here
+    int osm_src = static_cast<int>(this->osm_src);
     bool f;
     switch (osm) {
     case 6:
@@ -330,7 +334,7 @@ bool Free86::is_LT() {
         f = ((osm_src >> 7) ^ (osm_src >> 11)) & 1;
         break;
     default:
-        f = ((osm_dst < 0)) ^ is_OF();
+        f = (osm_dst < 0) ^ is_OF();
         break;
     }
     return f;
@@ -351,7 +355,7 @@ bool Free86::can_jump(int condition) {
         f = is_BE();
         break;
     case 4:
-        f = osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0);
+        f = osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000 ? 1 : 0);
         break;
     case 5:
         f = is_PF();
@@ -368,25 +372,25 @@ bool Free86::can_jump(int condition) {
     }
     return f ^ (condition & 1);
 }
-int Free86::compile_eflags(bool shift) {
-    int f0 = 0, f11 = 0;
+uint32_t Free86::compile_eflags(bool shift) {
+    uint32_t f0 = 0, f11 = 0;
     if (!shift) {
         f0 = is_CF() << 0;
         f11 = is_OF() << 11;
     }
-    int f2 = is_PF() << 2;
-    int f4 = is_AF() << 4;
-    int f6 = (osm_dst == 0) << 6;
-    int f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst < 0)) << 7;
+    uint32_t f2 = is_PF() << 2;
+    uint32_t f4 = is_AF() << 4;
+    uint32_t f6 = (osm_dst == 0) << 6;
+    uint32_t f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000 ? 1 : 0)) << 7;
     return f0 | f2 | f4 | f6 | f7 | f11;
 }
-int Free86::get_EFLAGS() {
-    int bits = compile_eflags();
+uint32_t Free86::get_EFLAGS() {
+    uint32_t bits = compile_eflags();
     bits |= df & 0x00000400;
     bits |= eflags;
     return bits;
 }
-void Free86::set_EFLAGS(int bits, int mask) {
+void Free86::set_EFLAGS(uint32_t bits, uint32_t mask) {
     osm_src = bits & (0x0800 | 0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001);
     osm_dst = ((osm_src >> 6) & 1) ^ 1;
     osm = 24;

@@ -53,7 +53,7 @@ void input_loop(PC *pc)
 int main(int ArgCount, char **Args)
 {
     static const int width = 840, height = 350;
-    static const int memory_size = 0x01000000; // 16 MB
+    static const uint32_t memory_size = 0x01000000; // 16 MB
 #ifdef TEST386
     Test386 *pc = new Test386(memory_size);
 #else

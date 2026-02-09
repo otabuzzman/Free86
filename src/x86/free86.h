@@ -7,8 +7,8 @@
 typedef struct SegmentDescriptor {
     uint32_t base;
     uint32_t limit;
-    int flags;
-    SegmentDescriptor(uint32_t base, uint32_t limit, int flags)
+    uint32_t flags;
+    SegmentDescriptor(uint32_t base, uint32_t limit, uint32_t flags)
         : base(base), limit(limit), flags(flags) {}
     SegmentDescriptor(uint64_t qword) {
         base = ((qword >> 16) & 0x0000ffff) |
@@ -33,16 +33,16 @@ typedef struct SegmentDescriptor {
                 (static_cast<uint64_t>(flags) & 0x00f0ff00) << 32 |
                 (static_cast<uint64_t>(limit) & 0x000f0000) << 32 | (static_cast<uint64_t>(limit) & 0xffff));
     }
-    int segment_size_mask() {
-        return (flags & (1 << 22)) ? -1 : 0xffff;
+    uint32_t segment_size_mask() {
+        return (flags & (1 << 22)) ? 0xffffffff : 0xffff;
     }
 } SegmentDescriptor;
 
 typedef struct SegmentRegister {
-    int selector;
+    uint32_t selector;
     SegmentDescriptor shadow;
     SegmentRegister() : selector(0), shadow(SegmentDescriptor(0)) {}
-    SegmentRegister(int selector, SegmentDescriptor shadow) : selector(selector), shadow(shadow) {}
+    SegmentRegister(uint32_t selector, SegmentDescriptor shadow) : selector(selector), shadow(shadow) {}
 } SegmentRegister;
 
 typedef struct Interrupt {
@@ -53,8 +53,8 @@ typedef struct Interrupt {
 class Free86 {
   public:
     // EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-    int regs[8];
-    int eflags;
+    uint32_t regs[8];
+    uint32_t eflags;
 
     uint32_t eip;
 
@@ -66,25 +66,25 @@ class Free86 {
     SegmentRegister tr;  // task register
     SegmentRegister idt; // IDT register
 
-    int cr0;
-    int cr2;
-    int cr3;
-    int cr4; // 80486
+    uint32_t cr0;
+    uint32_t cr2;
+    uint32_t cr3;
+    uint32_t cr4; // 80486
 
-    int cpl; // current privilege level register
+    uint32_t cpl; // current privilege level register
 
-    int halted;
+    bool halted;
 
     uint64_t cycles;
 
-    int tlb_lookup(uint32_t linear, bool writable) {
+    uint32_t tlb_lookup(uint32_t linear, bool writable) {
         uint32_t lat20 = linear >> 12; // PDE and PTE indices
         if (writable) {
             tlb_hash = tlb_writable[lat20];
         } else {
             tlb_hash = tlb_readonly[lat20];
         }
-        if (tlb_hash == -1) {
+        if (tlb_hash == 0xffffffff) {
             page_translation(linear, writable, cpl == 3);
             if (writable) {
                 tlb_hash = tlb_writable[lat20];
@@ -98,11 +98,11 @@ class Free86 {
     virtual int get_irq() = 0;
     virtual int get_iid() = 0;
 
-    virtual int io_read(int port) = 0;
-    virtual void io_write(int port, int data) = 0;
+    virtual uint32_t io_read(uint32_t port) = 0;
+    virtual void io_write(uint32_t port, uint32_t data) = 0;
 
     // x86.cpp
-    Free86(int memory_size);
+    Free86(uint32_t memory_size);
     virtual ~Free86();
 
     void reset();
@@ -111,9 +111,9 @@ class Free86 {
     void fetch_decode_execute(uint64_t cycles, Interrupt& interrupt);
 
     // memory.cpp
-    int ld8_direct(int address); // read/ write at physical memory address (bypass TLB)
-    void st8_direct(int address, int byte);
-    void st8_direct(int address, std::string data);
+    uint32_t ld8_direct(uint32_t address); // read/ write at physical memory address (bypass TLB)
+    void st8_direct(uint32_t address, uint32_t byte);
+    void st8_direct(uint32_t address, std::string data);
 
   private:
     uint32_t eip_linear;
@@ -126,18 +126,18 @@ class Free86 {
     uint32_t far;       // fetch address register (FAR, aka MAR)
     uint32_t far_start; // first fetch address of current cycle
 
-    int opcode; // sort of fetch data register (FDR, aka MDR)
+    uint32_t opcode; // sort of fetch data register (FDR, aka MDR)
 
     int df; // values 1/ -1 reflect EFLAGS.DF false/ true (string instructions)
 
-    int dpl;  // descriptor privilege level
-    int rpl;  // requested privilege level
-    int iopl; // IO privilege level
+    uint32_t dpl;  // descriptor privilege level
+    uint32_t rpl;  // requested privilege level
+    uint32_t iopl; // IO privilege level
 
     uint64_t cycles_requested;
     uint64_t cycles_remaining;
 
-    int memory_size;
+    uint32_t memory_size;
     uint8_t *memory;
 
 /*
@@ -158,20 +158,20 @@ class Free86 {
     uint32_t tlb_pages[2048]{0};
     int tlb_pages_count = 0;
     // mapping tables
-    int *tlb_readonly_cplX; // supervisor, any CPL
-    int *tlb_writable_cplX;
-    int *tlb_readonly_cpl3; // user, CPL == 3
-    int *tlb_writable_cpl3;
+    uint32_t *tlb_readonly_cplX; // supervisor, any CPL
+    uint32_t *tlb_writable_cplX;
+    uint32_t *tlb_readonly_cpl3; // user, CPL == 3
+    uint32_t *tlb_writable_cpl3;
     // current mapping tables (user or supervisor)
-    int *tlb_readonly;
-    int *tlb_writable;
+    uint32_t *tlb_readonly;
+    uint32_t *tlb_writable;
     int tlb_size = 0x100000; // 1M entries per MT
-    int tlb_hash; // LA ^ PA (by design, no necessity)
+    uint32_t tlb_hash; // LA ^ PA (by design, no necessity)
 
     void tlb_update(uint32_t linear /*data*/, uint32_t physical /*key*/, bool writable, bool user) {
         tlb_hash = linear ^ physical; // poor man's XOR hash function
         uint32_t lat20 = linear >> 12; // PD and PT indices (top 20 bits of linear address)
-        if (tlb_readonly_cplX[lat20] == -1) {
+        if (tlb_readonly_cplX[lat20] == 0xffffffff) { // new entry
             if (tlb_pages_count >= 2048) { // flush TLB if full
                 // if present, keep PTE immediately preceding this PTE to improve performance
                 tlb_flush_all(lat20 - 1);
@@ -184,18 +184,18 @@ class Free86 {
         if (writable) {
             tlb_writable_cplX[lat20] = tlb_hash;
         } else {
-            tlb_writable_cplX[lat20] = -1;
+            tlb_writable_cplX[lat20] = 0xffffffff;
         }
         if (user) {
             tlb_readonly_cpl3[lat20] = tlb_hash;
             if (writable) {
                 tlb_writable_cpl3[lat20] = tlb_hash;
             } else {
-                tlb_writable_cpl3[lat20] = -1;
+                tlb_writable_cpl3[lat20] = 0xffffffff;
             }
         } else {
-            tlb_readonly_cpl3[lat20] = -1;
-            tlb_writable_cpl3[lat20] = -1;
+            tlb_readonly_cpl3[lat20] = 0xffffffff;
+            tlb_writable_cpl3[lat20] = 0xffffffff;
         }
     }
     void tlb_flush_page(uint32_t linear) {
@@ -222,10 +222,10 @@ class Free86 {
         tlb_pages_count = n;
     }
     void tlb_clear(uint32_t lat20) {
-        tlb_readonly_cplX[lat20] = -1;
-        tlb_writable_cplX[lat20] = -1;
-        tlb_readonly_cpl3[lat20] = -1;
-        tlb_writable_cpl3[lat20] = -1;
+        tlb_readonly_cplX[lat20] = 0xffffffff;
+        tlb_writable_cplX[lat20] = 0xffffffff;
+        tlb_readonly_cpl3[lat20] = 0xffffffff;
+        tlb_writable_cpl3[lat20] = 0xffffffff;
     }
 
 /*
@@ -290,8 +290,8 @@ class Free86 {
    - : does not affect flag.
  */
     int osm;
-    int osm_src;
-    int osm_dst;
+    uint32_t osm_src;
+    uint32_t osm_dst;
 /*
    `osm_preserved'/ `osm_dst_preserved' preserve OMS/ destination of instruction
    before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
@@ -302,7 +302,7 @@ class Free86 {
    remains valid.
  */
     int ocm_preserved;
-    int ocm_dst_preserved;
+    uint32_t ocm_dst_preserved;
 
 /*
    Instruction prefix register
@@ -323,37 +323,36 @@ class Free86 {
    0x0080 address-size override prefix  (0x67)
    0x0100 operand-size override prefix  (0x66)
  */
-    int ipr; // instruction prefix register
-    int ipr_default; // reflects D flag (PM (1986), 16.1)
-                     // also belongs to the SSB (below)
+    uint32_t ipr; // instruction prefix register
+    uint32_t ipr_default; // reflects D flag (PM (1986), 16.1)
+                          // also belongs to the SSB (below)
+    uint32_t ipr_os_mask; // operand size override prefix size mask
 /*
    Segments state block
 
    Variables in the segments state block (SSB) provide shorthand
    access to frequently used segment data.
  */
-    int CS_base; // shortcut for segs[1].shadow.base
-    int SS_base; // shortcut for segs[2].shadow.base
-    int SS_mask; // 16/ 32 bit address size mask for SS (from descriptor)
+    uint32_t CS_base; // shortcut for segs[1].shadow.base
+    uint32_t SS_base; // shortcut for segs[2].shadow.base
+    uint32_t SS_mask; // 16/ 32 bit address size mask for SS (from descriptor)
 
     // https://en.wikipedia.org/wiki/X86_memory_segmentation
     bool x86_64_long_mode = false;
     // end of SSB
 
     // auxiliary variables for inter-method exchange
-    int operation; // bits 5..3 of opcode or modR/M byte
     uint32_t lax;  // linear address exchange register
-    int modRM, reg, rM;   // mod field (modRM >> 6) inline
-    int sib, base, index; // scale field (sib >> 6) inline
-    int r;  // data from register derived from modRM
-    int rm; // data from register or memory derived from modRM
-    int m, m16; // any data from memory not derived from modRM
-    int ind, imm, imm16, moffs; // indirect, immediate and offset
-    int ind1st, ind2nd, imm1st, imm2nd; // 1st/ 2nds of above
-    int x, y, XS_mask; // address size mask for effective DS
+    uint32_t operation; // bits 5..3 of opcode or modR/M byte
+    uint32_t modRM, reg, rM;   // mod field (modRM >> 6) inline
+    uint32_t sib, base, index; // scale field (sib >> 6) inline
+    uint32_t r, rm;  // register or register/ memory refered by modRM
+    uint32_t m, m16; // 32/ 16 bit memory operands from memory
+    uint32_t imm, imm16, moffs; // immediate/ offset operands
+    uint32_t ua, ub, uc; // unsigned helper
 
     // clang-format off
-    const std::vector<int> parity_LUT = {
+    const std::vector<uint32_t> parity_LUT = {
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -371,11 +370,11 @@ class Free86 {
         0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
         1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1
     };
-    const std::vector<int> shift8_LUT  = {
+    const std::vector<uint32_t> shift8_LUT  = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6,
         7, 8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4
     };
-    const std::vector<int> shift16_LUT = {
+    const std::vector<uint32_t> shift16_LUT = {
          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
         16, 0, 1, 2, 3, 4, 5, 6, 7, 8,  9, 10, 11, 12, 13, 14
     };
@@ -387,18 +386,21 @@ class Free86 {
     void update_SSB();
     void fetch_opcode();
 
-    int instruction_length(int opcode);
+    int instruction_length(uint32_t opcode);
     int modRM_bytes_number();
 
-    void set_CR0(int bits);
-    void set_CR3(int bits);
+    void set_CR0(uint32_t bits);
+    void set_CR3(uint32_t bits);
     bool is_real__v86();
     bool is_protected();
     bool is_paging(); // PG && PE set
-    void set_cpl(int level);
+    void set_cpl(uint32_t level);
 
-    void set_lower_byte(int reg, int byte);
-    void set_lower_word(int reg, int word);
+    void set_lower_byte(uint32_t reg, uint32_t byte);
+    void set_lower_word(uint32_t reg, uint32_t word);
+    uint32_t sign_extend_byte(uint32_t byte);
+    uint32_t sign_extend_word(uint32_t word);
+    uint32_t sign_shift_right(uint32_t dword, int count);
 
     void page_translation(bool writable, bool user);
     void page_translation(uint32_t address, bool writable, bool user);
@@ -406,77 +408,77 @@ class Free86 {
     void segment_translation();
     void moffs_to_linear(bool writable);
 
-    void set_segment_register(int sreg, int selector, uint32_t base, uint32_t limit, int flags);
-    void set_segment_register(int sreg, int selector);
-    void set_segment_register_real__v86(int sreg, int selector);
-    void set_segment_register_protected(int sreg, int selector);
+    void set_segment_register(uint32_t sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags);
+    void set_segment_register(uint32_t sreg, uint32_t selector);
+    void set_segment_register_real__v86(uint32_t sreg, uint32_t selector);
+    void set_segment_register_protected(uint32_t sreg, uint32_t selector);
 
-    SegmentDescriptor ld_xdt_entry(int selector);
-    uint64_t ld_tss_stack(int privilege_level); // seg:offset
+    SegmentDescriptor ld_xdt_entry(uint32_t selector);
+    uint64_t ld_tss_stack(uint32_t level); // seg:offset
 
-    int aux_INC8(int data);
-    int aux_INC16(int data);
-    int aux_DEC8(int data);
-    int aux_DEC16(int data);
-    int aux_SHRD16_SHLD16(int dst, int src, int count);
-    int aux_SHRD(int dst, int src, int count);
-    int aux_SHLD(int dst, int src, int count);
-    void aux_BT16(int base, int offset);
-    void aux_BT(int base, int offset);
-    int aux_BTS16_BTR16_BTC16(int base, int offset);
-    int aux_BTS_BTR_BTC(int base, int offset);
-    int aux_BSF16(int dst, int src);
-    int aux_BSF(int dst, int src);
-    int aux_BSR16(int dst, int src);
-    int aux_BSR(int dst, int src);
-    void aux_DIV8(int divisor);
-    void aux_DIV16(int divisor);
+    uint32_t aux_INC8(uint32_t byte);
+    uint32_t aux_INC16(uint32_t word);
+    uint32_t aux_DEC8(uint32_t byte);
+    uint32_t aux_DEC16(uint32_t word);
+    uint32_t aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, uint32_t count);
+    uint32_t aux_SHRD(uint32_t dst, uint32_t src, uint32_t count);
+    uint32_t aux_SHLD(uint32_t dst, uint32_t src, uint32_t count);
+    void aux_BT16(uint32_t base, uint32_t offset);
+    void aux_BT(uint32_t base, uint32_t offset);
+    uint32_t aux_BTS16_BTR16_BTC16(uint32_t base, uint32_t offset);
+    uint32_t aux_BTS_BTR_BTC(uint32_t base, uint32_t offset);
+    uint32_t aux_BSF16(uint32_t dst, uint32_t src);
+    uint32_t aux_BSF(uint32_t dst, uint32_t src);
+    uint32_t aux_BSR16(uint32_t dst, uint32_t src);
+    uint32_t aux_BSR(uint32_t dst, uint32_t src);
+    void aux_DIV8(uint32_t divisor);
+    void aux_DIV16(uint32_t divisor);
     void aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
-    void aux_IDIV8(int divisor);
-    void aux_IDIV16(int divisor);
-    void aux_IDIV(int dividend_upper, int dividend_lower, int divisor);
-    void aux_MUL8(int multiplicand, int multiplier);
-    void aux_MUL16(int multiplicand, int multiplier);
-    void aux_MUL(int multiplicand, int multiplier);
-    void aux_IMUL8(int multiplicand, int multiplier);
-    void aux_IMUL16(int multiplicand, int multiplier);
-    void aux_IMUL(int multiplicand, int multiplier);
-    void multiply(int multiplicand, int multiplier);
+    void aux_IDIV8(uint32_t divisor);
+    void aux_IDIV16(uint32_t divisor);
+    void aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    void aux_MUL8(uint32_t multiplicand, uint32_t multiplier);
+    void aux_MUL16(uint32_t multiplicand, uint32_t multiplier);
+    void aux_MUL(uint32_t multiplicand, uint32_t multiplier);
+    void aux_IMUL8(uint32_t multiplicand, uint32_t multiplier);
+    void aux_IMUL16(uint32_t multiplicand, uint32_t multiplier);
+    void aux_IMUL(uint32_t multiplicand, uint32_t multiplier);
+    void multiply(uint32_t multiplicand, uint32_t multiplier);
 
-    int calculate8(int dst, int src);
-    int calculate16(int dst, int src);
-    int calculate(int dst, int src);
+    uint32_t calculate8(uint32_t dst, uint32_t src);
+    uint32_t calculate16(uint32_t dst, uint32_t src);
+    uint32_t calculate(uint32_t dst, uint32_t src);
 
-    int shift8(int src, int count);
-    int shift16(int src, int count);
-    int shift(uint32_t src, int count);
+    uint32_t shift8(uint32_t src, uint32_t count);
+    uint32_t shift16(uint32_t src, uint32_t count);
+    uint32_t shift(uint32_t src, uint32_t count);
 
-    void aux_LDTR(int selector);
-    void aux_LTR(int selector);
-    void aux_JMPF(int selector, uint32_t offset);
-    void aux_JMPF_real__v86_mode(int selector, uint32_t offset);
-    void aux_JMPF_protected_mode(int selector, uint32_t offset);
-    void aux_CALLF(bool o32, int selector, uint32_t offset, int return_address);
-    void aux_CALLF_real__v86_mode(bool o32, int selector, uint32_t offset, int return_address);
-    void aux_CALLF_protected_mode(bool o32, int selector, uint32_t offset, int return_address);
-    void aux_RETF(bool o32, int release_stack_items);
-    void return_real__v86_mode(bool o32, bool is_iret, int release_stack_items);
-    void return_protected_mode(bool o32, bool is_iret, int release_stack_items);
-    void zero_segment_register(int sreg, int privilege_level);
+    void aux_LDTR(uint32_t selector);
+    void aux_LTR(uint32_t selector);
+    void aux_JMPF(uint32_t selector, uint32_t offset);
+    void aux_JMPF_real__v86_mode(uint32_t selector, uint32_t offset);
+    void aux_JMPF_protected_mode(uint32_t selector, uint32_t offset);
+    void aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_RETF(bool o32, uint32_t release_stack_items);
+    void return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items);
+    void return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items);
+    void zero_segment_register(uint32_t sreg, uint32_t level);
 
-    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, int return_address);
-    void raise_interrupt_real__v86_mode(int id, int is_sw, int return_address);
-    void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, int return_address);
+    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
+    void raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address);
+    void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);
-    int ld_descriptor_fields(int selector, bool limit);
-    void aux_VERR_VERW(int selector, bool is_verw);
-    bool is_segment_accessible(int selector, bool writable);
+    uint32_t ld_descriptor_fields(uint32_t selector, bool limit);
+    void aux_VERR_VERW(uint32_t selector, bool is_verw);
+    bool is_segment_accessible(uint32_t selector, bool writable);
     void aux_ARPL();
     void aux_CPUID();
-    void aux_AAM(int radix);
-    void aux_AAD(int radix);
+    void aux_AAM(uint32_t radix);
+    void aux_AAD(uint32_t radix);
     void aux_AAA();
     void aux_AAS();
     void aux_DAA();
@@ -491,8 +493,8 @@ class Free86 {
     void aux_LEAVE();
     void aux_ENTER16();
     void aux_ENTER();
-    void ld_far_pointer16(int sreg);
-    void ld_far_pointer(int sreg);
+    void ld_far_pointer16(uint32_t sreg);
+    void ld_far_pointer(uint32_t sreg);
 
     // string.cpp
     void aux_INS16();
@@ -526,44 +528,43 @@ class Free86 {
     void aux_SCASD();
 
     // memory.cpp
-    int ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
-    int ld16_readonly_cplX();  // ...word
-    int ld_readonly_cplX();  // ...dword
+    uint32_t ld8_readonly_cplX(); // from supervisor RO memory: load (return) byte
+    uint32_t ld16_readonly_cplX();  // ...word
+    uint32_t ld_readonly_cplX();  // ...dword
     uint64_t ld64_readonly_cplX();  // ...qword from current linear address
 
-    int ld8_readonly_cpl3(); // from user RO memory: load (return) byte
-    int ld16_readonly_cpl3(); // ...word
-    int ld_readonly_cpl3(); // ...dword from current linear address
+    uint32_t ld8_readonly_cpl3(); // from user RO memory: load (return) byte
+    uint32_t ld16_readonly_cpl3(); // ...word
+    uint32_t ld_readonly_cpl3(); // ...dword from current linear address
 
-    int ld8_writable_cpl3(); // from user WR memory: load (return) byte
-    int ld16_writable_cpl3(); // ...word
-    int ld_writable_cpl3(); // ...dword from current linear address
+    uint32_t ld8_writable_cpl3(); // from user WR memory: load (return) byte
+    uint32_t ld16_writable_cpl3(); // ...word
+    uint32_t ld_writable_cpl3(); // ...dword from current linear address
 
-    void st8_writable_cplX(int byte); // in supervisor WR memory: store byte
-    void st16_writable_cplX(int word); // ...word
-    void st_writable_cplX(int dword); // ...dword
+    void st8_writable_cplX(uint32_t byte); // in supervisor WR memory: store byte
+    void st16_writable_cplX(uint32_t word); // ...word
+    void st_writable_cplX(uint32_t dword); // ...dword
     void st64_writable_cplX(uint64_t qword); // ...qword at current linear address
 
-    void st8_writable_cpl3(int byte); // in user WR memory: store byte
-    void st16_writable_cpl3(int word); // ...word
-    void st_writable_cpl3(int dword); // ...dword at current linear address
+    void st8_writable_cpl3(uint32_t byte); // in user WR memory: store byte
+    void st16_writable_cpl3(uint32_t word); // ...word
+    void st_writable_cpl3(uint32_t dword); // ...dword at current linear address
 
-    int ld16_direct(int address); // read/ write at memory address, bypass TLB
-    int ld_direct(int address);
-    uint64_t ld64_direct(int address);
-    void st16_direct(int address, int byte);
-    void st_direct(int address, int dword);
-    void st64_direct(int address, uint64_t qword);
-
-    int fetch_data8(); // read byte...
-    int fetch_data16(); // ...word...
-    int fetch_data(); // ...dword at FAR, update FAR
-    void push16(int word);
-    void push(int dword);
-    int pop16();
-    int pop();
-    int ld16_stack();
-    int ld_stack();
+    uint32_t ld16_direct(uint32_t address); // read/ write at memory address, bypass TLB
+    uint32_t ld_direct(uint32_t address);
+    uint64_t ld64_direct(uint32_t address);
+    void st16_direct(uint32_t address, uint32_t byte);
+    void st_direct(uint32_t address, uint32_t dword);
+    void st64_direct(uint32_t address, uint64_t qword);
+    uint32_t fetch_data8(); // read byte...
+    uint32_t fetch_data16(); // ...word...
+    uint32_t fetch_data(); // ...dword at FAR, update FAR
+    void push16(uint32_t word);
+    void push(uint32_t dword);
+    uint32_t pop16();
+    uint32_t pop();
+    uint32_t ld16_stack();
+    uint32_t ld_stack();
 
     // eflags.cpp
     bool is_CF(); // carry (bit 0)
@@ -574,9 +575,9 @@ class Free86 {
     bool is_LE(); // less or equal, unsigned comparison
     bool is_LT(); // less than
     bool can_jump(int condition);
-    int compile_eflags(bool shift = false);
+    uint32_t compile_eflags(bool shift = false);
 
-    int get_EFLAGS();
-    void set_EFLAGS(int bits, int mask);
+    uint32_t get_EFLAGS();
+    void set_EFLAGS(uint32_t bits, uint32_t mask);
 };
 #endif // FREE86_H

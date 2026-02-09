@@ -7,32 +7,32 @@
 
 class PlainCPU : public Free86 {
   public:
-    PlainCPU(int memory_size) : Free86(memory_size) {}
+    PlainCPU(uint32_t memory_size) : Free86(memory_size) {}
     ~PlainCPU() override {}
     int get_irq() override { return 0; }
     int get_iid() override { return 0; }
-    int io_read(int port) override;
-    void io_write(int port, int data) override;
+    uint32_t io_read(uint32_t port) override;
+    void io_write(uint32_t port, uint32_t data) override;
 };
 
 class Test386 {
   public:
-    Test386(int memory_size) {
+    Test386(uint32_t memory_size) {
         cpu = new PlainCPU(memory_size);
     }
     ~Test386() {
         delete cpu;
     }
-    long load(std::string path, int offset) {
+    size_t load(std::string path, uint32_t offset) {
         FILE *f = fopen(path.c_str(), "rb");
         fseek(f, 0, SEEK_END);
-        long size = ftell(f);
+        size_t size = static_cast<size_t>(ftell(f));
         fseek(f, 0, SEEK_SET);
         auto buffer = new uint8_t[size];
         auto _ = fread(buffer, size, 1, f);
 
-        printf("load %ld bytes at 0x%x\n", size, offset);
-        for (int i = 0; i < size; i++) {
+        printf("load %lu bytes at 0x%x\n", size, offset);
+        for (size_t i = 0; i < size; i++) {
             cpu->st8_direct(offset + i, buffer[i]);
         }
         fclose(f);
@@ -71,7 +71,8 @@ class Test386 {
                 int mask = 1 << 6;
                 if ((32 > e.id) && (mask & (1 << e.id))) {
                     std::string status = compile_status_string();
-                    int n, linear, physical;
+                    uint32_t linear, physical;
+                    int n;
                     linear = cpu->segs[1].shadow.base + cpu->eip; // EIP is offset of linear address
                     if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
                         physical = cpu->tlb_lookup(linear, 0); // physical address
@@ -145,12 +146,12 @@ class Test386 {
         sp = "ESP:" + hex(cpu->regs[4]);
         bp = "EBP:" + hex(cpu->regs[5]);
         flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9, std::string::npos);
-        cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex((int) cpu->segs[1].shadow.base) + ":" + hex((int) cpu->segs[1].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].shadow.flags, true);
-        ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex((int) cpu->segs[2].shadow.base) + ":" + hex((int) cpu->segs[2].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].shadow.flags, true);
-        ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex((int) cpu->segs[3].shadow.base) + ":" + hex((int) cpu->segs[3].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].shadow.flags, true);
-        es = "ES:" + hex((short) cpu->segs[0].selector) + ":" + hex((int) cpu->segs[0].shadow.base) + ":" + hex((int) cpu->segs[0].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[0].shadow.flags, true);
-        fs = "FS:" + hex((short) cpu->segs[4].selector) + ":" + hex((int) cpu->segs[4].shadow.base) + ":" + hex((int) cpu->segs[4].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[4].shadow.flags, true);
-        gs = "GS:" + hex((short) cpu->segs[5].selector) + ":" + hex((int) cpu->segs[5].shadow.base) + ":" + hex((int) cpu->segs[5].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[5].shadow.flags, true);
+        cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex(cpu->segs[1].shadow.base) + ":" + hex(cpu->segs[1].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].shadow.flags, true);
+        ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex(cpu->segs[2].shadow.base) + ":" + hex(cpu->segs[2].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].shadow.flags, true);
+        ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex(cpu->segs[3].shadow.base) + ":" + hex(cpu->segs[3].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].shadow.flags, true);
+        es = "ES:" + hex((short) cpu->segs[0].selector) + ":" + hex(cpu->segs[0].shadow.base) + ":" + hex(cpu->segs[0].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[0].shadow.flags, true);
+        fs = "FS:" + hex((short) cpu->segs[4].selector) + ":" + hex(cpu->segs[4].shadow.base) + ":" + hex(cpu->segs[4].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[4].shadow.flags, true);
+        gs = "GS:" + hex((short) cpu->segs[5].selector) + ":" + hex(cpu->segs[5].shadow.base) + ":" + hex(cpu->segs[5].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[5].shadow.flags, true);
         cr0 = "CR0:" + bin(cpu->cr0).replace(1, 26, "..");
         cr2 = "CR2:" + hex(cpu->cr2);
         cr3 = "CR3:" + hex(cpu->cr3);
@@ -190,6 +191,9 @@ class Test386 {
     std::string bin(int bits, bool divide = false) {
         return bin((short)(bits >> 16), divide) + (divide ? "_" : "") + bin((short)(bits & 0xffff), divide);
     }
+    std::string bin(uint32_t bits, bool divide = false) {
+        return bin((short)(bits >> 16), divide) + (divide ? "_" : "") + bin((short)(bits & 0xffff), divide);
+    }
     std::string hex(char bits) {
         std::string result = ""; char numerals[] = "0123456789ABCDEF";
         return result + numerals[((bits >> 4) & 0xf)] + numerals[bits & 0xf];
@@ -198,6 +202,9 @@ class Test386 {
         return hex((char)(bits >> 8)) + hex((char)(bits & 0xff));
     }
     std::string hex(int bits) {
+        return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
+    }
+    std::string hex(uint32_t bits) {
         return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
     }
 /*
@@ -214,13 +221,13 @@ class Test386 {
     std::string history[history_size];
 };
 
-int PlainCPU::io_read(int port) {
-    int _port = port & (1024 - 1);
+uint32_t PlainCPU::io_read(uint32_t port) {
+    uint32_t _port = port & (1024 - 1);
     printf("*** ioport_read 0x%04x\n", _port);
     return 0xff;
 }
-void PlainCPU::io_write(int port, int data) {
-    int _port = port & (1024 - 1);
+void PlainCPU::io_write(uint32_t port, uint32_t data) {
+    uint32_t _port = port & (1024 - 1);
     if (_port == 0x0190) { // default POST_PORT in test386
         printf("*** ioport_write 0x%04x : 0x%08x\n", _port, data);
     } else { // any other value considered OUT_PORT
