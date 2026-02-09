@@ -94,26 +94,26 @@ bool Free86::is_AF() {
     case 0:
     case 1:
     case 2:
-        ua = osm_dst - osm_src;
-        f = (osm_dst ^ ua ^ osm_src) & 0x10;
+        u = osm_dst - osm_src;
+        f = (osm_dst ^ u ^ osm_src) & 0x10;
         break;
     case 3:
     case 4:
     case 5:
-        ua = osm_dst - osm_src - 1;
-        f = (osm_dst ^ ua ^ osm_src) & 0x10;
+        u = osm_dst - osm_src - 1;
+        f = (osm_dst ^ u ^ osm_src) & 0x10;
         break;
     case 6:
     case 7:
     case 8:
-        ua = osm_dst + osm_src;
-        f = (osm_dst ^ ua ^ osm_src) & 0x10;
+        u = osm_dst + osm_src;
+        f = (osm_dst ^ u ^ osm_src) & 0x10;
         break;
     case 9:
     case 10:
     case 11:
-        ua = osm_dst + osm_src + 1;
-        f = (osm_dst ^ ua ^ osm_src) & 0x10;
+        u = osm_dst + osm_src + 1;
+        f = (osm_dst ^ u ^ osm_src) & 0x10;
         break;
     case 12:
     case 13:
@@ -154,52 +154,52 @@ bool Free86::is_OF() {
     bool f;
     switch (osm % 0x1f) {
     case 0:
-        ua = osm_dst - osm_src;
-        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 7) & 1;
+        u = osm_dst - osm_src;
+        f = (((u ^ osm_src ^ 0xffffffff) & (u ^ osm_dst)) >> 7) & 1;
         break;
     case 1:
-        ua = osm_dst - osm_src;
-        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 15) & 1;
+        u = osm_dst - osm_src;
+        f = (((u ^ osm_src ^ 0xffffffff) & (u ^ osm_dst)) >> 15) & 1;
         break;
     case 2:
-        ua = osm_dst - osm_src;
-        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 31) & 1;
+        u = osm_dst - osm_src;
+        f = (((u ^ osm_src ^ 0xffffffff) & (u ^ osm_dst)) >> 31) & 1;
         break;
     case 3:
-        ua = osm_dst - osm_src - 1;
-        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 7) & 1;
+        u = osm_dst - osm_src - 1;
+        f = (((u ^ osm_src ^ 0xffffffff) & (u ^ osm_dst)) >> 7) & 1;
         break;
     case 4:
-        ua = osm_dst - osm_src - 1;
-        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 15) & 1;
+        u = osm_dst - osm_src - 1;
+        f = (((u ^ osm_src ^ 0xffffffff) & (u ^ osm_dst)) >> 15) & 1;
         break;
     case 5:
-        ua = osm_dst - osm_src - 1;
-        f = (((ua ^ osm_src ^ 0xffffffff) & (ua ^ osm_dst)) >> 31) & 1;
+        u = osm_dst - osm_src - 1;
+        f = (((u ^ osm_src ^ 0xffffffff) & (u ^ osm_dst)) >> 31) & 1;
         break;
     case 6:
-        ua = osm_dst + osm_src;
-        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 7) & 1;
+        u = osm_dst + osm_src;
+        f = (((u ^ osm_src) & (u ^ osm_dst)) >> 7) & 1;
         break;
     case 7:
-        ua = osm_dst + osm_src;
-        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 15) & 1;
+        u = osm_dst + osm_src;
+        f = (((u ^ osm_src) & (u ^ osm_dst)) >> 15) & 1;
         break;
     case 8:
-        ua = osm_dst + osm_src;
-        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 31) & 1;
+        u = osm_dst + osm_src;
+        f = (((u ^ osm_src) & (u ^ osm_dst)) >> 31) & 1;
         break;
     case 9:
-        ua = osm_dst + osm_src + 1;
-        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 7) & 1;
+        u = osm_dst + osm_src + 1;
+        f = (((u ^ osm_src) & (u ^ osm_dst)) >> 7) & 1;
         break;
     case 10:
-        ua = osm_dst + osm_src + 1;
-        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 15) & 1;
+        u = osm_dst + osm_src + 1;
+        f = (((u ^ osm_src) & (u ^ osm_dst)) >> 15) & 1;
         break;
     case 11:
-        ua = osm_dst + osm_src + 1;
-        f = (((ua ^ osm_src) & (ua ^ osm_dst)) >> 31) & 1;
+        u = osm_dst + osm_src + 1;
+        f = (((u ^ osm_src) & (u ^ osm_dst)) >> 31) & 1;
         break;
     case 12:
     case 13:
