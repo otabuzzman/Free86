@@ -79,8 +79,7 @@ void Free86::fetch_opcode() {
     }
 }
 int Free86::instruction_length(uint32_t opcode) {
-    uint32_t ipr, operation;
-    int stride, n = 1;
+    uint32_t ipr, operation, stride, n = 1;
     ipr = ipr_default;
     if (ipr & 0x0100) {
         stride = 2;
@@ -728,10 +727,10 @@ int Free86::instruction_length(uint32_t opcode) {
     }
 FETCH_LOOP:
     ;
-    return n;
+    return static_cast<int>(n);
 }
 int Free86::modRM_bytes_number() {
-    int n = 0;
+    uint32_t n = 0;
     if (ipr & 0x0080) {
         switch (modRM >> 6) {
         case 0:
@@ -792,7 +791,7 @@ int Free86::modRM_bytes_number() {
             break;
         }
     }
-    return n;
+    return static_cast<int>(n);
 }
 void Free86::set_CR0(uint32_t bits) {
     // if changing flags 31, 16, or 0, must flush tlb
@@ -838,13 +837,13 @@ void Free86::set_lower_word(uint32_t reg, uint32_t word) {
     regs[reg] = (regs[reg] & 0xffff0000) | (word & 0xffff);
 }
 uint32_t Free86::sign_extend_byte(uint32_t byte) {
-    return static_cast<uint32_t>(static_cast<int32_t>(byte << 24) >> 24);
+    return static_cast<uint32_t>(static_cast<int>(byte << 24) >> 24);
 }
 uint32_t Free86::sign_extend_word(uint32_t word) {
-    return static_cast<uint32_t>(static_cast<int32_t>(word << 16) >> 16);
+    return static_cast<uint32_t>(static_cast<int>(word << 16) >> 16);
 }
 uint32_t Free86::sign_shift_right(uint32_t dword, int count) {
-    return static_cast<uint32_t>(static_cast<int32_t>(dword) >> count);
+    return static_cast<uint32_t>(static_cast<int>(dword) >> count);
 }
 void Free86::page_translation(bool writable, bool user) {
     page_translation(lax, writable, user);
@@ -1548,8 +1547,8 @@ void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t 
 }
 void Free86::aux_IDIV8(uint32_t divisor) {
     int d, a, q, s;
-    d = (static_cast<int32_t>(divisor) << 24) >> 24;
-    a = (static_cast<int32_t>(regs[0]) << 16) >> 16;
+    d = (static_cast<int>(divisor) << 24) >> 24;
+    a = (static_cast<int>(regs[0]) << 16) >> 16;
     if (d == 0) {
         abort(0);
     }
@@ -1562,7 +1561,7 @@ void Free86::aux_IDIV8(uint32_t divisor) {
 }
 void Free86::aux_IDIV16(uint32_t divisor) {
     int d, a, q, s;
-    d = (static_cast<int32_t>(divisor) << 16) >> 16;
+    d = (static_cast<int>(divisor) << 16) >> 16;
     a = (regs[2] << 16) | (regs[0] & 0xffff);
     if (d == 0) {
         abort(0);
@@ -2403,8 +2402,8 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
             if (!(ssd.flags & (1 << 15))) {
                 abort(10, ss & 0xfffc);
             }
-            // Ue = get_addressmask(segs[2].shadow.flags);
-            // Ve = segs[2].shadow.base;
+            OS_base = segs[2].shadow.base;
+            OS_mask = (segs[2].shadow.flags & (1 << 22)) ? 0xffffffff : 0xffff;
             SS_base = ssd.base;
             SS_mask = ssd.segment_size_mask();
             if (gate32) {
@@ -2414,12 +2413,11 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
                 esp = esp - 4;
                 lax = SS_base + (esp & SS_mask);
                 st_writable_cplX(esp_start);
-                for (int i = gpac - 1; i >= 0; i--) {
-                    // x = Xe(Ve + ((esp_start + i * 4) & Ue));
+                for (uint32_t i = gpac; i > 0; i--) {
+                    ua = 0; // Xe(OS_base + ((esp_start + (i - 1) * 4) & OS_mask));
                     esp = esp - 4;
                     lax = SS_base + (esp & SS_mask);
-                    st_writable_cplX(0);
-                    // st_writable_cplX(x);
+                    st_writable_cplX(ua);
                 }
             } else {
                 esp = esp - 2;
@@ -2428,12 +2426,11 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
                 esp = esp - 2;
                 lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(esp_start);
-                for (int i = gpac - 1; i >= 0; i--) {
-                    // x = Ye(Ve + ((esp_start + i * 2) & Ue));
+                for (uint32_t i = gpac; i > 0; i--) {
+                    ua = 0; // Xe(OS_base + ((esp_start + (i - 1) * 2) & OS_mask));
                     esp = esp - 2;
                     lax = SS_base + (esp & SS_mask);
-                    st16_writable_cplX(0);
-                    // st16_writable_cplX(x);
+                    st16_writable_cplX(ua);
                 }
             }
             ss = (ss & ~3u) | dpl;
@@ -2959,7 +2956,7 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
     }
     ua = ld_descriptor_fields(selector, is_lsl);
     osm_src = compile_eflags();
-    if (ua == -1) {
+    if (ua == 0x80000000) { // notok
         osm_src &= ~0x0040u;
     } else {
         osm_src |= 0x0040;

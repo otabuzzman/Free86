@@ -216,7 +216,7 @@ void Free86::st8_direct(uint32_t address, uint32_t byte) {
 }
 void Free86::st8_direct(uint32_t address, std::string data) {
     auto s = data.c_str();
-    int l = static_cast<int32_t>(data.length());
+    int l = static_cast<int>(data.length());
     for (int i = 0; i < l; i++) {
         st8_direct(address++, s[i] & 0xff);
     }

@@ -272,8 +272,8 @@ bool Free86::is_BE() { // `below' for signed comparison, PM p. 317
     return f;
 }
 bool Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
-    int32_t osm_dst = static_cast<int32_t>(this->osm_dst); // signed arithmetic easier here
-    int32_t osm_src = static_cast<int32_t>(this->osm_src);
+    int osm_dst = static_cast<int>(this->osm_dst); // signed arithmetic easier here
+    int osm_src = static_cast<int>(this->osm_src);
     bool f;
     switch (osm) {
     case 6:
@@ -306,8 +306,8 @@ bool Free86::is_LE() { // `less' for unsigned comparison, PM p. 317
     return f;
 }
 bool Free86::is_LT() {
-    int32_t osm_dst = static_cast<int32_t>(this->osm_dst); // signed arithmetic easier here
-    int32_t osm_src = static_cast<int32_t>(this->osm_src);
+    int osm_dst = static_cast<int>(this->osm_dst); // signed arithmetic easier here
+    int osm_src = static_cast<int>(this->osm_src);
     bool f;
     switch (osm) {
     case 6:
