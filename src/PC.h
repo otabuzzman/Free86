@@ -77,7 +77,6 @@ class I8259 {
         imr = 0;
         isr = 0;
         priority_add = 0;
-        irq_base = 0;
         read_reg_select = 0;
         special_mask = 0;
         icwn = 0;
@@ -86,10 +85,11 @@ class I8259 {
         icw4 = 0;
         elcr = 0;
         elcr_mask = 0;
+        irq_base = 0;
     }
-    void set_irq(int irq, bool Qf) {
+    void set_irq(int irq, bool raise) {
         int ir_register = 1 << irq;
-        if (Qf) {
+        if (raise) {
             if ((last_irr & ir_register) == 0) {
                 irr |= ir_register;
             }
@@ -134,32 +134,31 @@ class I8259 {
             irr &= ~(1 << irq);
         }
     }
-    void ioport_write(int mem8_loc, int x) {
-        mem8_loc &= 1; // pin A0
+    void ioport_write(int port, int data) {
         int priority;
-        if (mem8_loc == 0) { // (A0 == 0) and...
-            if (x & 0x10) {  // ...(bit 4 == 1) is ICW1 (after reset)
+        if ((port & 1) == 0) { // (A0 == 0) and...
+            if (data & 0x10) {  // ...(bit 4 == 1) is ICW1 (after reset)
                 reset();
                 icwn = 1; // start ICW sequence
-                icw4 = x & 1;   // ICW1.IC4
-                if (x & 0x02) { // ICW1.SNGL
+                icw4 = data & 1;   // ICW1.IC4
+                if (data & 0x02) { // ICW1.SNGL
                     throw "ICW1: SNGL == 1 not supported";
                 }
-                if (x & 0x08) { // ICW1.LTIM
+                if (data & 0x08) { // ICW1.LTIM
                     throw "ICW1: LTIM == 1 not supported";
                 }
-            } else if (x & 0x08) { // ...(bit 3 == 1) are OCW3
-                if (x & 0x02) { // OCW3.RR (read register command)
-                    read_reg_select = x & 1;
+            } else if (data & 0x08) { // ...(bit 3 == 1) are OCW3
+                if (data & 0x02) { // OCW3.RR (read register command)
+                    read_reg_select = data & 1;
                 }
-                if (x & 0x40) { // OCW3.ESMM (special mask mode)
-                    special_mask = (x >> 5) & 1;
+                if (data & 0x40) { // OCW3.ESMM (special mask mode)
+                    special_mask = (data >> 5) & 1;
                 }
             } else { // ...( bit 4 == 0 && bit 3 == 0) are OCW2
-                switch (x) {
+                switch (data) {
                 case 0x00:
                 case 0x80: // rotate in automatic EOI mode (clear)
-                    rotate_on_autoeoi = x >> 7;
+                    rotate_on_autoeoi = data >> 7;
                     break;
                 case 0x20: // non-specific EOI command
                 case 0xa0: // rotate on non-specific EOI command
@@ -167,7 +166,7 @@ class I8259 {
                     if (priority >= 0) {
                         isr &= ~(1 << ((priority + priority_add) & 7));
                     }
-                    if (x == 0xa0) {
+                    if (data == 0xa0) {
                         priority_add = (priority_add + 1) & 7;
                     }
                     break;
@@ -179,7 +178,7 @@ class I8259 {
                 case 0x65: // level 5
                 case 0x66: // level 6
                 case 0x67: // level 7
-                    priority = x & 7;
+                    priority = data & 7;
                     isr &= ~(1 << priority);
                     break;
                 case 0xc0: // set priority command, IR priority level 0
@@ -190,7 +189,7 @@ class I8259 {
                 case 0xc5: // level 5
                 case 0xc6: // level 6
                 case 0xc7: // level 7
-                    priority_add = (x + 1) & 7;
+                    priority_add = (data + 1) & 7;
                     break;
                 case 0xe0: // rotate on specific EOI command, IR level 0
                 case 0xe1: // level 1
@@ -200,7 +199,7 @@ class I8259 {
                 case 0xe5: // level 5
                 case 0xe6: // level 6
                 case 0xe7: // level 7
-                    priority = x & 7;
+                    priority = data & 7;
                     isr &= ~(1 << priority);
                     priority_add = (priority + 1) & 7;
                     break;
@@ -209,11 +208,11 @@ class I8259 {
         } else { // ICW2, 3, 4, or OCW1
             switch (icwn) {
             case 0: // OCW1, set IMR
-                imr = x;
+                imr = data;
                 update_irq();
                 break;
             case 1: // ICW2, set page starting address of service routines
-                irq_base = x & 0xf8;
+                irq_base = data & 0xf8;
                 icwn = 2;
                 break;
             case 2: // ICW3, load slave register if ICW1.SNGL == 0
@@ -224,25 +223,24 @@ class I8259 {
                 }
                 break;
             case 3: // ICW4, program SFNM, BUF, M/S, AEOI and uPM if set
-                auto_eoi = (x >> 1) & 1;
+                auto_eoi = (data >> 1) & 1;
                 icwn = 0;
                 break;
             }
         }
     }
-    int ioport_read(int Ug) {
-        int mem8_loc, return_register;
-        mem8_loc = Ug & 1;
-        if (mem8_loc == 0) {
+    int ioport_read(int port) {
+        int reg;
+        if ((port & 1) == 0) {
             if (read_reg_select) {
-                return_register = isr;
+                reg = isr;
             } else {
-                return_register = irr;
+                reg = irr;
             }
         } else {
-            return_register = imr;
+            reg = imr;
         }
-        return return_register;
+        return reg;
     }
     void update_irq();
 };
@@ -261,8 +259,8 @@ class PIC {
         delete pics[0];
         delete pics[1];
     }
-    void set_irq(int irq, int Qf) {
-        pics[irq >> 3]->set_irq(irq & 7, Qf);
+    void set_irq(int irq, bool raise) {
+        pics[irq >> 3]->set_irq(irq & 7, raise);
         update_irq();
     }
     int get_hard_intno() {
@@ -330,8 +328,8 @@ class Serial {
         set_irq_func = kh;
         write_func = lh;
     }
-    void store_char(int x) {
-        print_fifo.push(x);
+    void store_char(int data) {
+        print_fifo.push(data);
     }
     void update_irq() {
         if ((lsr & 0x01) && (ier & 0x01)) {
@@ -347,17 +345,16 @@ class Serial {
             set_irq(0);
         }
     }
-    void ioport_write(int mem8_loc, int x) {
-        mem8_loc &= 7;
-        switch (mem8_loc) {
+    void ioport_write(int port, int data) {
+        switch (port & 7) {
         default:
         case 0:
             if (lcr & 0x80) {
-                divider = (divider & 0xff00) | x;
+                divider = (divider & 0xff00) | data;
             } else {
                 lsr &= ~0x20;
                 update_irq();
-                store_char(x);
+                store_char(data);
                 lsr |= 0x20;
                 lsr |= 0x40;
                 update_irq();
@@ -365,40 +362,39 @@ class Serial {
             break;
         case 1:
             if (lcr & 0x80) {
-                divider = (divider & 0x00ff) | (x << 8);
+                divider = (divider & 0x00ff) | (data << 8);
             } else {
-                ier = x;
+                ier = data;
                 update_irq();
             }
             break;
         case 2:
             break;
         case 3:
-            lcr = x;
+            lcr = data;
             break;
         case 4:
-            mcr = x;
+            mcr = data;
             break;
         case 5:
             break;
         case 6:
-            msr = x;
+            msr = data;
             break;
         case 7:
-            scr = x;
+            scr = data;
             break;
         }
     }
-    int ioport_read(int mem8_loc) {
-        mem8_loc &= 7;
-        int Pg;
-        switch (mem8_loc) {
+    int ioport_read(int port) {
+        int reg;
+        switch (port & 7) {
         default:
         case 0:
             if (lcr & 0x80) {
-                Pg = divider & 0xff;
+                reg = divider & 0xff;
             } else {
-                Pg = rbr;
+                reg = rbr;
                 lsr &= ~(0x01 | 0x10);
                 update_irq();
                 send_char_from_fifo();
@@ -406,31 +402,31 @@ class Serial {
             break;
         case 1:
             if (lcr & 0x80) {
-                Pg = (divider >> 8) & 0xff;
+                reg = (divider >> 8) & 0xff;
             } else {
-                Pg = ier;
+                reg = ier;
             }
             break;
         case 2:
-            Pg = iir;
+            reg = iir;
             break;
         case 3:
-            Pg = lcr;
+            reg = lcr;
             break;
         case 4:
-            Pg = mcr;
+            reg = mcr;
             break;
         case 5:
-            Pg = lsr;
+            reg = lsr;
             break;
         case 6:
-            Pg = msr;
+            reg = msr;
             break;
         case 7:
-            Pg = scr;
+            reg = scr;
             break;
         }
-        return Pg;
+        return reg;
     }
     void send_break() {
         rbr = 0;
@@ -454,10 +450,10 @@ class Serial {
     char print_fifo_pop() {
         return static_cast<char>(print_fifo.pop());
     }
-    void set_irq(int x);
+    void set_irq(bool raise);
 };
-inline void Serial::set_irq(int x) {
-    pic->set_irq(4, x);
+inline void Serial::set_irq(bool raise) {
+    pic->set_irq(4, raise);
 }
 class IRQCH {
     int last_irr = 0;
@@ -566,12 +562,12 @@ class IRQCH {
         fh = count_load_time + fh;
         return fh;
     }
-    void pit_load_count(int x) {
-        if (x == 0) {
-            x = 0x10000;
+    void pit_load_count(int data) {
+        if (data == 0) {
+            data = 0x10000;
         }
         count_load_time = get_time();
-        count = x;
+        count = data;
     }
 };
 class PIT {
@@ -591,52 +587,50 @@ class PIT {
             pit_channels[i]->pit_load_count(0);
         }
     }
-    void ioport_write(int mem8_loc, int x) {
-        mem8_loc &= 3;
+    void ioport_write(int port, int data) {
         int hh, ih;
-        if (mem8_loc == 3) {
-            hh = x >> 6;
+        if ((port & 3) == 3) {
+            hh = data >> 6;
             if (hh == 3) {
                 return;
             }
             auto s = pit_channels[hh];
-            ih = (x >> 4) & 3;
+            ih = (data >> 4) & 3;
             switch (ih) {
             case 0:
                 s->latched_count = s->pit_get_count();
                 s->rw_state = 4;
                 break;
             default:
-                s->mode = (x >> 1) & 7;
-                s->bcd = x & 1;
+                s->mode = (data >> 1) & 7;
+                s->bcd = data & 1;
                 s->rw_state = ih - 1 + 0;
                 break;
             }
         } else {
-            auto s = pit_channels[mem8_loc];
+            auto s = pit_channels[port & 3];
             switch (s->rw_state) {
             case 0:
-                s->pit_load_count(x);
+                s->pit_load_count(data);
                 break;
             case 1:
-                s->pit_load_count(x << 8);
+                s->pit_load_count(data << 8);
                 break;
             case 2:
             case 3:
                 if (s->rw_state & 1) {
-                    s->pit_load_count((s->latched_count & 0xff) | (x << 8));
+                    s->pit_load_count((s->latched_count & 0xff) | (data << 8));
                 } else {
-                    s->latched_count = x;
+                    s->latched_count = data;
                 }
                 s->rw_state ^= 1;
                 break;
             }
         }
     }
-    int ioport_read(int mem8_loc) {
-        mem8_loc &= 3;
-        int Pg, ma;
-        auto s = pit_channels[mem8_loc];
+    int ioport_read(int port) {
+        int res, ma;
+        auto s = pit_channels[port & 3];
         switch (s->rw_state) {
         case 0:
         case 1:
@@ -644,9 +638,9 @@ class PIT {
         case 3:
             ma = s->pit_get_count();
             if (s->rw_state & 1) {
-                Pg = (ma >> 8) & 0xff;
+                res = (ma >> 8) & 0xff;
             } else {
-                Pg = ma & 0xff;
+                res = ma & 0xff;
             }
             if (s->rw_state & 2) {
                 s->rw_state ^= 1;
@@ -656,35 +650,35 @@ class PIT {
         case 4:
         case 5:
             if (s->rw_state & 1) {
-                Pg = s->latched_count >> 8;
+                res = s->latched_count >> 8;
             } else {
-                Pg = s->latched_count & 0xff;
+                res = s->latched_count & 0xff;
             }
             s->rw_state ^= 1;
             break;
         }
-        return Pg;
+        return res;
     }
-    void speaker_ioport_write(int mem8_loc, int x) {
-        speaker_data_on = (x >> 1) & 1;
-        pit_channels[2]->gate = x & 1;
+    void speaker_ioport_write(int port, int data) {
+        speaker_data_on = (data >> 1) & 1;
+        pit_channels[2]->gate = data & 1;
     }
-    int speaker_ioport_read(int mem8_loc) {
-        int eh, x;
+    int speaker_ioport_read(int port) {
+        int eh, data;
         auto s = pit_channels[2];
         eh = s->pit_get_out();
-        x = (speaker_data_on << 1) | s->gate | (eh << 5);
-        return x;
+        data = (speaker_data_on << 1) | s->gate | (eh << 5);
+        return data;
     }
     void speaker_ioport_write() {
         set_irq(1);
         set_irq(0);
     }
-    void set_irq(int x);
+    void set_irq(bool raise);
     void update_irq();
 };
-inline void PIT::set_irq(int x) {
-    pic->set_irq(0, x);
+inline void PIT::set_irq(bool raise) {
+    pic->set_irq(0, raise);
 }
 inline void PIT::update_irq() {
     set_irq(1);

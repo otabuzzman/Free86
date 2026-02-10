@@ -112,6 +112,12 @@ int Free86::instruction_length(uint32_t opcode) {
                 stride = 2;
                 ipr |= 0x0100;
             }
+            if ((n + 1) > 15) {
+                abort(13);
+            }
+            lax = eip_linear + (n++);
+            opcode = ld8_readonly_cpl3();
+            break;
         case 0x67: // address-size override prefix
             if (ipr_default & 0x0080) {
                 ipr &= ~0x0080u;
@@ -2141,7 +2147,6 @@ uint32_t Free86::shift(uint32_t src, uint32_t count) {
 void Free86::aux_LDTR(uint32_t selector) {
     SegmentDescriptor xsd{0};
     uint32_t dti;
-    selector &= 0xffff;
     if ((selector & 0xfffc) == 0) {
         ldt.shadow.base = 0;
         ldt.shadow.limit = 0;
@@ -2283,7 +2288,6 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
     int type, gate32;
     uint64_t tss_stack;
-    // int Ue, Ve;
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
     }
@@ -2428,7 +2432,7 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
                 lax = SS_base + (esp & SS_mask);
                 st16_writable_cplX(esp_start);
                 for (uint32_t i = gpac; i > 0; i--) {
-                    u = 0; // Xe(OS_base + ((esp_start + (i - 1) * 2) & OS_mask));
+                    u = 0; // Ye(OS_base + ((esp_start + (i - 1) * 2) & OS_mask));
                     esp = esp - 2;
                     lax = SS_base + (esp & SS_mask);
                     st16_writable_cplX(u);
@@ -2690,7 +2694,7 @@ void Free86::zero_segment_register(uint32_t sreg, uint32_t level) {
     }
     flags = segs[sreg].shadow.flags;
     dpl = (flags >> 13) & 3;
-    if (!(flags & (1 << 11)) || !(flags & (1 << 10))) { // all but conforming code segments
+    if (!((flags & (1 << 11)) && (flags & (1 << 10)))) { // if non-conforming code segments
         if (dpl < level) {
             set_segment_register(sreg, 0, 0, 0, 0);
         }
