@@ -149,16 +149,6 @@ class I8259 {
             last_irr &= ~ir_register;
         }
     }
-    int get_priority(int ir_register) {
-        int priority = 7;
-        if (ir_register == 0) {
-            return -1;
-        }
-        while ((ir_register & (1 << ((priority + priority_add) & 7))) == 0) {
-            priority--;
-        }
-        return priority;
-    }
     int get_irq() {
         int ir_register, in_service_priority, priority;
         ir_register = irr & ~imr;
@@ -172,6 +162,17 @@ class I8259 {
         } else {
             return -1;
         }
+    }
+    void update_irq();
+    int get_priority(int ir_register) {
+        int priority = 7;
+        if (ir_register == 0) {
+            return -1;
+        }
+        while ((ir_register & (1 << ((priority + priority_add) & 7))) == 0) {
+            priority--;
+        }
+        return priority;
     }
     void intack(int irq) {
         if (auto_eoi) {
@@ -293,7 +294,6 @@ class I8259 {
         }
         return reg;
     }
-    void update_irq();
 };
 class PIC {
   public:
@@ -313,6 +313,7 @@ class PIC {
         pics[irq >> 3]->set_irq(irq & 7, val);
         update_irq();
     }
+    void update_irq();
     int get_hard_intno() {
         int intno = 0;
         int irq = pics[0]->get_irq();
@@ -337,7 +338,6 @@ class PIC {
         update_irq();
         return intno;
     }
-    void update_irq();
 };
 inline void I8259::update_irq() {
     pic->update_irq();
@@ -374,9 +374,7 @@ class Serial {
     Serial(PIC *pic) {
         this->pic = pic;
     }
-    void store_char(int data) {
-        print_fifo.push(data);
-    }
+    void set_irq(int val);
     void update_irq() {
         if ((lsr & 0x01) && (ier & 0x01)) {
             iir = 0x04;
@@ -400,7 +398,7 @@ class Serial {
             } else {
                 lsr &= ~0x20;
                 update_irq();
-                store_char(data);
+                put_stdout(data);
                 lsr |= 0x20;
                 lsr |= 0x40;
                 update_irq();
@@ -443,7 +441,7 @@ class Serial {
                 reg = rbr;
                 lsr &= ~(0x01 | 0x10);
                 update_irq();
-                send_char_from_fifo();
+                get_stdin();
             }
             break;
         case 1:
@@ -474,29 +472,30 @@ class Serial {
         }
         return reg;
     }
-    void send_break() {
-        rbr = 0;
-        lsr |= 0x10 | 0x01;
-        update_irq();
-    }
-    void send_char(int mh) {
-        rbr = mh;
+    void recv_char(int chr) {
+        rbr = chr;
         lsr |= 0x01;
         update_irq();
     }
-    void send_char_from_fifo() {
-        if (!input_fifo.isempty() && !(lsr & 0x01)) {
-            send_char(input_fifo.pop());
+    // class PC side
+    void put_stdin(int chr) {
+        input_fifo.push(chr);
+        if (!(lsr & 0x01)) {
+            recv_char(chr);
         }
     }
-    void input_fifo_push(int na) {
-        input_fifo.push(na);
-        send_char_from_fifo();
-    }
-    char print_fifo_pop() {
+    char get_stdout() {
         return static_cast<char>(print_fifo.pop());
     }
-    void set_irq(int val);
+    // class Serial side
+    void get_stdin() {
+        if (!input_fifo.isempty() && !(lsr & 0x01)) {
+            recv_char(input_fifo.pop());
+        }
+    }
+    void put_stdout(int chr) {
+        print_fifo.push(chr);
+    }
 };
 inline void Serial::set_irq(int val) {
     pic->set_irq(4, val);
@@ -519,6 +518,13 @@ class PITChannel {
     }
     int get_time() {
         return static_cast<int>(floor(cpu->cycles * pit_time_unit));
+    }
+    void pit_load_count(int data) {
+        if (data == 0) {
+            data = 0x10000;
+        }
+        count_load_time = get_time();
+        count = data;
     }
     int pit_get_count() {
         int d, dh;
@@ -608,13 +614,6 @@ class PITChannel {
         fh = count_load_time + fh;
         return fh;
     }
-    void pit_load_count(int data) {
-        if (data == 0) {
-            data = 0x10000;
-        }
-        count_load_time = get_time();
-        count = data;
-    }
 };
 class PIT {
     PITChannel *pit_channels[3];
@@ -633,6 +632,8 @@ class PIT {
             pit_channels[i]->pit_load_count(0);
         }
     }
+    void set_irq(int val);
+    void update_irq();
     void ioport_write(int port, int data) {
         int hh, ih;
         if ((port & 3) == 3) {
@@ -716,12 +717,6 @@ class PIT {
         data = (speaker_data_on << 1) | s->gate | (eh << 5);
         return data;
     }
-    void speaker_ioport_write() {
-        set_irq(1);
-        set_irq(0);
-    }
-    void set_irq(int val);
-    void update_irq();
 };
 inline void PIT::set_irq(int val) {
     pic->set_irq(0, val);

@@ -141,7 +141,7 @@ void PC::paint(SDL_Renderer *renderer, int widht, int height)
 void PC::print()
 {
     char chr;
-    chr = cpu->serial->print_fifo_pop();
+    chr = cpu->serial->get_stdout();
 
     std::cout << chr << std::flush;
 }
@@ -151,7 +151,7 @@ void PC::input()
     int chr;
     chr = std::cin.get();
 
-    cpu->serial->input_fifo_push(chr);
+    cpu->serial->put_stdin(chr);
 }
 #endif // NO_SDL
 int WiredCPU::get_irq() {
