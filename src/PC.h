@@ -566,50 +566,6 @@ class PITChannel {
         }
         return eh;
     }
-    int get_next_transition_time() {
-        int d, fh, base, gh;
-        d = get_time() - count_load_time;
-        switch (mode) {
-        default:
-        case 0: // Interrupt on terminal count
-        case 1: // One shot
-            if (d < count) {
-                fh = count;
-            } else {
-                return -1;
-            }
-            break;
-        case 2: // Frequency divider
-            base = (d / count) * count;
-            if ((d - base) == 0 && d != 0) {
-                fh = base + count;
-            } else {
-                fh = base + count + 1;
-            }
-            break;
-        case 3: // Square wave
-            base = (d / count) * count;
-            gh = ((count + 1) >> 1);
-            if ((d - base) < gh) {
-                fh = base + gh;
-            } else {
-                fh = base + count;
-            }
-            break;
-        case 4: // SW strobe
-        case 5: // HW strobe
-            if (d < count) {
-                fh = count;
-            } else if (d == count) {
-                fh = count + 1;
-            } else {
-                return -1;
-            }
-            break;
-        }
-        fh = count_load_time + fh;
-        return fh;
-    }
 };
 class PIT {
     PITChannel *pit_channels[3];

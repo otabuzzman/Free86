@@ -223,14 +223,12 @@ class Test386 {
     std::string history[history_size];
 };
 uint32_t PlainCPU::io_read(uint32_t port) {
-    uint32_t _port = port & (1024 - 1);
-    printf("*** ioport_read 0x%04x\n", _port);
+    printf("*** ioport_read 0x%04x\n", port);
     return 0xff;
 }
 void PlainCPU::io_write(uint32_t port, uint32_t data) {
-    uint32_t _port = port & (1024 - 1);
-    if (_port == 0x0190) { // default POST_PORT in test386
-        printf("*** ioport_write 0x%04x : 0x%08x\n", _port, data);
+    if (port == 0x0190) { // default POST_PORT in test386
+        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
     } else { // any other value considered OUT_PORT
         printf("%c", data);
     }
