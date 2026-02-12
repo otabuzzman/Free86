@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Free86}",
+            "name": "Debug linos",
+            "target": "linos",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug linos"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Free86}",
+            "name": "Release linos",
+            "target": "linos",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release linos"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Free86}",
+            "name": "Debug test386",
+            "target": "test386",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug test386"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Free86}",
+            "name": "Release test386",
+            "target": "test386",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release test386"
+        }
+    ]
+}
