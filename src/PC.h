@@ -398,7 +398,7 @@ class Serial {
             } else {
                 lsr &= ~0x20;
                 update_irq();
-                put_stdout(data);
+                print_fifo_push(data);
                 lsr |= 0x20;
                 lsr |= 0x40;
                 update_irq();
@@ -441,7 +441,7 @@ class Serial {
                 reg = rbr;
                 lsr &= ~(0x01 | 0x10);
                 update_irq();
-                get_stdin();
+                input_fifo_pop();
             }
             break;
         case 1:
@@ -477,24 +477,20 @@ class Serial {
         lsr |= 0x01;
         update_irq();
     }
-    // class PC side
-    void put_stdin(int chr) {
-        input_fifo.push(chr);
-        if (!(lsr & 0x01)) {
-            recv_char(chr);
-        }
-    }
-    char get_stdout() {
-        return static_cast<char>(print_fifo.pop());
-    }
-    // class Serial side
-    void get_stdin() {
+    void input_fifo_pop() {
         if (!input_fifo.isempty() && !(lsr & 0x01)) {
             recv_char(input_fifo.pop());
         }
     }
-    void put_stdout(int chr) {
+    void input_fifo_push(int chr) {
+        input_fifo.push(chr);
+        recv_char(chr);
+    }
+    void print_fifo_push(int chr) {
         print_fifo.push(chr);
+    }
+    char print_fifo_pop() {
+        return static_cast<char>(print_fifo.pop());
     }
 };
 inline void Serial::set_irq(int val) {
