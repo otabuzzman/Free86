@@ -85,8 +85,8 @@ void PC::cycle()
             cpu->fetch_decode_execute(cycles - cpu->cycles, interrupt);
             if (cpu->halted)
                 break;
-        } catch (const Interrupt& i) {
-            interrupt = {i.id, i.error_code};
+        } catch (const Interrupt& e) {
+            interrupt = {e.id, e.error_code};
         } catch (const char *m) {
             std::cout << m << std::endl;
             exit(1);
@@ -161,32 +161,29 @@ int WiredCPU::get_iid() {
     return pic->get_hard_intno();
 }
 uint32_t WiredCPU::io_read(uint32_t port) {
-    int _port = static_cast<int>(port) & (1024 - 1);
-    int _data;
+    int _port = static_cast<int>(port);
+    int data;
     switch (_port) {
     case 0x70:
     case 0x71:
-        _data = cmos->ioport_read(_port);
-        break;
-    case 0x64:
-        _data = kbd->read_status(_port);
+        data = cmos->ioport_read(_port);
         break;
     case 0x20:
     case 0x21:
-        _data = pic->pics[0]->ioport_read(_port);
+        data = pic->pics[0]->ioport_read(_port);
         break;
     case 0xa0:
     case 0xa1:
-        _data = pic->pics[1]->ioport_read(_port);
+        data = pic->pics[1]->ioport_read(_port);
         break;
     case 0x40:
     case 0x41:
     case 0x42:
     case 0x43:
-        _data = pit->ioport_read(_port);
+        data = pit->ioport_read(_port);
         break;
     case 0x61:
-        _data = pit->speaker_ioport_read(_port);
+        data = pit->speaker_ioport_read(_port);
         break;
     case 0x3f8:
     case 0x3f9:
@@ -196,16 +193,16 @@ uint32_t WiredCPU::io_read(uint32_t port) {
     case 0x3fd:
     case 0x3fe:
     case 0x3ff:
-        _data = serial->ioport_read(_port);
+        data = serial->ioport_read(_port);
         break;
     default:
-        _data = 0xff;
+        data = 0xff;
         break;
     }
-    return static_cast<uint32_t>(_data);
+    return static_cast<uint32_t>(data);
 }
 void WiredCPU::io_write(uint32_t port, uint32_t data) {
-    int _port = static_cast<int>(port) & (1024 - 1);
+    int _port = static_cast<int>(port);
     int _data = static_cast<int>(data);
     switch (_port) {
     case 0x80: // POST
@@ -213,9 +210,6 @@ void WiredCPU::io_write(uint32_t port, uint32_t data) {
     case 0x70:
     case 0x71:
         cmos->ioport_write(_port, _data);
-        break;
-    case 0x64:
-        kbd->write_command(_port, _data);
         break;
     case 0x20:
     case 0x21:

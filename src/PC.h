@@ -5,14 +5,13 @@
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
+#include <time.h>
 
 #ifndef NO_SDL
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #endif
 
-#include "CMOS.h"
-#include "KBD.h"
 #include "ringbuffer.h"
 #include "x86/free86.h"
 
@@ -41,8 +40,62 @@ class PC {
 #endif
 };
 
-class PIC;
+class CMOS {
+    uint8_t bytes[128]{0};
+    int     index = 0;
 
+  public:
+    CMOS()
+    {
+        bytes[10]   = 0x26; // RTC status register A: 32768 Hz time base, 976562 msec INT rate
+        bytes[11]   = 0x02; // RTC status register B: 24 hours
+        bytes[12]   = 0x00; // RTC status register C
+        bytes[13]   = 0x80; // RTC status register D: battery power good
+        bytes[0x14] = 0x02; // IBM equipment byte: math coprocessor installed
+    }
+
+    void ioport_write(int port, int data)
+    {
+        if (port == 0x70) {
+            index = data & 0x7f;
+        }
+    }
+
+    int ioport_read(int port)
+    {
+        int data;
+        time_t clock;
+        struct tm *utc;
+
+        if (port == 0x70) {
+            return 0xff;
+        }
+
+        time(&clock);
+        utc = gmtime(&clock);
+
+        bytes[0] = bin_to_bcd(utc->tm_sec);
+        bytes[2] = bin_to_bcd(utc->tm_min);
+        bytes[4] = bin_to_bcd(utc->tm_hour);
+        bytes[6] = bin_to_bcd(utc->tm_wday);
+        bytes[7] = bin_to_bcd(utc->tm_mday);
+        bytes[8] = bin_to_bcd(utc->tm_mon + 1);
+        bytes[9] = bin_to_bcd(utc->tm_year);
+
+        data = bytes[index];
+        if (index == 10) {
+            bytes[10] ^= 0x80; // XOR emulates data update cycle
+        }
+        return data;
+    }
+
+  private:
+    uint8_t bin_to_bcd(int a)
+    {
+        return static_cast<uint8_t>(((a / 10) << 4) | (a % 10));
+    }
+};
+class PIC;
 // https://pdos.csail.mit.edu/6.828/2017/readings/hardware/8259A.pdf
 class I8259 {
     int last_irr = 0;
@@ -63,13 +116,11 @@ class I8259 {
   public:
     int elcr_mask = 0;
     int irq_base = 0;
-    I8259(PIC *_pic) {
-        pic = _pic;
+    I8259(PIC *pic) {
+        this->pic = pic;
         reset();
     }
     ~I8259() {
-    }
-    void init() {
     }
     void reset() {
         last_irr = 0;
@@ -87,9 +138,9 @@ class I8259 {
         elcr_mask = 0;
         irq_base = 0;
     }
-    void set_irq(int irq, bool raise) {
+    void set_irq(int irq, int val) {
         int ir_register = 1 << irq;
-        if (raise) {
+        if (val) {
             if ((last_irr & ir_register) == 0) {
                 irr |= ir_register;
             }
@@ -246,7 +297,6 @@ class I8259 {
 };
 class PIC {
   public:
-    #pragma clang diagnostic ignored "-Wshadow"
     int irq = 0;
     I8259 *pics[2];
     PIC() {
@@ -259,8 +309,8 @@ class PIC {
         delete pics[0];
         delete pics[1];
     }
-    void set_irq(int irq, bool raise) {
-        pics[irq >> 3]->set_irq(irq & 7, raise);
+    void set_irq(int irq, int val) {
+        pics[irq >> 3]->set_irq(irq & 7, val);
         update_irq();
     }
     int get_hard_intno() {
@@ -316,17 +366,13 @@ class Serial {
     int lsr = 0x40 | 0x20; // line status register
     int msr = 0;    // modem status register
     int scr = 0;    // scratch register
-    int set_irq_func = 0;
-    int write_func = 0;
-    PIC *pic;
     RingBuffer<int> input_fifo{RingBuffer<int>(1000)};
     RingBuffer<int> print_fifo{RingBuffer<int>(1000)};
+    PIC *pic;
 
   public:
-    Serial(PIC *_pic, int kh, int lh) {
-        pic = _pic;
-        set_irq_func = kh;
-        write_func = lh;
+    Serial(PIC *pic) {
+        this->pic = pic;
     }
     void store_char(int data) {
         print_fifo.push(data);
@@ -450,16 +496,16 @@ class Serial {
     char print_fifo_pop() {
         return static_cast<char>(print_fifo.pop());
     }
-    void set_irq(bool raise);
+    void set_irq(int val);
 };
-inline void Serial::set_irq(bool raise) {
-    pic->set_irq(4, raise);
+inline void Serial::set_irq(int val) {
+    pic->set_irq(4, val);
 }
-class IRQCH {
+class PITChannel {
     int last_irr = 0;
     int count = 0;
     int count_load_time = 0;
-    float pit_time_unit = 0.596591F;
+    float pit_time_unit = 0.596591f;
     Free86 *cpu;
 
   public:
@@ -468,8 +514,8 @@ class IRQCH {
     int mode = 0;
     int bcd = 0;
     int gate = 0;
-    IRQCH(Free86 *_cpu) {
-        cpu = _cpu;
+    PITChannel(Free86 *cpu) {
+        this->cpu = cpu;
     }
     int get_time() {
         return static_cast<int>(floor(cpu->cycles * pit_time_unit));
@@ -571,17 +617,17 @@ class IRQCH {
     }
 };
 class PIT {
-    IRQCH *pit_channels[3];
+    PITChannel *pit_channels[3];
+    int speaker_data_on = 0;
     Free86 *cpu;
     PIC *pic;
-    int speaker_data_on = 0;
 
   public:
-    PIT(Free86 *_cpu, PIC *_pic) {
-        cpu = _cpu;
-        pic = _pic;
+    PIT(Free86 *cpu, PIC *pic) {
+        this->cpu = cpu;
+        this->pic = pic;
         for (int i = 0; i < 3; i++) {
-            pit_channels[i] = new IRQCH(cpu);
+            pit_channels[i] = new PITChannel(cpu);
             pit_channels[i]->mode = 3;
             pit_channels[i]->gate = (i != 2) >> 0;
             pit_channels[i]->pit_load_count(0);
@@ -674,11 +720,11 @@ class PIT {
         set_irq(1);
         set_irq(0);
     }
-    void set_irq(bool raise);
+    void set_irq(int val);
     void update_irq();
 };
-inline void PIT::set_irq(bool raise) {
-    pic->set_irq(0, raise);
+inline void PIT::set_irq(int val) {
+    pic->set_irq(0, val);
 }
 inline void PIT::update_irq() {
     set_irq(1);
@@ -686,7 +732,6 @@ inline void PIT::update_irq() {
 }
 class WiredCPU : public Free86 {
     CMOS *cmos = nullptr;
-    KBD *kbd = nullptr;
 
   public:
     PIC *pic = nullptr;
@@ -694,14 +739,12 @@ class WiredCPU : public Free86 {
     Serial *serial = nullptr;
     WiredCPU(uint32_t memory_size) : Free86(memory_size) {
         cmos = new CMOS();
-        kbd = new KBD();
         pic = new PIC();
-        serial = new Serial(pic, 0, 0);
         pit = new PIT(this, pic);
+        serial = new Serial(pic);
     }
     ~WiredCPU() override {
         delete cmos;
-        delete kbd;
         delete pic;
         delete pit;
         delete serial;
