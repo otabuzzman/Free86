@@ -1133,7 +1133,7 @@ void Free86::segment_translation() {
 void Free86::moffs_to_linear(bool writable) {
     uint64_t la;
     uint32_t sreg, stride;
-    bool type_notok, limit_notok;
+    bool notok;
     if (ipr & 0x0080) {
         la = fetch_data16();
         stride = 2; // 16 bit mode
@@ -1151,22 +1151,22 @@ void Free86::moffs_to_linear(bool writable) {
         sreg--;
     }
     // type checking
-    if (sreg == 1) { // CS
-        type_notok = writable || !(segs[sreg].shadow.flags & (1 << 9));
-    } else { // data segment
-        type_notok = writable && !(segs[sreg].shadow.flags & (1 << 9));
+    if (sreg == 1) { // code segment, WR requested or CS not readable
+        notok = writable || !(segs[sreg].shadow.flags & (1 << 9));
+    } else { // data segment; WR requested and DS not writable
+        notok = writable && !(segs[sreg].shadow.flags & (1 << 9));
     }
-    if (type_notok) {
+    if (notok) {
         abort(13, 0);
     }
     la = segs[sreg].shadow.base + la;
     // limit checking
     if (segs[sreg].shadow.flags & (1 << 10)) { // expand-down segment
-        limit_notok = la < static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1;
+        notok = la < static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1;
     } else {
-        limit_notok = la > static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit - (stride - 1);
+        notok = la > static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1 - stride;
     }
-    if (limit_notok) {
+    if (notok) {
         if (sreg == 2) {
             abort(12, 0); // #SS(0)
         } else {
