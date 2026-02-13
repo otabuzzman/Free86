@@ -40,13 +40,13 @@ class PC {
 #endif
 };
 
+// https://elixir.bootlin.com/qemu/v7.0.0/source/hw/rtc/mc146818rtc.c
 class CMOS {
     uint8_t bytes[128]{0};
     int     index = 0;
 
   public:
-    CMOS()
-    {
+    CMOS() {
         bytes[10]   = 0x26; // RTC status register A: 32768 Hz time base, 976562 msec INT rate
         bytes[11]   = 0x02; // RTC status register B: 24 hours
         bytes[12]   = 0x00; // RTC status register C
@@ -54,15 +54,13 @@ class CMOS {
         bytes[0x14] = 0x02; // IBM equipment byte: math coprocessor installed
     }
 
-    void ioport_write(int port, int data)
-    {
+    void ioport_write(int port, int data) {
         if (port == 0x70) {
             index = data & 0x7f;
         }
     }
 
-    int ioport_read(int port)
-    {
+    int ioport_read(int port) {
         int data;
         time_t clock;
         struct tm *utc;
@@ -90,12 +88,12 @@ class CMOS {
     }
 
   private:
-    uint8_t bin_to_bcd(int a)
-    {
+    uint8_t bin_to_bcd(int a) {
         return static_cast<uint8_t>(((a / 10) << 4) | (a % 10));
     }
 };
 class PIC;
+// https://elixir.bootlin.com/qemu/v7.0.0/source/hw/intc/i8259.c
 // https://pdos.csail.mit.edu/6.828/2017/readings/hardware/8259A.pdf
 class I8259 {
     int last_irr = 0;
@@ -295,6 +293,7 @@ class I8259 {
         return reg;
     }
 };
+// the programmable interrupt controller (two cascaded 8059)
 class PIC {
   public:
     int irq = 0;
@@ -314,7 +313,7 @@ class PIC {
         update_irq();
     }
     void update_irq();
-    int get_hard_intno() {
+    int read_irq() {
         int intno = 0;
         int irq = pics[0]->get_irq();
         if (irq >= 0) {
@@ -355,6 +354,7 @@ inline void PIC::update_irq() {
         this->irq = 0;
     }
 }
+// https://elixir.bootlin.com/qemu/v7.0.0/source/hw/char/serial.c
 // https://wiki.osdev.org/Serial_Ports
 class Serial {
     int divider = 0;
@@ -496,6 +496,8 @@ class Serial {
 inline void Serial::set_irq(int val) {
     pic->set_irq(4, val);
 }
+// https://elixir.bootlin.com/qemu/v7.0.0/source/hw/timer/i8254.c
+// https://elixir.bootlin.com/qemu/v7.0.0/source/hw/timer/i8254_common.c
 class PITChannel {
     int last_irr = 0;
     int count = 0;

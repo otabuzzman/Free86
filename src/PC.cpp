@@ -158,7 +158,7 @@ int WiredCPU::get_irq() {
     return pic->irq;
 }
 int WiredCPU::get_iid() {
-    return pic->get_hard_intno();
+    return pic->read_irq();
 }
 uint32_t WiredCPU::io_read(uint32_t port) {
     int _port = static_cast<int>(port);
