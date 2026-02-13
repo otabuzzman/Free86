@@ -25,6 +25,38 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
         ipr = ipr_default;
         opcode |= ipr & 0x0100;
         while (true) { // loop over instruction bytes (fetch)
+            if ((ipr & 0x0040) && !(ipr & 0x0100)) {
+                switch (opcode) {
+                    case 0x00: // ADD
+                    case 0x01: // ADD
+                    case 0x08: // OR
+                    case 0x09: // OR
+                    case 0x10: // ADC
+                    case 0x11: // ADC
+                    case 0x18: // SBB
+                    case 0x19: // SBB
+                    case 0x20: // AND
+                    case 0x21: // AND
+                    case 0x28: // SUB
+                    case 0x29: // SUB
+                    case 0x30: // XOR
+                    case 0x31: // XOR
+                    case 0x80: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                    case 0x81: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                    case 0x82: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                    case 0x83: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                    case 0x86: // XCHG
+                    case 0x87: // XCHG
+                    case 0xf6: // G3 (-, -, NOT, NEG, -, -, -, -)
+                    case 0xf7: // G3 (-, -, NOT, NEG, -, -, -, -)
+                    case 0xfe: // G4 (INC, DEC, -, -, -, -, -, -)
+                    case 0xff: // G5 (INC, DEC, -, -, -, -, -, -)
+                    case 0x0f: // 2-byte instruction escape
+                        break;
+                    default:
+                        abort(6);
+                }
+            }
             switch (opcode) {
             case 0x26: // ES segment override prefix
             case 0x2e: // CS segment override prefix
@@ -179,9 +211,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 st8_writable_cpl3(regs[0]);
                 goto FETCH_LOOP;
             case 0xa3: // MOV ,AX
-                if (ipr & 0x0040) { // test386, check LOCK prefix (not allowed)
-                    abort(6);
-                }
                 moffs_to_linear(true);
                 st_writable_cpl3(regs[0]);
                 goto FETCH_LOOP;
@@ -1055,7 +1084,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 segment_translation();
                 regs[(modRM >> 3) & 7] = lax;
                 goto FETCH_LOOP;
-            case 0xfe: // G4 (INC, DEC, -, -, -, -, -)
+            case 0xfe: // G4 (INC, DEC, -, -, -, -, -, -)
                 modRM = fetch_data8();
                 operation = (modRM >> 3) & 7;
                 switch (operation) {
@@ -1697,6 +1726,22 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 abort(6);
             case 0x0f: // 2-byte instruction escape
                 opcode = fetch_data8();
+                if (ipr & 0x0040) {
+                    switch (opcode) {
+                        case 0xa3: // BT
+                        case 0xab: // BTS
+                        case 0xb0: // CMPXCHG
+                        case 0xb1: // CMPXCHG
+                        case 0xb3: // BTR
+                        case 0xba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
+                        case 0xbb: // BTC
+                        case 0xc0: // XADD
+                        case 0xc1: // XADD
+                            break;
+                        default:
+                            abort(6);
+                    }
+                }
                 switch (opcode) {
                 case 0x80: // JO
                 case 0x81: // JNO
@@ -2423,6 +2468,38 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     abort(6);
                 }
             default:
+                if (ipr & 0x0040) {
+                    switch (opcode) {
+                        case 0x100: // ADD
+                        case 0x101: // ADD
+                        case 0x108: // OR
+                        case 0x109: // OR
+                        case 0x110: // ADC
+                        case 0x111: // ADC
+                        case 0x118: // SBB
+                        case 0x119: // SBB
+                        case 0x120: // AND
+                        case 0x121: // AND
+                        case 0x128: // SUB
+                        case 0x129: // SUB
+                        case 0x130: // XOR
+                        case 0x131: // XOR
+                        case 0x180: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                        case 0x181: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                        case 0x182: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                        case 0x183: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
+                        case 0x186: // XCHG
+                        case 0x187: // XCHG
+                        case 0x1f6: // G3 (-, -, NOT, NEG, -, -, -, -)
+                        case 0x1f7: // G3 (-, -, NOT, NEG, -, -, -, -)
+                        case 0x1fe: // G4 (INC, DEC, -, -, -, -, -, -)
+                        case 0x1ff: // G5 (INC, DEC, -, -, -, -, -, -)
+                        case 0x10f: // 2-byte instruction escape
+                            break;
+                        default:
+                            abort(6);
+                    }
+                }
                 switch (opcode) {
                 case 0x189: // MOV
                     modRM = fetch_data8();
@@ -3179,7 +3256,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x1fb: // STI
                 case 0x1fc: // CLD
                 case 0x1fd: // STD
-                case 0x1fe: // G4 (INC, DEC, -, -, -, -, -)
+                case 0x1fe: // G4 (INC, DEC, -, -, -, -, -, -)
                     opcode &= 0xff;
                     break;
                 case 0x163: // ARPL
@@ -3187,6 +3264,20 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x1f1: // -
                 case 0x10f: // 2-byte instruction escape
                     opcode = fetch_data8();
+                    if (ipr & 0x0040) {
+                        switch (opcode) {
+                            case 0x1a3: // BT
+                            case 0x1ab: // BTS
+                            case 0x1b1: // CMPXCHG
+                            case 0x1b3: // BTR
+                            case 0x1ba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
+                            case 0x1bb: // BTC
+                            case 0x1c1: // XADD
+                                break;
+                            default:
+                                abort(6);
+                        }
+                    }
                     opcode |= 0x0100;
                     switch (opcode) {
                     case 0x180: // JO

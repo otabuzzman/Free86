@@ -16,6 +16,8 @@ class PlainCPU : public Free86 {
 };
 
 class Test386 {
+    PlainCPU *cpu = nullptr;
+
   public:
     Test386(uint32_t memory_size) {
         cpu = new PlainCPU(memory_size);
@@ -100,8 +102,8 @@ class Test386 {
             }
         }
     }
+
   private:
-    PlainCPU *cpu = nullptr;
     std::string compile_status_string(bool compact = true) {
         std::string a, c, d, b, si, di, i, sp, bp, flags;
         std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
@@ -220,16 +222,13 @@ class Test386 {
     static const int history_size = 512;
     std::string history[history_size];
 };
-
 uint32_t PlainCPU::io_read(uint32_t port) {
-    uint32_t _port = port & (1024 - 1);
-    printf("*** ioport_read 0x%04x\n", _port);
+    printf("*** ioport_read 0x%04x\n", port);
     return 0xff;
 }
 void PlainCPU::io_write(uint32_t port, uint32_t data) {
-    uint32_t _port = port & (1024 - 1);
-    if (_port == 0x0190) { // default POST_PORT in test386
-        printf("*** ioport_write 0x%04x : 0x%08x\n", _port, data);
+    if (port == 0x0190) { // default POST_PORT in test386
+        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
     } else { // any other value considered OUT_PORT
         printf("%c", data);
     }

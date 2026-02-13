@@ -4,7 +4,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 
 **Missing features**
 - Full segment limit and rights checks
-- Full lock prefix not allowed checks
+- Full LOCK prefix not allowed checks
 - Task gates, and 16 bit interrupt and trap gates
 - Test and debug register handling
 
