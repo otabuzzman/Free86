@@ -52,6 +52,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     case 0xfe: // G4 (INC, DEC, -, -, -, -, -, -)
                     case 0xff: // G5 (INC, DEC, -, -, -, -, -, -)
                     case 0x0f: // 2-byte instruction escape
+                        break;
                     default:
                         abort(6);
                 }
@@ -1736,6 +1737,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         case 0xbb: // BTC
                         case 0xc0: // XADD
                         case 0xc1: // XADD
+                            break;
                         default:
                             abort(6);
                     }
@@ -2493,6 +2495,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         case 0x1fe: // G4 (INC, DEC, -, -, -, -, -, -)
                         case 0x1ff: // G5 (INC, DEC, -, -, -, -, -, -)
                         case 0x10f: // 2-byte instruction escape
+                            break;
                         default:
                             abort(6);
                     }
@@ -3270,6 +3273,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             case 0x1ba: // G8 (-, -, -, -, BT, BTS, BTR, BTC)
                             case 0x1bb: // BTC
                             case 0x1c1: // XADD
+                                break;
                             default:
                                 abort(6);
                         }
