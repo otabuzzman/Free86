@@ -272,6 +272,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 modRM = fetch_data8();
                 reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
+                    // LOCK prefix not allowed
                     rM = modRM & 7;
                     rm = regs[rM & 3] >> ((rM & 4) << 1);
                     set_lower_byte(rM, (regs[reg & 3] >> ((reg & 4) << 1)));
@@ -286,6 +287,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 modRM = fetch_data8();
                 reg = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
+                    // LOCK prefix not allowed
                     rM = modRM & 7;
                     rm = regs[rM];
                     regs[rM] = regs[reg];
@@ -342,6 +344,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 reg = (modRM >> 3) & 7;
                 r = regs[reg & 3] >> ((reg & 4) << 1);
                 if ((modRM >> 6) == 3) {
+                    // LOCK prefix not allowed
                     rM = modRM & 7;
                     set_lower_byte(rM, calculate8((regs[rM & 3] >> ((rM & 4) << 1)), r));
                 } else {
@@ -351,6 +354,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         u = calculate8(rm, r);
                         st8_writable_cpl3(u);
                     } else {
+                        // LOCK prefix not allowed
                         rm = ld8_readonly_cpl3();
                         calculate8(rm, r);
                     }
@@ -360,6 +364,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 modRM = fetch_data8();
                 r = regs[(modRM >> 3) & 7];
                 if ((modRM >> 6) == 3) {
+                    // LOCK prefix not allowed
                     rM = modRM & 7;
                     osm_src = r;
                     osm_dst = regs[rM] = regs[rM] + r;
@@ -383,6 +388,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 operation = opcode >> 3;
                 r = regs[(modRM >> 3) & 7];
                 if ((modRM >> 6) == 3) {
+                    // LOCK prefix not allowed
                     rM = modRM & 7;
                     regs[rM] = calculate(regs[rM], r);
                 } else {
@@ -516,6 +522,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 modRM = fetch_data8();
                 operation = (modRM >> 3) & 7;
                 if ((modRM >> 6) == 3) {
+                    // LOCK prefix not allowed
                     rM = modRM & 7;
                     imm = fetch_data8();
                     set_lower_byte(rM, calculate8((regs[rM & 3] >> ((rM & 4) << 1)), imm));
@@ -527,6 +534,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         u = calculate8(rm, imm);
                         st8_writable_cpl3(u);
                     } else {
+                        // LOCK prefix not allowed
                         rm = ld8_readonly_cpl3();
                         calculate8(rm, imm);
                     }
@@ -536,6 +544,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 modRM = fetch_data8();
                 operation = (modRM >> 3) & 7;
                 if (operation == 7) {
+                    // LOCK prefix not allowed
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
@@ -548,6 +557,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     osm = 8;
                 } else {
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         imm = fetch_data();
                         regs[rM] = calculate(regs[rM], imm);
@@ -564,6 +574,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 modRM = fetch_data8();
                 operation = (modRM >> 3) & 7;
                 if (operation == 7) {
+                    // LOCK prefix not allowed
                     if ((modRM >> 6) == 3) {
                         rm = regs[modRM & 7];
                     } else {
@@ -576,6 +587,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     osm = 8;
                 } else {
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         u = sign_extend_byte(fetch_data8());
                         regs[rM] = calculate(regs[rM], u);
@@ -685,6 +697,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xf6: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 modRM = fetch_data8();
                 operation = (modRM >> 3) & 7;
+                // LOCK prefix not allowed if operation != 2 && operation != 3
                 switch (operation) {
                 case 0: // TEST
                     if ((modRM >> 6) == 3) {
@@ -700,6 +713,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     break;
                 case 2: // NOT
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         set_lower_byte(rM, ~(regs[rM & 3] >> ((rM & 4) << 1)));
                     } else {
@@ -711,6 +725,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 3: // NEG
                     operation = 5;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         set_lower_byte(rM, calculate8(0, (regs[rM & 3] >> ((rM & 4) << 1))));
                     } else {
@@ -769,6 +784,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xf7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                 modRM = fetch_data8();
                 operation = (modRM >> 3) & 7;
+                // LOCK prefix not allowed if operation != 2 && operation != 3
                 switch (operation) {
                 case 0: // TEST
                     if ((modRM >> 6) == 3) {
@@ -783,6 +799,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     break;
                 case 2: // NOT
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         regs[rM] = ~regs[rM];
                     } else {
@@ -794,6 +811,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 3: // NEG
                     operation = 5;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         regs[rM] = calculate(0, regs[rM]);
                     } else {
@@ -1090,6 +1108,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 switch (operation) {
                 case 0: // INC
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         set_lower_byte(rM, aux_INC8((regs[rM & 3] >> ((rM & 4) << 1))));
                     } else {
@@ -1101,6 +1120,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     break;
                 case 1: // DEC
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         set_lower_byte(rM, aux_DEC8((regs[rM & 3] >> ((rM & 4) << 1))));
                     } else {
@@ -1117,9 +1137,11 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
                 modRM = fetch_data8();
                 operation = (modRM >> 3) & 7;
+                // LOCK prefix not allowed if operation != 0 && operation != 1
                 switch (operation) {
                 case 0: // INC
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         if (osm < 25) {
                             ocm_preserved = osm;
@@ -1141,6 +1163,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     break;
                 case 1: // DEC
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         if (osm < 25) {
                             ocm_preserved = osm;
@@ -2100,6 +2123,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     switch (operation) {
                     case 4: // BT
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rm = regs[modRM & 7];
                             imm = fetch_data8();
                         } else {
@@ -2114,6 +2138,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     case 7: // BTC
                         operation &= 3;
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             imm = fetch_data8();
                             regs[rM] = aux_BTS_BTR_BTC(regs[rM], imm);
@@ -2133,6 +2158,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     r = regs[(modRM >> 3) & 7];
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rm = regs[modRM & 7];
                     } else {
                         segment_translation();
@@ -2148,6 +2174,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     r = regs[(modRM >> 3) & 7];
                     operation = (opcode >> 3) & 3;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         regs[rM] = aux_BTS_BTR_BTC(regs[rM], r);
                     } else {
@@ -2201,6 +2228,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         r = regs[rM & 3] >> ((rM & 4) << 1);
                         u = calculate8(r, (regs[reg & 3] >> ((reg & 4) << 1)));
@@ -2219,6 +2247,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         r = regs[rM];
                         u = calculate(r, regs[reg]);
@@ -2237,6 +2266,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         r = regs[rM & 3] >> ((rM & 4) << 1);
                         u = calculate8(regs[0], r);
@@ -2261,6 +2291,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         r = regs[rM];
                         u = calculate(regs[0], r);
@@ -2470,29 +2501,17 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             default:
                 if (ipr & 0x0040) {
                     switch (opcode) {
-                        case 0x100: // ADD
                         case 0x101: // ADD
-                        case 0x108: // OR
                         case 0x109: // OR
-                        case 0x110: // ADC
                         case 0x111: // ADC
-                        case 0x118: // SBB
                         case 0x119: // SBB
-                        case 0x120: // AND
                         case 0x121: // AND
-                        case 0x128: // SUB
                         case 0x129: // SUB
-                        case 0x130: // XOR
                         case 0x131: // XOR
-                        case 0x180: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
                         case 0x181: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
-                        case 0x182: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
                         case 0x183: // G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, -)
-                        case 0x186: // XCHG
                         case 0x187: // XCHG
-                        case 0x1f6: // G3 (-, -, NOT, NEG, -, -, -, -)
                         case 0x1f7: // G3 (-, -, NOT, NEG, -, -, -, -)
-                        case 0x1fe: // G4 (INC, DEC, -, -, -, -, -, -)
                         case 0x1ff: // G5 (INC, DEC, -, -, -, -, -, -)
                         case 0x10f: // 2-byte instruction escape
                             break;
@@ -2567,6 +2586,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     reg = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         rm = regs[rM];
                         set_lower_word(rM, regs[reg]);
@@ -2595,6 +2615,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     operation = (opcode >> 3) & 7;
                     r = regs[(modRM >> 3) & 7];
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         set_lower_word(rM, calculate16(regs[rM], r));
                     } else {
@@ -2644,6 +2665,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     operation = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         imm = fetch_data16();
                         set_lower_word(rM, calculate16(regs[rM], imm));
@@ -2655,6 +2677,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             u = calculate16(rm, imm);
                             st16_writable_cpl3(u);
                         } else {
+                            // LOCK prefix not allowed
                             rm = ld16_readonly_cpl3();
                             calculate16(rm, imm);
                         }
@@ -2664,6 +2687,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     modRM = fetch_data8();
                     operation = (modRM >> 3) & 7;
                     if ((modRM >> 6) == 3) {
+                        // LOCK prefix not allowed
                         rM = modRM & 7;
                         u = sign_extend_byte(fetch_data8());
                         set_lower_word(rM, calculate16(regs[rM], u));
@@ -2675,6 +2699,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             u = calculate16(rm, v);
                             st16_writable_cpl3(u);
                         } else {
+                            // LOCK prefix not allowed
                             rm = ld16_readonly_cpl3();
                             calculate16(rm, v);
                         }
@@ -2748,6 +2773,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x1f7: // G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
                     modRM = fetch_data8();
                     operation = (modRM >> 3) & 7;
+                    // LOCK prefix not allowed if operation != 2 && operation != 3
                     switch (operation) {
                     case 0: // TEST
                         if ((modRM >> 6) == 3) {
@@ -2762,6 +2788,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         break;
                     case 2: // NOT
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             set_lower_word(rM, ~regs[rM]);
                         } else {
@@ -2773,6 +2800,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     case 3: // NEG
                         operation = 5;
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             set_lower_word(rM, calculate16(0, regs[rM]));
                         } else {
@@ -2956,9 +2984,11 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x1ff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
                     modRM = fetch_data8();
                     operation = (modRM >> 3) & 7;
+                    // LOCK prefix not allowed if operation != 0 && operation != 1
                     switch (operation) {
                     case 0: // INC
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             set_lower_word(rM, aux_INC16(regs[rM]));
                         } else {
@@ -2970,6 +3000,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         break;
                     case 1: // DEC
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             set_lower_word(rM, aux_DEC16(regs[rM]));
                         } else {
@@ -3370,6 +3401,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         modRM = fetch_data8();
                         reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             r = regs[rM];
                             u = calculate16(r, regs[reg]);
@@ -3435,6 +3467,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         switch (operation) {
                         case 4:
                             if ((modRM >> 6) == 3) {
+                                // LOCK prefix not allowed
                                 rm = regs[modRM & 7];
                                 imm = fetch_data8();
                             } else {
@@ -3449,6 +3482,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         case 7:
                             operation &= 3;
                             if ((modRM >> 6) == 3) {
+                                // LOCK prefix not allowed
                                 rM = modRM & 7;
                                 imm = fetch_data8();
                                 regs[rM] = aux_BTS16_BTR16_BTC16(regs[rM], imm);
@@ -3468,6 +3502,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         modRM = fetch_data8();
                         r = regs[(modRM >> 3) & 7];
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rm = regs[modRM & 7];
                         } else {
                             segment_translation();
@@ -3483,6 +3518,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         r = regs[(modRM >> 3) & 7];
                         operation = (opcode >> 3) & 3;
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             set_lower_word(rM, aux_BTS16_BTR16_BTC16(regs[rM], r));
                         } else {
@@ -3516,6 +3552,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         modRM = fetch_data8();
                         reg = (modRM >> 3) & 7;
                         if ((modRM >> 6) == 3) {
+                            // LOCK prefix not allowed
                             rM = modRM & 7;
                             r = regs[rM];
                             u = calculate16(regs[0], r);
