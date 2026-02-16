@@ -4,9 +4,9 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 
 **Missing features**
 - Full segment limit and rights checks
-- Full LOCK prefix not allowed checks
-- Task gates, and 16 bit interrupt and trap gates
-- Test and debug register handling
+- Full LOCK prefix not allowed handling
+- Task gates, 16 bit interrupt and trap gates
+- Test and debug registers
 
 **Branches**
 - `master`: Original repository fixed for Visual Studio Code
@@ -17,7 +17,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - Install C++, CMake
 - Run commands
   ```
-  git clone https://github.com/otabuzman/Free86.git ; cd Free86
+  git clone https://github.com/otabuzzman/Free86.git ; cd Free86
   
   # build for Linos boot
   cmake -DNO_SDL=ON -DTEST386=OFF -G "Unix Makefiles" .
@@ -39,7 +39,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - Install CMake, nmake, Visual Studio Community /w C++
 - Run commands
   ```
-  git clone https://github.com/otabuzman/Free86.git ; cd Free86
+  git clone https://github.com/otabuzzman/Free86.git ; cd Free86
   
   # build for Linos boot
   cmake -DNO_SDL=ON -DTEST386=OFF -G "NMake Makefiles" .
