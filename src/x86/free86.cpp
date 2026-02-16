@@ -1153,7 +1153,7 @@ void Free86::moffs_to_linear(bool writable) {
     // type checking
     if (sreg == 1) { // code segment, WR requested or CS not readable
         notok = writable || !(segs[sreg].shadow.flags & (1 << 9));
-    } else { // data segment; WR requested and DS not writable
+    } else { // data segment, WR requested and DS not writable
         notok = writable && !(segs[sreg].shadow.flags & (1 << 9));
     }
     if (notok) {
