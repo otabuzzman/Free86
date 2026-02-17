@@ -1188,11 +1188,9 @@ void Free86::set_segment_register(uint32_t sreg, uint32_t selector) {
 }
 void Free86::set_segment_register_real__v86(uint32_t sreg, uint32_t selector) {
     if (eflags & 0x00020000) { // v86 mode
-        set_segment_register(sreg, selector, (selector << 4), 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
+        set_segment_register(sreg, selector, selector << 4, 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
     } else { // real mode
-        segs[sreg].selector = selector;
-        segs[sreg].shadow.base = selector << 4;
-        segs[sreg].shadow.limit = 0xffff;
+        segs[sreg] = {selector, {selector << 4, 0xffff, 0}};
     }
 }
 void Free86::set_segment_register_protected(uint32_t sreg, uint32_t selector) {
