@@ -118,15 +118,15 @@ func machineDataTypeSetRaiseClearToggleBits() {
 
 @Test("MDT sign manipulations")
 func machineDataTypeSignManipulations() {
-    var dword: DWord = 129
-    #expect(Int32(dword) == 129)
-    #expect(dword.signExtendedByte == 0xFFFFFF81)
+    var dword: DWord = 0x8000_0081
+    #expect(Int32(bitPattern: dword) == -0x7FFF_FF7F)
+    #expect(dword.signExtendedByte == 0xFFFF_FF81)
     #expect(Int32(bitPattern: dword.signExtendedByte) == -127)
-    dword = 32769
-    #expect(Int32(dword) == 32769)
-    #expect(dword.signExtendedWord == 0xFFFF8001)
+    dword = 0x8000_8001
+    #expect(Int32(bitPattern: dword) == -0x7FFF_7FFF)
+    #expect(dword.signExtendedWord == 0xFFFF_8001)
     #expect(Int32(bitPattern: dword.signExtendedWord) == -32767)
-    dword = 0x80000000
+    dword = 0x8000_0000
     #expect(dword >> 24 == 128)
     #expect(Int32(bitPattern: dword.signedShiftRight(count: 24)) == -128)
 }

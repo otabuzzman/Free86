@@ -45,10 +45,10 @@ extension FixedWidthInteger {
 
 extension DWord {
     var signExtendedByte: Self {
-        DWord(bitPattern: (Int32(self) << 24) >> 24)
+        DWord(bitPattern: (Int32(bitPattern: self) << 24) >> 24)
     }
     var signExtendedWord: Self {
-        DWord(bitPattern: (Int32(self) << 16) >> 16)
+        DWord(bitPattern: (Int32(bitPattern: self) << 16) >> 16)
     }
     func signedShiftRight(count: Int) -> Self {
         DWord(bitPattern: Int32(bitPattern: self) >> count)
