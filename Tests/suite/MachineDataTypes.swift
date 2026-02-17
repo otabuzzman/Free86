@@ -120,13 +120,13 @@ func machineDataTypeSetRaiseClearToggleBits() {
 func machineDataTypeSignManipulations() {
     var dword: DWord = 129
     #expect(Int32(dword) == 129)
-    #expect(dword.signExtendedByte == 0xFFFFFF7F)
-    #expect(Int32(dword.signExtendedByte) == -129)
+    #expect(dword.signExtendedByte == 0xFFFFFF81)
+    #expect(Int32(bitPattern: dword.signExtendedByte) == -127)
     dword = 32769
     #expect(Int32(dword) == 32769)
-    #expect(dword.signExtendedWord == 0xFFFF7FFF)
-    #expect(Int32(dword.signExtendedWord) == -32769)
+    #expect(dword.signExtendedWord == 0xFFFF8001)
+    #expect(Int32(bitPattern: dword.signExtendedWord) == -32767)
     dword = 0x80000000
     #expect(dword >> 24 == 128)
-    #expect(Int32(dword.signedShiftRight(count: 24)) == -128)
+    #expect(Int32(bitPattern: dword.signedShiftRight(count: 24)) == -128)
 }
