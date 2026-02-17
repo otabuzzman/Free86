@@ -296,27 +296,27 @@ extension Free86 {
     }
     /// 0x16d  INSW/D
     func Ox16d() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x16f  OUTSW/D
     func Ox16f() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x1e5  IN AX,
     func Ox1e5() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x1e7  OUT ,AX
     func Ox1e7() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x1ed  IN AX,DX
     func Ox1ed() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x1ef  OUT DX,AX
     func Ox1ef() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x126  ES segment override prefix
     /// 0x12e  CS segment override prefix

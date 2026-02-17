@@ -374,7 +374,7 @@ extension Free86 {
     }
     /// 0x9d  POPF
     func Ox9d() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x06  PUSH
     /// 0x0e  PUSH
@@ -501,19 +501,19 @@ extension Free86 {
     }
     /// 0x9a  CALLF
     func Ox9a() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xca  RET
     func Oxca() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xcb  RET
     func Oxcb() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xcf  IRET
     func Oxcf() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x90  NOP
     func Ox90() throws -> Result<Resume, Never> {
@@ -561,7 +561,7 @@ extension Free86 {
     }
     /// 0xfb  STI
     func Oxfb() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x9e  SAHF
     func Ox9e() throws -> Result<Resume, Never> {
@@ -617,19 +617,19 @@ extension Free86 {
     }
     /// 0x6c  INSB
     func Ox6c() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x6d  INSW/D
     func Ox6d() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x6e  OUTSB
     func Ox6e() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x6f  OUTSW/D
     func Ox6f() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xd8  ESC (80387) 11011XXX
     /// 0xd9  ESC (80387)
@@ -648,35 +648,35 @@ extension Free86 {
     }
     /// 0xe4  IN AL,
     func Oxe4() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xe5  IN AX,
     func Oxe5() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xe6  OUT ,AL
     func Oxe6() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xe7  OUT ,AX
     func Oxe7() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xec  IN AL,DX
     func Oxec() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xed  IN AX,DX
     func Oxed() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xee  OUT DX,AL
     func Oxee() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0xef  OUT DX,AX
     func Oxef() throws -> Result<Resume, Never> {
-        return .success(.endCyclesLoopOnInterrupt)
+        return .success(.endOnInterrupt)
     }
     /// 0x27  DAA
     func Ox27() throws -> Result<Resume, Never> {

@@ -209,7 +209,7 @@ class Free86 {
         case goOnFetching
         case endFetchLoop
         case endCyclesLoop
-        case endCyclesLoopOnInterrupt
+        case endOnInterrupt
     }
 
     var invalid: OpcodeProgram = {

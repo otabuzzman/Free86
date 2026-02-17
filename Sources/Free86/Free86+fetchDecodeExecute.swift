@@ -14,7 +14,7 @@ extension Free86 {
                         break fetchLoop
                     case .endCyclesLoop:
                         break cyclesLoop
-                    case .endCyclesLoopOnInterrupt:
+                    case .endOnInterrupt:
                         if eflags.isFlagRaised(.IF) {
                             let irq = try await INTR.probe()
                             if irq {
