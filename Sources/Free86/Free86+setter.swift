@@ -23,7 +23,7 @@ extension Free86 {
             _cr3 = newValue
         }
     }
-    var cpl: Int {
+    var cpl: DWord {
         get { _cpl }
         set {
             if newValue == 3 {

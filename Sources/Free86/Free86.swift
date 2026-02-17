@@ -23,7 +23,7 @@ class Free86 {
     var _cr3: CR3 = 0
     var cr4: DWord = 0  // 80486
 
-    var _cpl: Int = 0  // current privilege level register
+    var _cpl: DWord = 0  // current privilege level register
 
     var halted = false
     var cycles: QWord = 0
@@ -35,14 +35,14 @@ class Free86 {
     var far: DWord = 0       // fetch address register (FAR, aka MAR)
     var farStart: DWord = 0  // first fetch address of current cycle
 
-    var opcode: Int = 0  // sort of fetch data register (FDR, aka MDR)
+    var opcode: DWord = 0  // sort of fetch data register (FDR, aka MDR)
 
     /// direction flag (used by string instructions)
     var df: Int = 0  // values 1/ -1 reflect EFLAGS.DF false/ true
 
-    var dpl: Int = 0  // descriptor privilege level
-    var rpl: Int = 0  // requested privilege level
-    var iopl: Int = 0  // IO privilege level
+    var dpl: DWord = 0  // descriptor privilege level
+    var rpl: DWord = 0  // requested privilege level
+    var iopl: DWord = 0  // IO privilege level
 
     var cyclesRequested: QWord = 0
     var cyclesRemaining: QWord = 0
@@ -132,8 +132,8 @@ class Free86 {
     // U : leaves flag undefined,
     // - : does not affect flag.
     var osm: Int = 0
-    var osm_src: Int = 0
-    var osm_dst: Int = 0
+    var osm_src: DWord = 0
+    var osm_dst: DWord = 0
 
     /// osm_preserved/ osm_dst_preserved preserve OMS/ destination of instruction
     /// before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
@@ -143,7 +143,7 @@ class Free86 {
     /// since INC/ DEC do not store the implicit value 1 in `osm_src', which therefore
     /// remains valid.
     var ocm_preserved: Int = 0
-    var ocm_dst_preserved: Int = 0
+    var ocm_dst_preserved: DWord = 0
 
     /// Instruction prefix register
     ///
@@ -194,6 +194,13 @@ class Free86 {
 
     /// auxiliary variables for inter-method exchange
     var lax: LinearAddress = 0  // linear address exchange register
+    var operation: DWord = 0  // bits 5..3 of opcode or modR/M byte
+    var modRM: DWord = 0, reg: DWord = 0, rM: DWord = 0    // mod field (modRM >> 6) inline
+    var sib: DWord = 0, base: DWord = 0, index: DWord = 0  // scale field (sib >> 6) inline
+    var r: DWord = 0, rm: DWord = 0   // register or register/ memory by modRM
+    var m: DWord = 0, m16: DWord = 0  // 32/ 16 bit memory operands from memory
+    var imm: DWord = 0, imm16: DWord = 0, moffs: DWord = 0  // immediate/ offset operands
+    var u: DWord = 0, v: DWord = 0, w: DWord = 0  // intermediate results
 
     typealias OpcodeDecoder = Array<OpcodeProgram>
     typealias OpcodeProgram = () throws -> Result<Resume, Never>

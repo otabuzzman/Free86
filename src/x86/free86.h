@@ -346,7 +346,7 @@ class Free86 {
     uint32_t operation; // bits 5..3 of opcode or modR/M byte
     uint32_t modRM, reg, rM;   // mod field (modRM >> 6) inline
     uint32_t sib, base, index; // scale field (sib >> 6) inline
-    uint32_t r, rm;  // register or register/ memory refered by modRM
+    uint32_t r, rm;  // register or register/ memory by modRM
     uint32_t m, m16; // 32/ 16 bit memory operands from memory
     uint32_t imm, imm16, moffs; // immediate/ offset operands
     uint32_t u, v, w; // intermediate results

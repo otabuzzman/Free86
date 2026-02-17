@@ -714,6 +714,6 @@ extension Free86 {
     /// 0x0f  2-byte instruction escape
     func Ox0f() throws -> Result<Resume, Never> {
         // opcode = fetch8()
-        return try twoByteDecoder[opcode]()
+        return try twoByteDecoder[Int(opcode)]()
     }
 }

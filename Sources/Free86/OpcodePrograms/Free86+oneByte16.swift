@@ -440,6 +440,6 @@ extension Free86 {
     func Ox10f() throws -> Result<Resume, Never> {
         // opcode = fetch8()
         opcode.raiseBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
-        return try twoByteDecoder[opcode]()
+        return try twoByteDecoder[Int(opcode)]()
     }
 }
