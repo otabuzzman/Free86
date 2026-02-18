@@ -1,10 +1,8 @@
 struct Instruction {
     var parent: Free86
     var _length = 0
-    var length: Int {
-        _length
-    }
-    mutating func length() throws {
+    mutating func length() throws -> Int {
+        _length = 0
         fetchLoop:
         while true {  // loop over instruction bytes (fetch)
             let result = try oneByteDecoder[Int(parent.opcode)]()
@@ -15,12 +13,17 @@ struct Instruction {
                     continue fetchLoop
                 case .endFetchLoop:
                     break fetchLoop
+                default:
+                    assert(false, "\(#file):\(#line)")
                 }
             }
         }
+        return _length
     }
 
-    var invalid: Free86.OpcodeProgram = { _ in
+    typealias Resume = Free86.Resume  // convenience shortener for opcode programs definitions
+
+    var invalid: Free86.OpcodeProgram = {
         throw Interrupt(.UD)
     }
     lazy var oneByteDecoder: Free86.OpcodeDecoder = [
