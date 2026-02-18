@@ -1,9 +1,13 @@
 struct Instruction {
-    mutating func length(opcode: Int) throws -> Int {
-        var length = 0
+    var parent: Free86
+    var _length = 0
+    var length: Int {
+        _length
+    }
+    mutating func length() throws {
         fetchLoop:
         while true {  // loop over instruction bytes (fetch)
-            let result = try oneByteDecoder[opcode](&length)
+            let result = try oneByteDecoder[Int(parent.opcode)]()
             switch result {
             case .success(let resume):
                 switch resume {
@@ -11,24 +15,15 @@ struct Instruction {
                     continue fetchLoop
                 case .endFetchLoop:
                     break fetchLoop
-               }
+                }
             }
         }
-        return length
     }
 
-    typealias OpcodeDecoder = Array<OpcodeProgram>
-    typealias OpcodeProgram = (inout Int) throws -> Result<Resume, Never>
-
-    enum Resume {
-        case goOnFetching
-        case endFetchLoop
-    }
-
-    var invalid: OpcodeProgram = { _ in
+    var invalid: Free86.OpcodeProgram = { _ in
         throw Interrupt(.UD)
     }
-    lazy var oneByteDecoder: OpcodeDecoder = [
+    lazy var oneByteDecoder: Free86.OpcodeDecoder = [
         //          0x0      0x1      0x2      0x3      0x4      0x5      0x6      0x7      0x8      0x9      0xa      0xb      0xc      0xd      0xe      0xf
         /* 0x000 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,
         /* 0x010 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,
@@ -47,7 +42,7 @@ struct Instruction {
         /* 0x0e0 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,
         /* 0x0f0 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,
     ]
-    lazy var twoByteDecoder: OpcodeDecoder = [
+    lazy var twoByteDecoder: Free86.OpcodeDecoder = [
         //          0x0      0x1      0x2      0x3      0x4      0x5      0x6      0x7      0x8      0x9      0xa      0xb      0xc      0xd      0xe      0xf
         /* 0x000 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,
         /* 0x010 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,

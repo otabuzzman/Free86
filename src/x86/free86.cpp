@@ -766,8 +766,8 @@ int Free86::modRM_bytes_number() {
                 abort(13);
             }
             lax = eip_linear + (n++);
-            modRM = ld8_readonly_cpl3();
-            if ((modRM & 7) == 5) {
+            sib = ld8_readonly_cpl3();
+            if ((sib & 7) == 5) {
                 n += 4;
             }
             break;

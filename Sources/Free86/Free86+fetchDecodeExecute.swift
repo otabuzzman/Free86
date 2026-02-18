@@ -23,7 +23,7 @@ extension Free86 {
                                 break fetchLoop
                             }
                         }
-                   }
+                    }
                 }
             }
             cyclesRemaining -= 1
