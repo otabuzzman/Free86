@@ -23,7 +23,7 @@ try mem.load(file: cpuStateInitFileURL, storeAt: cpuStateInitAddress)
 
 extension MemoryIO<DWord> {
     convenience init(capacity: A) {
-        assert(capacity % A(A.bankSize) == 0)
+        assert(capacity % A(A.bankSize) == 0, "fatal error")
         self.init(defaultBank: DefaultBank<A>())
         for address in stride(from: 0, to: capacity, by: A.bankSize) {
             self.register(bank: RAMBank<A>(), at: address)

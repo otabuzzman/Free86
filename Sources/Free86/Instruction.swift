@@ -14,7 +14,7 @@ struct Instruction {
                 case .endFetchLoop:
                     break fetchLoop
                 default:
-                    assert(false, "\(#file):\(#line)")
+                    assert(false, "fatal error")
                 }
             }
         }

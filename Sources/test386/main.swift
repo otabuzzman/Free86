@@ -9,7 +9,7 @@ try mem.load(file: testSuiteFileURL, storeAt: testSuiteAddress)
 
 extension MemoryIO<DWord> {
     convenience init(capacity: A) {
-        assert(capacity % A(A.bankSize) == 0)
+        assert(capacity % A(A.bankSize) == 0, "fatal error")
         self.init(defaultBank: DefaultBank<A>())
         for addr in stride(from: 0, to: capacity, by: A.bankSize) {
             self.register(bank: RAMBank<A>(), at: addr)
