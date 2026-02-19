@@ -416,32 +416,32 @@ class Free86 {
     SegmentDescriptor ld_xdt_entry(uint32_t selector);
     uint64_t ld_tss_stack(uint32_t level); // seg:offset
 
-    uint32_t aux_INC8(uint32_t byte);
-    uint32_t aux_INC16(uint32_t word);
-    uint32_t aux_DEC8(uint32_t byte);
-    uint32_t aux_DEC16(uint32_t word);
-    uint32_t aux_SHRD16_SHLD16(uint32_t dst, uint32_t src, uint32_t count);
+    uint32_t aux8_INC(uint32_t byte);
+    uint32_t aux16_INC(uint32_t word);
+    uint32_t aux8_DEC(uint32_t byte);
+    uint32_t aux16_DEC(uint32_t word);
+    uint32_t aux16_SHRD_SHLD(uint32_t dst, uint32_t src, uint32_t count);
     uint32_t aux_SHRD(uint32_t dst, uint32_t src, uint32_t count);
     uint32_t aux_SHLD(uint32_t dst, uint32_t src, uint32_t count);
-    void aux_BT16(uint32_t base, uint32_t offset);
+    void aux16_BT(uint32_t base, uint32_t offset);
     void aux_BT(uint32_t base, uint32_t offset);
-    uint32_t aux_BTS16_BTR16_BTC16(uint32_t base, uint32_t offset);
+    uint32_t aux16_BTS_BTR_BTC(uint32_t base, uint32_t offset);
     uint32_t aux_BTS_BTR_BTC(uint32_t base, uint32_t offset);
-    uint32_t aux_BSF16(uint32_t dst, uint32_t src);
+    uint32_t aux16_BSF(uint32_t dst, uint32_t src);
     uint32_t aux_BSF(uint32_t dst, uint32_t src);
-    uint32_t aux_BSR16(uint32_t dst, uint32_t src);
+    uint32_t aux16_BSR(uint32_t dst, uint32_t src);
     uint32_t aux_BSR(uint32_t dst, uint32_t src);
-    void aux_DIV8(uint32_t divisor);
-    void aux_DIV16(uint32_t divisor);
+    void aux8_DIV(uint32_t divisor);
+    void aux16_DIV(uint32_t divisor);
     void aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
-    void aux_IDIV8(uint32_t divisor);
-    void aux_IDIV16(uint32_t divisor);
+    void aux8_IDIV(uint32_t divisor);
+    void aux16_IDIV(uint32_t divisor);
     void aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
-    void aux_MUL8(uint32_t multiplicand, uint32_t multiplier);
-    void aux_MUL16(uint32_t multiplicand, uint32_t multiplier);
+    void aux8_MUL(uint32_t multiplicand, uint32_t multiplier);
+    void aux16_MUL(uint32_t multiplicand, uint32_t multiplier);
     void aux_MUL(uint32_t multiplicand, uint32_t multiplier);
-    void aux_IMUL8(uint32_t multiplicand, uint32_t multiplier);
-    void aux_IMUL16(uint32_t multiplicand, uint32_t multiplier);
+    void aux8_IMUL(uint32_t multiplicand, uint32_t multiplier);
+    void aux16_IMUL(uint32_t multiplicand, uint32_t multiplier);
     void aux_IMUL(uint32_t multiplicand, uint32_t multiplier);
     void multiply(uint32_t multiplicand, uint32_t multiplier);
 
@@ -483,27 +483,27 @@ class Free86 {
     void aux_AAS();
     void aux_DAA();
     void aux_DAS();
-    void aux_BOUND16();
+    void aux16_BOUND();
     void aux_BOUND();
-    void aux_PUSHA16();
+    void aux16_PUSHA();
     void aux_PUSHA();
-    void aux_POPA16();
+    void aux16_POPA();
     void aux_POPA();
-    void aux_LEAVE16();
+    void aux16_LEAVE();
     void aux_LEAVE();
-    void aux_ENTER16();
+    void aux16_ENTER();
     void aux_ENTER();
     void ld_far_pointer16(uint32_t sreg);
     void ld_far_pointer(uint32_t sreg);
 
     // string.cpp
-    void aux_INS16();
-    void aux_OUTS16();
-    void aux_MOVS16();
-    void aux_STOS16();
-    void aux_CMPS16();
-    void aux_LODS16();
-    void aux_SCAS16();
+    void aux16_INS();
+    void aux16_OUTS();
+    void aux16_MOVS();
+    void aux16_STOS();
+    void aux16_CMPS();
+    void aux16_LODS();
+    void aux16_SCAS();
 
     void aux_INSB();
     void aux_OUTSB();
@@ -556,8 +556,8 @@ class Free86 {
     void st16_direct(uint32_t address, uint32_t byte);
     void st_direct(uint32_t address, uint32_t dword);
     void st64_direct(uint32_t address, uint64_t qword);
-    uint32_t fetch_data8(); // read byte...
-    uint32_t fetch_data16(); // ...word...
+    uint32_t fetch8_data(); // read byte...
+    uint32_t fetch16_data(); // ...word...
     uint32_t fetch_data(); // ...dword at FAR, update FAR
     void push16(uint32_t word);
     void push(uint32_t dword);

@@ -223,8 +223,4 @@ extension Instruction {
     func Ox0fc7() throws -> Result<Resume, Never> {
         return .success(.endFetchLoop)
     }
-    /// 0x0f  2-byte instruction escape
-    func Ox0f0f() throws -> Result<Resume, Never> {
-        return .success(.endFetchLoop)
-    }
 }

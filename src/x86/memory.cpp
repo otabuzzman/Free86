@@ -236,19 +236,19 @@ void Free86::st64_direct(uint32_t address, uint64_t qword) {
     st_direct(address, qword & 0xffffffff);
     st_direct(address + 4, (qword >> 32) & 0xffffffff);
 }
-uint32_t Free86::fetch_data8() {
+uint32_t Free86::fetch8_data() {
     return ld8_direct(far++);
 }
-uint32_t Free86::fetch_data16() {
-    uint32_t word = fetch_data8();
-    word |= fetch_data8() << 8;
+uint32_t Free86::fetch16_data() {
+    uint32_t word = fetch8_data();
+    word |= fetch8_data() << 8;
     return word;
 }
 uint32_t Free86::fetch_data() {
-    uint32_t dword = fetch_data8();
-    dword |= fetch_data8() << 8;
-    dword |= fetch_data8() << 16;
-    dword |= fetch_data8() << 24;
+    uint32_t dword = fetch8_data();
+    dword |= fetch8_data() << 8;
+    dword |= fetch8_data() << 16;
+    dword |= fetch8_data() << 24;
     return dword;
 }
 void Free86::push16(uint32_t word) {

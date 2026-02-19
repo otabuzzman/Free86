@@ -438,7 +438,7 @@ extension Free86 {
     /// 0x1f1  -
     /// 0x10f  2-byte instruction escape
     func Ox10f() throws -> Result<Resume, Never> {
-        // opcode = fetch8()
+        // opcode = fetch8_data()
         opcode.raiseBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
         return try twoByteDecoder[Int(opcode)]()
     }
