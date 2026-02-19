@@ -1294,8 +1294,8 @@ uint64_t Free86::ld_tss_stack(uint32_t level) {
 }
 uint32_t Free86::aux8_INC(uint32_t byte) {
     if (osm < 25) {
-        ocm_preserved = osm;
-        ocm_dst_preserved = osm_dst;
+        osm_preserved = osm;
+        osm_dst_preserved = osm_dst;
     }
     osm_dst = sign_extend_byte(byte + 1);
     osm = 25;
@@ -1303,8 +1303,8 @@ uint32_t Free86::aux8_INC(uint32_t byte) {
 }
 uint32_t Free86::aux16_INC(uint32_t word) {
     if (osm < 25) {
-        ocm_preserved = osm;
-        ocm_dst_preserved = osm_dst;
+        osm_preserved = osm;
+        osm_dst_preserved = osm_dst;
     }
     osm_dst = sign_extend_word(word + 1);
     osm = 26;
@@ -1312,8 +1312,8 @@ uint32_t Free86::aux16_INC(uint32_t word) {
 }
 uint32_t Free86::aux8_DEC(uint32_t byte) {
     if (osm < 25) {
-        ocm_preserved = osm;
-        ocm_dst_preserved = osm_dst;
+        osm_preserved = osm;
+        osm_dst_preserved = osm_dst;
     }
     osm_dst = sign_extend_byte(byte - 1);
     osm = 28;
@@ -1321,8 +1321,8 @@ uint32_t Free86::aux8_DEC(uint32_t byte) {
 }
 uint32_t Free86::aux16_DEC(uint32_t word) {
     if (osm < 25) {
-        ocm_preserved = osm;
-        ocm_dst_preserved = osm_dst;
+        osm_preserved = osm;
+        osm_dst_preserved = osm_dst;
     }
     osm_dst = sign_extend_word(word - 1);
     osm = 29;
@@ -2201,18 +2201,18 @@ void Free86::aux_LTR(uint32_t selector) {
 }
 void Free86::aux_JMPF(uint32_t selector, uint32_t offset) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        aux_JMPF_real__v86_mode(selector, offset);
+        aux_JMPF_real__v86(selector, offset);
     } else {
-        aux_JMPF_protected_mode(selector, offset);
+        aux_JMPF_protected(selector, offset);
     }
 }
-void Free86::aux_JMPF_real__v86_mode(uint32_t selector, uint32_t offset) {
+void Free86::aux_JMPF_real__v86(uint32_t selector, uint32_t offset) {
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_JMPF_protected_mode(uint32_t selector, uint32_t offset) {
+void Free86::aux_JMPF_protected(uint32_t selector, uint32_t offset) {
     SegmentDescriptor xsd{0};
     if ((selector & 0xfffc) == 0) {
         abort(13, 0);
@@ -2253,12 +2253,12 @@ void Free86::aux_JMPF_protected_mode(uint32_t selector, uint32_t offset) {
 }
 void Free86::aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        aux_CALLF_real__v86_mode(o32, selector, offset, return_address);
+        aux_CALLF_real__v86(o32, selector, offset, return_address);
     } else {
-        aux_CALLF_protected_mode(o32, selector, offset, return_address);
+        aux_CALLF_protected(o32, selector, offset, return_address);
     }
 }
-void Free86::aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
+void Free86::aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
     uint32_t esp = regs[4];
     if (o32) {
         esp = esp - 4;
@@ -2281,7 +2281,7 @@ void Free86::aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offs
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
+void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
     uint32_t ss, esp, esp_start, spl, gsel, goff, gpac, OS_base, OS_mask;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
     int type, gate32;
@@ -2467,12 +2467,12 @@ void Free86::aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offs
 }
 void Free86::aux_RETF(bool o32, uint32_t release_stack_items) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        return_real__v86_mode(o32, 0, release_stack_items);
+        return_real__v86(o32, 0, release_stack_items);
     } else {
-        return_protected_mode(o32, 0, release_stack_items);
+        return_protected(o32, 0, release_stack_items);
     }
 }
-void Free86::return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items) {
+void Free86::return_real__v86(bool o32, bool is_iret, uint32_t release_stack_items) {
     uint32_t cs, esp, stack_eip, stack_eflags;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
@@ -2519,7 +2519,7 @@ void Free86::return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stac
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items) {
+void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_items) {
     uint32_t cpl, esp, stack_esp, stack_eip, stack_eflags = 0;
     uint32_t es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
@@ -2700,12 +2700,12 @@ void Free86::zero_segment_register(uint32_t sreg, uint32_t level) {
 }
 void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
     if (is_protected()) {
-        raise_interrupt_protected_mode(id, error_code, is_hw, is_sw, return_address);
+        raise_interrupt_protected(id, error_code, is_hw, is_sw, return_address);
     } else {
-        raise_interrupt_real__v86_mode(id, is_sw, return_address);
+        raise_interrupt_real__v86(id, is_sw, return_address);
     }
 }
-void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address) {
+void Free86::raise_interrupt_real__v86(int id, int is_sw, uint32_t return_address) {
     uint32_t selector, offset, esp;
     if (id * 4 + 3 > idt.shadow.limit) {
         abort(13, id * 8 + 2);
@@ -2730,7 +2730,7 @@ void Free86::raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_a
     segs[1].shadow.base = selector << 4;
     eflags &= ~(0x00000100u | 0x00000200u | 0x00010000u | 0x00040000u);
 }
-void Free86::raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
+void Free86::raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
     uint32_t ss, esp, spl, stack_error_code, gsel, goff;
     SegmentDescriptor isd{0}, cgd{0}, ssd{0};
     int is_interlevel, type, gate32;
@@ -2935,12 +2935,12 @@ void Free86::aux_IRET(bool o32) {
                 abort(13);
             }
         }
-        return_real__v86_mode(o32, 1, 0);
+        return_real__v86(o32, 1, 0);
     } else {
         if (eflags & 0x00004000) {
             throw "fatal: unsupported EFLAGS.NT == 1 in IRET";
         } else {
-            return_protected_mode(o32, 1, 0);
+            return_protected(o32, 1, 0);
         }
     }
 }

@@ -293,7 +293,7 @@ class Free86 {
     uint32_t osm_src;
     uint32_t osm_dst;
 /*
-   `osm_preserved'/ `osm_dst_preserved' preserve OMS/ destination of instruction
+   `osm_preserved'/ `osm_dst_preserved' preserve OSM/ destination of instruction
    before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
    which is not modified by INC/ DEC. CF calculation after one or more
    successive INC/ DEC is therefore based on the values for OSM, source and
@@ -301,8 +301,8 @@ class Free86 {
    since INC/ DEC do not store the implicit value 1 in `osm_src', which therefore
    remains valid.
  */
-    int ocm_preserved;
-    uint32_t ocm_dst_preserved;
+    int osm_preserved;
+    uint32_t osm_dst_preserved;
 
 /*
    Instruction prefix register
@@ -456,19 +456,19 @@ class Free86 {
     void aux_LDTR(uint32_t selector);
     void aux_LTR(uint32_t selector);
     void aux_JMPF(uint32_t selector, uint32_t offset);
-    void aux_JMPF_real__v86_mode(uint32_t selector, uint32_t offset);
-    void aux_JMPF_protected_mode(uint32_t selector, uint32_t offset);
+    void aux_JMPF_real__v86(uint32_t selector, uint32_t offset);
+    void aux_JMPF_protected(uint32_t selector, uint32_t offset);
     void aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
-    void aux_CALLF_real__v86_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
-    void aux_CALLF_protected_mode(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
     void aux_RETF(bool o32, uint32_t release_stack_items);
-    void return_real__v86_mode(bool o32, bool is_iret, uint32_t release_stack_items);
-    void return_protected_mode(bool o32, bool is_iret, uint32_t release_stack_items);
+    void return_real__v86(bool o32, bool is_iret, uint32_t release_stack_items);
+    void return_protected(bool o32, bool is_iret, uint32_t release_stack_items);
     void zero_segment_register(uint32_t sreg, uint32_t level);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
-    void raise_interrupt_real__v86_mode(int id, int is_sw, uint32_t return_address);
-    void raise_interrupt_protected_mode(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
+    void raise_interrupt_real__v86(int id, int is_sw, uint32_t return_address);
+    void raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);

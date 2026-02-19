@@ -610,8 +610,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0x47: // INC DI
                 reg = opcode & 7;
                 if (osm < 25) {
-                    ocm_preserved = osm;
-                    ocm_dst_preserved = osm_dst;
+                    osm_preserved = osm;
+                    osm_dst_preserved = osm_dst;
                 }
                 regs[reg] = osm_dst = regs[reg] + 1;
                 osm = 27;
@@ -626,8 +626,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0x4f: // DEC DI
                 reg = opcode & 7;
                 if (osm < 25) {
-                    ocm_preserved = osm;
-                    ocm_dst_preserved = osm_dst;
+                    osm_preserved = osm;
+                    osm_dst_preserved = osm_dst;
                 }
                 regs[reg] = osm_dst = regs[reg] - 1;
                 osm = 30;
@@ -1144,8 +1144,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         // LOCK prefix not allowed
                         rM = modRM & 7;
                         if (osm < 25) {
-                            ocm_preserved = osm;
-                            ocm_dst_preserved = osm_dst;
+                            osm_preserved = osm;
+                            osm_dst_preserved = osm_dst;
                         }
                         regs[rM] = osm_dst = regs[rM] + 1;
                         osm = 27;
@@ -1153,8 +1153,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_writable_cpl3();
                         if (osm < 25) {
-                            ocm_preserved = osm;
-                            ocm_dst_preserved = osm_dst;
+                            osm_preserved = osm;
+                            osm_dst_preserved = osm_dst;
                         }
                         rm = osm_dst = rm + 1;
                         osm = 27;
@@ -1166,8 +1166,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         // LOCK prefix not allowed
                         rM = modRM & 7;
                         if (osm < 25) {
-                            ocm_preserved = osm;
-                            ocm_dst_preserved = osm_dst;
+                            osm_preserved = osm;
+                            osm_dst_preserved = osm_dst;
                         }
                         regs[rM] = osm_dst = regs[rM] - 1;
                         osm = 30;
@@ -1175,8 +1175,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_writable_cpl3();
                         if (osm < 25) {
-                            ocm_preserved = osm;
-                            ocm_dst_preserved = osm_dst;
+                            osm_preserved = osm;
+                            osm_dst_preserved = osm_dst;
                         }
                         rm = osm_dst = rm - 1;
                         osm = 30;

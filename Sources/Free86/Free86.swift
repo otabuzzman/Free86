@@ -28,10 +28,10 @@ class Free86 {
     var halted = false
     var cycles: QWord = 0
 
-    ///   Fetch address register
+    /// Fetch address register
     ///
-    ///   The fetch address register (FAR, aka MAR) stores the physical memory
-    ///   address of the next byte to be retrieved in the current fetch cycle.
+    /// The fetch address register (FAR, aka MAR) stores the physical memory
+    /// address of the next byte to be retrieved in the current fetch cycle.
     var far: DWord = 0       // fetch address register (FAR, aka MAR)
     var farStart: DWord = 0  // first fetch address of current cycle
 
@@ -132,18 +132,18 @@ class Free86 {
     // U : leaves flag undefined,
     // - : does not affect flag.
     var osm: Int = 0
-    var osm_src: DWord = 0
-    var osm_dst: DWord = 0
+    var osmSrc: DWord = 0
+    var osmDst: DWord = 0
 
-    /// osm_preserved/ osm_dst_preserved preserve OMS/ destination of instruction
+    /// osmPreserved/ osmDstPreservedst_preserved preserve OSM/ destination of instruction
     /// before INC/ DEC but not including INC/ DEC. This is for later calculation of CF
     /// which is not modified by INC/ DEC. CF calculation after one or more
     /// successive INC/ DEC is therefore based on the values for OSM, source and
     /// destination before INC/ DEC. It is not necessary to also preserve source,
-    /// since INC/ DEC do not store the implicit value 1 in `osm_src', which therefore
+    /// since INC/ DEC do not store the implicit value 1 in `osmSrc', which therefore
     /// remains valid.
-    var ocm_preserved: Int = 0
-    var ocm_dst_preserved: DWord = 0
+    var osmPreserved: Int = 0
+    var osmDstPreserved: DWord = 0
 
     /// Instruction prefix register
     ///
@@ -172,14 +172,12 @@ class Free86 {
         return ipr
     }
 
-    lazy var instruction: Instruction = {
-        .init(parent: self)
-    }()
+    lazy var instruction = Instruction(parent: self)
 
-    ///   Segments state block
+    /// Segments state block
     ///
-    ///   Variables in the segments state block (SSB) provide shorthand
-    ///   access to frequently used segment data.
+    /// Variables in the segments state block (SSB) provide shorthand
+    /// access to frequently used segment data.
     var csBase: LinearAddress {
         segs[.CS].shadow.base
     }

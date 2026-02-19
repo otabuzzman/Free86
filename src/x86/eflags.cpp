@@ -5,8 +5,8 @@ bool Free86::is_CF() {
     int osm;
     uint32_t osm_dst;
     if (this->osm >= 25) {
-        osm = ocm_preserved;
-        osm_dst = ocm_dst_preserved;
+        osm = osm_preserved;
+        osm_dst = osm_dst_preserved;
     } else {
         osm = this->osm;
         osm_dst = this->osm_dst;
