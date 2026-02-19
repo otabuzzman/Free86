@@ -1508,17 +1508,17 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 aux_BOUND();
                 goto FETCH_LOOP;
             case 0xf5: // CMC
-                osm_src = compile_eflags() ^ 0x0001;
+                osm_src = compile_EFLAGS() ^ 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto FETCH_LOOP;
             case 0xf8: // CLC
-                osm_src = compile_eflags() & ~0x0001u;
+                osm_src = compile_EFLAGS() & ~0x0001u;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto FETCH_LOOP;
             case 0xf9: // STC
-                osm_src = compile_eflags() | 0x0001;
+                osm_src = compile_EFLAGS() | 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto FETCH_LOOP;
@@ -1783,7 +1783,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x8e: // JLE
                 case 0x8f: // JNLE
                     imm = fetch_data();
-                    if (can_jump(opcode & 0xf)) {
+                    if (can_jmp(opcode & 0xf)) {
                         far = far + imm;
                     }
                     goto FETCH_LOOP;
@@ -1804,7 +1804,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x9e: // SETLE
                 case 0x9f: // SETNLE
                     modRM = fetch8_data();
-                    u = can_jump(opcode & 0xf);
+                    u = can_jmp(opcode & 0xf);
                     if ((modRM >> 6) == 3) {
                         set_lower_byte(modRM & 7, u);
                     } else {
@@ -1835,7 +1835,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    if (can_jump(opcode & 0xf)) {
+                    if (can_jmp(opcode & 0xf)) {
                         regs[(modRM >> 3) & 7] = rm;
                     }
                     goto FETCH_LOOP;
@@ -3084,7 +3084,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x17e: // JLE
                 case 0x17f: // JNLE
                     u = sign_extend_byte(fetch8_data());
-                    if (can_jump(opcode & 0xf)) {
+                    if (can_jmp(opcode & 0xf)) {
                         eip = (eip + far - far_start + u) & 0xffff;
                         far = far_start = 0;
                     }
@@ -3328,7 +3328,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     case 0x18e: // JLE
                     case 0x18f: // JNLE
                         imm = fetch16_data();
-                        if (can_jump(opcode & 0xf)) {
+                        if (can_jmp(opcode & 0xf)) {
                             eip = (eip + far - far_start + imm) & 0xffff;
                             far = far_start = 0;
                         }
@@ -3356,7 +3356,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                             segment_translation();
                             rm = ld16_readonly_cpl3();
                         }
-                        if (can_jump(opcode & 0xf)) {
+                        if (can_jmp(opcode & 0xf)) {
                             set_lower_word((modRM >> 3) & 7, rm);
                         }
                         goto FETCH_LOOP;

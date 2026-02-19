@@ -1181,19 +1181,19 @@ void Free86::set_segment_register(uint32_t sreg, uint32_t selector, uint32_t bas
 }
 void Free86::set_segment_register(uint32_t sreg, uint32_t selector) {
     if (is_protected()) {
-        set_segment_register_protected(sreg, selector);
+        set_segment_register_protected_mode(sreg, selector);
     } else { // real or v86 mode
-        set_segment_register_real__v86(sreg, selector);
+        set_segment_register_real__v86_mode(sreg, selector);
     }
 }
-void Free86::set_segment_register_real__v86(uint32_t sreg, uint32_t selector) {
+void Free86::set_segment_register_real__v86_mode(uint32_t sreg, uint32_t selector) {
     if (eflags & 0x00020000) { // v86 mode
         set_segment_register(sreg, selector, selector << 4, 0xffff, (1 << 15) | (3 << 13) | (1 << 12) | (1 << 9) | (1 << 8));
     } else { // real mode
         segs[sreg] = {selector, {selector << 4, 0xffff, 0}};
     }
 }
-void Free86::set_segment_register_protected(uint32_t sreg, uint32_t selector) {
+void Free86::set_segment_register_protected_mode(uint32_t sreg, uint32_t selector) {
     SegmentRegister xdt;
     SegmentDescriptor xsd{0};
     uint32_t dti;
@@ -1872,7 +1872,7 @@ uint32_t Free86::shift8(uint32_t src, uint32_t count) {
         if (count & 0x1f) {
             c = count & 0x7;
             res = (res << c) | (res >> (8 - c));
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= res & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) << 4) & 0x0800;
@@ -1885,7 +1885,7 @@ uint32_t Free86::shift8(uint32_t src, uint32_t count) {
         if (count & 0x1f) {
             c = count & 0x7;
             res = (res >> c) | (res << (8 - c));
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (res >> 7) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) << 4) & 0x0800;
@@ -1902,7 +1902,7 @@ uint32_t Free86::shift8(uint32_t src, uint32_t count) {
             if (c > 1) {
                 res |= s >> (9 - c);
             }
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (s >> (8 - c)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) << 4) & 0x0800;
@@ -1919,7 +1919,7 @@ uint32_t Free86::shift8(uint32_t src, uint32_t count) {
             if (c > 1) {
                 res |= s << (9 - c);
             }
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (s >> (c - 1)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) << 4) & 0x0800;
@@ -1965,7 +1965,7 @@ uint32_t Free86::shift16(uint32_t src, uint32_t count) {
         if (count & 0x1f) {
             c = count & 0xf;
             res = (res << c) | (res >> (16 - c));
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= res & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 4) & 0x0800;
@@ -1978,7 +1978,7 @@ uint32_t Free86::shift16(uint32_t src, uint32_t count) {
         if (count & 0x1f) {
             c = count & 0xf;
             res = (res >> c) | (res << (16 - c));
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (res >> 15) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 4) & 0x0800;
@@ -1995,7 +1995,7 @@ uint32_t Free86::shift16(uint32_t src, uint32_t count) {
             if (c > 1) {
                 res |= s >> (17 - c);
             }
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (s >> (16 - c)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 4) & 0x0800;
@@ -2012,7 +2012,7 @@ uint32_t Free86::shift16(uint32_t src, uint32_t count) {
             if (c > 1) {
                 res |= s << (17 - c);
             }
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (s >> (c - 1)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 4) & 0x0800;
@@ -2058,7 +2058,7 @@ uint32_t Free86::shift(uint32_t src, uint32_t count) {
         c = count & 0x1f;
         if (c) {
             res = (res << c) | (res >> (32 - c));
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= res & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 20) & 0x0800;
@@ -2071,7 +2071,7 @@ uint32_t Free86::shift(uint32_t src, uint32_t count) {
         c = count & 0x1f;
         if (c) {
             res = (res >> c) | (res << (32 - c));
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (res >> 31) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 20) & 0x0800;
@@ -2088,7 +2088,7 @@ uint32_t Free86::shift(uint32_t src, uint32_t count) {
             if (c > 1) {
                 res |= s >> (33 - c);
             }
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (s >> (32 - c)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 20) & 0x0800;
@@ -2105,7 +2105,7 @@ uint32_t Free86::shift(uint32_t src, uint32_t count) {
             if (c > 1) {
                 res |= s << (33 - c);
             }
-            osm_src = compile_eflags(true);
+            osm_src = compile_EFLAGS(true);
             osm_src |= (s >> (c - 1)) & 0x0001;
             if (c == 1) {
                 osm_src |= ((s ^ res) >> 20) & 0x0800;
@@ -2565,12 +2565,12 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
                                          0x00020000 | 0x00040000 | 0x00080000 |
                                          0x00100000 | 0x00200000);
                 // clang-format on
-                set_segment_register_real__v86(0, es & 0xffff);
-                set_segment_register_real__v86(1, cs & 0xffff);
-                set_segment_register_real__v86(2, ss & 0xffff);
-                set_segment_register_real__v86(3, ds & 0xffff);
-                set_segment_register_real__v86(4, fs & 0xffff);
-                set_segment_register_real__v86(5, gs & 0xffff);
+                set_segment_register_real__v86_mode(0, es & 0xffff);
+                set_segment_register_real__v86_mode(1, cs & 0xffff);
+                set_segment_register_real__v86_mode(2, ss & 0xffff);
+                set_segment_register_real__v86_mode(3, ds & 0xffff);
+                set_segment_register_real__v86_mode(4, fs & 0xffff);
+                set_segment_register_real__v86_mode(5, gs & 0xffff);
                 eip = stack_eip & 0xffff, far = far_start = 0;
                 regs[4] = (regs[4] & ~SS_mask) | (stack_esp & SS_mask);
                 set_cpl(3);
@@ -2958,7 +2958,7 @@ void Free86::aux_LAR_LSL(bool o32, bool is_lsl) {
         selector = ld16_readonly_cpl3();
     }
     u = ld_descriptor_fields(selector, is_lsl);
-    osm_src = compile_eflags();
+    osm_src = compile_EFLAGS();
     if (u == 0x80000000) { // notok
         osm_src &= ~0x0040u;
     } else {
@@ -3021,7 +3021,7 @@ uint32_t Free86::ld_descriptor_fields(uint32_t selector, bool limit) { // !limit
     }
 }
 void Free86::aux_VERR_VERW(uint32_t selector, bool writable) { // !writable == readable
-    osm_src = compile_eflags();
+    osm_src = compile_EFLAGS();
     if (is_segment_accessible(selector, writable)) {
         osm_src |= 0x0040;
     } else {
@@ -3080,7 +3080,7 @@ void Free86::aux_ARPL() {
         rm = ld16_writable_cpl3();
     }
     r = regs[(modRM >> 3) & 7];
-    osm_src = compile_eflags();
+    osm_src = compile_EFLAGS();
     if ((rm & 3) < (r & 3)) {
         u = (rm & ~3u) | (r & 3);
         if ((modRM >> 6) == 3) {
@@ -3135,7 +3135,7 @@ void Free86::aux_AAD(uint32_t radix) {
 }
 void Free86::aux_AAA() {
     uint32_t of, al, ah, f4, flags;
-    flags = compile_eflags();
+    flags = compile_EFLAGS();
     f4 = flags & 0x0010;
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
@@ -3155,7 +3155,7 @@ void Free86::aux_AAA() {
 }
 void Free86::aux_AAS() {
     uint32_t of, al, ah, f4, flags;
-    flags = compile_eflags();
+    flags = compile_EFLAGS();
     f4 = flags & 0x0010; // AF
     al = regs[0] & 0xff;
     ah = (regs[0] >> 8) & 0xff;
@@ -3175,7 +3175,7 @@ void Free86::aux_AAS() {
 }
 void Free86::aux_DAA() {
     uint32_t al, f0, f4, flags;
-    flags = compile_eflags();
+    flags = compile_EFLAGS();
     f0 = flags & 0x0001;
     f4 = flags & 0x0010;
     al = regs[0] & 0xff;
@@ -3198,7 +3198,7 @@ void Free86::aux_DAA() {
 }
 void Free86::aux_DAS() {
     uint32_t al, of, f0, f4, flags;
-    flags = compile_eflags();
+    flags = compile_EFLAGS();
     f0 = flags & 0x0001;
     f4 = flags & 0x0010;
     al = regs[0] & 0xff;

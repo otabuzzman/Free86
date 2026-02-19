@@ -20,6 +20,9 @@ struct Instruction {
         }
         return _length
     }
+    mutating func modRMBytesNumber() throws -> Int {
+        0
+    }
 
     typealias Resume = Free86.Resume  // convenience shortener for opcode programs definitions
 

@@ -410,8 +410,8 @@ class Free86 {
 
     void set_segment_register(uint32_t sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags);
     void set_segment_register(uint32_t sreg, uint32_t selector);
-    void set_segment_register_real__v86(uint32_t sreg, uint32_t selector);
-    void set_segment_register_protected(uint32_t sreg, uint32_t selector);
+    void set_segment_register_real__v86_mode(uint32_t sreg, uint32_t selector);
+    void set_segment_register_protected_mode(uint32_t sreg, uint32_t selector);
 
     SegmentDescriptor ld_xdt_entry(uint32_t selector);
     uint64_t ld_tss_stack(uint32_t level); // seg:offset
@@ -574,8 +574,8 @@ class Free86 {
     bool is_BE(); // below or equal, signed comparison
     bool is_LE(); // less or equal, unsigned comparison
     bool is_LT(); // less than
-    bool can_jump(int condition);
-    uint32_t compile_eflags(bool shift = false);
+    bool can_jmp(int condition);
+    uint32_t compile_EFLAGS(bool shift = false);
 
     uint32_t get_EFLAGS();
     void set_EFLAGS(uint32_t bits, uint32_t mask);

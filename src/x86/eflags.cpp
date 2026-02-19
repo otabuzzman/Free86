@@ -339,7 +339,7 @@ bool Free86::is_LT() {
     }
     return f;
 }
-bool Free86::can_jump(int condition) {
+bool Free86::can_jmp(int condition) {
     bool f;
     switch ((condition >> 1) & 7) {
     case 0:
@@ -372,7 +372,7 @@ bool Free86::can_jump(int condition) {
     }
     return f ^ (condition & 1);
 }
-uint32_t Free86::compile_eflags(bool shift) {
+uint32_t Free86::compile_EFLAGS(bool shift) {
     uint32_t f0 = 0, f11 = 0;
     if (!shift) {
         f0 = is_CF() << 0;
@@ -385,7 +385,7 @@ uint32_t Free86::compile_eflags(bool shift) {
     return f0 | f2 | f4 | f6 | f7 | f11;
 }
 uint32_t Free86::get_EFLAGS() {
-    uint32_t bits = compile_eflags();
+    uint32_t bits = compile_EFLAGS();
     bits |= df & 0x00000400;
     bits |= eflags;
     return bits;

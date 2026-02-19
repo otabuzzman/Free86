@@ -49,6 +49,7 @@ let package = Package(
             sources: [
                 "Free86.swift",  // no tests
                 "Free86+reset.swift",
+                "Free86+eflags.swift",  // no tests
                 "Free86+setter.swift",
                 "Free86+fetchDecodeExecute.swift",  // no tests
                 "OpcodePrograms/Free86+oneByte16.swift",  // no tests
@@ -57,10 +58,18 @@ let package = Package(
                 "OpcodePrograms/Free86+twoByte.swift",    // no tests
                 "OpcodePrograms/Instruction+oneByte.swift",  // no tests
                 "OpcodePrograms/Instruction+twoByte.swift",  // no tests
+                "AuxiliaryPrograms/Free86+dataMovement.swift",  // no tests
+                "AuxiliaryPrograms/Free86+binaryArithmethic.swift",   // no tests
+                "AuxiliaryPrograms/Free86+decimalArithmethic.swift",  // no tests
+                "AuxiliaryPrograms/Free86+bitShiftTestRotate.swift",  // no tests
+                "AuxiliaryPrograms/Free86+stringManipulation.swift",  // no tests
+                "AuxiliaryPrograms/Free86+controlTransfer.swift",  // no tests
+                "AuxiliaryPrograms/Free86+miscellaneous.swift",    // no tests
                 "LookupTables/Free86+LUT.swift",  // no tests
                 "MachineDataTypes.swift",
                 "GeneralRegister.swift",
                 "SegmentRegister.swift",
+                "Free86+segmentRegister.swift",  // no tests
                 "SegmentSelector.swift",
                 "SegmentDescriptor.swift",
                 "ExtendedFlagsRegister.swift",
@@ -80,6 +89,7 @@ let package = Package(
                 "PageTableEntry.swift",
                 "TranslationLookasideBuffer.swift",  // protocol, no explicit tests
                 "Free86+TranslationLookasideBuffer.swift",
+                "Free86+segmentTranslation.swift",  // no tests
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
