@@ -47,7 +47,7 @@ struct Instruction {
     ]
     lazy var twoByteDecoder: Free86.OpcodeDecoder = [
         //          0x0      0x1      0x2      0x3      0x4      0x5      0x6      0x7      0x8      0x9      0xa      0xb      0xc      0xd      0xe      0xf
-        /* 0x000 */ Ox0fc1,  Ox0fc1,  Ox0fc1,  Ox0fc1,  Ox0fc7,  Ox0fc7,  Ox0fcf,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0f0f,  
+        /* 0x000 */ Ox0fc1,  Ox0fc1,  Ox0fc1,  Ox0fc1,  Ox0fc7,  Ox0fc7,  Ox0fcf,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,
         /* 0x010 */ Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  
         /* 0x020 */ Ox0fc1,  Ox0fc7,  Ox0fc1,  Ox0fc1,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  
         /* 0x030 */ Ox0fc7,  Ox0fcf,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  Ox0fc7,  

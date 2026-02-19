@@ -236,7 +236,7 @@ class Free86 {
         /* 0x0c0 */ Oxc0,    Oxc1,    Oxc2,    Oxc3,    Oxc4,    Oxc5,    Oxc6,    Oxc7,    Oxc8,    Oxc9,    Oxca,    Oxcb,    Oxcc,    Oxcd,    Oxce,    Oxcf,
         /* 0x0d0 */ Oxd0,    Oxd1,    Oxd2,    Oxd3,    Oxd4,    Oxd5,    Oxf1,    Oxd7,    Oxdf,    Oxdf,    Oxdf,    Oxdf,    Oxdf,    Oxdf,    Oxdf,    Oxdf,
         /* 0x0e0 */ Oxe2,    Oxe2,    Oxe2,    Oxe3,    Oxe4,    Oxe5,    Oxe6,    Oxe7,    Oxe8,    Oxe9,    Oxea,    Oxeb,    Oxec,    Oxed,    Oxee,    Oxef,
-        /* 0x0f0 */ Oxf0,    Oxf1,    Oxf2,    Oxf3,    Oxf4,    Oxf5,    Oxf6,    Oxf7,    Oxf8,    Oxf9,    Oxfa,    Oxfb,    Oxfc,    Oxfd,    Oxfe,    Oxff
+        /* 0x0f0 */ Oxf0,    Oxf1,    Oxf2,    Oxf3,    Oxf4,    Oxf5,    Oxf6,    Oxf7,    Oxf8,    Oxf9,    Oxfa,    Oxfb,    Oxfc,    Oxfd,    Oxfe,    Oxff,
         ///
         /// 16 bit programs
         ///
@@ -274,7 +274,7 @@ class Free86 {
         /* 0x0c0 */ Ox0fc0,  Ox0fc1,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fcf,  Ox0fcf,  Ox0fcf,  Ox0fcf,  Ox0fcf,  Ox0fcf,  Ox0fcf,  Ox0fcf,
         /* 0x0d0 */ Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,
         /* 0x0e0 */ Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,
-        /* 0x0f0 */ Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff
+        /* 0x0f0 */ Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,  Ox0fff,
         ///
         /// 16 bit programs
         ///
