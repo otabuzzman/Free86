@@ -52,6 +52,7 @@ let package = Package(
                 "Free86+eflags.swift",  // no tests
                 "Free86+setter.swift",
                 "Free86+fetchDecodeExecute.swift",  // no tests
+                "Free86+retrieveOpcode.swift",  // no tests
                 "OpcodePrograms/Free86+oneByte16.swift",  // no tests
                 "OpcodePrograms/Free86+oneByte.swift",    // no tests
                 "OpcodePrograms/Free86+twoByte16.swift",  // no tests
