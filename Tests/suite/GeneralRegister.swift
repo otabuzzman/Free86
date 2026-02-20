@@ -24,7 +24,7 @@ func generalRegisterXHLSetGet() {
 
 @Test("general register index access by name")
 func generalRegisterIndexAccessByName() {
-    let bank = [
+    var bank = [
         GeneralRegister(0xDEADC0DE),
         GeneralRegister(0xDEADBEAF),
         GeneralRegister(0xBEAFC0DE),
@@ -42,4 +42,8 @@ func generalRegisterIndexAccessByName() {
     #expect(bank[.EBP] == 0xADC0DEDE)
     #expect(bank[.ESI] == 0xDEC0DEAD)
     #expect(bank[.EDI] == 0xDEADDEC0)
+    bank[.EAX] = 0xCAFEBEEF
+    #expect(bank[.EAX] == 0xCAFEBEEF)
+    bank[.EDI] = 0xDEADC0DE
+    #expect(bank[.EDI] == 0xDEADC0DE)
 }
