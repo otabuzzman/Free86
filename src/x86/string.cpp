@@ -514,7 +514,7 @@ void Free86::aux_SCASW() {
         regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
-void Free86::aux_INS16() {
+void Free86::aux16_INS() {
     uint32_t ecx, edx, edi;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -547,7 +547,7 @@ void Free86::aux_INS16() {
         regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
-void Free86::aux_OUTS16() {
+void Free86::aux16_OUTS() {
     uint32_t ecx, edx, esi, sreg;
     iopl = (eflags >> 12) & 3;
     if (cpl > iopl) {
@@ -586,7 +586,7 @@ void Free86::aux_OUTS16() {
         regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
-void Free86::aux_MOVS16() {
+void Free86::aux16_MOVS() {
     uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
@@ -625,7 +625,7 @@ void Free86::aux_MOVS16() {
         regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
-void Free86::aux_STOS16() {
+void Free86::aux16_STOS() {
     uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
@@ -650,7 +650,7 @@ void Free86::aux_STOS16() {
         regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
-void Free86::aux_CMPS16() {
+void Free86::aux16_CMPS() {
     uint32_t ecx, edi, esi, sreg, la;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
@@ -701,7 +701,7 @@ void Free86::aux_CMPS16() {
         regs[7] = (edi & ~ipr_os_mask) | ((edi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
-void Free86::aux_LODS16() {
+void Free86::aux16_LODS() {
     uint32_t ecx, esi, sreg;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
@@ -734,7 +734,7 @@ void Free86::aux_LODS16() {
         regs[6] = (esi & ~ipr_os_mask) | ((esi + (static_cast<uint32_t>(df) << 1)) & ipr_os_mask);
     }
 }
-void Free86::aux_SCAS16() {
+void Free86::aux16_SCAS() {
     uint32_t ecx, edi;
     if (ipr & 0x0080) {
         ipr_os_mask = 0xffff;
