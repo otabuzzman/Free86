@@ -850,7 +850,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    aux_DIV((regs[0] & 0xffffffff) | static_cast<uint64_t>(regs[2] )<< 32, rm);
+                    aux_DIV((regs[0] & 0xffffffff) | static_cast<uint64_t>(regs[2]) << 32, rm);
                     regs[0] = u;
                     regs[2] = v;
                     break;
@@ -861,7 +861,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    aux_IDIV((regs[0] & 0xffffffff) | static_cast<uint64_t>(regs[2] )<< 32, rm);
+                    aux_IDIV((regs[0] & 0xffffffff) | static_cast<uint64_t>(regs[2]) << 32, rm);
                     regs[0] = u;
                     regs[2] = v;
                     break;

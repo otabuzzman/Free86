@@ -1599,7 +1599,7 @@ void Free86::aux_IDIV(uint64_t dividend, uint32_t divisor) {
     } else {
         rs = 0;
     }
-    aux_DIV(uh, lh, divisor);
+    aux_DIV((lh & 0xffffffff) | static_cast<uint64_t>(uh) << 32, divisor);
     rs ^= ds;
     if (rs) {
         if (u > 0x80000000) {
