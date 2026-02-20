@@ -73,67 +73,59 @@ func readWriteRamRomBanks64() {
 @Test("read/ write 8/ 16/ 32 bit isolated IO ports at 32 bit addresses")
 func readWriteIsolatedIoPorts() {
     let port8 = Port<Byte>()
-    let device8 = IsolatedIO<DWord, Port<Byte>>()
-    device8.register(port: port8, at: 42)
-    device8.register(port: port8, at: DWord(DWord.bankSize - 1))
-    #expect(device8[0] == 0)
-    device8[42] = 0xA5
-    #expect(device8[42] == 0xA5)
-    device8[DWord(DWord.bankSize - 1)] = 0x5A
-    #expect(device8[DWord(DWord.bankSize - 1)] == 0x5A)
-
     let port16 = Port<Word>()
-    let device16 = IsolatedIO<DWord, Port<Word>>()
-    device16.register(port: port16, at: 42)
-    device16.register(port: port16, at: DWord(DWord.bankSize - 1))
-    #expect(device16[0] == 0)
-    device16[42] = 0xDEAD
-    #expect(device16[42] == 0xDEAD)
-    device16[DWord(DWord.bankSize - 1)] = 0xADDE
-    #expect(device16[DWord(DWord.bankSize - 1)] == 0xADDE)
-
     let port = Port<DWord>()
-    let device = IsolatedIO<DWord, Port<DWord>>()
-    device.register(port: port, at: 42)
-    device.register(port: port, at: DWord(DWord.bankSize - 1))
-    #expect(device[0] == 0)
-    device[42] = 0xDEADC0DE
-    #expect(device[42] == 0xDEADC0DE)
-    device[DWord(DWord.bankSize - 1)] = 0xC0DEDEAD
-    #expect(device[DWord(DWord.bankSize - 1)] == 0xC0DEDEAD)
+    let device = IsolatedIO<DWord>()
+    device.register(port: port8, at: 42)
+    device.register(port: port16, at: 43)
+    device.register(port: port, at: 44)
+    device.register(port: port8, at: DWord(DWord.bankSize - 1))
+    device.register(port: port16, at: DWord(DWord.bankSize - 2))
+    device.register(port: port, at: DWord(DWord.bankSize - 3))
+
+    device[42] = UInt8(0xA5)
+    #expect(device[42] == UInt8(0xA5))
+    device[DWord(DWord.bankSize - 1)] = UInt8(0x5A)
+    #expect(device[DWord(DWord.bankSize - 1)] == UInt8(0x5A))
+
+    device[43] = UInt16(0xDEAD)
+    #expect(device[43] == UInt16(0xDEAD))
+    device[DWord(DWord.bankSize - 2)] = UInt16(0xADDE)
+    #expect(device[DWord(DWord.bankSize - 2)] == UInt16(0xADDE))
+
+    device[44] = UInt32(0xDEADC0DE)
+    #expect(device[44] == UInt32(0xDEADC0DE))
+    device[DWord(DWord.bankSize - 3)] = UInt32(0xC0DEDEAD)
+    #expect(device[DWord(DWord.bankSize - 3)] == UInt32(0xC0DEDEAD))
 }
 
 @Test("read/ write 8/ 16/ 32 bit isolated IO ports at 64 bit addresses")
 func readWriteIsolatedIoPorts64() {
     let port8 = Port<Byte>()
-    let device8 = IsolatedIO<QWord, Port<Byte>>()
-    device8.register(port: port8, at: 42)
-    device8.register(port: port8, at: QWord(QWord.bankSize - 1))
-    #expect(device8[0] == 0)
-    device8[42] = 0xA5
-    #expect(device8[42] == 0xA5)
-    device8[QWord(QWord.bankSize - 1)] = 0x5A
-    #expect(device8[QWord(QWord.bankSize - 1)] == 0x5A)
-
     let port16 = Port<Word>()
-    let device16 = IsolatedIO<QWord, Port<Word>>()
-    device16.register(port: port16, at: 42)
-    device16.register(port: port16, at: QWord(QWord.bankSize - 1))
-    #expect(device16[0] == 0)
-    device16[42] = 0xDEAD
-    #expect(device16[42] == 0xDEAD)
-    device16[QWord(QWord.bankSize - 1)] = 0xADDE
-    #expect(device16[QWord(QWord.bankSize - 1)] == 0xADDE)
-
     let port = Port<DWord>()
-    let device = IsolatedIO<QWord, Port<DWord>>()
-    device.register(port: port, at: 42)
-    device.register(port: port, at: QWord(QWord.bankSize - 1))
-    #expect(device[0] == 0)
-    device[42] = 0xDEADC0DE
-    #expect(device[42] == 0xDEADC0DE)
-    device[QWord(QWord.bankSize - 1)] = 0xC0DEDEAD
-    #expect(device[QWord(QWord.bankSize - 1)] == 0xC0DEDEAD)
+    let device = IsolatedIO<QWord>()
+    device.register(port: port8, at: 42)
+    device.register(port: port16, at: 43)
+    device.register(port: port, at: 44)
+    device.register(port: port8, at: QWord(QWord.bankSize - 1))
+    device.register(port: port16, at: QWord(QWord.bankSize - 2))
+    device.register(port: port, at: QWord(QWord.bankSize - 3))
+
+    device[42] = UInt8(0xA5)
+    #expect(device[42] == UInt8(0xA5))
+    device[QWord(QWord.bankSize - 1)] = UInt8(0x5A)
+    #expect(device[QWord(QWord.bankSize - 1)] == UInt8(0x5A))
+
+    device[43] = UInt16(0xDEAD)
+    #expect(device[43] == UInt16(0xDEAD))
+    device[QWord(QWord.bankSize - 2)] = UInt16(0xADDE)
+    #expect(device[QWord(QWord.bankSize - 2)] == UInt16(0xADDE))
+
+    device[44] = UInt32(0xDEADC0DE)
+    #expect(device[44] == UInt32(0xDEADC0DE))
+    device[QWord(QWord.bankSize - 3)] = UInt32(0xC0DEDEAD)
+    #expect(device[QWord(QWord.bankSize - 3)] == UInt32(0xC0DEDEAD))
 }
 
 @Test("read/ write multiple 8 bit IO ports bank at 32 bit addresses")

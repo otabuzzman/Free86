@@ -5,6 +5,8 @@ class Free86 {
     let NMI = PinIO<Bool>()
     let RESET = PinIO<Bool>()
 
+    let io: IsolatedIO<DWord>?
+
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
     var eflags: EFlags = 0
@@ -331,7 +333,7 @@ class Free86 {
         /* 0x1f0 */ invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid
     ]
 
-    init(memory: MemoryIO<DWord>) {
+    init(memory: MemoryIO<DWord>, io: IsolatedIO<DWord>? = nil) {
         /// RAM configuration check
         memory.st(at: 0x00000000, dword: 0xDEADBEEF)
         memory.st(at: 0x000FFFF0, dword: 0xC0DECAFE)
@@ -355,6 +357,7 @@ class Free86 {
         tlbWritableCplX.initialize(repeating: -1, count: 0x10000)
         tlbReadonlyCpl3.initialize(repeating: -1, count: 0x10000)
         tlbWritableCpl3.initialize(repeating: -1, count: 0x10000)
+        self.io = io
         reset()
     }
     deinit {

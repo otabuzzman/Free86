@@ -1,11 +1,11 @@
 /// only byte-type IO ports permitted for memory-mapped IO since memory is also byte-typed
-class IOPortBank<A: PhysicalAddress, P: IOPort>: IsolatedIO<A, P>, MemoryBank where P.Element == Byte {
-    override subscript(address: A) -> P.Element {
+class IOPortBank<A: PhysicalAddress, P: IOPort>: IsolatedIO<A>, MemoryBank where P.Element == Byte {
+    subscript(address: A) -> Byte {
         get {
-             P.Element(super[address & A(A.bankOffsetMask)])
+            super[address & A(A.bankOffsetMask)]
         }
-        set(iodata) {
-             super[address & A(A.bankOffsetMask)] = P.Element(iodata)
+        set(byte) {
+            super[address & A(A.bankOffsetMask)] = byte as Byte
         }
     }
 }
