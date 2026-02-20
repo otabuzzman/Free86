@@ -1130,19 +1130,19 @@ void Free86::segment_translation() {
     lax = segs[sreg].shadow.base + lax;
     return;
 }
-void Free86::moffs_to_linear(bool writable) {
+void Free86::ld_memory_offset(bool writable) {
     uint64_t la;
     uint32_t sreg, stride;
     bool notok;
-    if (ipr & 0x0080) {
-        la = fetch16_data();
-        stride = 2; // 16 bit mode
-    } else {
+    if (!(ipr & 0x0080)) {
         la = fetch_data() & 0xffffffff;
         stride = 4; // 32 bit mode
+    } else {
+        la = fetch16_data();
+        stride = 2; // 16 bit mode
     }
     if (!(opcode & 0x01)) {
-        stride = 1; // byte mode, opcodes A0, A2
+        stride = 1; // 8 bit mode, opcodes A0, A2
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
@@ -1523,31 +1523,31 @@ void Free86::aux16_DIV(uint32_t divisor) {
     set_lower_word(0, q);
     set_lower_word(2, s);
 }
-void Free86::aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
+void Free86::aux_DIV(uint64_t dividend, uint32_t divisor) {
     uint64_t a;
-    uint32_t d6du, d6dl, d6ds;
-    d6du = dividend_upper;
-    d6dl = dividend_lower;
-    if (d6du >= divisor) {
+    uint32_t uh, lh, s;
+    uh = dividend >> 32;
+    lh = dividend & 0xffffffff;
+    if (uh >= divisor) {
         abort(0);
     }
-    if (d6du <= 0x200000) {
-        a = d6du * 4294967296 + d6dl;
+    if (uh <= 0x200000) {
+        a = uh * 4294967296 + lh;
         v = a % divisor;
         u = a / divisor;
     } else {
         for (int i = 0; i < 32; i++) {
-            d6ds = d6du >> 31;
-            d6du = (d6du << 1) | (d6dl >> 31);
-            if (d6ds || (d6du >= divisor)) {
-                d6du = d6du - divisor;
-                d6dl = (d6dl << 1) | 1;
+            s = uh >> 31;
+            uh = (uh << 1) | (lh >> 31);
+            if (s || (uh >= divisor)) {
+                uh = uh - divisor;
+                lh = (lh << 1) | 1;
             } else {
-                d6dl = d6dl << 1;
+                lh = lh << 1;
             }
         }
-        v = d6du;
-        u = d6dl;
+        v = uh;
+        u = lh;
     }
 }
 void Free86::aux8_IDIV(uint32_t divisor) {
@@ -1579,29 +1579,29 @@ void Free86::aux16_IDIV(uint32_t divisor) {
     set_lower_word(0, q);
     set_lower_word(2, s);
 }
-void Free86::aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor) {
-    uint32_t d6du, d6dl, d6ds, d5rs;
-    d6du = dividend_upper;
-    d6dl = dividend_lower;
-    if (d6du & 0x80000000) {
-        d6ds = 1;
-        d6du = ~d6du;
-        d6dl = ~d6dl + 1;
-        if (d6dl == 0) {
-            d6du = d6du + 1;
+void Free86::aux_IDIV(uint64_t dividend, uint32_t divisor) {
+    uint32_t uh, lh, ds, rs;
+    uh = dividend >> 32;
+    lh = dividend & 0xffffffff;
+    if (uh & 0x80000000) {
+        ds = 1;
+        uh = ~uh;
+        lh = ~lh + 1;
+        if (lh == 0) {
+            uh = uh + 1;
         }
     } else {
-        d6ds = 0;
+        ds = 0;
     }
     if (divisor & 0x80000000) {
         divisor = ~divisor + 1;
-        d5rs = 1;
+        rs = 1;
     } else {
-        d5rs = 0;
+        rs = 0;
     }
-    aux_DIV(d6du, d6dl, divisor);
-    d5rs ^= d6ds;
-    if (d5rs) {
+    aux_DIV(uh, lh, divisor);
+    rs ^= ds;
+    if (rs) {
         if (u > 0x80000000) {
             abort(0);
         }
@@ -1611,7 +1611,7 @@ void Free86::aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t
             abort(0);
         }
     }
-    if (d6ds) {
+    if (ds) {
         v = ~v + 1;
     }
 }
@@ -1634,37 +1634,37 @@ void Free86::aux_MUL(uint32_t multiplicand, uint32_t multiplier) {
     osm = 23;
 }
 void Free86::aux8_IMUL(uint32_t multiplicand, uint32_t multiplier) {
-    uint32_t m10d, m8r;
-    m10d = sign_extend_byte(multiplicand);
-    m8r = sign_extend_byte(multiplier);
-    u = m10d * m8r;
+    uint32_t md, mr;
+    md = sign_extend_byte(multiplicand);
+    mr = sign_extend_byte(multiplier);
+    u = md * mr;
     osm_dst = sign_extend_byte(u);
     osm_src = u != osm_dst;
     osm = 21;
 }
 void Free86::aux16_IMUL(uint32_t multiplicand, uint32_t multiplier) {
-    uint32_t m10d, m8r;
-    m10d = sign_extend_word(multiplicand);
-    m8r = sign_extend_word(multiplier);
-    u = m10d * m8r;
+    uint32_t md, mr;
+    md = sign_extend_word(multiplicand);
+    mr = sign_extend_word(multiplier);
+    u = md * mr;
     osm_dst = sign_extend_word(u);
     osm_src = u != osm_dst;
     osm = 22;
 }
 void Free86::aux_IMUL(uint32_t multiplicand, uint32_t multiplier) {
-    uint32_t m10d, m8r, s;
-    m10d = multiplicand;
-    m8r = multiplier;
+    uint32_t md, mr, s;
+    md = multiplicand;
+    mr = multiplier;
     s = 0;
-    if (m10d & 0x80000000) {
-        m10d = ~m10d + 1;
+    if (md & 0x80000000) {
+        md = ~md + 1;
         s = 1;
     }
-    if (m8r & 0x80000000) {
-        m8r = ~m8r + 1;
+    if (mr & 0x80000000) {
+        mr = ~mr + 1;
         s ^= 1;
     }
-    multiply(m10d, m8r);
+    multiply(md, mr);
     if (s) {
         v = ~v;
         u = ~u + 1;
@@ -1678,24 +1678,24 @@ void Free86::aux_IMUL(uint32_t multiplicand, uint32_t multiplier) {
 }
 void Free86::multiply(uint32_t multiplicand, uint32_t multiplier) {
     uint64_t x = static_cast<uint64_t>(multiplicand) * multiplier;
-    uint32_t m10du, m10dl, m8ru, m8rl;
+    uint32_t du, dl, ru, rl;
     if (x <= 0xffffffff) {
         v = 0;
     } else {
-        m10dl = multiplicand & 0xffff;
-        m10du = multiplicand >> 16;
-        m8rl = multiplier & 0xffff;
-        m8ru = multiplier >> 16;
-        x = m10dl * m8rl;
-        v = m10du * m8ru;
-        w = m10dl * m8ru;
+        dl = multiplicand & 0xffff;
+        du = multiplicand >> 16;
+        rl = multiplier & 0xffff;
+        ru = multiplier >> 16;
+        x = dl * rl;
+        v = du * ru;
+        w = dl * ru;
         x += (w & 0xffff) << 16;
         v += w >> 16;
         if (x >= 4294967296) {
             x -= 4294967296;
             v++;
         }
-        w = m10du * m8rl;
+        w = du * rl;
         x += (w & 0xffff) << 16;
         v += w >> 16;
         if (x >= 4294967296) {
@@ -2659,11 +2659,11 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
             }
             set_segment_register(2, ss, ssd.base, ssd.limit, ssd.flags);
         }
-        zero_segment_register(0, rpl);
+        reset_segment_register(0, rpl);
         set_segment_register(1, cs, csd.base, csd.limit, csd.flags);
-        zero_segment_register(3, rpl);
-        zero_segment_register(4, rpl);
-        zero_segment_register(5, rpl);
+        reset_segment_register(3, rpl);
+        reset_segment_register(4, rpl);
+        reset_segment_register(5, rpl);
         esp = stack_esp + release_stack_items;
         SS_mask = csd.segment_size_mask();
         set_cpl(rpl);
@@ -2685,7 +2685,7 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
         set_EFLAGS(stack_eflags, mask);
     }
 }
-void Free86::zero_segment_register(uint32_t sreg, uint32_t level) {
+void Free86::reset_segment_register(uint32_t sreg, uint32_t level) {
     uint32_t flags;
     if ((sreg == 4 || sreg == 5) && (segs[sreg].selector & 0xfffc) == 0) {
         return; // null selector in FS, GS

@@ -197,21 +197,21 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 regs[(modRM >> 3) & 7] = rm;
                 goto FETCH_LOOP;
             case 0xa0: // MOV AL,
-                moffs_to_linear(false);
+                ld_memory_offset(false);
                 moffs = ld8_readonly_cpl3();
                 regs[0] = (regs[0] & 0xffffff00) | moffs;
                 goto FETCH_LOOP;
             case 0xa1: // MOV AX,
-                moffs_to_linear(false);
+                ld_memory_offset(false);
                 moffs = ld_readonly_cpl3();
                 regs[0] = moffs;
                 goto FETCH_LOOP;
             case 0xa2: // MOV ,AL
-                moffs_to_linear(true);
+                ld_memory_offset(true);
                 st8_writable_cpl3(regs[0]);
                 goto FETCH_LOOP;
             case 0xa3: // MOV ,AX
-                moffs_to_linear(true);
+                ld_memory_offset(true);
                 st_writable_cpl3(regs[0]);
                 goto FETCH_LOOP;
             case 0xc6: // MOV
@@ -850,7 +850,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    aux_DIV(regs[2], regs[0], rm);
+                    aux_DIV((regs[0] & 0xffffffff) | static_cast<uint64_t>(regs[2] )<< 32, rm);
                     regs[0] = u;
                     regs[2] = v;
                     break;
@@ -861,7 +861,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         segment_translation();
                         rm = ld_readonly_cpl3();
                     }
-                    aux_IDIV(regs[2], regs[0], rm);
+                    aux_IDIV((regs[0] & 0xffffffff) | static_cast<uint64_t>(regs[2] )<< 32, rm);
                     regs[0] = u;
                     regs[2] = v;
                     break;
@@ -2551,12 +2551,12 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     set_lower_word(opcode & 7, fetch16_data());
                     goto FETCH_LOOP;
                 case 0x1a1: // MOV AX,
-                    moffs_to_linear(false);
+                    ld_memory_offset(false);
                     moffs = ld16_readonly_cpl3();
                     set_lower_word(0, moffs);
                     goto FETCH_LOOP;
                 case 0x1a3: // MOV ,AX
-                    moffs_to_linear(true);
+                    ld_memory_offset(true);
                     st16_writable_cpl3(regs[0]);
                     goto FETCH_LOOP;
                 case 0x1c7: // MOV

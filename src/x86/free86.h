@@ -406,7 +406,7 @@ class Free86 {
     void page_translation(uint32_t address, bool writable, bool user);
 
     void segment_translation();
-    void moffs_to_linear(bool writable);
+    void ld_memory_offset(bool writable);
 
     void set_segment_register(uint32_t sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags);
     void set_segment_register(uint32_t sreg, uint32_t selector);
@@ -433,10 +433,10 @@ class Free86 {
     uint32_t aux_BSR(uint32_t dst, uint32_t src);
     void aux8_DIV(uint32_t divisor);
     void aux16_DIV(uint32_t divisor);
-    void aux_DIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    void aux_DIV(uint64_t dividend, uint32_t divisor);
     void aux8_IDIV(uint32_t divisor);
     void aux16_IDIV(uint32_t divisor);
-    void aux_IDIV(uint32_t dividend_upper, uint32_t dividend_lower, uint32_t divisor);
+    void aux_IDIV(uint64_t dividend, uint32_t divisor);
     void aux8_MUL(uint32_t multiplicand, uint32_t multiplier);
     void aux16_MUL(uint32_t multiplicand, uint32_t multiplier);
     void aux_MUL(uint32_t multiplicand, uint32_t multiplier);
@@ -464,7 +464,7 @@ class Free86 {
     void aux_RETF(bool o32, uint32_t release_stack_items);
     void return_real__v86(bool o32, bool is_iret, uint32_t release_stack_items);
     void return_protected(bool o32, bool is_iret, uint32_t release_stack_items);
-    void zero_segment_register(uint32_t sreg, uint32_t level);
+    void reset_segment_register(uint32_t sreg, uint32_t level);
 
     void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
     void raise_interrupt_real__v86(int id, int is_sw, uint32_t return_address);

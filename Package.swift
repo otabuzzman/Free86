@@ -69,7 +69,7 @@ let package = Package(
                 "MachineDataTypes.swift",
                 "GeneralRegister.swift",
                 "SegmentRegister.swift",
-                "Free86+segmentRegister.swift",  // no tests
+                "Free86+setSegmentRegister.swift",  // no tests
                 "SegmentSelector.swift",
                 "SegmentDescriptor.swift",
                 "ExtendedFlagsRegister.swift",

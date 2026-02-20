@@ -17,7 +17,7 @@ extension Free86 {
     }
     func returnProtectedMode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) {
     }
-    func zeroSegmentRegister(_ sreg: SegmentRegister.Name, _ level: DWord) {
+    func resetSegmentRegister(_ sreg: SegmentRegister.Name, _ level: DWord) {
     }
     func raiseInterrupt(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ returnAddress: DWord) {
     }

@@ -15,13 +15,13 @@ extension Free86 {
     }
     func aux16Div(_ divisor: DWord) {
     }
-    func auxDiv(_ dividendUpperHalf: DWord, _ dividendLowerHalf: DWord, _ divisor: DWord) {
+    func auxDiv(_ dividend: QWord, _ divisor: DWord) {
     }
     func aux8Idiv(_ divisor: DWord) {
     }
     func aux16Idiv(_ divisor: DWord) {
     }
-    func auxIdiv(_ dividendUpperHalf: DWord, _ dividendLowerHalf: DWord, _ divisor: DWord) {
+    func auxIdiv(_ dividend: QWord, _ divisor: DWord) {
     }
     func aux8Mul(_ multiplicand: DWord, _ multiplier: DWord) {
     }
