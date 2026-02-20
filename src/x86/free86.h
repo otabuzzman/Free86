@@ -384,7 +384,7 @@ class Free86 {
     [[noreturn]] void abort(int /*interrupt*/ id, int error_code = 0);
 
     void update_SSB();
-    void fetch_opcode();
+    void retrieve_opcode();
 
     int instruction_length(uint32_t opcode);
     int modRM_bytes_number();
@@ -556,9 +556,9 @@ class Free86 {
     void st16_direct(uint32_t address, uint32_t byte);
     void st_direct(uint32_t address, uint32_t dword);
     void st64_direct(uint32_t address, uint64_t qword);
-    uint32_t fetch8_data(); // read byte...
-    uint32_t fetch16_data(); // ...word...
-    uint32_t fetch_data(); // ...dword at FAR, update FAR
+    uint32_t fetch8(); // read byte...
+    uint32_t fetch16(); // ...word...
+    uint32_t fetch(); // ...dword at FAR, update FAR
     void push16(uint32_t word);
     void push(uint32_t dword);
     uint32_t pop16();
