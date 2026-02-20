@@ -19,11 +19,48 @@ class Free86 {
     var idt = SegmentRegister(0, .init(0))  // IDT register
 
     var _cr0: CR0 = 0
+    var cr0: CR0 {
+        get { _cr0 }
+        set {
+            /// must flush tlb on change of flags 31, 16, or 0
+            var mask: CR0 = 0
+            mask.setFlag(.PG)
+            mask.setFlag(.WP)
+            mask.setFlag(.PE)
+            if newValue & mask != _cr0 & mask {
+                tlbFlush()
+            }
+            _cr0 = newValue
+            _cr0.setFlag(.ET) // keep bit 4 raised (80387 present)
+        }
+    }
     var cr2: LinearAddress = 0
     var _cr3: CR3 = 0
+    var cr3: CR3 {
+        get { _cr3 }
+        set {
+            if cr0.isPagingEnabled {
+                tlbFlush()
+            }
+            _cr3 = newValue
+        }
+    }
     var cr4: DWord = 0  // 80486
 
     var _cpl: DWord = 0  // current privilege level register
+    var cpl: DWord {
+        get { _cpl }
+        set {
+            if newValue == 3 {
+                tlbReadonly = tlbReadonlyCpl3
+                tlbWritable = tlbWritableCpl3
+            } else {
+                tlbReadonly = tlbReadonlyCplX
+                tlbWritable = tlbWritableCplX
+            }
+            _cpl = newValue
+        }
+    }
 
     var halted = false
     var cycles: QWord = 0
