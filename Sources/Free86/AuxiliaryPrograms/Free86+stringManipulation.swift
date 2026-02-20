@@ -1,6 +1,6 @@
 extension Free86 {
     func aux16Ins() throws {
-        if (cpl > iopl.iopl) {
+        if (cpl > eflags.iopl) {
             throw Interrupt(13)
         }
         let mask = ipr.operandSizeMask
@@ -28,7 +28,7 @@ extension Free86 {
         }
     }
     func aux16Outs() throws {
-        if (cpl > iopl.iopl) {
+        if (cpl > eflags.iopl) {
             throw Interrupt(13)
         }
         let mask = ipr.operandSizeMask
