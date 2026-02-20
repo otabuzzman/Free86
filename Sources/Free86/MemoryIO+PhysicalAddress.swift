@@ -10,10 +10,10 @@ class IOPortBank<A: PhysicalAddress, P: IOPort>: IsolatedIO<A, P>, MemoryBank wh
     }
 }
 
-class IsolatedIO<A: PhysicalAddress, P: IOPort> {
-    private var mapping: [A: P] = [:]
+class IsolatedIO<A: PhysicalAddress> {
+    private var mapping: [A: AnyIOPort] = [:]
 
-    subscript(address: A) -> P.Element {
+    subscript<T: UnsignedInteger>(address: A) -> T {
         get {
             guard let port = mapping[address] else { return .zero }
             return port.rd()
@@ -24,8 +24,31 @@ class IsolatedIO<A: PhysicalAddress, P: IOPort> {
         }
     }
 
-    func register(port: P, at address: A) {
-        mapping.updateValue(port, forKey: address)
+    func register<P: IOPort>(port: P, at address: A) {
+        mapping.updateValue(AnyIOPort(port), forKey: address)
+    }
+}
+
+/// type-erasing adapter for any type implementing IOPort
+class AnyIOPort {
+    private let _rd: () -> Any
+    private let _wr: (Any) -> Void
+
+    init<P: IOPort>(_ port: P) {
+        _rd = { port.rd() }
+        _wr = { iodata in
+            guard let _iodata = iodata as? P.Element else { return }
+            port.wr(_iodata)
+        }
+    }
+
+    func rd<T: UnsignedInteger>() -> T {
+        guard let iodata = _rd() as? T else { return .zero }
+        return iodata
+    }
+
+    func wr<T: UnsignedInteger>(_ iodata: T) {
+        _wr(iodata)
     }
 }
 
