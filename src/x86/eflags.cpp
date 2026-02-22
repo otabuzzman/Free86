@@ -355,7 +355,7 @@ bool Free86::can_jmp(int condition) {
         f = is_BE();
         break;
     case 4:
-        f = osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000 ? 1 : 0);
+        f = osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000);
         break;
     case 5:
         f = is_PF();
@@ -381,7 +381,7 @@ uint32_t Free86::compile_EFLAGS(bool shift) {
     uint32_t f2 = is_PF() << 2;
     uint32_t f4 = is_AF() << 4;
     uint32_t f6 = (osm_dst == 0) << 6;
-    uint32_t f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000 ? 1 : 0)) << 7;
+    uint32_t f7 = (osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst >> 31) & 1) << 7;
     return f0 | f2 | f4 | f6 | f7 | f11;
 }
 uint32_t Free86::get_EFLAGS() {

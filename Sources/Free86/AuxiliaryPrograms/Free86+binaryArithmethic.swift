@@ -37,12 +37,15 @@ extension Free86 {
     }
     func multiply(_ multiplicand: DWord, _ multiplier: DWord) {
     }
+    @discardableResult
     func calculate8(_ dst: DWord, _ src: DWord) -> DWord {
         0
     }
+    @discardableResult
     func calculate16(_ dst: DWord, _ src: DWord) -> DWord {
         0
     }
+    @discardableResult
     func calculate(_ dst: DWord, _ src: DWord) -> DWord {
         0
     }

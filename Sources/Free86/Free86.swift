@@ -77,7 +77,7 @@ class Free86 {
     var opcode: DWord = 0  // sort of fetch data register (FDR, aka MDR)
 
     /// direction flag (used by string instructions)
-    var df: Int = 0  // values 1/ -1 reflect EFLAGS.DF false/ true
+    var df: Int32 = 0  // values 1/ -1 reflect EFLAGS.DF false/ true
 
     var dpl: DWord = 0  // descriptor privilege level
     var rpl: DWord = 0  // requested privilege level
