@@ -39,7 +39,7 @@ extension Free86 {
         lax = xdt.shadow.base + dti
         return SegmentDescriptor(try ld64ReadonlyCplX())
     }
-    func ldTssStack(_ level: DWord) throws -> QWord { // seg:offset
+    func ldTssStack(_ level: DWord) throws -> QWord {  // seg:offset
         0
     }
     func auxIret(_ o32: Bool) {

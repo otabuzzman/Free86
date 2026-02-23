@@ -214,7 +214,7 @@ extension Free86 {
         }
         return f
     }
-    func isBE() -> Bool { // `below' for signed comparison, PM p. 317
+    func isBE() -> Bool {  // `below' for signed comparison, PM p. 317
         let f: Bool
         switch osm {
         case 6:
@@ -235,8 +235,8 @@ extension Free86 {
         }
         return f
     }
-    func isLE() -> Bool { // `less' for unsigned comparison, PM p. 317
-        let osmDst = Int32(bitPattern: self.osmDst) // signed arithmetic easier here
+    func isLE() -> Bool {  // `less' for unsigned comparison, PM p. 317
+        let osmDst = Int32(bitPattern: self.osmDst)  // signed arithmetic easier here
         let osmSrc = Int32(bitPattern: self.osmSrc)
         let f: Bool
         switch osm {
@@ -262,7 +262,7 @@ extension Free86 {
         return f
     }
     func isLT() -> Bool {  // less than
-        let osmDst = Int32(bitPattern: self.osmDst) // signed arithmetic easier here
+        let osmDst = Int32(bitPattern: self.osmDst)  // signed arithmetic easier here
         let osmSrc = Int32(bitPattern: self.osmSrc)
         let f: Bool
         switch osm {

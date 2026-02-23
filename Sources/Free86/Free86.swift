@@ -33,7 +33,7 @@ class Free86 {
                 tlbFlush()
             }
             _cr0 = newValue
-            _cr0.setFlag(.ET) // keep bit 4 raised (80387 present)
+            _cr0.setFlag(.ET)  // keep bit 4 raised (80387 present)
         }
     }
     var cr2: LinearAddress = 0

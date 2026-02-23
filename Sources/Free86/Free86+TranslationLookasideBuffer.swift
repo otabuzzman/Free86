@@ -37,9 +37,9 @@ extension Free86: TranslationLookasideBuffer {
             tlbWritableCplX[pxi] = -1
         }
         if (user) {
-            tlbReadonlyCpl3[pxi] = hash;
+            tlbReadonlyCpl3[pxi] = hash
             if (writable) {
-                tlbWritableCpl3[pxi] = hash;
+                tlbWritableCpl3[pxi] = hash
             } else {
                 tlbWritableCpl3[pxi] = -1
             }
