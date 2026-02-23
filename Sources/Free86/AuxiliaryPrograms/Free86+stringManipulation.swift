@@ -12,7 +12,7 @@ extension Free86 {
                 return
             }
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
@@ -22,7 +22,7 @@ extension Free86 {
             }
         } else {
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
@@ -40,7 +40,7 @@ extension Free86 {
             if (ecx & mask) == 0 {
                 return
             }
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld8ReadonlyCpl3())
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
@@ -50,7 +50,7 @@ extension Free86 {
                 far = farStart
             }
         } else {
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld8ReadonlyCpl3())
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
@@ -61,8 +61,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -89,7 +89,7 @@ extension Free86 {
     func aux_STOSB() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -112,8 +112,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
@@ -153,7 +153,7 @@ extension Free86 {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
-        lax = segs[sreg].shadow.base + (esi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -176,7 +176,7 @@ extension Free86 {
     func aux_SCASB() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
@@ -219,7 +219,7 @@ extension Free86 {
                 return
             }
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
@@ -229,7 +229,7 @@ extension Free86 {
             }
         } else {
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
@@ -247,7 +247,7 @@ extension Free86 {
             if (ecx & mask) == 0 {
                 return
             }
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
@@ -257,7 +257,7 @@ extension Free86 {
                 far = farStart
             }
         } else {
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
@@ -268,8 +268,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -296,7 +296,7 @@ extension Free86 {
     func aux_STOSW() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -319,8 +319,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
@@ -360,7 +360,7 @@ extension Free86 {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
-        lax = segs[sreg].shadow.base + (esi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -383,7 +383,7 @@ extension Free86 {
     func aux_SCASW() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
@@ -426,7 +426,7 @@ extension Free86 {
                 return
             }
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
@@ -436,7 +436,7 @@ extension Free86 {
             }
         } else {
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
@@ -454,7 +454,7 @@ extension Free86 {
             if (ecx & mask) == 0 {
                 return
             }
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
@@ -464,7 +464,7 @@ extension Free86 {
                 far = farStart
             }
         } else {
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
@@ -475,8 +475,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -503,7 +503,7 @@ extension Free86 {
     func aux16_STOS() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -526,8 +526,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
@@ -567,7 +567,7 @@ extension Free86 {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
-        lax = segs[sreg].shadow.base + (esi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -590,7 +590,7 @@ extension Free86 {
     func aux16_SCAS() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
@@ -633,7 +633,7 @@ extension Free86 {
                 return
             }
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try stWritableCpl3(dword: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
@@ -643,7 +643,7 @@ extension Free86 {
             }
         } else {
             u = io?[edx] ?? 0
-            lax = segs[.ES].shadow.base + (edi & mask)
+            lax = segs[.ES].shadow.base &+ (edi & mask)
             try stWritableCpl3(dword: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
         }
@@ -661,7 +661,7 @@ extension Free86 {
             if (ecx & mask) == 0 {
                 return
             }
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = try ldReadonlyCpl3()
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
@@ -671,7 +671,7 @@ extension Free86 {
                 far = farStart
             }
         } else {
-            lax = segs[sreg].shadow.base + (esi & mask)
+            lax = segs[sreg].shadow.base &+ (esi & mask)
             u = try ldReadonlyCpl3()
             io?[edx] = u
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
@@ -682,8 +682,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -710,7 +710,7 @@ extension Free86 {
     func aux_STOSD() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -733,8 +733,8 @@ extension Free86 {
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
         let edi = regs[.EDI]
-        lax = segs[sreg].shadow.base + (esi & mask)
-        let la = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
+        let la = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
@@ -774,7 +774,7 @@ extension Free86 {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
-        lax = segs[sreg].shadow.base + (esi & mask)
+        lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
             if (ecx & mask) == 0 {
@@ -797,7 +797,7 @@ extension Free86 {
     func aux_SCASD() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
-        lax = segs[.ES].shadow.base + (edi & mask)
+        lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]

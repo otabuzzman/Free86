@@ -1,5 +1,24 @@
 extension Free86 {
-    func auxLdtr(_ selector: SegmentSelector) {
+    func auxLdtr(_ selector: SegmentSelector) throws {
+        if selector.index == 0 {
+            ldt = SegmentRegister(selector, SegmentDescriptor(0))
+        } else {
+            if selector.isGDT {
+                throw Interrupt(13, selector.index)
+            }
+            if selector.index > gdt.shadow.limit {
+                throw Interrupt(13, selector.index)
+            }
+            lax = gdt.shadow.base + selector.index
+            let xsd = SegmentDescriptor(try ld64ReadonlyCplX())
+            if !xsd.isSystemSegment || !xsd.isType(.LDT) {
+                throw Interrupt(13, selector.index)
+            }
+            if !xsd.isFlagRaised(.P) {
+                throw Interrupt(13, selector.index)
+            }
+            ldt = SegmentRegister(selector, SegmentDescriptor(xsd))
+        }
     }
     func auxLtr(_ selector: SegmentSelector) {
     }

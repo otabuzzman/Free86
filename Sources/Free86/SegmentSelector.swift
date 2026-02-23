@@ -15,7 +15,7 @@ extension SegmentSelector {
 
 extension SegmentSelector {
     var index: Self {
-        self >> 3
+        self & ~0b0111
     }
     var isGDT: Bool {
         !isLDT
