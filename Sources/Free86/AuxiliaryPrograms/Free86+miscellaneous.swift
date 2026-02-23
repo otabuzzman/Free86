@@ -33,16 +33,16 @@ extension Free86 {
                 throw Interrupt(13, errorCode: dti)
             }
             lax = gdt.shadow.base + dti;
-            let xsd = SegmentDescriptor(try ld64ReadonlyCplX());
-            if !xsd.isSystemSegment || (xsd.type != .TSSAvailable && xs.type != .TSS16Available) {
+            var xsd = SegmentDescriptor(try ld64ReadonlyCplX());
+            if !xsd.isSystemSegment || !xsd.isType(.TSSAvailable) || !xsd.isType(.TSS16Available) {
                 throw Interrupt(13, errorCode: dti)
             }
             if !xsd.isFlagRaised(.P) {
                 throw Interrupt(11, errorCode: dti)
             }
             tr = SegmentRegister(selector, xsd)
-            xsd.xsd.setFlag(.B)
-            try st64WritableCplX(xsd.qword());
+            xsd.setFlag(.B)
+            try st64WritableCplX(qword: xsd.qword);
         }
     }
     func auxLarLsl(_ o32: Bool, _ isLsl: Bool) {

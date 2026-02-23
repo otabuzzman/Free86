@@ -2180,7 +2180,6 @@ void Free86::aux_LTR(uint32_t selector) {
         if (selector & 0x4) {
             abort(13, dti);
         }
-        dti = selector & ~7u;
         if ((dti + 7) > gdt.shadow.limit) {
             abort(13, dti);
         }
