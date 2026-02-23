@@ -117,7 +117,7 @@ extension Free86 {
             return xsd.flags
         }
     }
-    func auxVerrVerw(_ selector: SegmentSelector, _ isVerw: Bool) throws {
+    func auxVerrVerw(_ selector: SegmentSelector, _ writable: Bool) throws {
         osmSrc = compileEflags()
         if try isSegmentAccessible(selector, writable) {
             osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
@@ -127,13 +127,13 @@ extension Free86 {
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
     }
-    func isSegmentAccessible(_ selector: SegmentSelector, _ writable: Bool) -> Bool {
+    func isSegmentAccessible(_ selector: SegmentSelector, _ writable: Bool) throws -> Bool {
         if selector.index == 0 {
-            return notok
+            return false
         }
         let xsd = try ldXdtEntry(selector)
         if xsd.qword == 0 {
-            return notok
+            return false
         }
         if xsd.isSystemSegment {
             return false
@@ -170,7 +170,7 @@ extension Free86 {
             rm = regs[modRM.rM].lowerHalf
         } else {
             segmentTranslation()
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
         }
         r = regs[modRM.reg]
         osmSrc = compileEflags()
@@ -179,13 +179,13 @@ extension Free86 {
             if modRM.mod == 3 {
                 regs[modRM.rM].lowerHalf = u
             } else {
-                try st16WritableCpl3(u)
+                try st16WritableCpl3(word: Word(u))
             }
             osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
         } else {
             osmSrc.clearBit(EflagsFlag.ZF.rawValue)
         }
-        osmDst = ((osm_src >> 6) & 1) ^ 1
+        osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
     }
     func auxCpuid() {
