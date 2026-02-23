@@ -1,27 +1,49 @@
 extension Free86 {
     func auxLdtr(_ selector: SegmentSelector) throws {
-        let six = DWord(selector.index)
-        if selector.index == 0 {
+        let dti = DWord(selector.index)
+        if dti == 0 {
             ldt = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
-            if selector.isGDT {
-                throw Interrupt(13, errorCode: six)
+            if !selector.isGDT {
+                throw Interrupt(13, errorCode: dti)
             }
-            if selector.index > gdt.shadow.limit {
-                throw Interrupt(13, errorCode: six)
+            if (dti + 7) > gdt.shadow.limit {
+                throw Interrupt(13, errorCode: dti)
             }
-            lax = gdt.shadow.base + six
+            lax = gdt.shadow.base + dti
             let xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if !xsd.isSystemSegment || !xsd.isType(.LDT) {
-                throw Interrupt(13, errorCode: six)
+                throw Interrupt(13, errorCode: dti)
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(13, errorCode: six)
+                throw Interrupt(11, errorCode: dti)
             }
             ldt = SegmentRegister(selector, xsd)
         }
     }
-    func auxLtr(_ selector: SegmentSelector) {
+    func auxLtr(_ selector: SegmentSelector) throws {
+        let dti = DWord(selector.index)
+        if (dti == 0) {
+            tr = SegmentRegister(selector, SegmentDescriptor(0))
+        } else {
+            if !selector.isGDT {
+                throw Interrupt(13, errorCode: dti)
+            }
+            if (dti + 7) > gdt.shadow.limit {
+                throw Interrupt(13, errorCode: dti)
+            }
+            lax = gdt.shadow.base + dti;
+            let xsd = SegmentDescriptor(try ld64ReadonlyCplX());
+            if !xsd.isSystemSegment || (xsd.type != .TSSAvailable && xs.type != .TSS16Available) {
+                throw Interrupt(13, errorCode: dti)
+            }
+            if !xsd.isFlagRaised(.P) {
+                throw Interrupt(11, errorCode: dti)
+            }
+            tr = SegmentRegister(selector, xsd)
+            xsd.xsd.setFlag(.B)
+            try st64WritableCplX(xsd.qword());
+        }
     }
     func auxLarLsl(_ o32: Bool, _ isLsl: Bool) {
     }

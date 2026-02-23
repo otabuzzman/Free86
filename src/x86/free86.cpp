@@ -2144,25 +2144,25 @@ uint32_t Free86::shift(uint32_t src, uint32_t count) {
 }
 void Free86::aux_LDTR(uint32_t selector) {
     SegmentDescriptor xsd{0};
-    uint32_t dti;
-    if ((selector & 0xfffc) == 0) {
+    uint32_t dti = selector & 0xfffc;
+    if (dti == 0) {
         ldt.shadow.base = 0;
         ldt.shadow.limit = 0;
+        ldt.shadow.flags = 0;
     } else {
         if (selector & 0x4) {
-            abort(13, selector & 0xfffc);
+            abort(13, dti);
         }
-        dti = selector & ~7u;
         if ((dti + 7) > gdt.shadow.limit) {
-            abort(13, selector & 0xfffc);
+            abort(13, dti);
         }
         lax = gdt.shadow.base + dti;
         xsd = SegmentDescriptor(ld64_readonly_cplX());
         if ((xsd.flags & (1 << 12)) || ((xsd.flags >> 8) & 0xf) != 2) {
-            abort(13, selector & 0xfffc);
+            abort(13, dti);
         }
         if (!(xsd.flags & (1 << 15))) {
-            abort(11, selector & 0xfffc);
+            abort(11, dti);
         }
         ldt.shadow = xsd;
     }
@@ -2170,28 +2170,28 @@ void Free86::aux_LDTR(uint32_t selector) {
 }
 void Free86::aux_LTR(uint32_t selector) {
     SegmentDescriptor xsd{0};
-    uint32_t dti;
+    uint32_t dti = selector & 0xfffc;
     int type;
-    if ((selector & 0xfffc) == 0) {
+    if (dti == 0) {
         tr.shadow.base = 0;
         tr.shadow.limit = 0;
         tr.shadow.flags = 0;
     } else {
         if (selector & 0x4) {
-            abort(13, selector & 0xfffc);
+            abort(13, dti);
         }
         dti = selector & ~7u;
         if ((dti + 7) > gdt.shadow.limit) {
-            abort(13, selector & 0xfffc);
+            abort(13, dti);
         }
         lax = gdt.shadow.base + dti;
         xsd = SegmentDescriptor(ld64_readonly_cplX());
         type = (xsd.flags >> 8) & 0xf;
         if ((xsd.flags & (1 << 12)) || (type != 1 && type != 9)) {
-            abort(13, selector & 0xfffc);
+            abort(13, dti);
         }
         if (!(xsd.flags & (1 << 15))) {
-            abort(11, selector & 0xfffc);
+            abort(11, dti);
         }
         tr.shadow = xsd;
         xsd.flags |= 1 << 9;

@@ -21,10 +21,13 @@ extension SegmentDescriptor {
 }
 
 enum SegmentDescriptorFlag: Int {
+    /// all descriptor types
     case G = 23  // granularity, 1 = limit in 4 kB units
     case D = 22  // D (default)/ B (big) flag if code/ data segment, 0 = 16 bit
     case P = 15  // 1 = segment is present
     case S = 12  // 0 = system segment
+    /// TSS
+    case B = 9   // 1 = TSS busy
 }
 
 extension SegmentDescriptor {
