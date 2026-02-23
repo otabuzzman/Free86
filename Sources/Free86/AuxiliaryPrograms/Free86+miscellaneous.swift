@@ -226,9 +226,9 @@ extension Free86 {
             throw Interrupt(6)
         }
         segmentTranslation()
-        u = try ldReadonlyCpl3
+        u = try ldReadonlyCpl3()
         lax = lax &+ 4
-        v = try ldReadonlyCpl3
+        v = try ldReadonlyCpl3()
         r = regs[modRM.reg]
         if (r < u) || (r > v) {
             throw Interrupt(5)
@@ -238,7 +238,7 @@ extension Free86 {
         lax = ssBase &+ ((regs[.ESP] &- 16) & ssBase)
         for reg in (0...7).reversed() {
             r = regs[reg]
-            try st16WritableCpl3(r)
+            try st16WritableCpl3(word: Word(r))
             lax = lax &+ 2
         }
         regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 16) & ssBase)
@@ -247,7 +247,7 @@ extension Free86 {
         lax = ssBase &+ ((regs[.ESP] &- 32) & ssBase)
         for reg in (0...7).reversed() {
             r = regs[reg]
-            try stWritableCpl3(r)
+            try stWritableCpl3(dword: r)
             lax = lax &+ 4
         }
         regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 32) & ssBase)
@@ -262,7 +262,7 @@ extension Free86 {
         }
         regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &+ 16) & ssBase)
     }
-    func auxPopa() {
+    func auxPopa() throws {
         lax = ssBase &+ (regs[.ESP] & ssBase)
         for reg in (0...7).reversed() {
             if reg != GeneralRegister.Name.ESP.rawValue {
