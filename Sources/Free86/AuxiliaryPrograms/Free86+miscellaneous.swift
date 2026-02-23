@@ -23,7 +23,7 @@ extension Free86 {
     }
     func auxLtr(_ selector: SegmentSelector) throws {
         let dti = DWord(selector.index)
-        if (dti == 0) {
+        if dti == 0 {
             tr = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
             if !selector.isGDT {
@@ -81,15 +81,7 @@ extension Free86 {
         if xsd.qword == 0 {
             return notok
         }
-        rpl = selector.rpl
-        dpl = xsd.dpl
-        if !xsd.isSystemSegment {  // code/ data segment
-            if (xsd.type & 0b0_1100) == 0 {  // if non-conforming code segments
-                if (dpl < cpl) || (dpl < rpl) {
-                    return notok
-                }
-            }
-        } else {  // system segment
+        if xsd.isSystemSegment {
             switch xsd.type & 0b0_1111 {
             case 1, 2, 3, 9, 11:
                 // 1:  16 bit TSS (busy)
@@ -109,24 +101,110 @@ extension Free86 {
             default:
                 return notok
             }
-            if (dpl < cpl) || (dpl < rpl) {
+            if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
                 return notok
             }
+        } else {  // code/ data segment
+            if (xsd.type & 0b0_1100) == 0 {  // if non-conforming code segments
+                if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
+                    return notok
+                }
+            }
         }
-        if (limit) {
+        if limit {
             return xsd.limit
         } else {
             return xsd.flags
         }
     }
-    func auxVerrVerw(_ selector: SegmentSelector, _ isVerw: Bool) {
+    func auxVerrVerw(_ selector: SegmentSelector, _ isVerw: Bool) throws {
+        osmSrc = compileEflags()
+        if try isSegmentAccessible(selector, writable) {
+            osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
+        } else {
+            osmSrc.clearBit(EflagsFlag.ZF.rawValue)
+        }
+        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osm = 24
     }
     func isSegmentAccessible(_ selector: SegmentSelector, _ writable: Bool) -> Bool {
-        false
+        if selector.index == 0 {
+            return notok
+        }
+        let xsd = try ldXdtEntry(selector)
+        if xsd.qword == 0 {
+            return notok
+        }
+        if xsd.isSystemSegment {
+            return false
+        }
+        if (xsd.type & 0b0_1000) != 0 {  // code == 1, data == 0
+            if writable {
+                return false
+            } else {
+                if (xsd.type & 0b0_0100) == 0 {
+                    if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
+                        return false
+                    }
+                }
+                if (xsd.type & 0b0_0010) == 0 {  // readable code segment
+                    return true
+                }
+            }
+        } else {
+            if writable && (xsd.type & 0b0_0010) == 0 {
+                return false
+            }
+            if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
+                return false
+            }
+        }
+        return true
     }
-    func auxArpl() {
+    func auxArpl() throws {
+        if cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+            throw Interrupt(6)
+        }
+        modRM = fetch8()
+        if modRM.mod == 3 {
+            rm = regs[modRM.rM].lowerHalf
+        } else {
+            segmentTranslation()
+            rm = try ld16WritableCpl3()
+        }
+        r = regs[modRM.reg]
+        osmSrc = compileEflags()
+        if (rm & 3) < (r & 3) {
+            u = (rm & ~3) | (r & 3)
+            if modRM.mod == 3 {
+                regs[modRM.rM].lowerHalf = u
+            } else {
+                try st16WritableCpl3(u)
+            }
+            osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
+        } else {
+            osmSrc.clearBit(EflagsFlag.ZF.rawValue)
+        }
+        osmDst = ((osm_src >> 6) & 1) ^ 1
+        osm = 24
     }
     func auxCpuid() {
+        switch regs[.EAX] {
+        case 0:  // vendor ID
+            regs[.EAX] = 1
+            regs[.EBX] = 0x756e6547  // "uneG"
+            regs[.EDX] = 0x49656e69  // "Ieni"
+            regs[.ECX] = 0x6c65746e  // "letn"
+            break
+        case 1:   // processor info and feature flags
+            fallthrough
+        default:  // https://datasheets.chipdb.org/Intel/x86/CPUID/24161821.pdf
+            regs[.EAX] = (5 << 8) | (4 << 4) | 3  // type | family | model | stepping
+            regs[.EBX] = 8 << 8                   //   00     0101    0100       0011
+            regs[.ECX] = 0
+            regs[.EDX] = 1 << 4
+            break
+        }
     }
     func aux16Bound() {
     }
