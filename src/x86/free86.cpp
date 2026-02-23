@@ -2993,9 +2993,9 @@ uint32_t Free86::ld_descriptor_fields(uint32_t selector, bool limit) { // !limit
     } else { // system segment
         type = (xsd.flags >> 8) & 0xf;
         switch (type) {
-        case 1: // 16 bit TSS (busy)
-        case 2: // LDT
-        case 3: // 16 bit TSS (available)
+        case 1:  // 16 bit TSS (busy)
+        case 2:  // LDT
+        case 3:  // 16 bit TSS (available)
         case 9:  // 32 bit TSS (busy)
         case 11: // 32 bit TSS (available)
             break;

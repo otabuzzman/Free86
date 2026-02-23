@@ -27,3 +27,9 @@ extension SegmentSelector {
         Int(self & 0b0011)
     }
 }
+
+extension SegmentSelector {
+    init(_ dword: DWord) {
+        self = Self(truncatingIfNeeded: dword)
+    }
+}

@@ -25,9 +25,21 @@ extension Free86 {
     }
     func raiseInterruptProtectedMode(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ returnAddress: DWord) {
     }
-    func ldXdtEntry(_ selector: SegmentSelector) {
+    func ldXdtEntry(_ selector: SegmentSelector) throws -> SegmentDescriptor {
+        let xdt: SegmentRegister
+        if selector.isLDT {
+            xdt = ldt
+        } else {
+            xdt = gdt
+        }
+        let dti = DWord(selector.index)
+        if (dti + 7) > xdt.shadow.limit {
+            return SegmentDescriptor(0)
+        }
+        lax = xdt.shadow.base + dti
+        return SegmentDescriptor(try ld64ReadonlyCplX())
     }
-    func ldTssStack(_ level: DWord) { // seg:offset
+    func ldTssStack(_ level: DWord) throws -> QWord { // seg:offset
     }
     func auxIret(_ o32: Bool) {
     }

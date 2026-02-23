@@ -1,4 +1,4 @@
-typealias EFlags = DWord
+typealias Eflags = DWord
 
 enum EflagsFlag: Int {
     case CF = 0
@@ -15,7 +15,7 @@ enum EflagsFlag: Int {
     case VM = 17  // systems flag
 }
 
-extension EFlags {
+extension Eflags {
     func isFlagRaised(_ flag: EflagsFlag) -> Bool {
         self.isBitRaised(flag.rawValue)
     }
@@ -24,7 +24,7 @@ extension EFlags {
     }
 }
 
-extension EFlags {
+extension Eflags {
     var iopl: Int {
         get { Int((self & 0x00003000) >> 12) }
         set { self = (self & ~0x00003000) | (Self(newValue) << 12) }

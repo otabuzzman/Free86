@@ -42,13 +42,82 @@ extension Free86 {
             }
             tr = SegmentRegister(selector, xsd)
             xsd.setFlag(.B)
-            try st64WritableCplX(qword: xsd.qword);
+            try st64WritableCplX(qword: xsd.qword)
         }
     }
-    func auxLarLsl(_ o32: Bool, _ isLsl: Bool) {
+    func auxLarLsl(_ o32: Bool, _ isLsl: Bool) throws {
+        let selector: SegmentSelector
+        if cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+            Interrupt(6)
+        }
+        modRM = fetch8()
+        if modRM.mod == 3 {
+            selector = SegmentSelector(regs[modRM.rM])
+        } else {
+            segmentTranslation();
+            selector = try ld16ReadonlyCpl3()
+        }
+        u = try ldDescriptorFields(selector, isLsl)
+        osm_src = compileEflags()
+        if u == 0x80000000 {  // notok
+            osm_src.clearBit(EflagsFlag.ZF)
+        } else {
+            osm_src.raiseBit(EflagsFlag.ZF)
+            if (o32) {
+                regs[modRM.reg] = u
+            } else {
+                regs[modRM.reg].lowerHalf = u
+            }
+        }
+        osmDst = ((osm_src >> 6) & 1) ^ 1
+        osm = 24
     }
-    func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) -> DWord {
-        0
+    func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) throws -> DWord {
+        let notok: DWord = 0x80000000
+        if selector.index == 0 {
+            return notok
+        }
+        let xsd = try ldXdtEntry(selector)
+        if xsd.qword == 0 {
+            return notok
+        }
+        rpl = selector.rpl
+        dpl = xsd.dpl
+        if !xsd.isSystemSegment {  // code/ data segment
+            if (xsd.type & 0b0_1100) == 0 {  // if non-conforming code segments
+                if (dpl < cpl) || (dpl < rpl) {
+                    return notok
+                }
+            }
+        } else {  // system segment
+            switch xsd.type & 0b0_1111 {
+            case 1, 2, 3, 9, 11:
+                // 1:  16 bit TSS (busy)
+                // 2:  LDT
+                // 3:  16 bit TSS (available)
+                // 9:  32 bit TSS (busy)
+                // 11: 32 bit TSS (available)
+                break
+            case 4, 5, 12:
+                // 4:  16 bit call gate
+                // 5:  task gate
+                // 12: 32 bit call gate
+                if limit {
+                    return notok
+                }
+                break
+            default:
+                return notok
+            }
+            if (dpl < cpl) || (dpl < rpl) {
+                return notok
+            }
+        }
+        if (limit) {
+            return xsd.limit
+        } else {
+            return xsd.flags
+        }
     }
     func auxVerrVerw(_ selector: SegmentSelector, _ isVerw: Bool) {
     }
