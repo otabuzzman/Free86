@@ -285,10 +285,10 @@ extension Free86 {
         regs[.ESP] = (regs[.ESP] & ~ssBase) | ((ebp & 2) & ssBase)
     }
     func aux16Enter() throws {
-        imm16 = fetch16()
-        imm = fetch8() & 0x1f
+        imm16 = DWord(fetch16())
+        imm = DWord(fetch8() & 0x1f)
         var esp = regs[.ESP]
-        let ebp = regs[.EBP]
+        var ebp = regs[.EBP]
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
         try st16WritableCpl3(word: Word(ebp))
@@ -297,7 +297,7 @@ extension Free86 {
             while imm > 1 {
                 ebp = ebp &- 2
                 lax = ssBase &+ (ebp & ssMask)
-                m16 = ld16ReadonlyCpl3()
+                m16 = DWord(try ld16ReadonlyCpl3())
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
                 try st16WritableCpl3(word: Word(m16))
@@ -309,24 +309,24 @@ extension Free86 {
         }
         esp = esp &- imm16
         lax = ssBase &+ (esp & ssMask)
-        try ld16WritableCpl3()
+        _ = try ld16WritableCpl3()
         regs[.EBP] = (regs[.EBP] & ~ssMask) | (exp & ssMask)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
     }
     func auxEnter() throws {
-        imm16 = fetch16()
-        imm = fetch8() & 0x1f
+        imm16 = DWord(fetch16())
+        imm = DWord(fetch8() & 0x1f)
         var esp = regs[.ESP]
-        let ebp = regs[.EBP]
+        var ebp = regs[.EBP]
         esp = esp &- 4
         lax = ssBase &+ (esp & ssMask)
-        try stWritableCpl3(dword:ebp))
+        try stWritableCpl3(dword: ebp)
         let exp = esp
         if imm != 0 {
             while imm > 1 {
                 ebp = ebp &- 4
                 lax = ssBase &+ (ebp & ssMask)
-                m = ldReadonlyCpl3()
+                m = try ldReadonlyCpl3()
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCpl3(dword: m)
@@ -338,7 +338,7 @@ extension Free86 {
         }
         esp = esp &- imm16
         lax = ssBase &+ (esp & ssMask)
-        try ldWritableCpl3()
+        _ = try ldWritableCpl3()
         regs[.EBP] = (regs[.EBP] & ~ssMask) | (exp & ssMask)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
     }
@@ -348,7 +348,7 @@ extension Free86 {
         imm = DWord(try ld16ReadonlyCpl3())
         lax += 2
         imm16 = DWord(try ld16ReadonlyCpl3())
-        setSegmentRegister(sreg, imm16)
+        setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg].lowerHalf = imm
     }
     func ldFarPointer(_ sreg: SegmentRegister.Name) throws {
@@ -357,7 +357,7 @@ extension Free86 {
         imm = try ldReadonlyCpl3()
         lax += 4
         imm16 = DWord(try ld16ReadonlyCpl3())
-        setSegmentRegister(sreg, imm16)
+        setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg] = imm
     }
 }
