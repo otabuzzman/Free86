@@ -346,7 +346,7 @@ extension Free86 {
         modRM = fetch8()
         segmentTranslation()
         imm = DWord(try ld16ReadonlyCpl3())
-        lax += 2
+        lax = lax &+ 2
         imm16 = DWord(try ld16ReadonlyCpl3())
         setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg].lowerHalf = imm
@@ -355,9 +355,94 @@ extension Free86 {
         modRM = fetch8()
         segmentTranslation()
         imm = try ldReadonlyCpl3()
-        lax += 4
+        lax = lax &+ 4
         imm16 = DWord(try ld16ReadonlyCpl3())
         setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg] = imm
+    }
+    func ldMemoryOffset(_ writable: Bool) throws {
+        var la: QWord
+        var notok: Bool
+        let stride: DWord
+        if !ipr.addressSizeOverride {
+            la = DWord(fetch())
+            stride = 4  // 32 bit mode
+        } else {
+            la = DWord(fetch16())
+            stride = 2  // 16 bit mode
+        }
+        if !(opcode & 0x01) {
+            stride = 1  // 8 bit mode, opcodes A0, A2
+        }
+        let sreg = ipr.segmentRegisterIndex
+        /// type checking
+        if sreg == SegmentRegister.Name.CS.rawValue {  // code segment, WR requested or CS not readable
+            notok = writable || !segs[sreg].shadow.isFlagRaised(.R)
+        } else {  // data segment, WR requested and DS not writable
+            notok = writable && !segs[sreg].shadow.isFlagRaised(.W)
+        }
+        if notok {
+            throw Interrupt(13, 0)
+        }
+        la = segs[sreg].shadow.base + la
+        /// limit checking
+        if segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
+            notok = la < QWord(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1
+        } else {
+            notok = la > QWord(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1 - stride
+        }
+        if notok {
+            if sreg == 2 {
+                throw Interrupt(12, 0)  // #SS(0)
+            } else {
+                throw Interrupt(13, 0)  // #GP(0)
+            }
+        }
+        lax = DWord(truncatingIfNeeded: la)
+    }
+    func fetch8() -> Byte {
+        let byte = memory.ld8(from: far)
+        far = far &+ 1
+        return byte
+    }
+    func fetch16() -> Word {
+        let word = memory.ld16(from: far)
+        far = far &+ 2
+        return word
+    }
+    func fetch() -> DWord {
+        let dword = memory.ld(from: far)
+        far = far &+ 4
+        return dword
+    }
+    func push16(_ word: Word) throws {
+        let esp = regs[.ESP] &- 2
+        lax = ssBase &+ (esp & ssMask)
+        try st16WritableCpl3(word: Word(word))
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+    }
+    func push(_ dword: DWord) throws {
+        let esp = regs[.ESP] &- 4
+        lax = ssBase &+ (esp & ssMask)
+        try stWritableCpl3(word: Word(word))
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+    }
+    func pop16() throws -> Word {
+        let res = DWord(ld16Stack())
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+        return res
+    }
+    func pop() throws -> DWord {
+        let res = ldStack()
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+        return res
+    }
+    func ld16Stack() throws -> Word {
+        lax = ssBase &+ (regs[.ESP] & ssMask)
+        return try ld16ReadonlyCpl3()
+    }
+    func ldStack() throws -> DWord {
+        lax = ssBase &+ (regs[.ESP] & ssMask)
+        return try ldReadonlyCpl3()
     }
 }

@@ -58,7 +58,6 @@ let package = Package(
                 "OpcodePrograms/Free86+twoByte.swift",    // no tests
                 "OpcodePrograms/Instruction+oneByte.swift",  // no tests
                 "OpcodePrograms/Instruction+twoByte.swift",  // no tests
-                "AuxiliaryPrograms/Free86+dataMovement.swift",  // no tests
                 "AuxiliaryPrograms/Free86+binaryArithmethic.swift",   // no tests
                 "AuxiliaryPrograms/Free86+decimalArithmethic.swift",  // no tests
                 "AuxiliaryPrograms/Free86+bitShiftTestRotate.swift",  // no tests

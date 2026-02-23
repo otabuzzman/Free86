@@ -28,6 +28,12 @@ enum SegmentDescriptorFlag: Int {
     case S = 12  // 0 = system segment
     /// TSS
     case B = 9   // 1 = TSS busy
+    /// code segment
+    case R = 9   // 1 = readable
+    case C = 10  // 1 = conforming
+    /// data segment
+    case W = 9   // 1 = writable
+    case E = 10  // 1 = expand-down
 }
 
 extension SegmentDescriptor {
