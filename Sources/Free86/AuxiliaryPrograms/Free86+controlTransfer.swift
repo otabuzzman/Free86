@@ -40,6 +40,7 @@ extension Free86 {
         return SegmentDescriptor(try ld64ReadonlyCplX())
     }
     func ldTssStack(_ level: DWord) throws -> QWord { // seg:offset
+        0
     }
     func auxIret(_ o32: Bool) {
     }

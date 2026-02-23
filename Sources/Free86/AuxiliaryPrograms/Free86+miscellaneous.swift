@@ -32,8 +32,8 @@ extension Free86 {
             if (dti + 7) > gdt.shadow.limit {
                 throw Interrupt(13, errorCode: dti)
             }
-            lax = gdt.shadow.base + dti;
-            var xsd = SegmentDescriptor(try ld64ReadonlyCplX());
+            lax = gdt.shadow.base + dti
+            var xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if !xsd.isSystemSegment || !xsd.isType(.TSSAvailable) || !xsd.isType(.TSS16Available) {
                 throw Interrupt(13, errorCode: dti)
             }
@@ -48,28 +48,28 @@ extension Free86 {
     func auxLarLsl(_ o32: Bool, _ isLsl: Bool) throws {
         let selector: SegmentSelector
         if cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
-            Interrupt(6)
+            throw Interrupt(6)
         }
         modRM = fetch8()
         if modRM.mod == 3 {
             selector = SegmentSelector(regs[modRM.rM])
         } else {
-            segmentTranslation();
+            segmentTranslation()
             selector = try ld16ReadonlyCpl3()
         }
         u = try ldDescriptorFields(selector, isLsl)
-        osm_src = compileEflags()
+        osmSrc = compileEflags()
         if u == 0x80000000 {  // notok
-            osm_src.clearBit(EflagsFlag.ZF)
+            osmSrc.clearBit(EflagsFlag.ZF.rawValue)
         } else {
-            osm_src.raiseBit(EflagsFlag.ZF)
+            osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
             if (o32) {
                 regs[modRM.reg] = u
             } else {
                 regs[modRM.reg].lowerHalf = u
             }
         }
-        osmDst = ((osm_src >> 6) & 1) ^ 1
+        osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
     }
     func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) throws -> DWord {

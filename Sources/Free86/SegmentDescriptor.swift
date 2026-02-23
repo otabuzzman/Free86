@@ -11,7 +11,7 @@ struct SegmentDescriptor {
 }
 
 extension SegmentDescriptor {
-    init(_ base: LinearAddress, _ limit: DWord, _ type: SegmentDescriptorType, _ dpl: Int) {
+    init(_ base: LinearAddress, _ limit: DWord, _ type: SegmentDescriptorType, _ dpl: DWord) {
         assert(dpl >= 0 && dpl <= 3, "fatal error")
         self.base  = base
         self.limit = limit
@@ -61,9 +61,9 @@ extension SegmentDescriptor {
         get { (upper & 0x0000_1F00) >> 8 }
         set { upper = upper & 0xFFFF_E0FF | DWord(newValue) << 8 }
     }
-    var dpl: Int {
+    var dpl: DWord {
         get {
-            Int((upper & 0x0000_6000) >> 13 & 0b0011)
+            (upper & 0x0000_6000) >> 13 & 0b0011
         }
         set {
             assert(newValue >= 0 && newValue <= 3, "fatal error")

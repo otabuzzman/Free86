@@ -23,8 +23,8 @@ extension SegmentSelector {
     var isLDT: Bool {
         isFlagRaised(.TI)
     }
-    var rpl: Int {
-        Int(self & 0b0011)
+    var rpl: DWord {
+        DWord(self & 0b0011)
     }
 }
 

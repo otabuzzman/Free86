@@ -9,7 +9,7 @@ class Free86 {
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
-    var eflags: EFlags = 0
+    var eflags: Eflags = 0
 
     var eip: DWord = 0
 
@@ -241,7 +241,7 @@ class Free86 {
     /// auxiliary variables for inter-method exchange
     var lax: LinearAddress = 0  // linear address exchange register
     var operation: DWord = 0  // bits 5..3 of opcode or modR/M byte
-    var modRM: DWord = 0, reg: DWord = 0, rM: DWord = 0    // mod field (modRM >> 6) inline
+    var modRM: ModRM = 0, reg: DWord = 0, rM: DWord = 0    // mod field (modRM >> 6) inline
     var sib: DWord = 0, base: DWord = 0, index: DWord = 0  // scale field (sib >> 6) inline
     var r: DWord = 0, rm: DWord = 0   // register or register/ memory by modRM
     var m: DWord = 0, m16: DWord = 0  // 32/ 16 bit memory operands from memory
