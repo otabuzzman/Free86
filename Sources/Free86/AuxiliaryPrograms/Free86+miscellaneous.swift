@@ -206,21 +206,83 @@ extension Free86 {
             break
         }
     }
-    func aux16Bound() {
+    func aux16Bound() throws {
+        modRM = fetch8()
+        if modRM.mod == 3 {
+            throw Interrupt(6)
+        }
+        segmentTranslation()
+        u = DWord(try ld16ReadonlyCpl3()).signExtendedWord
+        lax = lax &+ 2
+        v = DWord(try ld16ReadonlyCpl3()).signExtendedWord
+        r = regs[modRM.reg].signExtendedWord
+        if (r < u) || (r > v) {
+            throw Interrupt(5)
+        }
     }
-    func auxBound() {
+    func auxBound() throws {
+        modRM = fetch8()
+        if modRM.mod == 3 {
+            throw Interrupt(6)
+        }
+        segmentTranslation()
+        u = try ldReadonlyCpl3
+        lax = lax &+ 4
+        v = try ldReadonlyCpl3
+        r = regs[modRM.reg]
+        if (r < u) || (r > v) {
+            throw Interrupt(5)
+        }
     }
-    func aux16Pusha() {
+    func aux16Pusha() throws {
+        lax = ssBase &+ ((regs[.ESP] &- 16) & ssBase)
+        for reg in (0...7).reversed() {
+            r = regs[reg]
+            try st16WritableCpl3(r)
+            lax = lax &+ 2
+        }
+        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 16) & ssBase)
     }
-    func auxPusha() {
+    func auxPusha() throws {
+        lax = ssBase &+ ((regs[.ESP] &- 32) & ssBase)
+        for reg in (0...7).reversed() {
+            r = regs[reg]
+            try stWritableCpl3(r)
+            lax = lax &+ 4
+        }
+        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 32) & ssBase)
     }
-    func aux16Popa() {
+    func aux16Popa() throws {
+        lax = ssBase &+ (regs[.ESP] & ssBase)
+        for reg in (0...7).reversed() {
+            if reg != GeneralRegister.Name.ESP.rawValue {
+                regs[reg].lowerHalf = DWord(try ld16ReadonlyCpl3())
+            }
+            lax = lax &+ 2
+        }
+        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &+ 16) & ssBase)
     }
     func auxPopa() {
+        lax = ssBase &+ (regs[.ESP] & ssBase)
+        for reg in (0...7).reversed() {
+            if reg != GeneralRegister.Name.ESP.rawValue {
+                regs[reg].lowerHalf = DWord(try ldReadonlyCpl3())
+            }
+            lax = lax &+ 4
+        }
+        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &+ 32) & ssBase)
     }
-    func aux16Leave() {
+    func aux16Leave() throws {
+        let ebp = regs[.EBP]
+        lax = ssBase &+ (ebp & ssBase)
+        regs[.EBP].lowerHalf = DWord(try ld16ReadonlyCpl3())
+        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((ebp & 2) & ssBase)
     }
-    func auxLeave() {
+    func auxLeave() throws {
+        let ebp = regs[.EBP]
+        lax = ssBase &+ (ebp & ssBase)
+        regs[.EBP] = try ldReadonlyCpl3()
+        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((ebp & 2) & ssBase)
     }
     func aux16Enter() {
     }
