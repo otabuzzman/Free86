@@ -76,7 +76,7 @@ func machineDataTypeBitValues() {
 
 @Test("MDT set/ raise/ clear/ toggle bits")
 func machineDataTypeSetRaiseClearToggleBits() {
-    var byte: Byte = 0 // 0100_0111_0001_0001
+    var byte: Byte = 0  // 0100_0111_0001_0001
     byte.raiseBit(0)
     byte.raiseBit(4)
     #expect(byte == 0x11)
