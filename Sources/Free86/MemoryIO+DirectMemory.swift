@@ -1,4 +1,4 @@
-extension MemoryIO: DirectMemory {
+extension MemoryIO: DirectMemory where A: FixedWidthInteger {
     public func ld8(from address: A) -> Byte {
         self[address]
     }
