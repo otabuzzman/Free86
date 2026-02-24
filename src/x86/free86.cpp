@@ -1580,7 +1580,7 @@ void Free86::aux16_IDIV(uint32_t divisor) {
     set_lower_word(2, s);
 }
 void Free86::aux_IDIV(uint64_t dividend, uint32_t divisor) {
-    uint32_t uh, lh, ds, rs;
+    uint32_t uh, lh, ds, rs, d;
     uh = dividend >> 32;
     lh = dividend & 0xffffffff;
     if (uh & 0x80000000) {
@@ -1594,12 +1594,13 @@ void Free86::aux_IDIV(uint64_t dividend, uint32_t divisor) {
         ds = 0;
     }
     if (divisor & 0x80000000) {
-        divisor = ~divisor + 1;
+        d = ~divisor + 1;
         rs = 1;
     } else {
+        d = divisor;
         rs = 0;
     }
-    aux_DIV((lh & 0xffffffff) | static_cast<uint64_t>(uh) << 32, divisor);
+    aux_DIV((lh & 0xffffffff) | static_cast<uint64_t>(uh) << 32, d);
     rs ^= ds;
     if (rs) {
         if (u > 0x80000000) {

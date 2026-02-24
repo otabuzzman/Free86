@@ -57,8 +57,8 @@ extension Free86 {
         regs[.EDX].lowerHalf = s
     }
     func auxDiv(_ dividend: QWord, _ divisor: DWord) throws {
-        let uh = DWord(truncatingIfNeeded: dividend >> 32)
-        let lh = DWord(truncatingIfNeeded: dividend & 0xffffffff)
+        var uh = DWord(truncatingIfNeeded: dividend >> 32)
+        var lh = DWord(truncatingIfNeeded: dividend & 0xffffffff)
         if uh >= divisor {
             throw Interrupt(.DE)
         }
@@ -88,30 +88,31 @@ extension Free86 {
             throw Interrupt(.DE)
         }
         let q = a / d
-        if q.signExtendedByte != q {
+        if ((q << 24) >> 24) != q {
             throw Interrupt(.DE)
         }
         let s = a % d
-        regs[.EAX].lowerHalf = (q & 0xff) | (s << 8)
+        regs[.EAX].lowerHalf = DWord((q & 0xff) | (s << 8))
     }
     func aux16Idiv(_ divisor: DWord) throws {
         let d = Int32(bitPattern: divisor.signExtendedWord)
-        let a = (regs[.EDX] << 16) | (regs[.EAX] & 0xffff)
+        let a = Int32((regs[.EDX] << 16) | (regs[.EAX] & 0xffff))
         if d == 0 {
             throw Interrupt(.DE)
         }
         let q = a / d
-        if q.signExtendedWord != q {
+        if ((q << 24) >> 24) != q {
             throw Interrupt(.DE)
         }
         let s = a % d
-        regs[.EAX].lowerHalf = q
-        regs[.EDX].lowerHalf = s
+        regs[.EAX].lowerHalf = DWord(bitPattern: q)
+        regs[.EDX].lowerHalf = DWord(bitPattern: s)
     }
-    func auxIdiv(_ dividend: QWord, _ divisor: DWord) {
+    func auxIdiv(_ dividend: QWord, _ divisor: DWord) throws {
         let ds: DWord, d: DWord
-        let uh = DWord(truncatingIfNeeded: dividend >> 32)
-        let lh = DWord(truncatingIfNeeded: dividend & 0xffffffff)
+        var rs: DWord
+        var uh = DWord(truncatingIfNeeded: dividend >> 32)
+        var lh = DWord(truncatingIfNeeded: dividend & 0xffffffff)
         if (uh & 0x80000000) != 0 {
             ds = 1
             uh = ~uh
@@ -126,21 +127,22 @@ extension Free86 {
             d = ~divisor &+ 1
             rs = 1
         } else {
+            d = divisor
             rs = 0
         }
-        aux_DIV(lh | (QWord(uh) << 32), d)
+        try auxDiv(QWord(lh) | (QWord(uh) << 32), d)
         rs ^= ds
         if rs != 0 {
-            if (u > 0x80000000) {
-                abort(0)
+            if u > 0x80000000 {
+                throw Interrupt(.DE)
             }
             u = ~u &+ 1
         } else {
-            if (u >= 0x80000000) {
-                abort(0)
+            if u >= 0x80000000 {
+                throw Interrupt(.DE)
             }
         }
-        if (ds) {
+        if ds != 0 {
             v = ~v &+ 1
         }
     }
