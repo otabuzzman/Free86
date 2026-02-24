@@ -1,22 +1,22 @@
 extension Free86 {
     func aux16ShrdShld(_ dst: DWord, _ src: DWord, _ count: DWord) -> DWord {
-        let res = dst
-        let c = count & 0x1f
+        var res = dst
+        let c = Int(count & 0x1f)
         if c != 0 {
             if operation == 0 { // SHLD
-                s = src & 0xffff
+                let s = src & 0xffff
                 u = s | (res << 16)
-                osmSrc = u.signedShiftRight(32 - c)
+                osmSrc = u.signedShiftRight(count: 32 - c)
                 u = u << c
                 if c > 16 {
                     u |= s << (c - 16)
                 }
-                osmDst = u.signedShiftRight(16)
+                osmDst = u.signedShiftRight(count: 16)
                 res = osmDst
                 osm = 19
             } else { // SHRD
                 u = (res & 0xffff) | (src << 16)
-                osmSrc = u.signedShiftRight(c - 1)
+                osmSrc = u.signedShiftRight(count: c - 1)
                 u = u >> c
                 if c > 16 {
                     u |= src << (32 - c)
@@ -29,7 +29,7 @@ extension Free86 {
         return res
     }
     func auxShrd(_ dst: DWord, _ src: DWord, _ count: DWord) -> DWord {
-        let res = dst
+        var res = dst
         let c = count & 0x1f
         if c != 0 {
             osmSrc = res >> (c - 1)
@@ -42,7 +42,7 @@ extension Free86 {
         return res
     }
     func auxShld(_ dst: DWord, _ src: DWord, _ count: DWord) -> DWord {
-        let res = dst
+        var res = dst
         let c = count & 0x1f
         if c != 0 {
             osmSrc = res << (c - 1)
@@ -75,6 +75,7 @@ extension Free86 {
             res = base & ~u
             break
         case 3: // BTC
+            fallthrough
         default:
             res = base ^ u
             break
@@ -84,7 +85,7 @@ extension Free86 {
     }
     func auxBtsBtrBtc(_ base: DWord, _ offset: DWord) -> DWord {
         let res: DWord
-        o = offset & 0x1f
+        let o = offset & 0x1f
         osmSrc = base >> o
         u = 1 << o
         switch operation {
@@ -95,6 +96,7 @@ extension Free86 {
             res = base & ~u
             break
         case 3: // BTC
+            fallthrough
         default:
             res = base ^ u
             break
@@ -103,8 +105,8 @@ extension Free86 {
         return res
     }
     func aux16Bsf(_ dst: DWord, _ src: DWord) -> DWord {
-        let res = dst
-        let s = src & 0xffff
+        var res = dst
+        var s = src & 0xffff
         if s != 0 {
             res = 0
             while (s & 1) == 0 {
@@ -119,8 +121,8 @@ extension Free86 {
         return res
     }
     func auxBsf(_ dst: DWord, _ src: DWord) -> DWord {
-        let res = dst
-        let s: QWord = QWord(src)
+        var res = dst
+        var s: QWord = QWord(src)
         if s != 0 {
             res = 0
             while (s & 1) == 0 {
@@ -135,8 +137,8 @@ extension Free86 {
         return res
     }
     func aux16Bsr(_ dst: DWord, _ src: DWord) -> DWord {
-        let res = dst
-        let s = src & 0xffff
+        var res = dst
+        var s = src & 0xffff
         if s != 0 {
             res = 15
             while (s & 0x8000) == 0 {
@@ -151,8 +153,8 @@ extension Free86 {
         return res
     }
     func auxBsr(_ dst: DWord, _ src: DWord) -> DWord {
-        let res = dst
-        let u = src
+        var res = dst
+        var u = src
         if u != 0 {
             res = 31
             while (u & 0x80000000) == 0 {
@@ -167,12 +169,12 @@ extension Free86 {
         return res
     }
     func shift8(_ src: DWord, _ count: DWord) -> DWord {
-        let cf: DWord
+        let c: DWord, cf: DWord
         let s = src & 0xff
-        let res = s
+        var res = s
         switch operation & 7 {
         case 0:
-            if count & 0x1f {
+            if (count & 0x1f) != 0 {
                 c = count & 0x7
                 res = (res << c) | (res >> (8 - c))
                 osmSrc = compileEflags(true)
@@ -185,7 +187,7 @@ extension Free86 {
             }
             break
         case 1:
-            if count & 0x1f {
+            if (count & 0x1f) != 0 {
                 c = count & 0x7
                 res = (res >> c) | (res << (8 - c))
                 osmSrc = compileEflags(true)
@@ -252,7 +254,7 @@ extension Free86 {
         case 7:
             c = count & 0x1f
             if c != 0 {
-                res = sign_extend_byte(src)
+                res = src.signExtendedByte
                 osmSrc = res >> (c - 1)
                 osmDst = (res >> c).signExtendedByte
                 res = osmDst
@@ -265,12 +267,12 @@ extension Free86 {
         return res
     }
     func shift16(_ src: DWord, _ count: DWord) -> DWord {
-        let cf: DWord
+        let c: DWord, cf: DWord
         let s = src & 0xffff
-        let res = s
+        var res = s
         switch operation & 7 {
          case 0:
-            if count & 0x1f {
+            if (count & 0x1f) != 0 {
                 c = count & 0xf
                 res = (res << c) | (res >> (16 - c))
                 osmSrc = compileEflags(true)
@@ -283,7 +285,7 @@ extension Free86 {
             }
             break
         case 1:
-            if count & 0x1f {
+            if (count & 0x1f) != 0 {
                 c = count & 0xf
                 res = (res >> c) | (res << (16 - c))
                 osmSrc = compileEflags(true)
@@ -296,7 +298,7 @@ extension Free86 {
             }
             break
         case 2:
-            c = Free86.shift16LUT[count & 0x1f]
+            c = Free86.shift16LUT[Int(count) & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
                 res = (res << c) | (cf << (c - 1))
@@ -313,7 +315,7 @@ extension Free86 {
             }
             break
         case 3:
-            c = Free86.shift16LUT[count & 0x1f]
+            c = Free86.shift16LUT[Int(count) & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
                 res = (res >> c) | (cf << (16 - c))
@@ -363,15 +365,15 @@ extension Free86 {
         return res
     }
     func shift(_ src: DWord, _ count: DWord) -> DWord {
-        let cf: DWord
+        let c: DWord, cf: DWord
         let s = src
-        let res = s
+        var res = s
         switch operation & 7 {
         case 0:
             c = count & 0x1f
-            c != 0 {
+            if c != 0 {
                 res = (res << c) | (res >> (32 - c))
-                osmSrc = compile_EFLAGS(true)
+                osmSrc = compileEflags(true)
                 osmSrc |= res & 0x0001
                 if c == 1 {
                     osmSrc |= ((s ^ res) >> 20) & 0x0800
@@ -382,9 +384,9 @@ extension Free86 {
             break
         case 1:
             c = count & 0x1f
-            c != 0 {
+            if c != 0 {
                 res = (res >> c) | (res << (32 - c))
-                osmSrc = compile_EFLAGS(true)
+                osmSrc = compileEflags(true)
                 osmSrc |= (res >> 31) & 0x0001
                 if c == 1 {
                     osmSrc |= ((s ^ res) >> 20) & 0x0800
@@ -395,13 +397,13 @@ extension Free86 {
             break
         case 2:
             c = count & 0x1f
-            c != 0 {
+            if c != 0 {
                 cf = isCF() ? 1 : 0
                 res = (res << c) | (cf << (c - 1))
                 if c > 1 {
                     res |= s >> (33 - c)
                 }
-                osmSrc = compile_EFLAGS(true)
+                osmSrc = compileEflags(true)
                 osmSrc |= (s >> (32 - c)) & 0x0001
                 if c == 1 {
                     osmSrc |= ((s ^ res) >> 20) & 0x0800
@@ -412,13 +414,13 @@ extension Free86 {
             break
         case 3:
             c = count & 0x1f
-            c != 0 {
-                cf = sCF() ? 1 : 0
+            if c != 0 {
+                cf = isCF() ? 1 : 0
                 res = (res >> c) | (cf << (32 - c))
                 if c > 1 {
                     res |= s << (33 - c)
                 }
-                osmSrc = compile_EFLAGS(true)
+                osmSrc = compileEflags(true)
                 osmSrc |= (s >> (c - 1)) & 0x0001
                 if c == 1 {
                     osmSrc |= ((s ^ res) >> 20) & 0x0800
@@ -429,7 +431,7 @@ extension Free86 {
             break
         case 4, 6:
             c = count & 0x1f
-            c != 0 {
+            if c != 0 {
                 osmSrc = res << (c - 1)
                 osmDst = res << c
                 res = osmDst
@@ -438,7 +440,7 @@ extension Free86 {
             break
         case 5:
             c = count & 0x1f
-            c != 0 {
+            if c != 0 {
                 osmSrc = res >> (c - 1)
                 osmDst = res >> c
                 res = osmDst
@@ -447,9 +449,9 @@ extension Free86 {
             break
         case 7:
             c = count & 0x1f
-            c != 0 {
-                osmSrc = res.signedShiftRight(c - 1)
-                osmDst = res.signedShiftRight(c)
+            if c != 0 {
+                osmSrc = res.signedShiftRight(count: Int(c) - 1)
+                osmDst = res.signedShiftRight(count: Int(c))
                 res = osmDst
                 osm = 20
             }
