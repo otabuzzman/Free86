@@ -3120,7 +3120,7 @@ void Free86::aux_AAM(uint32_t radix) {
     ah = al / radix;
     al = al % radix;
     regs[0] = (regs[0] & ~0xffffu) | al | (ah << 8);
-    osm_dst = (al << 24) >> 24;
+    osm_dst = sign_extend_byte(al);
     osm = 12;
 }
 void Free86::aux_AAD(uint32_t radix) {
@@ -3129,7 +3129,7 @@ void Free86::aux_AAD(uint32_t radix) {
     ah = (regs[0] >> 8) & 0xff;
     al = (ah * radix + al) & 0xff;
     regs[0] = (regs[0] & ~0xffffu) | al;
-    osm_dst = (al << 24) >> 24;
+    osm_dst = sign_extend_byte(al);
     osm = 12;
 }
 void Free86::aux_AAA() {
