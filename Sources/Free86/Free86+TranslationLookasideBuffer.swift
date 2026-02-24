@@ -23,7 +23,7 @@ extension Free86: TranslationLookasideBuffer {
         if (tlbReadonlyCplX[pxi] == -1) {
             if (tlbPagesCount >= 2048) {  // flush TLB if full
                 /// if present, keep PTE immediately preceding this PTE to improve performance
-                tlbFlush(preservePageIfPresent: pxi - 1)
+                tlbFlush(preservePageIfPresent: pxi &- 1)
             }
             /// record LA just added to TLB
             tlbPages[tlbPagesCount] = pxi
@@ -94,10 +94,10 @@ extension Free86 {
         }
         /// paging enabled
         var errorCode: DWord = 0
-        let pdeAddress = cr3.pageDirectoryBase + linear.pageDirectoryOffset
+        let pdeAddress = cr3.pageDirectoryBase &+ linear.pageDirectoryOffset
         var pde: PageTableEntry = memory.ld(from: pdeAddress)
         if pde.isPresent {
-            let pteAddress = pde.pageFrameAddress + linear.pageTableOffset
+            let pteAddress = pde.pageFrameAddress &+ linear.pageTableOffset
             var pte: PageTableEntry = memory.ld(from: pteAddress)
             if pde.isPresent {
                 let supervisor = !user

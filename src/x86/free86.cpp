@@ -2986,7 +2986,7 @@ uint32_t Free86::ld_descriptor_fields(uint32_t selector, bool limit) { // !limit
     rpl = selector & 3;
     dpl = (xsd.flags >> 13) & 3;
     if (xsd.flags & (1 << 12)) { // code/ data segment
-        if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) { // if non-conforming code segments
+        if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) {
             if (dpl < cpl || dpl < rpl) {
                 return notok;
             }

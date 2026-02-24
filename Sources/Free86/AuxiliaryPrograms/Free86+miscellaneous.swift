@@ -81,19 +81,24 @@ extension Free86 {
         if xsd.qword == 0 {
             return notok
         }
+        let type = SegmentDescriptorType(rawValue: xsd.type)
         if xsd.isSystemSegment {
-            switch xsd.type & 0b0_1111 {
-            case 1, 2, 3, 9, 11:
-                // 1:  16 bit TSS (busy)
-                // 2:  LDT
-                // 3:  16 bit TSS (available)
-                // 9:  32 bit TSS (busy)
-                // 11: 32 bit TSS (available)
+            switch type {
+            case .TSS16Available:
+                fallthrough
+            case .LDT:
+                fallthrough
+            case .TSS16Busy:
+                fallthrough
+            case .TSSAvailable:
+                fallthrough
+            case .TSSBusy:
                 break
-            case 4, 5, 12:
-                // 4:  16 bit call gate
-                // 5:  task gate
-                // 12: 32 bit call gate
+            case .CallGate16:
+                fallthrough
+            case .TaskGate:
+                fallthrough
+            case .CallGate:
                 if limit {
                     return notok
                 }
@@ -104,11 +109,21 @@ extension Free86 {
             if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
                 return notok
             }
-        } else {  // code/ data segment
-            if (xsd.type & 0b0_1100) == 0 {  // if non-conforming code segments
+        } else {
+            switch type {
+            case .DataRO:
+                fallthrough
+            case .DataROAccessed:
+                fallthrough
+            case .DataRW:
+                fallthrough
+            case .DataRWAccessed:
                 if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
                     return notok
                 }
+                fallthrough
+            default:
+                break
             }
         }
         if limit {
@@ -138,21 +153,21 @@ extension Free86 {
         if xsd.isSystemSegment {
             return false
         }
-        if (xsd.type & 0b0_1000) != 0 {  // code == 1, data == 0
+        if xsd.isCodeSegment {  // if code segment
             if writable {
                 return false
             } else {
-                if (xsd.type & 0b0_0100) == 0 {
+                if !xsd.isFlagRaised(.C) {
                     if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
                         return false
                     }
                 }
-                if (xsd.type & 0b0_0010) == 0 {  // readable code segment
+                if !xsd.isFlagRaised(.R) {
                     return true
                 }
             }
         } else {
-            if writable && (xsd.type & 0b0_0010) == 0 {
+            if writable && !xsd.isFlagRaised(.W) {
                 return false
             }
             if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
