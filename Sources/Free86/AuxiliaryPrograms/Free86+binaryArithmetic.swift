@@ -181,8 +181,8 @@ extension Free86 {
         osm = 22
     }
     func auxImul(_ multiplicand: DWord, _ multiplier: DWord) {
-        let md = multiplicand
-        let mr = multiplier
+        var md = multiplicand
+        var mr = multiplier
         var s: DWord = 0
         if (md & 0x80000000) != 0 {
             md = ~md &+ 1
@@ -201,7 +201,7 @@ extension Free86 {
             }
     }
     osmDst = u
-    osmSrc = v - u.signedShiftRight(31)
+        osmSrc = v - u.signedShiftRight(count: 31)
     osm = 23
     }
     func multiply(_ multiplicand: DWord, _ multiplier: DWord) {
@@ -213,17 +213,17 @@ extension Free86 {
             let du = multiplicand >> 16
             let rl = multiplier & 0xffff
             let ru = multiplier >> 16
-            x = dl &* rl
+            x = QWord(dl) &* QWord(rl)
             v = du &* ru
             w = dl &* ru
-            x = x &+ (w & 0xffff) << 16
+            x = x &+ QWord((w & 0xffff) << 16)
             v = v &+ (w >> 16)
             if x >= 4294967296 {
                 x -= 4294967296
                 v = v &+ 1
             }
             w = du &* rl
-            x = x &+ (w & 0xffff) << 16
+            x = x &+ QWord((w & 0xffff) << 16)
             v = v &+ (w >> 16)
             if x >= 4294967296 {
                 x -= 4294967296
@@ -234,8 +234,8 @@ extension Free86 {
     }
     @discardableResult
     func calculate8(_ dst: DWord, _ src: DWord) -> DWord {
-        let cf: DWord, res: DWord
-        res = dst
+        let cf: DWord
+        var res = dst
         switch operation & 7 {
         case 0:
             osmSrc = src
@@ -283,13 +283,15 @@ extension Free86 {
             osmDst = (dst &- src).signExtendedByte
             osm = 6
             break
+        default:
+            break  // exhaustive
         }
         return res
     }
     @discardableResult
     func calculate16(_ dst: DWord, _ src: DWord) -> DWord {
-        let cf: DWord, res: DWord
-        res = dst
+        let cf: DWord
+        var res = dst
         switch operation & 7 {
         case 0:
             osmSrc = src
@@ -337,13 +339,15 @@ extension Free86 {
             osmDst = (res &- src).signExtendedWord
             osm = 7
             break
-        }
+        default:
+            break  // exhaustive
+       }
         return res
     }
     @discardableResult
     func calculate(_ dst: DWord, _ src: DWord) -> DWord {
-        let cf: DWord, res: DWord
-        res = dst
+        let cf: DWord
+        var res = dst
         switch operation & 7 {
         case 0:
             osmSrc = src
@@ -391,7 +395,9 @@ extension Free86 {
             osmDst = res &- src
             osm = 8
             break
-        }
+        default:
+            break  // exhaustive
+       }
         return res
     }
 }
