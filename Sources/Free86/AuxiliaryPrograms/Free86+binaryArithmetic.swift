@@ -341,7 +341,7 @@ extension Free86 {
             break
         default:
             break  // exhaustive
-       }
+        }
         return res
     }
     @discardableResult
@@ -397,7 +397,7 @@ extension Free86 {
             break
         default:
             break  // exhaustive
-       }
+        }
         return res
     }
 }
