@@ -38,7 +38,7 @@ extension Free86 {
     func aux8Div(_ divisor: DWord) throws {
         let d = divisor & 0xff
         let a = regs[.EAX] & 0xffff
-        if (a >> 8) >= d {
+        if a >> 8 >= d {
             throw Interrupt(.DE)
         }
         let q = a / d
@@ -48,7 +48,7 @@ extension Free86 {
     func aux16Div(_ divisor: DWord) throws {
         let d = divisor & 0xffff
         let a = (regs[.EDX] << 16) | (regs[.EAX] & 0xffff)
-        if (a >> 16) >= d {
+        if a >> 16 >= d {
             throw Interrupt(.DE)
         }
         let q = a / d
@@ -68,7 +68,7 @@ extension Free86 {
             u = DWord(truncatingIfNeeded: a / QWord(divisor))
         } else {
             for _ in 0..<32 {
-                let s = (uh >> 31) != 0
+                let s = uh >> 31 != 0
                 uh = (uh << 1) | (lh >> 31)
                 if s || (uh >= divisor) {
                     uh = uh &- divisor
@@ -88,7 +88,7 @@ extension Free86 {
             throw Interrupt(.DE)
         }
         let q = a / d
-        if ((q << 24) >> 24) != q {
+        if (q << 24) >> 24 != q {
             throw Interrupt(.DE)
         }
         let s = a % d
@@ -101,7 +101,7 @@ extension Free86 {
             throw Interrupt(.DE)
         }
         let q = a / d
-        if ((q << 24) >> 24) != q {
+        if (q << 24) >> 24 != q {
             throw Interrupt(.DE)
         }
         let s = a % d
