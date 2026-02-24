@@ -1,7 +1,7 @@
 extension Free86 {
     func aux_INSB() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
@@ -29,7 +29,7 @@ extension Free86 {
     }
     func aux_OUTSB() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
@@ -208,7 +208,7 @@ extension Free86 {
     }
     func aux_INSW() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
@@ -236,7 +236,7 @@ extension Free86 {
     }
     func aux_OUTSW() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
@@ -415,7 +415,7 @@ extension Free86 {
     }
     func aux16_INS() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
@@ -443,7 +443,7 @@ extension Free86 {
     }
     func aux16_OUTS() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
@@ -622,7 +622,7 @@ extension Free86 {
     }
     func aux_INSD() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
@@ -650,7 +650,7 @@ extension Free86 {
     }
     func aux_OUTSD() throws {
         if (cpl > eflags.iopl) {
-            throw Interrupt(13)
+            throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex

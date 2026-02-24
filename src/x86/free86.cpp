@@ -62,7 +62,7 @@ void Free86::update_SSB() {
     }
     x86_64_long_mode = (((segs[0].shadow.base | CS_base | SS_base | segs[3].shadow.base) == 0) && SS_mask == 0xffffffff);
 }
-void Free86::retrieve_opcode() {
+void Free86::obtain_opcode() {
     eip = eip + far - far_start;
     eip_linear = is_real__v86() ? (CS_base + eip) & 0xfffff : CS_base + eip;
     far = far_start = tlb_lookup(eip_linear, 0);

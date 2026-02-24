@@ -9,6 +9,11 @@ func segmentDescriptorFlagsPositions() {
     #expect(SegmentDescriptorFlag.D.rawValue == 22)
     #expect(SegmentDescriptorFlag.P.rawValue == 15)
     #expect(SegmentDescriptorFlag.S.rawValue == 12)
+    #expect(SegmentDescriptorTypeFlag.A.rawValue == 8)
+    #expect(SegmentDescriptorCodeTypeFlag.C.rawValue == 10)
+    #expect(SegmentDescriptorCodeTypeFlag.R.rawValue == 9)
+    #expect(SegmentDescriptorDataTypeFlag.E.rawValue == 10)
+    #expect(SegmentDescriptorDataTypeFlag.W.rawValue == 9)
 }
 
 @Test("segment descriptor set/ check flags")
@@ -16,7 +21,20 @@ func segmentDescriptorSetCheckFlags() {
     var segmentDescriptor = SegmentDescriptor(0xC0FEBA5E, 0x00012345, .CodeExOnly, 3)
     #expect(segmentDescriptor.isFlagRaised(.G) == false)
     segmentDescriptor.setFlag(.G, 1)
-    #expect(segmentDescriptor.upper == 0xC08178FE)
+    #expect(segmentDescriptor.upper == 0xC08178FE)  // 0111_1000
+    /// TSS
+    #expect(segmentDescriptor.upper.isBitRaised(9) == false)
+    /// data segment
+    #expect(segmentDescriptor.isFlagRaised(.A) == false)
+    segmentDescriptor.upper.raiseBit(SegmentDescriptorTypeFlag.A.rawValue)
+    #expect(segmentDescriptor.isFlagRaised(.A) == true)
+    #expect(segmentDescriptor.isFlagRaised(.R) == false)
+    #expect(segmentDescriptor.isFlagRaised(.C) == false)
+    /// code segment
+    segmentDescriptor.upper.clearBit(SegmentDescriptorTypeFlag.A.rawValue)
+    #expect(segmentDescriptor.isFlagRaised(.A) == false)
+    #expect(segmentDescriptor.isFlagRaised(.W) == false)
+    #expect(segmentDescriptor.isFlagRaised(.E) == false)
 }
 
 @Test("segment descriptor type values")

@@ -51,7 +51,7 @@ let package = Package(
                 "Free86+reset.swift",
                 "Free86+eflags.swift",  // no tests
                 "Free86+fetchDecodeExecute.swift",  // no tests
-                "Free86+retrieveOpcode.swift",  // no tests
+                "Free86+obtainOpcode.swift",  // no tests
                 "OpcodePrograms/Free86+oneByte16.swift",  // no tests
                 "OpcodePrograms/Free86+oneByte.swift",    // no tests
                 "OpcodePrograms/Free86+twoByte16.swift",  // no tests
@@ -66,9 +66,9 @@ let package = Package(
                 "AuxiliaryPrograms/Free86+miscellaneous.swift",    // no tests
                 "LookupTables/Free86+LUT.swift",  // no tests
                 "MachineDataTypes.swift",
+                "PinIO.swift",
                 "GeneralRegister.swift",
                 "SegmentRegister.swift",
-                "Free86+setSegmentRegister.swift",  // no tests
                 "SegmentSelector.swift",
                 "SegmentDescriptor.swift",
                 "ExtendedFlagsRegister.swift",
@@ -78,9 +78,9 @@ let package = Package(
                 "ModRM+SIB.swift",
                 "InstructionPrefixRegister.swift",
                 "LogicalAddress+Pointers.swift",  // no tests
+                "Free86+segmentation.swift",  // no tests
                 "LinearAddress.swift",
                 "MemoryIO+PhysicalAddress.swift",
-                "PinIO.swift",
                 "DirectMemory.swift",  // protocol, no explicit tests
                 "MemoryIO+DirectMemory.swift",
                 "PagedMemory.swift",   // protocol, no explicit tests
@@ -88,7 +88,6 @@ let package = Package(
                 "PageTableEntry.swift",
                 "TranslationLookasideBuffer.swift",  // protocol, no explicit tests
                 "Free86+TranslationLookasideBuffer.swift",
-                "Free86+segmentTranslation.swift",  // no tests
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
@@ -102,6 +101,7 @@ let package = Package(
                 "Free86+reset.swift",
                 "Free86+SSB.swift",
                 "MachineDataTypes.swift",
+                "PinIO.swift",
                 "GeneralRegister.swift",
                 "SegmentRegister.swift",
                 "SegmentSelector.swift",
@@ -113,7 +113,6 @@ let package = Package(
                 "InstructionPrefixRegister.swift",
                 "LinearAddress.swift",
                 "MemoryIO+PhysicalAddress.swift",
-                "PinIO.swift",
                 "MemoryIO+DirectMemory.swift",
                 "Free86+PagedMemory.swift",
                 "PageTableEntry.swift",

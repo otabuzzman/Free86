@@ -389,7 +389,7 @@ class Free86 {
     [[noreturn]] void abort(int /*interrupt*/ id, int error_code = 0);
 
     void update_SSB();
-    void retrieve_opcode();
+    void obtain_opcode();
 
     int instruction_length(uint32_t opcode);
     int modRM_bytes_number();

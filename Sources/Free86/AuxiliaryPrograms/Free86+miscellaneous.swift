@@ -5,18 +5,18 @@ extension Free86 {
             ldt = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
             if !selector.isGDT {
-                throw Interrupt(13, errorCode: dti)
+                throw Interrupt(.GP, errorCode: dti)
             }
             if (dti + 7) > gdt.shadow.limit {
-                throw Interrupt(13, errorCode: dti)
+                throw Interrupt(.GP, errorCode: dti)
             }
             lax = gdt.shadow.base + dti
             let xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if !xsd.isSystemSegment || !xsd.isType(.LDT) {
-                throw Interrupt(13, errorCode: dti)
+                throw Interrupt(.GP, errorCode: dti)
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(11, errorCode: dti)
+                throw Interrupt(.NP, errorCode: dti)
             }
             ldt = SegmentRegister(selector, xsd)
         }
@@ -27,28 +27,28 @@ extension Free86 {
             tr = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
             if !selector.isGDT {
-                throw Interrupt(13, errorCode: dti)
+                throw Interrupt(.GP, errorCode: dti)
             }
             if (dti + 7) > gdt.shadow.limit {
-                throw Interrupt(13, errorCode: dti)
+                throw Interrupt(.GP, errorCode: dti)
             }
             lax = gdt.shadow.base + dti
             var xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if !xsd.isSystemSegment || !xsd.isType(.TSSAvailable) || !xsd.isType(.TSS16Available) {
-                throw Interrupt(13, errorCode: dti)
+                throw Interrupt(.GP, errorCode: dti)
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(11, errorCode: dti)
+                throw Interrupt(.NP, errorCode: dti)
             }
             tr = SegmentRegister(selector, xsd)
-            xsd.setFlag(.B)
+            xsd.upper.setBit(9)  /// bit 9 distinguishes available (0)/ busy (1) TSS
             try st64WritableCplX(qword: xsd.qword)
         }
     }
     func auxLarLsl(_ o32: Bool, _ isLsl: Bool) throws {
         let selector: SegmentSelector
         if cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
-            throw Interrupt(6)
+            throw Interrupt(.UD)
         }
         modRM = fetch8()
         if modRM.mod == 3 {
@@ -163,7 +163,7 @@ extension Free86 {
     }
     func auxArpl() throws {
         if cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
-            throw Interrupt(6)
+            throw Interrupt(.UD)
         }
         modRM = fetch8()
         if modRM.mod == 3 {
@@ -209,7 +209,7 @@ extension Free86 {
     func aux16Bound() throws {
         modRM = fetch8()
         if modRM.mod == 3 {
-            throw Interrupt(6)
+            throw Interrupt(.UD)
         }
         segmentTranslation()
         u = DWord(try ld16ReadonlyCpl3()).signExtendedWord
@@ -217,13 +217,13 @@ extension Free86 {
         v = DWord(try ld16ReadonlyCpl3()).signExtendedWord
         r = regs[modRM.reg].signExtendedWord
         if (r < u) || (r > v) {
-            throw Interrupt(5)
+            throw Interrupt(.BR)
         }
     }
     func auxBound() throws {
         modRM = fetch8()
         if modRM.mod == 3 {
-            throw Interrupt(6)
+            throw Interrupt(.UD)
         }
         segmentTranslation()
         u = try ldReadonlyCpl3()
@@ -231,7 +231,7 @@ extension Free86 {
         v = try ldReadonlyCpl3()
         r = regs[modRM.reg]
         if (r < u) || (r > v) {
-            throw Interrupt(5)
+            throw Interrupt(.BR)
         }
     }
     func aux16Pusha() throws {
@@ -360,46 +360,6 @@ extension Free86 {
         setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg] = imm
     }
-    func ldMemoryOffset(_ writable: Bool) throws {
-        var la: QWord
-        var notok: Bool
-        let stride: DWord
-        if !ipr.addressSizeOverride {
-            la = DWord(fetch())
-            stride = 4  // 32 bit mode
-        } else {
-            la = DWord(fetch16())
-            stride = 2  // 16 bit mode
-        }
-        if !(opcode & 0x01) {
-            stride = 1  // 8 bit mode, opcodes A0, A2
-        }
-        let sreg = ipr.segmentRegisterIndex
-        /// type checking
-        if sreg == SegmentRegister.Name.CS.rawValue {  // code segment, WR requested or CS not readable
-            notok = writable || !segs[sreg].shadow.isFlagRaised(.R)
-        } else {  // data segment, WR requested and DS not writable
-            notok = writable && !segs[sreg].shadow.isFlagRaised(.W)
-        }
-        if notok {
-            throw Interrupt(13, 0)
-        }
-        la = segs[sreg].shadow.base + la
-        /// limit checking
-        if segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
-            notok = la < QWord(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1
-        } else {
-            notok = la > QWord(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1 - stride
-        }
-        if notok {
-            if sreg == 2 {
-                throw Interrupt(12, 0)  // #SS(0)
-            } else {
-                throw Interrupt(13, 0)  // #GP(0)
-            }
-        }
-        lax = DWord(truncatingIfNeeded: la)
-    }
     func fetch8() -> Byte {
         let byte = memory.ld8(from: far)
         far = far &+ 1
@@ -424,17 +384,17 @@ extension Free86 {
     func push(_ dword: DWord) throws {
         let esp = regs[.ESP] &- 4
         lax = ssBase &+ (esp & ssMask)
-        try stWritableCpl3(word: Word(word))
+        try stWritableCpl3(dword: dword)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
     }
     func pop16() throws -> Word {
-        let res = DWord(ld16Stack())
-        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+        let res = try ld16Stack()
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 4) & ssMask)
         return res
     }
     func pop() throws -> DWord {
-        let res = ldStack()
-        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+        let res = try ldStack()
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 4) & ssMask)
         return res
     }
     func ld16Stack() throws -> Word {

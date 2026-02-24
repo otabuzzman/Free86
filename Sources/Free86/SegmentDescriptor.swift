@@ -21,19 +21,21 @@ extension SegmentDescriptor {
 }
 
 enum SegmentDescriptorFlag: Int {
-    /// all descriptor types
     case G = 23  // granularity, 1 = limit in 4 kB units
     case D = 22  // D (default)/ B (big) flag if code/ data segment, 0 = 16 bit
     case P = 15  // 1 = segment is present
     case S = 12  // 0 = system segment
-    /// TSS
-    case B = 9   // 1 = TSS busy
-    /// code segment
-    case R = 9   // 1 = readable
-    case C = 10  // 1 = conforming
-    /// data segment
-    case W = 9   // 1 = writable
-    case E = 10  // 1 = expand-down
+}
+enum SegmentDescriptorTypeFlag: Int {
+    case A = 8 // 1 = code/ data segment available
+}
+enum SegmentDescriptorCodeTypeFlag: Int {
+    case R = 9  // 1 = readable
+    case C      // 1 = conforming
+}
+enum SegmentDescriptorDataTypeFlag: Int {
+    case W = 9  // 1 = writable
+    case E      // 1 = expand-down
 }
 
 extension SegmentDescriptor {
@@ -95,6 +97,15 @@ extension SegmentDescriptor {
 
 extension SegmentDescriptor {
     func isFlagRaised(_ flag: SegmentDescriptorFlag) -> Bool {
+        upper.isBitRaised(flag.rawValue)
+    }
+    func isFlagRaised(_ flag: SegmentDescriptorTypeFlag) -> Bool {
+        upper.isBitRaised(flag.rawValue)
+    }
+    func isFlagRaised(_ flag: SegmentDescriptorCodeTypeFlag) -> Bool {
+        upper.isBitRaised(flag.rawValue)
+    }
+    func isFlagRaised(_ flag: SegmentDescriptorDataTypeFlag) -> Bool {
         upper.isBitRaised(flag.rawValue)
     }
     mutating func setFlag(_ flag: SegmentDescriptorFlag, _ value: Int = 1) {

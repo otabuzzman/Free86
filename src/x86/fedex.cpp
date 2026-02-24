@@ -21,7 +21,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
         raise_interrupt(get_iid(), 0, 1, 0, 0);
     }
     do { // cycles (actually instructions)
-        retrieve_opcode();
+        obtain_opcode();
         ipr = ipr_default;
         opcode |= ipr & 0x0100;
         while (true) { // loop over instruction bytes (fetch)
