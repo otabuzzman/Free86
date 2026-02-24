@@ -1,5 +1,5 @@
 extension Free86 {
-    func auxAam(_ radix: DWord) {
+    func auxAam(_ radix: DWord) throws {
         if radix == 0 {
             throw Interrupt(.DE)
         }
@@ -22,15 +22,15 @@ extension Free86 {
         var flags = compileEflags()
         var al = regs[.EAX] & 0xff
         var ah = (regs[.EAX] >> 8) & 0xff
-        let of = al > 0xf9 ? 1 : 0
+        let of: DWord = al > 0xf9 ? 1 : 0
         if ((al & 0x0f) > 9) || flags.isFlagRaised(.AF) {
             al = (al &+ 6) & 0x0f
             ah = (ah &+ 1 &+ of) & 0xff
-            flags.raiseFlag(.CF)
-            flags.raiseFlag(.AF)
+            flags.setFlag(.CF)
+            flags.setFlag(.AF)
         } else {
-            flags.clearFlag(.CF)
-            flags.clearFlag(.AF)
+            flags.setFlag(.CF, 0)
+            flags.setFlag(.AF, 0)
             al &= 0x0f
         }
         regs[.EAX] = (regs[.EAX] & ~0xffff) | al | (ah << 8)
@@ -42,15 +42,15 @@ extension Free86 {
         var flags = compileEflags()
         var al = regs[.EAX] & 0xff
         var ah = (regs[.EAX] >> 8) & 0xff
-        let of = al < 6 ? 1 : 0
+        let of: DWord = al < 6 ? 1 : 0
         if ((al & 0x0f) > 9) || flags.isFlagRaised(.AF) {
             al = (al &- 6) & 0x0f
             ah = (ah &- 1 &- of) & 0xff
-            flags.raiseFlag(.CF)
-            flags.raiseFlag(.AF)
+            flags.setFlag(.CF)
+            flags.setFlag(.AF)
         } else {
-            flags.clearFlag(.CF)
-            flags.clearFlag(.AF)
+            flags.setFlag(.CF, 0)
+            flags.setFlag(.AF, 0)
             al &= 0x0f
         }
         regs[.EAX] = (regs[.EAX] & ~0xffff) | al | (ah << 8)
@@ -66,19 +66,19 @@ extension Free86 {
         flags = 0
         if ((al & 0x0f) > 9) || f4 {
             al = (al &+ 6) & 0xff
-            flags.raiseFlag(.AF)
+            flags.setFlag(.AF)
         }
         if ((al > 0x9f) || f0) {
             al = (al &+ 0x60) & 0xff
-            flags.raiseFlag(.CF)
+            flags.setFlag(.CF)
         }
-        regs[.EAX] = (regs[.EAX] & ~0xffu) | al
+        regs[.EAX] = (regs[.EAX] & ~0xff) | al
         if al == 0 {
-            flags.raiseFlag(.ZF)
+            flags.setFlag(.ZF)
         }
-        flags.setFlag(.PF, parityLUT[al])
-        if al (& 0x80) != 0 {
-            flags.raiseFlag(.SF)
+        flags.setFlag(.PF, Free86.parityLUT[Int(al)])
+        if (al & 0x80) != 0 {
+            flags.setFlag(.SF)
         }
         osmSrc = flags
         osmDst = ((osmSrc >> 6) & 1) ^ 1
@@ -92,23 +92,23 @@ extension Free86 {
         flags = 0
         let of = al > 0x99
         if ((al & 0x0f) > 9) || f4 {
-            flags.raiseFlag(.AF)
+            flags.setFlag(.AF)
             if (al < 6) || f0 {
-                flags.raiseFlag(.CF)
+                flags.setFlag(.CF)
             }
             al = (al &- 6) & 0xff
         }
         if of || f0 {
             al = (al &- 0x60) & 0xff
-            flags.raiseFlag(.CF)
+            flags.setFlag(.CF)
         }
         regs[.EAX] = (regs[.EAX] & ~0xff) | al
         if al == 0 {
-            flags.raiseFlag(.ZF)
+            flags.setFlag(.ZF)
         }
-        flags.setFlag(.PF, parityLUT[al])
-        if al (& 0x80) != 0 {
-            flags.raiseFlag(.SF)
+        flags.setFlag(.PF, Free86.parityLUT[Int(al)])
+        if (al & 0x80) != 0 {
+            flags.setFlag(.SF)
         }
         osmSrc = flags
         osmDst = ((osmSrc >> 6) & 1) ^ 1
