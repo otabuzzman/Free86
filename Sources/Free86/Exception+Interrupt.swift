@@ -14,7 +14,8 @@ enum Exception: Byte {
     case SS  // error code
     case GP  // error code
     case PF  // error code
-    case MF = 16
+    case MF = 16  // 80486
+    case AC  // 80486
 }
 
 struct Interrupt: Error, Equatable {
