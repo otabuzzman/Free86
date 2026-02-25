@@ -1,4 +1,3 @@
-extension String: Error {}
 class Free86 {
     /// interrupt pins and data bus low byte
     let INTR = PinIO<Bool>()
