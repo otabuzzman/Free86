@@ -44,7 +44,7 @@ extension Free86 {
         if offset > xsd.limit {
             throw Interrupt(.GP, errorCode: DWord(selector.index))
         }
-        setSegmentRegister(.CS, selector.index | Word(cpl), shadow: xsd.base, xsd.limit, xsd.flags)
+        segs[.CS] = SegmentRegister(selector.index | Word(cpl), xsd)
         eip = offset
         far = 0
         farStart = 0
@@ -130,7 +130,7 @@ extension Free86 {
                 throw Interrupt(.GP, errorCode: DWord(selector.index))
             }
             regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
-            setSegmentRegister(.CS, selector.index | Word(cpl), shadow: xsd.base, xsd.limit, xsd.flags)
+            segs[.CS] = SegmentRegister(selector.index | Word(cpl), xsd)
             eip = offset
             far = 0
             farStart = 0
@@ -229,7 +229,7 @@ extension Free86 {
                         try st16WritableCpl3(word: Word(u))
                     }
                 }
-                setSegmentRegister(.SS, ss.index | Word(dpl), shadow: ssBase, ssd.limit, ssd.flags)
+                segs[.SS] = SegmentRegister(ss.index | Word(dpl), ssd)
             } else {  // intralevel
                 esp = espStart
             }
@@ -248,7 +248,7 @@ extension Free86 {
                 lax = ssBase &+ (esp & ssMask)
                 try st16WritableCpl3(word: Word(home))
             }
-            setSegmentRegister(.CS, gsel.index | Word(dpl), shadow: cgd.base, cgd.limit, cgd.flags)
+            segs[.CS] = SegmentRegister(gsel.index | Word(dpl), cgd)
             cpl = dpl
             regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
             eip = goff
@@ -422,7 +422,7 @@ extension Free86 {
         }
         esp = esp &+ releaseStackItems
         if cs.rpl == cpl {
-            setSegmentRegister(.CS, cs, shadow: csd.base, csd.limit, csd.flags)
+            segs[.CS] = SegmentRegister(cs, csd)
         } else {
             if o32 {
                 lax = ssBase &+ (esp & ssMask)
@@ -458,10 +458,10 @@ extension Free86 {
                 if !ssd.isFlagRaised(.P) {
                     throw Interrupt(.NP, errorCode: DWord(ss.index))
                 }
-                setSegmentRegister(.SS, ss, shadow: ssd.base, ssd.limit, ssd.flags)
+                segs[.SS] = SegmentRegister(ss, ssd)
             }
             resetSegmentRegister(.ES, rpl)
-            setSegmentRegister(.CS, cs, shadow: csd.base, csd.limit, csd.flags)
+            segs[.CS] = SegmentRegister(cs, csd)
             resetSegmentRegister(.DS, rpl)
             resetSegmentRegister(.FS, rpl)
             resetSegmentRegister(.GS, rpl)
@@ -499,7 +499,7 @@ extension Free86 {
         let xsd = segs[sreg].shadow
         if xsd.isDataSegment && !xsd.isFlagRaised(.E) {
            if xsd.dpl < level {
-                setSegmentRegister(sreg, 0, shadow: 0, 0, 0)
+                segs[sreg] = SegmentRegister(0, SegmentDescriptor(0))
             }
         }
     }
@@ -724,14 +724,14 @@ extension Free86 {
         }
         if isInterlevel {
             if eflags.isFlagRaised(.VM) {
-                setSegmentRegister(.ES, 0, shadow: 0, 0, 0)
-                setSegmentRegister(.DS, 0, shadow: 0, 0, 0)
-                setSegmentRegister(.FS, 0, shadow: 0, 0, 0)
-                setSegmentRegister(.GS, 0, shadow: 0, 0, 0)
+                segs[.ES] = SegmentRegister(0, SegmentDescriptor(0))
+                segs[.DS] = SegmentRegister(0, SegmentDescriptor(0))
+                segs[.FS] = SegmentRegister(0, SegmentDescriptor(0))
+                segs[.GS] = SegmentRegister(0, SegmentDescriptor(0))
             }
-            setSegmentRegister(.SS, ss.index | Word(dpl), shadow: ssBase, ssd.limit, ssd.flags)
+            segs[.SS] = SegmentRegister(ss.index | Word(dpl), ssd)
         }
-        setSegmentRegister(.CS, gsel.index | Word(dpl), shadow: cgd.base, cgd.limit, cgd.flags)
+        segs[.CS] = SegmentRegister(gsel.index | Word(dpl), cgd)
         cpl = dpl
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = goff
