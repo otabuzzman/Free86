@@ -13,6 +13,10 @@ enum EflagsFlag: Int {
     case NT = 14  // systems flag
     case RF = 16  // systems flag
     case VM = 17  // systems flag
+    case AC = 18   // 80486
+    case VIF = 19  // 80486
+    case VIP = 20  // 80486
+    case ID = 21   // 80486
 }
 
 extension Eflags {

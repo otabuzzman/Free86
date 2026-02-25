@@ -2403,7 +2403,7 @@ void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, u
                 abort(10, ss & 0xfffc);
             }
             if (!(ssd.flags & (1 << 15))) {
-                abort(10, ss & 0xfffc);
+                abort(11, ss & 0xfffc);
             }
             OS_base = segs[2].shadow.base;
             OS_mask = (segs[2].shadow.flags & (1 << 22)) ? 0xffffffff : 0xffff;
@@ -2692,7 +2692,7 @@ void Free86::reset_segment_register(uint32_t sreg, uint32_t level) {
     }
     flags = segs[sreg].shadow.flags;
     dpl = (flags >> 13) & 3;
-    if (!((flags & (1 << 11)) && (flags & (1 << 10)))) { // if non-conforming code segments
+    if (!((flags & (1 << 11)) && (flags & (1 << 10)))) {
         if (dpl < level) {
             set_segment_register(sreg, 0, 0, 0, 0);
         }
@@ -2814,7 +2814,7 @@ void Free86::raise_interrupt_protected(int id, int error_code, int is_hw, int is
             abort(10, ss & 0xfffc);
         }
         if (!(ssd.flags & (1 << 15))) {
-            abort(10, ss & 0xfffc);
+            abort(11, ss & 0xfffc);
         }
         SS_base = ssd.base;
         SS_mask = ssd.segment_size_mask();

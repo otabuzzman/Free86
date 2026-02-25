@@ -197,7 +197,7 @@ extension Free86 {
                     throw Interrupt(.TS, errorCode: DWord(ss.index))
                 }
                 if !ssd.isFlagRaised(.P) {
-                    throw Interrupt(.TS, errorCode: DWord(ss.index))
+                    throw Interrupt(.NP, errorCode: DWord(ss.index))
                 }
                 // osBase = ssBase
                 // osMask = ssMask
@@ -256,13 +256,251 @@ extension Free86 {
             farStart = 0
         }
     }
-    func auxRetf(_ o32: Bool, _ releaseStackItems: DWord) {
+    func auxRetf(_ o32: Bool, _ releaseStackItems: DWord) throws {
+        if !cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+            try returnRealOrV86Mode(o32, false, releaseStackItems)
+        } else {
+            try returnProtectedMode(o32, false, releaseStackItems)
+        }
     }
-    func returnRealOrV86Mode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) {
+    func returnRealOrV86Mode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
+        let cs: SegmentSelector
+        let homeEip: DWord, homeEflags: Eflags
+        var esp = regs[.ESP]
+        let ssMask = 0xffff
+        if o32 {
+            lax = ssBase &+ (esp & ssMask)
+            homeEip = try ldReadonlyCplX()
+            esp = esp &+ 4
+            lax = ssBase &+ (esp & ssMask)
+            cs = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+            esp = esp &+ 4
+            if isIret {
+                lax = ssBase &+ (esp & ssMask)
+                homeEflags = try ldReadonlyCplX()
+                esp = esp &+ 4
+            }
+        } else {
+            lax = ssBase &+ (esp & ssMask)
+            homeEip = try ld16ReadonlyCplX()
+            esp = esp &+ 2
+            lax = ssBase &+ (esp & ssMask)
+            cs = SegmentSelector(try ld16ReadonlyCplX())
+            esp = esp &+ 2
+            if isIret {
+                lax = ssBase &+ (esp & ssMask)
+                homeEflags = try ld16ReadonlyCplX()
+                esp = esp &+ 2
+            }
+        }
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((esp &+ releaseStackItems) & ssMask)
+        var shadow = segs[.CS].shadow
+        shadow.base = LinearAddress(cs << 4)
+        segs[.CS] = SegmentRegister(cs, shadow)
+        eip = homeEip
+        far = 0
+        far_start = 0
+        if isIret {
+            var mask: DWord = 0
+            mask.setFlag(.TF)
+            mask.setFlag(.IF)
+            mask.setFlag(.NT)
+            mask.setFlag(.RF)
+            mask.setFlag(.AC)
+            mask.setFlag(.ID)
+            mask.iopl = 3
+            if eflags.isFlagRaised(.VM) {
+                mask.iopl = 0
+            }
+            if !o32 {
+                mask &= 0xffff
+            }
+            setEflags(homeEflags, mask)
+        }
     }
-    func returnProtectedMode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) {
+    func returnProtectedMode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
+        let homeEsp: DWord, homeEip: DWord, homeEflags: Eflags
+        let es: SegmentSelector, cs: SegmentSelector, ss: SegmentSelector
+        let ds: SegmentSelector, fs: SegmentSelector, gs: SegmentSelector
+        let cpl = self.cpl
+        var esp = regs[.ESP]
+        if o32 {
+            lax = ssBase &+ (esp & ssMask)
+            homeEip = try ldReadonlyCplX()
+            esp = esp &+ 4
+            lax = ssBase &+ (esp & ssMask)
+            cs = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+            esp = esp &+ 4
+            if isIret {
+                lax = ssBase &+ (esp & ssMask)
+                homeEflags = try ldReadonlyCplX()
+                esp = esp &+ 4
+                if homeEflags.isFlagRaised(.VM) {
+                    lax = ssBase &+ (esp & ssMask)
+                    homeEsp = try ldReadonlyCplX()
+                    esp = esp &+ 4
+                    // pop segment selectors from stack
+                    lax = ssBase &+ (esp & ssMask)
+                    ss = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+                    esp = esp &+ 4
+                    lax = ssBase &+ (esp & ssMask)
+                    es = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+                    esp = esp &+ 4
+                    lax = ssBase &+ (esp & ssMask)
+                    ds = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+                    esp = esp &+ 4
+                    lax = ssBase &+ (esp & ssMask)
+                    fs = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+                    esp = esp &+ 4
+                    lax = ssBase &+ (esp & ssMask)
+                    gs = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+                    esp = esp &+ 4
+                    var mask: DWord = 0
+                    mask.setFlag(.TF)
+                    mask.setFlag(.IF)
+                    mask.setFlag(.NT)
+                    mask.setFlag(.VM)
+                    mask.setFlag(.AC)
+                    mask.setFlag(.VIF)
+                    mask.setFlag(.VIP)
+                    mask.setFlag(.ID)
+                    mask.iopl = 3
+                    setEflags(homeEflags, mask)
+                    setSegmentRegisterRealOrV86Mode(.ES, es)
+                    setSegmentRegisterRealOrV86Mode(.CS, cs)
+                    setSegmentRegisterRealOrV86Mode(.SS, ss)
+                    setSegmentRegisterRealOrV86Mode(.DS, ds)
+                    setSegmentRegisterRealOrV86Mode(.FS, fs)
+                    setSegmentRegisterRealOrV86Mode(.GS, gs)
+                    eip = homeEip & 0xffff
+                    far = 0
+                    far_start = 0
+                    regs[.ESP] = (regs[.ESP] & ~ssMask) | (homeEsp & ssMask)
+                    cpl = 3
+                    return
+                }
+            }
+        } else {
+            lax = ssBase &+ (esp & ssMask)
+            homeEip = try ld16ReadonlyCplX()
+            esp = esp &+ 2
+            lax = ssBase &+ (esp & ssMask)
+            cs = SegmentSelector(try ld16ReadonlyCplX())
+            esp = esp &+ 2
+            if isIret {
+                lax = ssBase &+ (esp & ssMask)
+                homeEflags = Eflags(try ld16ReadonlyCplX())
+                esp = esp &+ 2
+            }
+        }
+        if cs.index == 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        let csd = try ldXdtEntry(cs)
+        if csd.qword == 0 {
+            throw Interrupt(.GP, errorCode: cs.index)
+        }
+        if !csd.isCodeSegment {
+            throw Interrupt(.GP, errorCode: cs.index)
+        }
+        if cs.rpl < cpl {
+            throw Interrupt(.GP, errorCode: cs.index)
+        }
+        if csd.isFlagRaised(.C) {
+            if csd.dpl > cs.rpl {
+                throw Interrupt(.GP, errorCode: cs.index)
+            }
+        } else {
+            if csd.dpl != cs.rpl {
+                throw Interrupt(.GP, errorCode: cs.index)
+            }
+        }
+        if !ssd.isFlagRaised(.P) {
+            throw Interrupt(.NP, errorCode: DWord(cs.index))
+        }
+        esp = esp &+ releaseStackItems
+        if cs.rpl == cpl {
+            setSegmentRegister(.CS, cs, shadow: csd.base, csd.limit, csd.flags)
+        } else {
+            if o32 {
+                lax = ssBase &+ (esp & ssMask)
+                homeEsp = try ldReadonlyCplX()
+                esp = esp &+ 4
+                lax = ssBase &+ (esp & ssMask)
+                ss = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+                esp = esp &+ 4
+            } else {
+                lax = ssBase &+ (esp & ssMask)
+                homeEsp = try ld16ReadonlyCplX()
+                esp = esp &+ 2
+                lax = ssBase &+ (esp & ssMask)
+                ss = SegmentSelector(truncatingIfNeeded: try ld16ReadonlyCplX())
+                esp = esp &+ 2
+            }
+            if ss.index == 0 {
+                throw Interrupt(.GP, errorCode: 0)
+            } else {
+                if ss.rpl != cs.rpl {
+                    throw Interrupt(.GP, errorCode: ss.index)
+                }
+                let ssd = try ldXdtEntry(ss)
+                if ssd.qword == 0 {
+                    throw Interrupt(.GP, errorCode: ss.index)
+                }
+                if !ssd.isDataSegment || !ssd.isFlagRaised(.W) {
+                    throw Interrupt(.GP, errorCode: ss.index)
+                }
+                if ssd.dpl != rpl {
+                    throw Interrupt(.GP, errorCode: ss.index)
+                }
+                if !ssd.isFlagRaised(.P) {
+                    throw Interrupt(.NP, errorCode: DWord(ss.index))
+                }
+                setSegmentRegister(.SS, ss, shadow: ssd.base, ssd.limit, ssd.flags)
+            }
+            resetSegmentRegister(.ES, rpl)
+            setSegmentRegister(.CS, cs, shadow: csd.base, csd.limit, csd.flags)
+            resetSegmentRegister(.DS, rpl)
+            resetSegmentRegister(.FS, rpl)
+            resetSegmentRegister(.GS, rpl)
+            esp = homeEsp &+ releaseStackItems
+            ssMask = csd.segmentSizeMask
+            cpl = rpl
+        }
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+        eip = homeEip
+        far = 0
+        far_start = 0
+        if isIret {
+        var mask: DWord = 0
+        mask.setFlag(.TF)
+        mask.setFlag(.NT)
+        mask.setFlag(.RF)
+        mask.setFlag(.AC)
+        mask.setFlag(.ID)
+        mask.iopl = 3
+            if cpl == 0 {
+                mask.iopl = 3
+            }
+            if cpl <= eflags.iopl {
+                mask.setFlag(.IF)
+            }
+            if !o32 {
+                mask &= 0xffff
+            }
+            setEflags(homeEflags, mask)
+        }
     }
     func resetSegmentRegister(_ sreg: SegmentRegister.Name, _ level: DWord) {
+        if (sreg == .FS || sreg == .GS) && segs[sreg].selector.index == 0 {
+            return // null selector in FS, GS
+        }
+        let xsd = segs[sreg].shadow
+        if xsd.isDataSegment && !xsd.isFlagRaised(.E)
+           if xsd.dpl < level {
+                setSegmentRegister(sreg, 0, shadow: 0, 0, 0)
+            }
+        }
     }
     func raiseInterrupt(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) {
     }
