@@ -22,7 +22,7 @@ extension Free86 {
         if xsd.qword == 0 {
             throw Interrupt(.GP, errorCode: DWord(selector.index))
         }
-        assert(!xsd.isSystemSegment, "fatal error: system segment descriptor")
+        assert(!xsd.isSystemSegment, "fatal error: unexpected system segment descriptor")
         if !xsd.isCodeSegment {
             throw Interrupt(.GP, errorCode: DWord(selector.index))
         }
@@ -202,7 +202,7 @@ extension Free86 {
                 // osBase = ssBase
                 // osMask = ssMask
                 segs[.SS] = SegmentRegister(segs[.SS].selector, SegmentDescriptor(ssd.qword))
-                if type == .CallGate {
+                if (type & 0b0_1000) != 0 {  // 32 bit descriptor
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
                     try stWritableCpl3(dword: DWord(segs[.SS].selector))
@@ -503,11 +503,247 @@ extension Free86 {
             }
         }
     }
-    func raiseInterrupt(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) {
+    func raiseInterrupt(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
+        if !cr0.isProtectedMode
+            try raiseInterruptRealOrV86Mode(id, isSW, home)
+        } else {
+            try raiseInterruptProtectedMode(id, errorCode, isHW, isSW, home)
+        }
     }
-    func raiseInterruptRealOrV86Mode(_ id: Int, _ isSW: Bool, _ home: LinearAddress) {
+    func raiseInterruptRealOrV86Mode(_ id: Int, _ isSW: Bool, _ home: LinearAddress) throws {
+        if (id * 4 + 3) > idt.shadow.limit {
+           throw Interrupt(.GP, errorCode: DWord(id * 4 + 2))
+        }
+        lax = idt.shadow.base &+ (id << 2)
+        let offset = try ld16ReadonlyCplX()
+        lax = lax &+ 2
+        let selector = try ld16ReadonlyCplX()
+        let esp = regs[.ESP]
+        esp = esp &- 2
+        lax = ssBase &+ (esp & ssMask)
+        try st16WritableCpl3word: (getEflags())
+        esp = esp &- 2
+        lax = ssBase &+ (esp & ssMask)
+        try st16WritableCpl3word: (segs[.CS].selector)
+        esp = esp &- 2
+        lax = ssBase &+ (esp & ssMask)
+        try st16WritableCpl3word: (isSW ? home : eip)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+        eip = offset
+        far = 0
+        far_start = 0
+        var shadow = segs[.CS].shadow
+        shadow.base = LinearAddress(selector << 4)
+        segs[.CS] = SegmentRegister(selector, shadow)
+        eflags.clearBit(EflagsFlag.TF.rawValue)
+        eflags.clearBit(EflagsFlag.IF.rawValue)
+        eflags.clearBit(EflagsFlag.RF.rawValue)
+        eflags.clearBit(EflagsFlag.AC.rawValue)
     }
-    func raiseInterruptProtectedMode(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) {
+    func raiseInterruptProtectedMode(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
+        let ss: SegmentSelector, esp: DWord, ssBase: DWord, ssMask: DWord
+        let dpl: DWord = 0, isInterlevel: Bool, pushErrorCode = false
+        if !isSW && !isHW {
+            switch id { // with error codes, Intel 64 IA-32 SDM (latest), Vol. 3A, 7.3
+            case 8:  // double exception
+                fallthrough
+            case 10: // invalid task state segment
+                fallthrough
+            case 11: // segment not present
+                fallthrough
+            case 12: // stack fault
+                fallthrough
+            case 13: // general protection
+                fallthrough
+            case 14: // page fault
+                fallthrough
+            case 17: // alignment check (80486)
+                pushErrorCode = true
+                break
+            default:
+                break
+            }
+        }
+        if (id * 8 + 7) > idt.shadow.limit {
+            throw Interrupt(.GP, errorCode: DWord(id * 8 + 2))
+        }
+        lax = idt.shadow.base + id * 8
+        let isd = SegmentDescriptor(qword: try ld64_readonly_cplX())
+        let type = SegmentDescriptorType(rawValue: isd.type)
+        switch type {
+        case .TaskGate:
+            fallthrough
+        case .InterruptGate16:
+            fallthrough
+        case .TrapGate16:
+            assert(false, "fatal error: unsupported system segment descriptor")
+            break
+        case .InterruptGate:
+            fallthrough
+        case .TrapGate:
+            break
+        default:
+            throw Interrupt(.GP, errorCode: DWord(id * 8 + 2))
+        }
+        if (isSW && isd.dpl < cpl) {
+            throw Interrupt(.GP, errorCode: DWord(id * 8 + 2))
+        }
+        if !isd.isFlagRaised(.P) {
+            throw Interrupt(.NP, errorCode: DWord(id * 8 + 2))
+        }
+        let gsel = SegmentSelector(truncatingIfNeeded: (isd.qword >> 16) & 0xffff)  // different fields in call gate
+        let goff = DWord(truncatingIfNeeded: (isd.qword >> 32) & 0xffff0000) | DWord(truncatingIfNeeded: isd.qword & 0x0000ffff)
+        if gsel.index == 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        let cgd = try ldXdtEntry(gsel)
+        if cgd.qword == 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        if !cgd.isCodeSegment {
+            throw Interrupt(.GP, errorCode: DWord(gsel.index))
+        }
+        if cgd.dpl > cpl {
+            throw Interrupt(.GP, errorCode: DWord(gsel.index))
+        }
+        if !cgd.isFlagRaised(.P) {
+            throw Interrupt(.NP, errorCode: DWord(gsel.index))
+        }
+        if !cgd.isFlagRaised(.C) && (cgd.dpl < cpl) {  // interlevel
+            let tss = try ldTssStack(cgd.dpl)  // seg:offset
+            let ss = SegmentSelector(truncatingIfNeeded: tss >> 32)
+            esp = DWord(truncatingIfNeeded: tss)
+            if ss.index == 0 {
+                throw Interrupt(.TS, errorCode: 0)
+            }
+            if ss.rpl != cgd.dpl {
+                throw Interrupt(.TS, errorCode: DWord(ss.index))
+            }
+            let ssd = try ldXdtEntry(ss)
+            if ssd.qword == 0 {
+                throw Interrupt(.TS, errorCode: DWord(ss.index))
+            }
+            if ssd.dpl != cgd.dpl {
+                throw Interrupt(.TS, errorCode: DWord(ss.index))
+            }
+            if !ssd.isDataSegment || !ssd.isFlagRaised(.W) {
+                throw Interrupt(.TS, errorCode: DWord(ss.index))
+            }
+            if !ssd.isFlagRaised(.P) {
+                throw Interrupt(.NP, errorCode: DWord(ss.index))
+            }
+            ssBase = ssd.base
+            ssMask = ssd.segmentSizeMask
+            isInterlevel = true
+        } else if cgd.isFlagRaised(.C) || (cgd.dpl == cpl) {  // intralevel
+            if eflags.isFlagRaised(.VM) {
+                throw Interrupt(.GP, errorCode: DWord(gsel.index))
+            }
+            dpl = cpl
+            ssBase = segs[.SS].shadow.base
+            ssMask = segs[.SS].shadow.segmentSizeMask
+            esp = regs[4]
+            isInterlevel = false
+        } else {
+            throw Interrupt(.GP, errorCode: DWord(gsel.index))
+        }
+        if (type & 0b0_1000) != 0 {  // 32 bit descriptor (?)
+            if isInterlevel {
+                if (eflags & 0x00020000) {
+                    esp = esp &- 4
+                    lax = ssBase &+ (esp & ssMask)
+                    try stWritableCpl3(dword: (segs[5].selector))
+                    esp = esp &- 4
+                    lax = ssBase &+ (esp & ssMask)
+                    try stWritableCpl3(dword: (segs[4].selector))
+                    esp = esp &- 4
+                    lax = ssBase &+ (esp & ssMask)
+                    try stWritableCpl3(dword: (segs[3].selector))
+                    esp = esp &- 4
+                    lax = ssBase &+ (esp & ssMask)
+                    try stWritableCpl3(dword: (segs[0].selector))
+                }
+                esp = esp &- 4
+                lax = ssBase &+ (esp & ssMask)
+                try stWritableCpl3(dword: (segs[2].selector))
+                esp = esp &- 4
+                lax = ssBase &+ (esp & ssMask)
+                try stWritableCpl3(dword: (regs[4]))
+            }
+            esp = esp &- 4
+            lax = ssBase &+ (esp & ssMask)
+            try stWritableCpl3(dword: (getEflags()))
+            esp = esp &- 4
+            lax = ssBase &+ (esp & ssMask)
+            try stWritableCpl3(dword: (segs[1].selector))
+            esp = esp &- 4
+            lax = ssBase &+ (esp & ssMask)
+            try stWritableCpl3(dword: (is_sw ? home : eip))
+            if pushErrorCode {
+                esp = esp &- 4
+                lax = ssBase &+ (esp & ssMask)
+                try stWritableCpl3(dword: (errorCode))
+            }
+        } else {
+            if isInterlevel {
+                if eflags.isFlagRaised(.VM) {
+                    esp = esp &- 2
+                    lax = ssBase &+ (esp & ssMask)
+                    try st16WritableCpl3(word: (segs[5].selector))
+                    esp = esp &- 2
+                    lax = ssBase &+ (esp & ssMask)
+                    try st16WritableCpl3(word: (segs[4].selector))
+                    esp = esp &- 2
+                    lax = ssBase &+ (esp & ssMask)
+                    try st16WritableCpl3(word: (segs[3].selector))
+                    esp = esp &- 2
+                    lax = ssBase &+ (esp & ssMask)
+                    try st16WritableCpl3(word: (segs[0].selector))
+                }
+                esp = esp &- 2
+                lax = ssBase &+ (esp & ssMask)
+                try st16WritableCpl3(word: (segs[2].selector))
+                esp = esp &- 2
+                lax = ssBase &+ (esp & ssMask)
+                try st16WritableCpl3(word: (regs[4]))
+            }
+            esp = esp &- 2
+            lax = ssBase &+ (esp & ssMask)
+            try st16WritableCpl3(word: (getEflags()))
+            esp = esp &- 2
+            lax = ssBase &+ (esp & ssMask)
+            try st16WritableCpl3(word: (segs[1].selector))
+            esp = esp &- 2
+            lax = ssBase &+ (esp & ssMask)
+            try st16WritableCpl3(word: (is_sw ? home : eip))
+            if pushErrorCode {
+                esp = esp &- 2
+                lax = ssBase &+ (esp & ssMask)
+                try st16WritableCpl3(word: (errorCode))
+            }
+        }
+        if isInterlevel {
+            if eflags.isFlagRaised(.VM) {
+                setSegmentRegister(.ES, 0, shadow: 0, 0, 0)
+                setSegmentRegister(.DS, 0, shadow: 0, 0, 0)
+                setSegmentRegister(.FS, 0, shadow: 0, 0, 0)
+                setSegmentRegister(.GS, 0, shadow: 0, 0, 0)
+            }
+            setSegmentRegister(.SS, ss.index | dpl, shadow: ssBase, ssd.limit, ssd.flags)
+        }
+        setSegmentRegister(.CS, gsel.index | dpl, hadow: cgd.base, cgd.limit, cgd.flags)
+        cpl = dpl
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
+        eip = goff
+        far = 0
+        farStart = 0
+        if (type & 0b0_0001) == 0 {  // .TrapGate (?)
+            eflags.clearBit(EflagsFlag.IF.rawValue)
+        }
+        eflags.clearBit(EflagsFlag.TF.rawValue)
+        eflags.clearBit(EflagsFlag.NT.rawValue)
+        eflags.clearBit(EflagsFlag.RF.rawValue)
+        eflags.clearBit(EflagsFlag.VM.rawValue)
     }
     func ldXdtEntry(_ selector: SegmentSelector) throws -> SegmentDescriptor {
         let xdt: SegmentRegister
