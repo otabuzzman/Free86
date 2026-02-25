@@ -265,9 +265,10 @@ extension Free86 {
     }
     func returnRealOrV86Mode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
         let cs: SegmentSelector
-        let homeEip: DWord, homeEflags: Eflags
+        let homeEip: DWord
+        var homeEflags: Eflags = 0
         var esp = regs[.ESP]
-        let ssMask = 0xffff
+        let ssMask: DWord = 0xffff
         if o32 {
             lax = ssBase &+ (esp & ssMask)
             homeEip = try ldReadonlyCplX()
@@ -282,14 +283,14 @@ extension Free86 {
             }
         } else {
             lax = ssBase &+ (esp & ssMask)
-            homeEip = try ld16ReadonlyCplX()
+            homeEip = DWord(try ld16ReadonlyCplX())
             esp = esp &+ 2
             lax = ssBase &+ (esp & ssMask)
             cs = SegmentSelector(try ld16ReadonlyCplX())
             esp = esp &+ 2
             if isIret {
                 lax = ssBase &+ (esp & ssMask)
-                homeEflags = try ld16ReadonlyCplX()
+                homeEflags = Eflags(try ld16ReadonlyCplX())
                 esp = esp &+ 2
             }
         }
@@ -299,7 +300,7 @@ extension Free86 {
         segs[.CS] = SegmentRegister(cs, shadow)
         eip = homeEip
         far = 0
-        far_start = 0
+        farStart = 0
         if isIret {
             var mask: DWord = 0
             mask.setFlag(.TF)
@@ -319,7 +320,8 @@ extension Free86 {
         }
     }
     func returnProtectedMode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
-        let homeEsp: DWord, homeEip: DWord, homeEflags: Eflags
+        let homeEsp: DWord, homeEip: DWord
+        var homeEflags: Eflags = 0
         let es: SegmentSelector, cs: SegmentSelector, ss: SegmentSelector
         let ds: SegmentSelector, fs: SegmentSelector, gs: SegmentSelector
         let cpl = self.cpl
@@ -374,15 +376,15 @@ extension Free86 {
                     setSegmentRegisterRealOrV86Mode(.GS, gs)
                     eip = homeEip & 0xffff
                     far = 0
-                    far_start = 0
+                    farStart = 0
                     regs[.ESP] = (regs[.ESP] & ~ssMask) | (homeEsp & ssMask)
-                    cpl = 3
+                    self.cpl = 3
                     return
                 }
             }
         } else {
             lax = ssBase &+ (esp & ssMask)
-            homeEip = try ld16ReadonlyCplX()
+            homeEip = DWord(try ld16ReadonlyCplX())
             esp = esp &+ 2
             lax = ssBase &+ (esp & ssMask)
             cs = SegmentSelector(try ld16ReadonlyCplX())
@@ -398,24 +400,24 @@ extension Free86 {
         }
         let csd = try ldXdtEntry(cs)
         if csd.qword == 0 {
-            throw Interrupt(.GP, errorCode: cs.index)
+            throw Interrupt(.GP, errorCode: DWord(cs.index))
         }
         if !csd.isCodeSegment {
-            throw Interrupt(.GP, errorCode: cs.index)
+            throw Interrupt(.GP, errorCode: DWord(cs.index))
         }
         if cs.rpl < cpl {
-            throw Interrupt(.GP, errorCode: cs.index)
+            throw Interrupt(.GP, errorCode: DWord(cs.index))
         }
         if csd.isFlagRaised(.C) {
             if csd.dpl > cs.rpl {
-                throw Interrupt(.GP, errorCode: cs.index)
+                throw Interrupt(.GP, errorCode: DWord(cs.index))
             }
         } else {
             if csd.dpl != cs.rpl {
-                throw Interrupt(.GP, errorCode: cs.index)
+                throw Interrupt(.GP, errorCode: DWord(cs.index))
             }
         }
-        if !ssd.isFlagRaised(.P) {
+        if !csd.isFlagRaised(.P) {
             throw Interrupt(.NP, errorCode: DWord(cs.index))
         }
         esp = esp &+ releaseStackItems
@@ -431,7 +433,7 @@ extension Free86 {
                 esp = esp &+ 4
             } else {
                 lax = ssBase &+ (esp & ssMask)
-                homeEsp = try ld16ReadonlyCplX()
+                homeEsp = DWord(try ld16ReadonlyCplX())
                 esp = esp &+ 2
                 lax = ssBase &+ (esp & ssMask)
                 ss = SegmentSelector(truncatingIfNeeded: try ld16ReadonlyCplX())
@@ -441,17 +443,17 @@ extension Free86 {
                 throw Interrupt(.GP, errorCode: 0)
             } else {
                 if ss.rpl != cs.rpl {
-                    throw Interrupt(.GP, errorCode: ss.index)
+                    throw Interrupt(.GP, errorCode: DWord(ss.index))
                 }
                 let ssd = try ldXdtEntry(ss)
                 if ssd.qword == 0 {
-                    throw Interrupt(.GP, errorCode: ss.index)
+                    throw Interrupt(.GP, errorCode: DWord(ss.index))
                 }
                 if !ssd.isDataSegment || !ssd.isFlagRaised(.W) {
-                    throw Interrupt(.GP, errorCode: ss.index)
+                    throw Interrupt(.GP, errorCode: DWord(ss.index))
                 }
                 if ssd.dpl != rpl {
-                    throw Interrupt(.GP, errorCode: ss.index)
+                    throw Interrupt(.GP, errorCode: DWord(ss.index))
                 }
                 if !ssd.isFlagRaised(.P) {
                     throw Interrupt(.NP, errorCode: DWord(ss.index))
@@ -464,13 +466,12 @@ extension Free86 {
             resetSegmentRegister(.FS, rpl)
             resetSegmentRegister(.GS, rpl)
             esp = homeEsp &+ releaseStackItems
-            ssMask = csd.segmentSizeMask
-            cpl = rpl
+            self.cpl = rpl
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = homeEip
         far = 0
-        far_start = 0
+        farStart = 0
         if isIret {
         var mask: DWord = 0
         mask.setFlag(.TF)
@@ -496,7 +497,7 @@ extension Free86 {
             return // null selector in FS, GS
         }
         let xsd = segs[sreg].shadow
-        if xsd.isDataSegment && !xsd.isFlagRaised(.E)
+        if xsd.isDataSegment && !xsd.isFlagRaised(.E) {
            if xsd.dpl < level {
                 setSegmentRegister(sreg, 0, shadow: 0, 0, 0)
             }
