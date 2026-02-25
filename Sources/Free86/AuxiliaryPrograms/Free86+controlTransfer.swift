@@ -202,7 +202,7 @@ extension Free86 {
                 // osBase = ssBase
                 // osMask = ssMask
                 segs[.SS] = SegmentRegister(segs[.SS].selector, SegmentDescriptor(ssd.qword))
-                if (type!.rawValue & 0b0_1000) != 0 {  // 32 bit descriptor
+                if type == .CallGate {  // 32 bit descriptor
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
                     try stWritableCpl3(dword: DWord(segs[.SS].selector))
@@ -647,7 +647,7 @@ extension Free86 {
         } else {
             throw Interrupt(.GP, errorCode: DWord(gsel.index))
         }
-        if (isd.type & 0b0_1000) != 0 {  // 32 bit descriptor (?)
+        if isd.isType(.InterruptGate) || isd.isType(.TrapGate) {  // 32 bit descriptor (?)
             if isInterlevel {
                 if eflags.isFlagRaised(.VM) {
                     esp = esp &- 4
@@ -737,7 +737,7 @@ extension Free86 {
         eip = goff
         far = 0
         farStart = 0
-        if (isd.type & 0b0_0001) == 0 {  // .TrapGate (?)
+        if isd.isType(.TrapGate) {  // .TrapGate (?)
             eflags.clearBit(EflagsFlag.IF.rawValue)
         }
         eflags.clearBit(EflagsFlag.TF.rawValue)
@@ -760,8 +760,43 @@ extension Free86 {
         return SegmentDescriptor(try ld64ReadonlyCplX())
     }
     func ldTssStack(_ level: DWord) throws -> QWord {  // seg:offset
-        0
+        var res: QWord
+        if !tr.shadow.isFlagRaised(.P) {
+            throw Interrupt(.NP, errorCode: DWord(tr.selector.index))
+        }
+        if !tr.shadow.isType(.TSSAvailable) && !tr.shadow.isType(.TSS16Available) {
+            throw Interrupt(.GP, errorCode: DWord(tr.selector.index))
+        }
+        let gate32 = tr.shadow.isType(.TSSAvailable) ? 1 : 0
+        let offset = (level * 4 + 2) << gate32  // offset of privileged (E)SP in TSS
+        if (offset + (4 << gate32) - 1) > tr.shadow.limit {
+            throw Interrupt(.TS, errorCode: DWord(tr.selector.index))
+        }
+        lax = tr.shadow.base &+ offset
+        if gate32 == 1 {
+            res = QWord(try ldReadonlyCplX())  // privileged ESP
+            lax = lax &+ 4
+        } else {
+            res = QWord(try ld16ReadonlyCplX())  // privileged SP
+            lax = lax &+ 2
+        }
+        res |= QWord(try ld16ReadonlyCplX()) << 32  // privileged SS
+        return res
     }
-    func auxIret(_ o32: Bool) {
+    func auxIret(_ o32: Bool) throws {
+        if !cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+            if eflags.isFlagRaised(.VM) {
+                if eflags.iopl != 3 {
+                    throw Interrupt(.GP, errorCode: 0)
+                }
+            }
+            try returnRealOrV86Mode(o32, true, 0)
+        } else {
+            if eflags.isFlagRaised(.NT) {
+                assert(false, "fatal error: EFLAGS.NT set")
+            } else {
+                try returnProtectedMode(o32, true, 0)
+            }
+        }
     }
 }

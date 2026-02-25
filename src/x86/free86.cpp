@@ -1273,10 +1273,10 @@ uint64_t Free86::ld_tss_stack(uint32_t level) {
         abort(11, tr.selector & 0xfffc);
     }
     type = (tr.shadow.flags >> 8) & 0xf;
-    if ((type & 7) != 1) { // no 16 bit TSS (available)
+    if ((type & 7) != 1) { // no 16/ 32 bit TSS (available)
         abort(13, tr.selector & 0xfffc);
     }
-    gate32 = type >> 3; // 0/ 1 == 16/ 32 bit gates
+    gate32 = type >> 3; // 0/ 1 == 16/ 32 bit TSS
     offset = (level * 4 + 2) << gate32; // offset of privileged (E)SP in TSS
     if (offset + (4 << gate32) - 1 > tr.shadow.limit) {
         abort(10, tr.selector & 0xfffc);
