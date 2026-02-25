@@ -153,7 +153,7 @@ extension Free86 {
         if xsd.isSystemSegment {
             return false
         }
-        if xsd.isCodeSegment {  // if code segment
+        if xsd.isCodeSegment {
             if writable {
                 return false
             } else {

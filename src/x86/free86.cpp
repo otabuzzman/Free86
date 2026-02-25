@@ -2248,17 +2248,17 @@ void Free86::aux_JMPF_protected(uint32_t selector, uint32_t offset) {
         set_segment_register(1, (selector & 0xfffc) | cpl, xsd.base, xsd.limit, xsd.flags);
         eip = offset, far = far_start = 0;
     } else {
-        throw "fatal: unsupported TSS or task gate in JMP";
+        throw "fatal: not a system segment descriptor in JMP";
     }
 }
-void Free86::aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
+void Free86::aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t home) {
     if (!is_protected() || (eflags & 0x00020000)) {
-        aux_CALLF_real__v86(o32, selector, offset, return_address);
+        aux_CALLF_real__v86(o32, selector, offset, home);
     } else {
-        aux_CALLF_protected(o32, selector, offset, return_address);
+        aux_CALLF_protected(o32, selector, offset, home);
     }
 }
-void Free86::aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
+void Free86::aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, uint32_t home) {
     uint32_t esp = regs[4];
     if (o32) {
         esp = esp - 4;
@@ -2266,14 +2266,14 @@ void Free86::aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, u
         st_writable_cpl3(segs[1].selector);
         esp = esp - 4;
         lax = SS_base + (esp & SS_mask);
-        st_writable_cpl3(return_address);
+        st_writable_cpl3(home);
     } else {
         esp = esp - 2;
         lax = SS_base + (esp & SS_mask);
         st16_writable_cpl3(segs[1].selector);
         esp = esp - 2;
         lax = SS_base + (esp & SS_mask);
-        st16_writable_cpl3(return_address);
+        st16_writable_cpl3(home);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
@@ -2281,7 +2281,7 @@ void Free86::aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, u
     segs[1].shadow.base = selector << 4;
     update_SSB();
 }
-void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address) {
+void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, uint32_t home) {
     uint32_t ss, esp, esp_start, spl, gsel, goff, gpac, OS_base, OS_mask;
     SegmentDescriptor xsd{0}, cgd{0}, ssd{0};
     int type, gate32;
@@ -2324,14 +2324,14 @@ void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, u
             st_writable_cplX(segs[1].selector);
             esp = esp - 4;
             lax = SS_base + (esp & SS_mask);
-            st_writable_cplX(return_address);
+            st_writable_cplX(home);
         } else {
             esp = esp - 2;
             lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
             lax = SS_base + (esp & SS_mask);
-            st16_writable_cplX(return_address);
+            st16_writable_cplX(home);
         }
         if (offset > xsd.limit) {
             abort(13, selector & 0xfffc);
@@ -2449,14 +2449,14 @@ void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, u
             st_writable_cplX(segs[1].selector);
             esp = esp - 4;
             lax = SS_base + (esp & SS_mask);
-            st_writable_cplX(return_address);
+            st_writable_cplX(home);
         } else {
             esp = esp - 2;
             lax = SS_base + (esp & SS_mask);
             st16_writable_cplX(segs[1].selector);
             esp = esp - 2;
             lax = SS_base + (esp & SS_mask);
-            st16_writable_cplX(return_address);
+            st16_writable_cplX(home);
         }
         gsel = (gsel & ~3u) | dpl;
         set_segment_register(1, gsel, cgd.base, cgd.limit, cgd.flags);
@@ -2698,14 +2698,14 @@ void Free86::reset_segment_register(uint32_t sreg, uint32_t level) {
         }
     }
 }
-void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
+void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t home) {
     if (is_protected()) {
-        raise_interrupt_protected(id, error_code, is_hw, is_sw, return_address);
+        raise_interrupt_protected(id, error_code, is_hw, is_sw, home);
     } else {
-        raise_interrupt_real__v86(id, is_sw, return_address);
+        raise_interrupt_real__v86(id, is_sw, home);
     }
 }
-void Free86::raise_interrupt_real__v86(int id, int is_sw, uint32_t return_address) {
+void Free86::raise_interrupt_real__v86(int id, int is_sw, uint32_t home) {
     uint32_t selector, offset, esp;
     if (id * 4 + 3 > idt.shadow.limit) {
         abort(13, id * 8 + 2);
@@ -2723,14 +2723,14 @@ void Free86::raise_interrupt_real__v86(int id, int is_sw, uint32_t return_addres
     st16_writable_cpl3(segs[1].selector);
     esp = esp - 2;
     lax = SS_base + (esp & SS_mask);
-    st16_writable_cpl3(is_sw ? return_address : eip);
+    st16_writable_cpl3(is_sw ? home : eip);
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
     eip = offset, far = far_start = 0;
     segs[1].selector = selector;
     segs[1].shadow.base = selector << 4;
     eflags &= ~(0x00000100u | 0x00000200u | 0x00010000u | 0x00040000u);
 }
-void Free86::raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t return_address) {
+void Free86::raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t home) {
     uint32_t ss, esp, spl, stack_error_code, gsel, goff;
     SegmentDescriptor isd{0}, cgd{0}, ssd{0};
     int is_interlevel, type, gate32;
@@ -2863,7 +2863,7 @@ void Free86::raise_interrupt_protected(int id, int error_code, int is_hw, int is
         st_writable_cplX(segs[1].selector);
         esp = esp - 4;
         lax = SS_base + (esp & SS_mask);
-        st_writable_cplX(is_sw ? return_address : eip);
+        st_writable_cplX(is_sw ? home : eip);
         if (stack_error_code) {
             esp = esp - 4;
             lax = SS_base + (esp & SS_mask);
@@ -2900,7 +2900,7 @@ void Free86::raise_interrupt_protected(int id, int error_code, int is_hw, int is
         st16_writable_cplX(segs[1].selector);
         esp = esp - 2;
         lax = SS_base + (esp & SS_mask);
-        st16_writable_cplX(is_sw ? return_address : eip);
+        st16_writable_cplX(is_sw ? home : eip);
         if (stack_error_code) {
             esp = esp - 2;
             lax = SS_base + (esp & SS_mask);
