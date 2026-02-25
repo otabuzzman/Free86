@@ -2381,7 +2381,7 @@ void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, u
         if (!(cgd.flags & (1 << 15))) {
             abort(11, gsel & 0xfffc);
         }
-        if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // bit 10 == 0, data segment expand-up (no stack) or non-conforming code segment, and interlevel
+        if (!(cgd.flags & (1 << 10)) && dpl < cpl) { // interlevel
             tss_stack = ld_tss_stack(dpl); // seg:offset
             ss = tss_stack >> 32 & 0xffff;
             esp = tss_stack & 0xffffffff;
@@ -2438,7 +2438,7 @@ void Free86::aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, u
             }
             ss = (ss & ~3u) | dpl;
             set_segment_register(2, ss, SS_base, ssd.limit, ssd.flags);
-        } else { // other data/ code segments, or intralevel
+        } else { // intralevel
             esp = esp_start;
             SS_base = segs[2].shadow.base;
             SS_mask = segs[2].shadow.segment_size_mask();
@@ -2473,13 +2473,13 @@ void Free86::aux_RETF(bool o32, uint32_t release_stack_items) {
     }
 }
 void Free86::return_real__v86(bool o32, bool is_iret, uint32_t release_stack_items) {
-    uint32_t cs, esp, stack_eip, stack_eflags;
+    uint32_t cs, esp, home_eip, home_eflags;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
     SS_mask = 0xffff;
     if (o32) {
         lax = SS_base + (esp & SS_mask);
-        stack_eip = ld_readonly_cplX();
+        home_eip = ld_readonly_cplX();
         esp = esp + 4;
         lax = SS_base + (esp & SS_mask);
         cs = ld_readonly_cplX();
@@ -2487,19 +2487,19 @@ void Free86::return_real__v86(bool o32, bool is_iret, uint32_t release_stack_ite
         cs &= 0xffff;
         if (is_iret) {
             lax = SS_base + (esp & SS_mask);
-            stack_eflags = ld_readonly_cplX();
+            home_eflags = ld_readonly_cplX();
             esp = esp + 4;
         }
     } else {
         lax = SS_base + (esp & SS_mask);
-        stack_eip = ld16_readonly_cplX();
+        home_eip = ld16_readonly_cplX();
         esp = esp + 2;
         lax = SS_base + (esp & SS_mask);
         cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
             lax = SS_base + (esp & SS_mask);
-            stack_eflags = ld16_readonly_cplX();
+            home_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
     }
@@ -2507,7 +2507,7 @@ void Free86::return_real__v86(bool o32, bool is_iret, uint32_t release_stack_ite
     segs[1].selector = cs;
     segs[1].shadow.base = cs << 4;
     update_SSB();
-    eip = stack_eip, far = far_start = 0;
+    eip = home_eip, far = far_start = 0;
     if (is_iret) {
         uint32_t mask = 0x00000100 | 0x00000200 | 0x00003000 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         if (eflags & 0x00020000) {
@@ -2516,11 +2516,11 @@ void Free86::return_real__v86(bool o32, bool is_iret, uint32_t release_stack_ite
         if (o32 == 0) {
             mask &= 0xffff;
         }
-        set_EFLAGS(stack_eflags, mask);
+        set_EFLAGS(home_eflags, mask);
     }
 }
 void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_items) {
-    uint32_t cpl, esp, stack_esp, stack_eip, stack_eflags = 0;
+    uint32_t cpl, esp, home_esp, home_eip, home_eflags = 0;
     uint32_t es, cs, ss, ds, fs, gs;
     SegmentDescriptor csd{0}, ssd{0};
     cpl = this->cpl;
@@ -2529,7 +2529,7 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
     SS_mask = segs[2].shadow.segment_size_mask();
     if (o32) {
         lax = SS_base + (esp & SS_mask);
-        stack_eip = ld_readonly_cplX();
+        home_eip = ld_readonly_cplX();
         esp = esp + 4;
         lax = SS_base + (esp & SS_mask);
         cs = ld_readonly_cplX();
@@ -2537,11 +2537,11 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
         cs &= 0xffff;
         if (is_iret) {
             lax = SS_base + (esp & SS_mask);
-            stack_eflags = ld_readonly_cplX();
+            home_eflags = ld_readonly_cplX();
             esp = esp + 4;
-            if (stack_eflags & 0x00020000) {
+            if (home_eflags & 0x00020000) {
                 lax = SS_base + (esp & SS_mask);
-                stack_esp = ld_readonly_cplX();
+                home_esp = ld_readonly_cplX();
                 esp = esp + 4;
                 // pop segment selectors from stack
                 lax = SS_base + (esp & SS_mask);
@@ -2560,7 +2560,7 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
                 gs = ld_readonly_cplX();
                 esp = esp + 4;
                 // clang-format off
-                set_EFLAGS(stack_eflags, 0x00000100 | 0x00000200 |
+                set_EFLAGS(home_eflags, 0x00000100 | 0x00000200 |
                                          0x00003000 | 0x00004000 |
                                          0x00020000 | 0x00040000 | 0x00080000 |
                                          0x00100000 | 0x00200000);
@@ -2571,22 +2571,22 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
                 set_segment_register_real__v86_mode(3, ds & 0xffff);
                 set_segment_register_real__v86_mode(4, fs & 0xffff);
                 set_segment_register_real__v86_mode(5, gs & 0xffff);
-                eip = stack_eip & 0xffff, far = far_start = 0;
-                regs[4] = (regs[4] & ~SS_mask) | (stack_esp & SS_mask);
+                eip = home_eip & 0xffff, far = far_start = 0;
+                regs[4] = (regs[4] & ~SS_mask) | (home_esp & SS_mask);
                 set_cpl(3);
                 return;
             }
         }
     } else {
         lax = SS_base + (esp & SS_mask);
-        stack_eip = ld16_readonly_cplX();
+        home_eip = ld16_readonly_cplX();
         esp = esp + 2;
         lax = SS_base + (esp & SS_mask);
         cs = ld16_readonly_cplX();
         esp = esp + 2;
         if (is_iret) {
             lax = SS_base + (esp & SS_mask);
-            stack_eflags = ld16_readonly_cplX();
+            home_eflags = ld16_readonly_cplX();
             esp = esp + 2;
         }
     }
@@ -2623,7 +2623,7 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
     } else {
         if (o32) {
             lax = SS_base + (esp & SS_mask);
-            stack_esp = ld_readonly_cplX();
+            home_esp = ld_readonly_cplX();
             esp = esp + 4;
             lax = SS_base + (esp & SS_mask);
             ss = ld_readonly_cplX();
@@ -2631,7 +2631,7 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
             ss &= 0xffff;
         } else {
             lax = SS_base + (esp & SS_mask);
-            stack_esp = ld16_readonly_cplX();
+            home_esp = ld16_readonly_cplX();
             esp = esp + 2;
             lax = SS_base + (esp & SS_mask);
             ss = ld16_readonly_cplX();
@@ -2664,12 +2664,12 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
         reset_segment_register(3, rpl);
         reset_segment_register(4, rpl);
         reset_segment_register(5, rpl);
-        esp = stack_esp + release_stack_items;
+        esp = home_esp + release_stack_items;
         SS_mask = csd.segment_size_mask();
         set_cpl(rpl);
     }
     regs[4] = (regs[4] & ~SS_mask) | (esp & SS_mask);
-    eip = stack_eip, far = far_start = 0;
+    eip = home_eip, far = far_start = 0;
     if (is_iret) {
         uint32_t mask = 0x00000100 | 0x00004000 | 0x00010000 | 0x00040000 | 0x00200000;
         if (cpl == 0) {
@@ -2682,7 +2682,7 @@ void Free86::return_protected(bool o32, bool is_iret, uint32_t release_stack_ite
         if (!o32) {
             mask &= 0xffff;
         }
-        set_EFLAGS(stack_eflags, mask);
+        set_EFLAGS(home_eflags, mask);
     }
 }
 void Free86::reset_segment_register(uint32_t sreg, uint32_t level) {
