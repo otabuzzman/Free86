@@ -26,10 +26,10 @@ extension MemoryIO: DirectMemory where A: FixedWidthInteger {
     }
     public func st(at address: A, dword: DWord) {
         st16(at: address, word: Word(truncatingIfNeeded: dword))
-        st16(at: address &+ 2, word: Word(truncatingIfNeeded: dword >> 16))
+        st16(at: address &+ 2, word: Word(dword >> 16))
     }
     public func st64(at address: A, qword: QWord) {
         st(at: address, dword: DWord(truncatingIfNeeded: qword))
-        st(at: address &+ 4, dword: DWord(truncatingIfNeeded: qword >> 32))
+        st(at: address &+ 4, dword: DWord(qword >> 32))
     }
 }

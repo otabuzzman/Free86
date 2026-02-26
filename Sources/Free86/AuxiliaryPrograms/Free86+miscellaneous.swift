@@ -194,7 +194,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 regs[modRM.rM].lowerHalf = u
             } else {
-                try st16WritableCpl3(word: Word(u))
+                try st16WritableCpl3(word: Word(truncatingIfNeeded: u))
             }
             osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
         } else {
@@ -253,7 +253,7 @@ extension Free86 {
         lax = ssBase &+ ((regs[.ESP] &- 16) & ssBase)
         for reg in (0...7).reversed() {
             r = regs[reg]
-            try st16WritableCpl3(word: Word(r))
+            try st16WritableCpl3(word: Word(truncatingIfNeeded: r))
             lax = lax &+ 2
         }
         regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 16) & ssBase)
@@ -306,7 +306,7 @@ extension Free86 {
         var ebp = regs[.EBP]
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: Word(ebp))
+        try st16WritableCpl3(word: Word(truncatingIfNeeded: ebp))
         let exp = esp
         if imm != 0 {
             while imm > 1 {
@@ -320,7 +320,7 @@ extension Free86 {
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(exp))
+            try st16WritableCpl3(word: Word(truncatingIfNeeded: exp))
         }
         esp = esp &- DWord(imm16)
         lax = ssBase &+ (esp & ssMask)
@@ -393,7 +393,7 @@ extension Free86 {
     func push16(_ word: Word) throws {
         let esp = regs[.ESP] &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: Word(word))
+        try st16WritableCpl3(word: word)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
     }
     func push(_ dword: DWord) throws {

@@ -71,7 +71,7 @@ extension Free86 {
             try st16WritableCpl3(word: segs[.CS].selector)
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(home))
+            try st16WritableCpl3(word: Word(truncatingIfNeeded: home))
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = offset
@@ -124,7 +124,7 @@ extension Free86 {
                 try st16WritableCpl3(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(home))
+                try st16WritableCpl3(word: Word(truncatingIfNeeded: home))
             }
             if offset > xsd.limit {
                 throw Interrupt(.GP, errorCode: DWord(selector.index))
@@ -221,12 +221,12 @@ extension Free86 {
                     try st16WritableCpl3(word: segs[.SS].selector)
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: Word(espStart))
+                    try st16WritableCpl3(word: Word(truncatingIfNeeded: espStart))
                     for _ in (1...gpac).reversed() {
                         u = 0 // Ye(osBase &+ ((espStart &+ (i &- 1) &* 2) & osMask))
                         esp = esp &- 2
                         lax = ssBase &+ (esp & ssMask)
-                        try st16WritableCpl3(word: Word(u))
+                        try st16WritableCpl3(word: Word(truncatingIfNeeded: u))
                     }
                 }
                 segs[.SS] = SegmentRegister(ss.index | Word(ssd.dpl), ssd)
@@ -246,7 +246,7 @@ extension Free86 {
                 try st16WritableCpl3(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(home))
+                try st16WritableCpl3(word: Word(truncatingIfNeeded: home))
             }
             segs[.CS] = SegmentRegister(gsel.index | Word(cgd.dpl), cgd)
             cpl = cgd.dpl
@@ -521,13 +521,13 @@ extension Free86 {
         var esp = regs[.ESP]
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: Word(getEflags()))
+        try st16WritableCpl3(word: Word(truncatingIfNeeded: getEflags()))
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
         try st16WritableCpl3(word: segs[.CS].selector)
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: Word(isSW ? home : eip))
+        try st16WritableCpl3(word: Word(truncatingIfNeeded: isSW ? home : eip))
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = DWord(offset)
         far = 0
@@ -682,7 +682,7 @@ extension Free86 {
             if pushErrorCode {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: DWord(errorCode))
+                try stWritableCpl3(dword: DWord(truncatingIfNeeded: errorCode))
             }
         } else {
             if isInterlevel {
@@ -705,21 +705,21 @@ extension Free86 {
                 try st16WritableCpl3(word: segs[.SS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(regs[.ESP]))
+                try st16WritableCpl3(word: Word(truncatingIfNeeded: regs[.ESP]))
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(getEflags()))
+            try st16WritableCpl3(word: Word(truncatingIfNeeded: getEflags()))
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCpl3(word: (segs[.CS].selector))
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(isSW ? home : eip))
+            try st16WritableCpl3(word: Word(truncatingIfNeeded: isSW ? home : eip))
             if pushErrorCode {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word((errorCode)))
+                try st16WritableCpl3(word: Word(truncatingIfNeeded: errorCode))
             }
         }
         if isInterlevel {
