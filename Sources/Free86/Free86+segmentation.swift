@@ -1,6 +1,6 @@
 extension Free86 {
     func segmentTranslation() {
-        var sreg: SegmentRegister.Name
+        var sreg: SegmentRegister.Name, base: Int = 0
         if x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
             switch modRM.modRM {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
@@ -28,8 +28,7 @@ extension Free86 {
             case 0x0c:
                 sib = fetch8()
                 u = DWord(fetch8()).signExtendedByte
-                base = sib.base
-                lax = regs[base] &+ u
+                lax = regs[sib.base] &+ u
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
@@ -37,8 +36,7 @@ extension Free86 {
             case 0x14:
                 sib = fetch8()
                 lax = fetch()
-                base = sib.base
-                lax = regs[base] &+ lax
+                lax = regs[sib.base] &+ lax
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
@@ -53,7 +51,7 @@ extension Free86 {
             return
         } else if ipr.isFlagRaised(.addressSizeOverride) {
             if modRM.mod == 0 && modRM.rM == 6 {
-                lax = LinearAddress(fetch16())
+                lax = DWord(fetch16())
                 sreg = .DS
             } else {
                 switch modRM.mod {
@@ -64,7 +62,7 @@ extension Free86 {
                     lax = DWord(fetch8()).signExtendedByte
                     break
                 default:
-                    lax = LinearAddress(fetch16())
+                    lax = DWord(fetch16())
                     break
                 }
                 switch modRM.rM {

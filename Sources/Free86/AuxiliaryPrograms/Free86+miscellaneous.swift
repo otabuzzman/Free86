@@ -300,7 +300,7 @@ extension Free86 {
         regs[.ESP] = (regs[.ESP] & ~ssBase) | ((ebp & 2) & ssBase)
     }
     func aux16Enter() throws {
-        imm16 = DWord(fetch16())
+        imm16 = fetch16()
         imm = DWord(fetch8() & 0x1f)
         var esp = regs[.ESP]
         var ebp = regs[.EBP]
@@ -312,24 +312,24 @@ extension Free86 {
             while imm > 1 {
                 ebp = ebp &- 2
                 lax = ssBase &+ (ebp & ssMask)
-                m16 = DWord(try ld16ReadonlyCpl3())
+                m16 = try ld16ReadonlyCpl3()
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(m16))
+                try st16WritableCpl3(word: m16)
                 imm -= 1
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCpl3(word: Word(exp))
         }
-        esp = esp &- imm16
+        esp = esp &- DWord(imm16)
         lax = ssBase &+ (esp & ssMask)
         _ = try ld16WritableCpl3()
         regs[.EBP] = (regs[.EBP] & ~ssMask) | (exp & ssMask)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
     }
     func auxEnter() throws {
-        imm16 = DWord(fetch16())
+        imm16 = fetch16()
         imm = DWord(fetch8() & 0x1f)
         var esp = regs[.ESP]
         var ebp = regs[.EBP]
@@ -351,7 +351,7 @@ extension Free86 {
             lax = ssBase &+ (esp & ssMask)
             try stWritableCpl3(dword: exp)
         }
-        esp = esp &- imm16
+        esp = esp &- DWord(imm16)
         lax = ssBase &+ (esp & ssMask)
         _ = try ldWritableCpl3()
         regs[.EBP] = (regs[.EBP] & ~ssMask) | (exp & ssMask)
@@ -362,7 +362,7 @@ extension Free86 {
         segmentTranslation()
         imm = DWord(try ld16ReadonlyCpl3())
         lax = lax &+ 2
-        imm16 = DWord(try ld16ReadonlyCpl3())
+        imm16 = try ld16ReadonlyCpl3()
         try setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg].lowerHalf = imm
     }
@@ -371,7 +371,7 @@ extension Free86 {
         segmentTranslation()
         imm = try ldReadonlyCpl3()
         lax = lax &+ 4
-        imm16 = DWord(try ld16ReadonlyCpl3())
+        imm16 = try ld16ReadonlyCpl3()
         try setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg] = imm
     }

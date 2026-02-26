@@ -5,14 +5,14 @@ extension Free86 {
         far = try tlbLookup(linear: eipLinear, writable: false)
         farStart = far
         opcode = DWord(fetch8())
-        let pageOffset = eipLinear & 0xfff
+        let offset = eipLinear & 0xfff
         let n = try instruction.length()
-        if (Int(pageOffset) &+ n) > 4096 {  // instruction extends page boundary
+        if (Int(offset) &+ n) > 4096 {  // instruction extends page boundary
             far = memoryCount  // point FAR to buffer on top of memory
             farStart = far
-            for u in 0..<n {  // copy instruction bytewise to buffer
-                lax = eipLinear &+ DWord(u)  // paged memory functions expect address in LAX
-                memory.st8(at: far &+ DWord(u), byte: try ld8ReadonlyCpl3())  // copy [LAX] to physical [FAR]
+            for i in 0..<n {  // copy instruction bytewise to buffer
+                lax = eipLinear &+ DWord(i)  // paged memory functions expect address in LAX
+                memory.st8(at: far &+ DWord(i), byte: try ld8ReadonlyCpl3())  // copy [LAX] to physical [FAR]
             }
             far = far &+ 1  // adjust FAR for upcomming fetches from buffer
         }

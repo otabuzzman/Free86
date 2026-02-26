@@ -229,7 +229,7 @@ extension Free86 {
                         try st16WritableCpl3(word: Word(u))
                     }
                 }
-                segs[.SS] = SegmentRegister(ss.index | Word(dpl), ssd)
+                segs[.SS] = SegmentRegister(ss.index | Word(ssd.dpl), ssd)
             } else {  // intralevel
                 esp = espStart
             }
@@ -248,8 +248,8 @@ extension Free86 {
                 lax = ssBase &+ (esp & ssMask)
                 try st16WritableCpl3(word: Word(home))
             }
-            segs[.CS] = SegmentRegister(gsel.index | Word(dpl), cgd)
-            cpl = dpl
+            segs[.CS] = SegmentRegister(gsel.index | Word(cgd.dpl), cgd)
+            cpl = cgd.dpl
             regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
             eip = goff
             far = 0
@@ -452,7 +452,7 @@ extension Free86 {
                 if !ssd.isDataSegment || !ssd.isFlagRaised(.W) {
                     throw Interrupt(.GP, errorCode: DWord(ss.index))
                 }
-                if ssd.dpl != rpl {
+                if ssd.dpl != cs.rpl {
                     throw Interrupt(.GP, errorCode: DWord(ss.index))
                 }
                 if !ssd.isFlagRaised(.P) {
@@ -460,13 +460,13 @@ extension Free86 {
                 }
                 segs[.SS] = SegmentRegister(ss, ssd)
             }
-            resetSegmentRegister(.ES, rpl)
+            resetSegmentRegister(.ES, cs.rpl)
             segs[.CS] = SegmentRegister(cs, csd)
-            resetSegmentRegister(.DS, rpl)
-            resetSegmentRegister(.FS, rpl)
-            resetSegmentRegister(.GS, rpl)
+            resetSegmentRegister(.DS, cs.rpl)
+            resetSegmentRegister(.FS, cs.rpl)
+            resetSegmentRegister(.GS, cs.rpl)
             esp = homeEsp &+ releaseStackItems
-            self.cpl = rpl
+            self.cpl = cs.rpl
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = homeEip
@@ -514,7 +514,7 @@ extension Free86 {
         if (id * 4 + 3) > idt.shadow.limit {
            throw Interrupt(.GP, errorCode: DWord(id * 4 + 2))
         }
-        lax = idt.shadow.base &+ LinearAddress((id << 2))
+        lax = idt.shadow.base &+ DWord((id << 2))
         let offset = try ld16ReadonlyCplX()
         lax = lax &+ 2
         let selector = try ld16ReadonlyCplX()
@@ -567,7 +567,7 @@ extension Free86 {
         if (id * 8 + 7) > idt.shadow.limit {
             throw Interrupt(.GP, errorCode: DWord(id * 8 + 2))
         }
-        lax = idt.shadow.base + UInt32(id * 8)
+        lax = idt.shadow.base + DWord(id * 8)
         let isd = SegmentDescriptor(try ld64ReadonlyCplX())
         let type = SegmentDescriptorType(rawValue: isd.type)
         switch type {

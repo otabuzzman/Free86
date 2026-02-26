@@ -1,5 +1,5 @@
 extension Free86 {
-    func aux_INSB() throws {
+    func auxInsb() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -27,7 +27,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
-    func aux_OUTSB() throws {
+    func auxOutsb() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -56,7 +56,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
-    func aux_MOVSB() throws {
+    func auxMovsb() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -86,7 +86,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
-    func aux_STOSB() throws {
+    func auxStosb() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
@@ -107,7 +107,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
-    func aux_CMPSB() throws {
+    func auxCmpsb() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -149,7 +149,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
-    func aux_LODSB() throws {
+    func auxLodsb() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -173,7 +173,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
-    func aux_SCASB() throws {
+    func auxScasb() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
@@ -206,7 +206,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
-    func aux_INSW() throws {
+    func auxInsw() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -234,7 +234,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux_OUTSW() throws {
+    func auxOutsw() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -263,7 +263,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux_MOVSW() throws {
+    func auxMovsw() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -293,7 +293,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux_STOSW() throws {
+    func auxStosw() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
@@ -314,7 +314,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux_CMPSW() throws {
+    func auxCmpsw() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -356,7 +356,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux_LODSW() throws {
+    func auxLodsw() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -380,7 +380,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux_SCASW() throws {
+    func auxScasw() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
@@ -413,7 +413,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux16_INS() throws {
+    func aux16Ins() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -441,7 +441,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux16_OUTS() throws {
+    func aux16Outs() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -470,7 +470,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux16_MOVS() throws {
+    func aux16Movs() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -500,7 +500,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux16_STOS() throws {
+    func aux16Stos() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
@@ -521,7 +521,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux16_CMPS() throws {
+    func aux16Cmps() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -563,7 +563,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux16_LODS() throws {
+    func aux16Lods() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -587,7 +587,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux16_SCAS() throws {
+    func aux16Scas() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
@@ -620,7 +620,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
-    func aux_INSD() throws {
+    func auxInsd() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -648,7 +648,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
         }
     }
-    func aux_OUTSD() throws {
+    func auxOutsd() throws {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -677,7 +677,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
         }
     }
-    func aux_MOVSD() throws {
+    func auxMovsd() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -707,7 +707,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
         }
     }
-    func aux_STOSD() throws {
+    func auxStosd() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
@@ -728,7 +728,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
         }
     }
-    func aux_CMPSD() throws {
+    func auxCmpsd() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -770,7 +770,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
         }
     }
-    func aux_LODSD() throws {
+    func auxLodsd() throws {
         let mask = ipr.operandSizeMask
         let sreg = ipr.segmentRegisterIndex
         let esi = regs[.ESI]
@@ -794,7 +794,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
         }
     }
-    func aux_SCASD() throws {
+    func auxScasd() throws {
         let mask = ipr.operandSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)

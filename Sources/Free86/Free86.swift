@@ -5,14 +5,23 @@ class Free86 {
     let NMI = PinIO<Bool>()
     let RESET = PinIO<Bool>()
 
+    var _interrupt: Interrupt?
+    var interrupt: Interrupt? {
+        get {
+            let oldValue = _interrupt
+            _interrupt = nil
+            return oldValue
+        }
+        set { _interrupt = newValue }
+    }
     let io: IsolatedIO<DWord>?
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
     var eflags: Eflags = 0
 
-    var eip: DWord = 0
-    var eipLinear: DWord = 0
+    var eip: LinearAddress = 0
+    var eipLinear: LinearAddress = 0
 
     /// ES, CS, SS, DS, FS, GS, LDT, TR
     var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 7)
@@ -79,10 +88,6 @@ class Free86 {
 
     /// direction flag (used by string instructions)
     var df: Int32 = 0  // values 1/ -1 reflect EFLAGS.DF false/ true
-
-    var dpl: DWord = 0  // descriptor privilege level
-    var rpl: DWord = 0  // requested privilege level
-    var iopl: DWord = 0  // IO privilege level
 
     var cyclesRequested: QWord = 0
     var cyclesRemaining: QWord = 0
@@ -242,11 +247,10 @@ class Free86 {
     /// auxiliary variables for inter-method exchange
     var lax: LinearAddress = 0  // linear address exchange register
     var operation: DWord = 0  // bits 5..3 of opcode or modR/M byte
-    var modRM: ModRM = 0, reg: DWord = 0, rM: DWord = 0    // mod field (modRM >> 6) inline
-    var sib: SIB = 0, base: Int = 0, index: DWord = 0  // scale field (sib >> 6) inline
-    var r: DWord = 0, rm: DWord = 0   // register or register/ memory by modRM
-    var m: DWord = 0, m16: DWord = 0  // 32/ 16 bit memory operands from memory
-    var imm: DWord = 0, imm16: DWord = 0, moffs: DWord = 0  // immediate/ offset operands
+    var modRM: ModRM = 0, sib: SIB = 0
+    var r: DWord = 0, rm: DWord = 0  // register or register/ memory by modRM
+    var m: DWord = 0, m16: Word = 0  // 32/ 16 bit memory operands from memory
+    var imm: DWord = 0, imm16: Word = 0, moffs: DWord = 0  // immediate/ offset operands
     var u: DWord = 0, v: DWord = 0, w: DWord = 0  // intermediate results
 
     typealias OpcodeDecoder = Array<OpcodeProgram>
