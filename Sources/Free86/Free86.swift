@@ -12,6 +12,7 @@ class Free86 {
     var eflags: Eflags = 0
 
     var eip: DWord = 0
+    var eipLinear: DWord = 0
 
     /// ES, CS, SS, DS, FS, GS, LDT, TR
     var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 7)
