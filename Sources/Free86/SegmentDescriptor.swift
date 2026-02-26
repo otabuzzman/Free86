@@ -111,6 +111,15 @@ extension SegmentDescriptor {
     mutating func setFlag(_ flag: SegmentDescriptorFlag, _ value: Int = 1) {
         upper.setBit(flag.rawValue, value)
     }
+    mutating func setFlag(_ flag: SegmentDescriptorTypeFlag, _ value: Int = 1) {
+        upper.setBit(flag.rawValue, value)
+    }
+    mutating func setFlag(_ flag: SegmentDescriptorCodeTypeFlag, _ value: Int = 1) {
+        upper.setBit(flag.rawValue, value)
+    }
+    mutating func setFlag(_ flag: SegmentDescriptorDataTypeFlag, _ value: Int = 1) {
+        upper.setBit(flag.rawValue, value)
+    }
 }
 
 ///combined S bit and type field

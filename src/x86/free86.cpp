@@ -1052,8 +1052,8 @@ void Free86::segment_translation() {
         case 0x03:
         case 0x06:
         case 0x07:
-            rM = modRM & 7;
-            lax = regs[rM];
+            base = modRM & 7;
+            lax = regs[base];
             break;
         case 0x04:
             sib = fetch8();
@@ -1081,8 +1081,8 @@ void Free86::segment_translation() {
         case 0x0e:
         case 0x0f:
             u = sign_extend_byte(fetch8());
-            rM = modRM & 7;
-            lax = regs[rM] + u;
+            base = modRM & 7;
+            lax = regs[base] + u;
             break;
         case 0x0c:
             sib = fetch8();
@@ -1116,7 +1116,7 @@ void Free86::segment_translation() {
             rM = modRM & 7;
             lax = regs[rM] + lax;
             break;
-        }
+    }
     sreg = ipr & 0x000f;
     if (sreg == 0) {
         if (base == 4 || base == 5) {

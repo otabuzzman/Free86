@@ -1,5 +1,6 @@
 extension Free86 {
     func segmentTranslation() {
+        var sreg: SegmentRegister.Name
         if x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
             switch modRM.modRM {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
@@ -21,12 +22,12 @@ extension Free86 {
                 lax = fetch()
                 break
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
-                u = fetch8().signExtendedByte
+                u = DWord(fetch8()).signExtendedByte
                 lax = regs[modRM.rM] + u
                 break
             case 0x0c:
                 sib = fetch8()
-                u = fetch8().signExtendedByte
+                u = DWord(fetch8()).signExtendedByte
                 base = sib.base
                 lax = regs[base] + u
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
@@ -52,64 +53,67 @@ extension Free86 {
             return
         } else if ipr.isFlagRaised(.addressSizeOverride) {
             if modRM.mod == 0 && modRM.rM == 6 {
-                lax = fetch16()
-                sregDefault = .DS
+                lax = LinearAddress(fetch16())
+                sreg = .DS
             } else {
                 switch modRM.mod {
                 case 0:
                     lax = 0
                     break
                 case 1:
-                    lax = fetch8().signExtendedByte
+                    lax = DWord(fetch8()).signExtendedByte
                     break
                 default:
-                    lax = fetch16()
+                    lax = LinearAddress(fetch16())
                     break
                 }
                 switch modRM.rM {
                 case 0:
                     lax = (lax + regs[3] + regs[6]) & 0xffff
-                    sregDefault = .DS
+                    sreg = .DS
                     break
                 case 1:
                     lax = (lax + regs[3] + regs[7]) & 0xffff
-                    sregDefault = .DS
+                    sreg = .DS
                     break
                 case 2:
                     lax = (lax + regs[5] + regs[6]) & 0xffff
-                    sregDefault = .SS
+                    sreg = .SS
                     break
                 case 3:
                     lax = (lax + regs[5] + regs[7]) & 0xffff
-                    sregDefault = .SS
+                    sreg = .SS
                     break
                 case 4:
                     lax = (lax + regs[6]) & 0xffff
-                    sregDefault = .DS
+                    sreg = .DS
                     break
                 case 5:
                     lax = (lax + regs[7]) & 0xffff
-                    sregDefault = .DS
+                    sreg = .DS
                     break
                 case 6:
                     lax = (lax + regs[5]) & 0xffff
-                    sregDefault = .SS
+                    sreg = .SS
                     break
                 case 7:
                     fallthrough
                 default:
                     lax = (lax + regs[3]) & 0xffff
-                    sregDefault = .DS
+                    sreg = .DS
                     break
                 }
             }
-            sreg = ipr.segmentOverride ? ipr.segmentRegisterIndex : sregDefault
+            if ipr.segmentOverride {
+                sreg = SegmentRegister.Name(rawValue: ipr.segmentRegisterIndex)!
+            }
             lax = segs[sreg].shadow.base + lax
             return
         }
         switch modRM.modRM {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
-                lax = regs[modRM.rM]
+                base = modRM.rM
+                lax = regs[base]
                 break
             case 0x04:
                 sib = fetch8()
@@ -129,12 +133,13 @@ extension Free86 {
                 base = GeneralRegister.Name.EAX.rawValue
                 break
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
-                u = fetch8().signExtendedByte
-                lax = regs[modRM.rM] + u
+                u = DWord(fetch8()).signExtendedByte
+                base = modRM.rM
+                lax = regs[base] + u
                 break
             case 0x0c:
                 sib = fetch8()
-                u = fetch8().signExtendedByte
+                u = DWord(fetch8()).signExtendedByte
                 base = sib.base
                 lax = regs[base] + u
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
@@ -158,7 +163,7 @@ extension Free86 {
                 break
         }
         if ipr.segmentOverride {
-            sreg = ipr.segmentRegisterIndex
+            sreg = SegmentRegister.Name(rawValue: ipr.segmentRegisterIndex)!
         } else {
             if base == GeneralRegister.Name.ESP.rawValue || base == GeneralRegister.Name.EBP.rawValue {
                 sreg = .SS
@@ -216,13 +221,14 @@ extension Free86 {
         }
     }
     func setSegmentRegisterRealOrV86Mode(_ sreg: SegmentRegister.Name, _ selector: SegmentSelector) {
+        let la = LinearAddress(selector << 4)
         if eflags.isFlagRaised(.VM) {
-            var xsd = SegmentDescriptor(selector << 4, 0xffff, .DataRWAccessed, 3)
-            xsd.raiseBit(SegmentDescriptorFlag.G.rawValue)
-            xsd.raiseBit(SegmentDescriptorFlag.S.rawValue)
+            var xsd = SegmentDescriptor(la, 0xffff, .DataRWAccessed, 3)
+            xsd.setFlag(.G)
+            xsd.setFlag(.S)
             segs[sreg] = SegmentRegister(selector, xsd)
         } else {
-            segs[sreg] = SegmentRegister(selector, SegmentDescriptor(selector << 4, 0xffff, .zero, 0))
+            segs[sreg] = SegmentRegister(selector, SegmentDescriptor(la, 0xffff, .zero, 0))
         }
     }
     func setSegmentRegisterProtectedMode(_ sreg: SegmentRegister.Name, _ selector: SegmentSelector) throws {
@@ -243,7 +249,7 @@ extension Free86 {
                 throw Interrupt(.GP, errorCode: DWord(selector.index))
             }
             lax = xdt.shadow.base + dti
-            let xsd = SegmentDescriptor(try ld64ReadonlyCplX())
+            var xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if xsd.isSystemSegment {
                 throw Interrupt(.GP, errorCode: DWord(selector.index))
             }
@@ -273,7 +279,7 @@ extension Free86 {
             }
             if !xsd.isFlagRaised(.A) {
                 xsd.setFlag(.A)
-                try st64WritableCplX(xsd.qword)
+                try st64WritableCplX(qword: xsd.qword)
             }
             segs[sreg] = SegmentRegister(selector, xsd)
         }

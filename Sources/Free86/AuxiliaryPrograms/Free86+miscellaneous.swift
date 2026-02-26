@@ -363,7 +363,7 @@ extension Free86 {
         imm = DWord(try ld16ReadonlyCpl3())
         lax = lax &+ 2
         imm16 = DWord(try ld16ReadonlyCpl3())
-        setSegmentRegister(sreg, SegmentSelector(imm16))
+        try setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg].lowerHalf = imm
     }
     func ldFarPointer(_ sreg: SegmentRegister.Name) throws {
@@ -372,7 +372,7 @@ extension Free86 {
         imm = try ldReadonlyCpl3()
         lax = lax &+ 4
         imm16 = DWord(try ld16ReadonlyCpl3())
-        setSegmentRegister(sreg, SegmentSelector(imm16))
+        try setSegmentRegister(sreg, SegmentSelector(imm16))
         regs[modRM.reg] = imm
     }
     func fetch8() -> Byte {

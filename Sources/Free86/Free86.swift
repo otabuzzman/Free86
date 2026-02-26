@@ -242,7 +242,7 @@ class Free86 {
     var lax: LinearAddress = 0  // linear address exchange register
     var operation: DWord = 0  // bits 5..3 of opcode or modR/M byte
     var modRM: ModRM = 0, reg: DWord = 0, rM: DWord = 0    // mod field (modRM >> 6) inline
-    var sib: DWord = 0, base: DWord = 0, index: DWord = 0  // scale field (sib >> 6) inline
+    var sib: SIB = 0, base: Int = 0, index: DWord = 0  // scale field (sib >> 6) inline
     var r: DWord = 0, rm: DWord = 0   // register or register/ memory by modRM
     var m: DWord = 0, m16: DWord = 0  // 32/ 16 bit memory operands from memory
     var imm: DWord = 0, imm16: DWord = 0, moffs: DWord = 0  // immediate/ offset operands

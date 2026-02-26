@@ -21,10 +21,10 @@ extension InstructionPrefixRegister {
 }
 
 extension InstructionPrefixRegister {
-    var segmentRegisterIndex: Int? {
+    var segmentRegisterIndex: Int {
         guard
             self & 7 > 0
-        else { return nil }
+        else { return SegmentRegister.Name.DS.rawValue }
         return Int(self & 7 - 1)
     }
     var operandSizeMask: DWord {
