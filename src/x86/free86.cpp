@@ -920,8 +920,8 @@ void Free86::segment_translation() {
         case 0x03:
         case 0x06:
         case 0x07:
-            base = modRM & 7;
-            lax = regs[base];
+            rM = modRM & 7;
+            lax = regs[rM];
             break;
         case 0x04:
             sib = fetch8();
@@ -947,8 +947,8 @@ void Free86::segment_translation() {
         case 0x0e:
         case 0x0f:
             u = sign_extend_byte(fetch8());
-            base = modRM & 7;
-            lax = regs[base] + u;
+            rM = modRM & 7;
+            lax = regs[rM] + u;
             break;
         case 0x0c:
             sib = fetch8();
@@ -979,8 +979,8 @@ void Free86::segment_translation() {
         case 0x17:
         default:
             lax = fetch();
-            base = modRM & 7;
-            lax = regs[base] + lax;
+            rM = modRM & 7;
+            lax = regs[rM] + lax;
             break;
         }
         return;
@@ -1052,8 +1052,8 @@ void Free86::segment_translation() {
         case 0x03:
         case 0x06:
         case 0x07:
-            base = modRM & 7;
-            lax = regs[base];
+            rM = modRM & 7;
+            lax = regs[rM];
             break;
         case 0x04:
             sib = fetch8();
@@ -1079,10 +1079,10 @@ void Free86::segment_translation() {
         case 0x0b:
         case 0x0d:
         case 0x0e:
-        case 0x0f: // 2-byte instruction escape
+        case 0x0f:
             u = sign_extend_byte(fetch8());
-            base = modRM & 7;
-            lax = regs[base] + u;
+            rM = modRM & 7;
+            lax = regs[rM] + u;
             break;
         case 0x0c:
             sib = fetch8();
@@ -1113,8 +1113,8 @@ void Free86::segment_translation() {
         case 0x17:
         default:
             lax = fetch();
-            base = modRM & 7;
-            lax = regs[base] + lax;
+            rM = modRM & 7;
+            lax = regs[rM] + lax;
             break;
         }
     sreg = ipr & 0x000f;
@@ -1227,10 +1227,10 @@ void Free86::set_segment_register_protected_mode(uint32_t sreg, uint32_t selecto
                 abort(13, selector & 0xfffc);
             }
         } else {
-            if ((xsd.flags & ((1 << 11) | (1 << 9))) == (1 << 11)) {
+            if ((xsd.flags & (1 << 11)) && !(xsd.flags & (1 << 9))) {
                 abort(13, selector & 0xfffc);
             }
-            if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) { // if non-conforming code segments
+            if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) {
                 if (dpl < cpl || dpl < rpl) {
                     abort(13, selector & 0xfffc);
                 }
@@ -2699,10 +2699,10 @@ void Free86::reset_segment_register(uint32_t sreg, uint32_t level) {
     }
 }
 void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t home) {
-    if (is_protected()) {
-        raise_interrupt_protected(id, error_code, is_hw, is_sw, home);
-    } else {
+    if (!is_protected()) {
         raise_interrupt_real__v86(id, is_sw, home);
+    } else {
+        raise_interrupt_protected(id, error_code, is_hw, is_sw, home);
     }
 }
 void Free86::raise_interrupt_real__v86(int id, int is_sw, uint32_t home) {

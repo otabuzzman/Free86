@@ -21,14 +21,16 @@ extension InstructionPrefixRegister {
 }
 
 extension InstructionPrefixRegister {
-    var segmentRegisterIndex: Int {
-        assert(7 > self & 7, "fatal error")  // ES..GS are 1..6
+    var segmentRegisterIndex: Int? {
         guard
-            self & 0x7 > 0
-        else { return SegmentRegister.Name.DS.rawValue }
-        return Int(self & 0x07 - 1)
+            self & 7 > 0
+        else { return nil }
+        return Int(self & 7 - 1)
     }
     var operandSizeMask: DWord {
         self.isFlagRaised(.operandSizeOverride) ? 0xFFFF : 0xFFFFFFFF
+    }
+    var segmentOverride: Bool {
+        self & 7 > 0
     }
 }

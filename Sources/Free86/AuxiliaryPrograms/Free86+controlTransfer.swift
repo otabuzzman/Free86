@@ -201,8 +201,8 @@ extension Free86 {
                 }
                 // osBase = ssBase
                 // osMask = ssMask
-                segs[.SS] = SegmentRegister(segs[.SS].selector, SegmentDescriptor(ssd.qword))
-                if type == .CallGate {  // 32 bit descriptor
+                segs[.SS] = SegmentRegister(segs[.SS].selector, ssd)
+                if xsd.isType(.CallGate) {  // 32 bit descriptor
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
                     try stWritableCpl3(dword: DWord(segs[.SS].selector))
@@ -233,17 +233,17 @@ extension Free86 {
             } else {  // intralevel
                 esp = espStart
             }
-            if type == .CallGate {
+            if xsd.isType(.CallGate) {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: DWord(segs[1].selector))
+                try stWritableCpl3(dword: DWord(segs[.CS].selector))
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCpl3(dword: home)
             } else {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: segs[1].selector)
+                try st16WritableCpl3(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
                 try st16WritableCpl3(word: Word(home))
@@ -473,13 +473,13 @@ extension Free86 {
         far = 0
         farStart = 0
         if isIret {
-        var mask: DWord = 0
-        mask.setFlag(.TF)
-        mask.setFlag(.NT)
-        mask.setFlag(.RF)
-        mask.setFlag(.AC)
-        mask.setFlag(.ID)
-        mask.iopl = 3
+            var mask: DWord = 0
+            mask.setFlag(.TF)
+            mask.setFlag(.NT)
+            mask.setFlag(.RF)
+            mask.setFlag(.AC)
+            mask.setFlag(.ID)
+            mask.iopl = 3
             if cpl == 0 {
                 mask.iopl = 3
             }
@@ -767,13 +767,13 @@ extension Free86 {
         if !tr.shadow.isType(.TSSAvailable) && !tr.shadow.isType(.TSS16Available) {
             throw Interrupt(.GP, errorCode: DWord(tr.selector.index))
         }
-        let gate32 = tr.shadow.isType(.TSSAvailable) ? 1 : 0
-        let offset = (level * 4 + 2) << gate32  // offset of privileged (E)SP in TSS
-        if (offset + (4 << gate32) - 1) > tr.shadow.limit {
+        let tss32 = tr.shadow.isType(.TSSAvailable) ? 1 : 0
+        let offset = (level * 4 + 2) << tss32  // offset of privileged (E)SP in TSS
+        if (offset + (4 << tss32) - 1) > tr.shadow.limit {
             throw Interrupt(.TS, errorCode: DWord(tr.selector.index))
         }
         lax = tr.shadow.base &+ offset
-        if gate32 == 1 {
+        if tss32 == 1 {
             res = QWord(try ldReadonlyCplX())  // privileged ESP
             lax = lax &+ 4
         } else {

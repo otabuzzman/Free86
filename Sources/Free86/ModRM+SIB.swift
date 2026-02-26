@@ -13,6 +13,9 @@ extension ModRM {
     var rM: Int {
         Int(self & 0b0111)
     }
+    var modRM: Self {
+        (self & 7) | ((self >> 3) & 0x18)
+    }
 }
 
 typealias SIB = Byte

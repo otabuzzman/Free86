@@ -47,7 +47,7 @@ extension Free86 {
     }
     func auxLarLsl(_ o32: Bool, _ isLsl: Bool) throws {
         let selector: SegmentSelector
-        if cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+        if !cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
             throw Interrupt(.UD)
         }
         modRM = fetch8()
@@ -177,7 +177,7 @@ extension Free86 {
         return true
     }
     func auxArpl() throws {
-        if cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+        if !cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
             throw Interrupt(.UD)
         }
         modRM = fetch8()
