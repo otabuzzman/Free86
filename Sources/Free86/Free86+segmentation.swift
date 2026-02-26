@@ -15,7 +15,7 @@ extension Free86 {
                     lax = regs[base]
                 }
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
-                    lax = lax + (regs[sib.index] << sib.scale)
+                    lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x05:
@@ -23,31 +23,31 @@ extension Free86 {
                 break
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
                 u = DWord(fetch8()).signExtendedByte
-                lax = regs[modRM.rM] + u
+                lax = regs[modRM.rM] &+ u
                 break
             case 0x0c:
                 sib = fetch8()
                 u = DWord(fetch8()).signExtendedByte
                 base = sib.base
-                lax = regs[base] + u
+                lax = regs[base] &+ u
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
-                    lax = lax + (regs[sib.index] << sib.scale)
+                    lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x14:
                 sib = fetch8()
                 lax = fetch()
                 base = sib.base
-                lax = regs[base] + lax
+                lax = regs[base] &+ lax
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
-                    lax = lax + (regs[sib.index] << sib.scale)
+                    lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x10, 0x11, 0x12, 0x13, 0x15, 0x16, 0x17:
                 fallthrough
             default:
                 lax = fetch()
-                lax = regs[modRM.rM] + lax
+                lax = regs[modRM.rM] &+ lax
                 break
             }
             return
@@ -69,37 +69,37 @@ extension Free86 {
                 }
                 switch modRM.rM {
                 case 0:
-                    lax = (lax + regs[3] + regs[6]) & 0xffff
+                    lax = (lax &+ regs[.EBX] &+ regs[.ESI]) & 0xffff
                     sreg = .DS
                     break
                 case 1:
-                    lax = (lax + regs[3] + regs[7]) & 0xffff
+                    lax = (lax &+ regs[.EBX] &+ regs[.EDI]) & 0xffff
                     sreg = .DS
                     break
                 case 2:
-                    lax = (lax + regs[5] + regs[6]) & 0xffff
+                    lax = (lax &+ regs[.EBP] &+ regs[.ESI]) & 0xffff
                     sreg = .SS
                     break
                 case 3:
-                    lax = (lax + regs[5] + regs[7]) & 0xffff
+                    lax = (lax &+ regs[.EBP] &+ regs[.EDI]) & 0xffff
                     sreg = .SS
                     break
                 case 4:
-                    lax = (lax + regs[6]) & 0xffff
+                    lax = (lax &+ regs[.ESI]) & 0xffff
                     sreg = .DS
                     break
                 case 5:
-                    lax = (lax + regs[7]) & 0xffff
+                    lax = (lax &+ regs[.EDI]) & 0xffff
                     sreg = .DS
                     break
                 case 6:
-                    lax = (lax + regs[5]) & 0xffff
+                    lax = (lax &+ regs[.EBP]) & 0xffff
                     sreg = .SS
                     break
                 case 7:
                     fallthrough
                 default:
-                    lax = (lax + regs[3]) & 0xffff
+                    lax = (lax &+ regs[.EBX]) & 0xffff
                     sreg = .DS
                     break
                 }
@@ -107,7 +107,7 @@ extension Free86 {
             if ipr.segmentOverride {
                 sreg = SegmentRegister.Name(rawValue: ipr.segmentRegisterIndex)!
             }
-            lax = segs[sreg].shadow.base + lax
+            lax = segs[sreg].shadow.base &+ lax
             return
         }
         switch modRM.modRM {
@@ -125,7 +125,7 @@ extension Free86 {
                     lax = regs[base]
                 }
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
-                    lax = lax + (regs[sib.index] << sib.scale)
+                    lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x05:
@@ -135,31 +135,31 @@ extension Free86 {
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
                 u = DWord(fetch8()).signExtendedByte
                 base = modRM.rM
-                lax = regs[base] + u
+                lax = regs[base] &+ u
                 break
             case 0x0c:
                 sib = fetch8()
                 u = DWord(fetch8()).signExtendedByte
                 base = sib.base
-                lax = regs[base] + u
+                lax = regs[base] &+ u
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
-                    lax = lax + (regs[sib.index] << sib.scale)
+                    lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x14:
                 sib = fetch8()
                 lax = fetch()
                 base = sib.base
-                lax = regs[base] + lax
+                lax = regs[base] &+ lax
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
-                    lax = lax + (regs[sib.index] << sib.scale)
+                    lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x10, 0x11, 0x12, 0x13, 0x15, 0x16, 0x17:
                 fallthrough
             default:
                 lax = fetch()
-                lax = regs[modRM.rM] + lax
+                lax = regs[modRM.rM] &+ lax
                 break
         }
         if ipr.segmentOverride {
@@ -171,7 +171,7 @@ extension Free86 {
                 sreg = .DS
             }
         }
-        lax = segs[sreg].shadow.base + lax
+        lax = segs[sreg].shadow.base &+ lax
     }
     func ldMemoryOffset(_ writable: Bool) throws {
         var la: QWord
