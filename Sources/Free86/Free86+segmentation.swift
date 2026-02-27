@@ -1,6 +1,6 @@
 extension Free86 {
     func segmentTranslation() {
-        var sreg: SegmentRegister.Name, base: Int = 0
+        var sreg: SegmentRegister.Name, exp: Int = 0
         if x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
             switch modRM.modRM {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
@@ -8,11 +8,10 @@ extension Free86 {
                 break
             case 0x04:
                 sib = fetch8()
-                base = sib.base
-                if base == GeneralRegister.Name.EBP.rawValue {
+                if sib.base == GeneralRegister.Name.EBP.rawValue {
                     lax = fetch()
                 } else {
-                    lax = regs[base]
+                    lax = regs[sib.base]
                 }
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
                     lax = lax &+ (regs[sib.index] << sib.scale)
@@ -49,7 +48,8 @@ extension Free86 {
                 break
             }
             return
-        } else if ipr.isFlagRaised(.addressSizeOverride) {
+        }
+        if ipr.isFlagRaised(.addressSizeOverride) {
             if modRM.mod == 0 && modRM.rM == 6 {
                 lax = DWord(fetch16())
                 sreg = .DS
@@ -110,17 +110,16 @@ extension Free86 {
         }
         switch modRM.modRM {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
-                base = modRM.rM
-                lax = regs[base]
+                exp = modRM.rM
+                lax = regs[modRM.rM]
                 break
             case 0x04:
                 sib = fetch8()
-                base = sib.base
-                if base == GeneralRegister.Name.EBP.rawValue {
+                exp = sib.base
+                if sib.base == GeneralRegister.Name.EBP.rawValue {
                     lax = fetch()
-                    base = GeneralRegister.Name.EAX.rawValue
                 } else {
-                    lax = regs[base]
+                    lax = regs[sib.base]
                 }
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
                     lax = lax &+ (regs[sib.index] << sib.scale)
@@ -128,18 +127,17 @@ extension Free86 {
                 break
             case 0x05:
                 lax = fetch()
-                base = GeneralRegister.Name.EAX.rawValue
                 break
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
                 u = DWord(fetch8()).signExtendedByte
-                base = modRM.rM
-                lax = regs[base] &+ u
+                exp = modRM.rM
+                lax = regs[modRM.rM] &+ u
                 break
             case 0x0c:
                 sib = fetch8()
                 u = DWord(fetch8()).signExtendedByte
-                base = sib.base
-                lax = regs[base] &+ u
+                exp = sib.base
+                lax = regs[sib.base] &+ u
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
@@ -147,8 +145,8 @@ extension Free86 {
             case 0x14:
                 sib = fetch8()
                 lax = fetch()
-                base = sib.base
-                lax = regs[base] &+ lax
+                exp = sib.base
+                lax = regs[sib.base] &+ lax
                 if sib.index != GeneralRegister.Name.ESP.rawValue {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
@@ -163,7 +161,7 @@ extension Free86 {
         if ipr.segmentOverride {
             sreg = SegmentRegister.Name(rawValue: ipr.segmentRegisterIndex)!
         } else {
-            if base == GeneralRegister.Name.ESP.rawValue || base == GeneralRegister.Name.EBP.rawValue {
+            if exp == GeneralRegister.Name.ESP.rawValue || exp == GeneralRegister.Name.EBP.rawValue {
                 sreg = .SS
             } else {
                 sreg = .DS

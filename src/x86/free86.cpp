@@ -984,7 +984,8 @@ void Free86::segment_translation() {
             break;
         }
         return;
-    } else if (ipr & 0x0080) {
+    }
+    if (ipr & 0x0080) {
         if ((modRM & 0xc7) == 0x06) {
             lax = fetch16();
             sreg_default = 3;
