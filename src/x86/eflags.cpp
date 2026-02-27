@@ -355,7 +355,7 @@ bool Free86::can_jmp(int condition) {
         f = is_BE();
         break;
     case 4:
-        f = osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst & 0x80000000);
+        f = osm == 24 ? ((osm_src >> 7) & 1) : (osm_dst >> 31) & 1);
         break;
     case 5:
         f = is_PF();
