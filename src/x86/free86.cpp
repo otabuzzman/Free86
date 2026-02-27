@@ -1230,7 +1230,7 @@ void Free86::set_segment_register_protected_mode(uint32_t sreg, uint32_t selecto
             if ((xsd.flags & (1 << 11)) && !(xsd.flags & (1 << 9))) {
                 abort(13, selector & 0xfffc);
             }
-            if (!((xsd.flags & (1 << 11)) && (xsd.flags & (1 << 10)))) {
+            if (!(xsd.flags & (1 << 11)) || !(xsd.flags & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
                     abort(13, selector & 0xfffc);
                 }

@@ -262,7 +262,7 @@ extension Free86 {
                 if xsd.isCodeSegment && !xsd.isFlagRaised(.R) {
                     throw Interrupt(.GP, errorCode: DWord(selector.index))
                 }
-                if xsd.isDataSegment && xsd.isFlagRaised(.E) {
+                if xsd.isDataSegment || !xsd.isFlagRaised(.C) {
                     if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
                         throw Interrupt(.GP, errorCode: DWord(selector.index))
                     }
