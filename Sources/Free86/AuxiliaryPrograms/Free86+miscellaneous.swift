@@ -60,9 +60,9 @@ extension Free86 {
         u = try ldDescriptorFields(selector, isLsl)
         osmSrc = compileEflags()
         if u == 0x80000000 {  // notok
-            osmSrc.clearBit(EflagsFlag.ZF.rawValue)
+            osmSrc.setFlag(.ZF, .zero)
         } else {
-            osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
+            osmSrc.setFlag(.ZF)
             if (o32) {
                 regs[modRM.reg] = u
             } else {
@@ -135,9 +135,9 @@ extension Free86 {
     func auxVerrVerw(_ selector: SegmentSelector, _ writable: Bool) throws {
         osmSrc = compileEflags()
         if try isSegmentAccessible(selector, writable) {
-            osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
+            osmSrc.setFlag(.ZF)
         } else {
-            osmSrc.clearBit(EflagsFlag.ZF.rawValue)
+            osmSrc.setFlag(.ZF, .zero)
         }
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
@@ -196,9 +196,9 @@ extension Free86 {
             } else {
                 try st16WritableCpl3(word: Word(truncatingIfNeeded: u))
             }
-            osmSrc.raiseBit(EflagsFlag.ZF.rawValue)
+            osmSrc.setFlag(.ZF)
         } else {
-            osmSrc.clearBit(EflagsFlag.ZF.rawValue)
+            osmSrc.setFlag(.ZF, .zero)
         }
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
@@ -270,7 +270,7 @@ extension Free86 {
     func aux16Popa() throws {
         lax = ssBase &+ (regs[.ESP] & ssBase)
         for reg in (0...7).reversed() {
-            if reg != GeneralRegister.Name.ESP.rawValue {
+            if !reg.isGeneralRegister(.ESP) {
                 regs[reg].lowerHalf = DWord(try ld16ReadonlyCpl3())
             }
             lax = lax &+ 2
@@ -280,7 +280,7 @@ extension Free86 {
     func auxPopa() throws {
         lax = ssBase &+ (regs[.ESP] & ssBase)
         for reg in (0...7).reversed() {
-            if reg != GeneralRegister.Name.ESP.rawValue {
+            if !reg.isGeneralRegister(.ESP) {
                 regs[reg].lowerHalf = DWord(try ldReadonlyCpl3())
             }
             lax = lax &+ 4

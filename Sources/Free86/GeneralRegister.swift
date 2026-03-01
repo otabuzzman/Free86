@@ -31,3 +31,9 @@ extension Array where Element == GeneralRegister {
         set { self[register.rawValue] = newValue }
     }
 }
+
+extension FixedWidthInteger {
+    func isGeneralRegister(_ name: GeneralRegister.Name) -> Bool {
+        self == (name.rawValue & 0b111) as! Self
+    }
+}

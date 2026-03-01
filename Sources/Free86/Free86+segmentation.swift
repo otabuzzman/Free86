@@ -8,12 +8,12 @@ extension Free86 {
                 break
             case 0x04:
                 sib = fetch8()
-                if sib.base == GeneralRegister.Name.EBP.rawValue {
+                if sib.base.isGeneralRegister(.EBP) {
                     lax = fetch()
                 } else {
                     lax = regs[sib.base]
                 }
-                if sib.index != GeneralRegister.Name.ESP.rawValue {
+                if !sib.index.isGeneralRegister(.ESP) {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
@@ -28,7 +28,7 @@ extension Free86 {
                 sib = fetch8()
                 u = DWord(fetch8()).signExtendedByte
                 lax = regs[sib.base] &+ u
-                if sib.index != GeneralRegister.Name.ESP.rawValue {
+                if !sib.index.isGeneralRegister(.ESP) {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
@@ -36,7 +36,7 @@ extension Free86 {
                 sib = fetch8()
                 lax = fetch()
                 lax = regs[sib.base] &+ lax
-                if sib.index != GeneralRegister.Name.ESP.rawValue {
+                if !sib.index.isGeneralRegister(.ESP) {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
@@ -116,12 +116,12 @@ extension Free86 {
             case 0x04:
                 sib = fetch8()
                 exp = sib.base
-                if sib.base == GeneralRegister.Name.EBP.rawValue {
+                if sib.base.isGeneralRegister(.EBP) {
                     lax = fetch()
                 } else {
                     lax = regs[sib.base]
                 }
-                if sib.index != GeneralRegister.Name.ESP.rawValue {
+                if !sib.index.isGeneralRegister(.ESP) {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
@@ -138,7 +138,7 @@ extension Free86 {
                 u = DWord(fetch8()).signExtendedByte
                 exp = sib.base
                 lax = regs[sib.base] &+ u
-                if sib.index != GeneralRegister.Name.ESP.rawValue {
+                if !sib.index.isGeneralRegister(.ESP) {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
@@ -147,7 +147,7 @@ extension Free86 {
                 lax = fetch()
                 exp = sib.base
                 lax = regs[sib.base] &+ lax
-                if sib.index != GeneralRegister.Name.ESP.rawValue {
+                if !sib.index.isGeneralRegister(.ESP) {
                     lax = lax &+ (regs[sib.index] << sib.scale)
                 }
                 break
@@ -161,7 +161,7 @@ extension Free86 {
         if ipr.segmentOverride {
             sreg = SegmentRegister.Name(rawValue: ipr.segmentRegisterIndex)!
         } else {
-            if exp == GeneralRegister.Name.ESP.rawValue || exp == GeneralRegister.Name.EBP.rawValue {
+            if exp.isGeneralRegister(.ESP) || exp.isGeneralRegister(.EBP) {
                 sreg = .SS
             } else {
                 sreg = .DS
@@ -185,7 +185,7 @@ extension Free86 {
         }
         let sreg = ipr.segmentRegisterIndex
         /// type checking
-        if sreg == SegmentRegister.Name.CS.rawValue {  // code segment, WR requested or CS not readable
+        if sreg.isSegmentRegister(.CS) {  // code segment, WR requested or CS not readable
             notok = writable || !segs[sreg].shadow.isFlagRaised(.R)
         } else {  // data segment, WR requested and DS not writable
             notok = writable && !segs[sreg].shadow.isFlagRaised(.W)

@@ -430,7 +430,7 @@ extension Free86 {
     /// 0x1fd  STD
     /// 0x1fe  G4 (INC, DEC, -, -, -, -, -)
     func Ox1fe() throws -> Result<Resume, Never> {
-        opcode.clearBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
+        opcode.setFlag(.operandSizeOverride, .zero)
         return .success(.goOnFetching)
     }
     /// 0x163  ARPL
@@ -439,7 +439,7 @@ extension Free86 {
     /// 0x10f  2-byte instruction escape
     func Ox10f() throws -> Result<Resume, Never> {
         // opcode = fetch8_data()
-        opcode.raiseBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
+        opcode.setFlag(.operandSizeOverride)
         return try twoByteDecoder[Int(opcode)]()
     }
 }

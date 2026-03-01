@@ -29,3 +29,9 @@ extension Array where Element == SegmentRegister {
         set { self[register.rawValue] = newValue }
     }
 }
+
+extension FixedWidthInteger {
+    func isSegmentRegister(_ name: SegmentRegister.Name) -> Bool {
+        self == (name.rawValue & 0b111) as! Self
+    }
+}

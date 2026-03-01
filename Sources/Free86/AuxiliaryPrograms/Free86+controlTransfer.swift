@@ -535,10 +535,10 @@ extension Free86 {
         var shadow = segs[.CS].shadow
         shadow.base = LinearAddress(selector << 4)
         segs[.CS] = SegmentRegister(selector, shadow)
-        eflags.clearBit(EflagsFlag.TF.rawValue)
-        eflags.clearBit(EflagsFlag.IF.rawValue)
-        eflags.clearBit(EflagsFlag.RF.rawValue)
-        eflags.clearBit(EflagsFlag.AC.rawValue)
+        eflags.setFlag(.TF, .zero)
+        eflags.setFlag(.IF, .zero)
+        eflags.setFlag(.RF, .zero)
+        eflags.setFlag(.AC, .zero)
     }
     func raiseInterruptProtectedMode(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
         var ss = SegmentSelector(0), ssd = SegmentDescriptor(0), esp: DWord, ssBase: DWord, ssMask: DWord
@@ -738,12 +738,12 @@ extension Free86 {
         far = 0
         farStart = 0
         if isd.isType(.TrapGate) {  // .TrapGate (?)
-            eflags.clearBit(EflagsFlag.IF.rawValue)
+            eflags.setFlag(.IF, .zero)
         }
-        eflags.clearBit(EflagsFlag.TF.rawValue)
-        eflags.clearBit(EflagsFlag.NT.rawValue)
-        eflags.clearBit(EflagsFlag.RF.rawValue)
-        eflags.clearBit(EflagsFlag.VM.rawValue)
+        eflags.setFlag(.TF, .zero)
+        eflags.setFlag(.NT, .zero)
+        eflags.setFlag(.RF, .zero)
+        eflags.setFlag(.VM, .zero)
     }
     func ldXdtEntry(_ selector: SegmentSelector) throws -> SegmentDescriptor {
         let xdt: SegmentRegister
