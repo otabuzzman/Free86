@@ -57,7 +57,7 @@ class Free86 {
             _cr3 = newValue
         }
     }
-    var cr4: DWord = 0  // 80486
+    var cr4: CR4 = 0  // 80486
 
     var _cpl: DWord = 0  // current privilege level register
     var cpl: DWord {

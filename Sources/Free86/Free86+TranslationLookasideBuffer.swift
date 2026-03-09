@@ -55,7 +55,7 @@ extension Free86: TranslationLookasideBuffer {
         tlbPagesCount = 0
     }
 
-    private func tlbFlush(pageContainingAddress linear: LinearAddress) {
+    func tlbFlush(pageContainingAddress linear: LinearAddress) {
         tlbClear(linear.pageTablesIndices)
     }
     private func tlbFlush(preservePageIfPresent pxi: DWord) {

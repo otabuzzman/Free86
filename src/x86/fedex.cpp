@@ -1391,9 +1391,9 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xe1: // LOOPE
             case 0xe2: // LOOP
                 w = sign_extend_byte(fetch8());
-                ipr_os_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
-                u = (regs[1] - 1) & ipr_os_mask;
-                regs[1] = (regs[1] & ~ipr_os_mask) | u;
+                ipr_as_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
+                u = (regs[1] - 1) & ipr_as_mask;
+                regs[1] = (regs[1] & ~ipr_as_mask) | u;
                 opcode &= 3;
                 if (opcode == 0) {
                     v = osm_dst != 0;
@@ -1413,8 +1413,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0xe3: // JCXZ
                 u = sign_extend_byte(fetch8());
-                ipr_os_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
-                if ((regs[1] & ipr_os_mask) == 0) {
+                ipr_as_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
+                if ((regs[1] & ipr_as_mask) == 0) {
                     if (ipr & 0x0100) {
                         eip = (eip + far - far_start + u) & 0xffff;
                         far = far_start = 0;
@@ -1626,8 +1626,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     abort(7);
                 }
                 modRM = fetch8();
-                reg = (modRM >> 3) & 7;
-                rM = modRM & 7;
                 operation = ((opcode & 7) << 3) | ((modRM >> 3) & 7);
                 set_lower_word(0, 0xffff);
                 if ((modRM >> 6) == 3) {

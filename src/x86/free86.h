@@ -331,7 +331,7 @@ class Free86 {
     uint32_t ipr; // instruction prefix register
     uint32_t ipr_default; // reflects D flag (PM (1986), 16.1)
                           // also belongs to the SSB (below)
-    uint32_t ipr_os_mask; // operand size override prefix size mask
+    uint32_t ipr_as_mask; // address size override prefix size mask
 /*
    Segments state block
 

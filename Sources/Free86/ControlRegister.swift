@@ -1,5 +1,6 @@
 typealias CR0 = DWord
 typealias CR3 = DWord
+typealias CR4 = DWord
 
 enum CR0Flag: Int {
     case PE
@@ -35,5 +36,15 @@ extension CR0 {
 extension CR3 {
     var pageDirectoryBase: DWord {
         self & ~0xFFF
+    }
+}
+
+enum CR4Flag: Int {
+    case TSD = 2  // 80486
+}
+
+extension CR4 {
+    func isFlagRaised(_ flag: CR4Flag) -> Bool {
+        self.isBitRaised(flag.rawValue)
     }
 }

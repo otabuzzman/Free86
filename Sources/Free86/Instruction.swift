@@ -1,11 +1,16 @@
 struct Instruction {
     var parent: Free86
-    var _length = 0
+    var opcode: DWord = 0, ipr: DWord = 0
+    var stride: DWord = 4, _length: DWord = 1
+    @discardableResult
     mutating func length() throws -> Int {
-        _length = 0
+        opcode = parent.opcode
+        ipr = parent.iprDefault
+        stride = ipr.isFlagRaised(.addressSizeOverride) ? 2 : 4
+        _length = 1
         fetchLoop:
         while true {  // loop over instruction bytes (fetch)
-            let result = try oneByteDecoder[Int(parent.opcode)]()
+            let result = try oneByteDecoder[Int(opcode)]()
             switch result {
             case .success(let resume):
                 switch resume {
@@ -18,10 +23,54 @@ struct Instruction {
                 }
             }
         }
-        return _length
+        return Int(_length)
     }
-    mutating func modRMBytesNumber() throws -> Int {
-        0
+    mutating func modRMBytesNumber(_ modRM: ModRM) throws -> DWord {
+        var length: DWord = 0
+        if ipr.isFlagRaised(.operandSizeOverride) {
+            switch modRM.mod {
+            case 0:
+                if modRM.rM == 6) {
+                    length += 2
+                }
+                break
+            case 1:
+                length += 1
+                break
+            default:
+                length += 2
+                break
+            }
+        } else {
+            switch modRM.modRM {
+            case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
+                break
+            case 0x04:
+                if (length + 1) > 15 {
+                    throw Interrupt(.GP, errorCode: 0)
+                }
+                lax = eipLinear &+ length
+                length += 1
+                let sib = try ld8ReadonlyCpl3()
+                if sib.base == 5 {
+                    length += 4
+                }
+                break
+            case 0x05, 0x10, 0x11, 0x12, 0x13, 0x15, 0x16, 0x17:
+                length += 4
+                break
+            case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
+                length += 1
+                break
+            case 0x0c:
+                length += 2
+                break
+            case 0x14:
+                length += 5
+                break
+            }
+        }
+        return length
     }
 
     typealias Resume = Free86.Resume  // convenience shortener for opcode programs definitions
