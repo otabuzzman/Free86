@@ -4,8 +4,8 @@ enum InstructionPrefixRegisterFlag: Int {
     case repzStringOperation = 4
     case repnzStringOperation
     case lockSignal
-    case operandSizeOverride
     case addressSizeOverride
+    case operandSizeOverride
 }
 
 extension InstructionPrefixRegister {
@@ -21,11 +21,17 @@ extension InstructionPrefixRegister {
 }
 
 extension InstructionPrefixRegister {
-    var segmentRegisterIndex: Int {
-        guard
-            self & 7 > 0
-        else { return SegmentRegister.Name.DS.rawValue }
-        return Int(self & 7 - 1)
+    var segmentRegister: Int {
+        get {
+            guard
+                self & 7 > 0
+            else { return SegmentRegister.Name.DS.rawValue }
+            return Int(self) & 7 - 1
+        }
+        set {
+            assert((0..<7).contains(newValue), "fatal error")
+            self = Self(truncatingIfNeeded: newValue + 1)
+        }
     }
     var operandSizeMask: DWord {
         self.isFlagRaised(.operandSizeOverride) ? 0xFFFF : 0xFFFFFFFF

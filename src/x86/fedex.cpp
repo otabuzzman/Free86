@@ -135,7 +135,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
             case 0xb6: // MOV DH
             case 0xb7: // MOV BH
                 imm = fetch8();
-                opcode &= 7;
                 hL = (opcode & 4) << 1;
                 regs[opcode & 3] = (regs[opcode & 3] & ~(0xffu << hL)) | ((imm & 0xffu) << hL);
                 goto FETCH_LOOP;
@@ -1492,7 +1491,8 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0xcd: // INT
                 imm = fetch8();
-                if ((eflags & 0x00020000) && ((eflags >> 12) & 3) != 3) {
+                iopl = (eflags >> 12) & 3;
+                if ((eflags & 0x00020000) && iopl != 3) {
                     abort(13);
                 }
                 u = eip + far - far_start;

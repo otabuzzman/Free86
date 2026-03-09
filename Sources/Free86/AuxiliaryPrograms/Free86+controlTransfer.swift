@@ -793,7 +793,7 @@ extension Free86 {
             try returnRealOrV86Mode(o32, true, 0)
         } else {
             if eflags.isFlagRaised(.NT) {
-                assert(false, "fatal error: EFLAGS.NT set")
+                assert(false, "fatal error: NT flag set")
             } else {
                 try returnProtectedMode(o32, true, 0)
             }

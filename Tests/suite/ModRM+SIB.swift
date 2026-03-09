@@ -7,14 +7,16 @@ func modRMByteElements() {
     modRM = 0b10_100_101
     #expect(modRM.mod == 2)
     #expect(modRM.reg == 4)
-    #expect(modRM.opcode == 4)
     #expect(modRM.rM == 5)
+    #expect(modRM.opcode == 4)
+    #expect(modRM.modRM == 21)
 
     modRM = 0b01_011_010
     #expect(modRM.mod == 1)
     #expect(modRM.reg == 3)
-    #expect(modRM.opcode == 3)
     #expect(modRM.rM == 2)
+    #expect(modRM.opcode == 3)
+    #expect(modRM.modRM == 10)
 }
 
 @Test("SIB byte fields access")

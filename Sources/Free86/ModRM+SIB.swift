@@ -7,14 +7,17 @@ extension ModRM {
     var reg: Int {
         Int(self >> 3 & 0b0111)
     }
-    var opcode: Int {
-        reg
-    }
     var rM: Int {
         Int(self & 0b0111)
     }
+}
+
+extension ModRM {
+    var opcode: Int {
+        reg
+    }
     var modRM: Self {
-        (self & 7) | ((self >> 3) & 0x18)
+        Self(rM | mod << 3)
     }
 }
 

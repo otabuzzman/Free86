@@ -103,7 +103,7 @@ extension Free86 {
                 }
             }
             if ipr.segmentOverride {
-                sreg = SegmentRegister.Name(rawValue: ipr.segmentRegisterIndex)!
+                sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap
             }
             lax = segs[sreg].shadow.base &+ lax
             return
@@ -159,7 +159,7 @@ extension Free86 {
                 break
         }
         if ipr.segmentOverride {
-            sreg = SegmentRegister.Name(rawValue: ipr.segmentRegisterIndex)!
+            sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap
         } else {
             if exp.isGeneralRegister(.ESP) || exp.isGeneralRegister(.EBP) {
                 sreg = .SS
@@ -183,7 +183,7 @@ extension Free86 {
         if (opcode & 0x01) != 0 {
             stride = 1  // 8 bit mode, opcodes A0, A2
         }
-        let sreg = ipr.segmentRegisterIndex
+        let sreg = ipr.segmentRegister
         /// type checking
         if sreg.isSegmentRegister(.CS) {  // code segment, WR requested or CS not readable
             notok = writable || !segs[sreg].shadow.isFlagRaised(.R)
@@ -201,7 +201,7 @@ extension Free86 {
             notok = la > DWord(segs[sreg].shadow.base) &+ DWord(segs[sreg].shadow.limit) &+ 1 &- stride
         }
         if notok {
-            if sreg == 2 {
+            if sreg.isSegmentRegister(.SS) {
                 throw Interrupt(.SS, errorCode: 0)
             } else {
                 throw Interrupt(.GP, errorCode: 0)

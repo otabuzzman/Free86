@@ -22,7 +22,7 @@ extension FixedWidthInteger {
         set { self = (newValue & Self.lowerHalfMask) | (self & Self.upperHalfMask) }
     }
     static func bitMask(for position: Int) -> Self {
-        assert(position >= 0 && position < Self.bitWidth, "fatal error")
+        assert((0..<Self.bitWidth).contains(position), "fatal error")
         return Self(1) << position
     }
     mutating func setBit(_ position: Int, _ value: Int = 1) {
