@@ -26,12 +26,14 @@ extension GeneralRegister {
             } else {
                 return byteH
             }
+        }
         set {
             if isLByteEncoded {
                 byteL = newValue
             } else {
                 byteH = newValue
             }
+        }
     }
     var wordX: Self {
         get { self.lowerHalf }

@@ -196,9 +196,9 @@ extension Free86 {
         la = QWord(segs[sreg].shadow.base) &+ la
         /// limit checking
         if segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
-            notok = la < DWord(segs[sreg].shadow.base) &+ DWord(segs[sreg].shadow.limit) &+ 1
+            notok = la < segs[sreg].shadow.base &+ segs[sreg].shadow.limit &+ 1
         } else {
-            notok = la > DWord(segs[sreg].shadow.base) &+ DWord(segs[sreg].shadow.limit) &+ 1 &- stride
+            notok = la > segs[sreg].shadow.base &+ segs[sreg].shadow.limit &+ 1 &- stride
         }
         if notok {
             if sreg.isSegmentRegister(.SS) {

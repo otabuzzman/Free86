@@ -29,8 +29,8 @@ extension Free86 {
             flags.setFlag(.CF)
             flags.setFlag(.AF)
         } else {
-            flags.setFlag(.CF, 0)
-            flags.setFlag(.AF, 0)
+            flags.setFlag(.CF, .zero)
+            flags.setFlag(.AF, .zero)
             al &= 0x0f
         }
         regs[.EAX] = (regs[.EAX] & ~0xffff) | al | (ah << 8)
@@ -49,8 +49,8 @@ extension Free86 {
             flags.setFlag(.CF)
             flags.setFlag(.AF)
         } else {
-            flags.setFlag(.CF, 0)
-            flags.setFlag(.AF, 0)
+            flags.setFlag(.CF, .zero)
+            flags.setFlag(.AF, .zero)
             al &= 0x0f
         }
         regs[.EAX] = (regs[.EAX] & ~0xffff) | al | (ah << 8)

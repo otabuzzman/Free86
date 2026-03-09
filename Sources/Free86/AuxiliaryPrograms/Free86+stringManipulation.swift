@@ -3,7 +3,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -31,7 +31,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edx = regs[.EDX] & 0xffff
@@ -57,7 +57,7 @@ extension Free86 {
         }
     }
     func auxMovsb() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -87,7 +87,7 @@ extension Free86 {
         }
     }
     func auxStosb() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -108,7 +108,7 @@ extension Free86 {
         }
     }
     func auxCmpsb() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -150,7 +150,7 @@ extension Free86 {
         }
     }
     func auxLodsb() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -174,7 +174,7 @@ extension Free86 {
         }
     }
     func auxScasb() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
@@ -210,7 +210,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -238,7 +238,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edx = regs[.EDX] & 0xffff
@@ -264,7 +264,7 @@ extension Free86 {
         }
     }
     func auxMovsw() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -294,7 +294,7 @@ extension Free86 {
         }
     }
     func auxStosw() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -315,7 +315,7 @@ extension Free86 {
         }
     }
     func auxCmpsw() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -357,7 +357,7 @@ extension Free86 {
         }
     }
     func auxLodsw() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -381,7 +381,7 @@ extension Free86 {
         }
     }
     func auxScasw() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
@@ -417,7 +417,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -445,7 +445,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edx = regs[.EDX] & 0xffff
@@ -471,7 +471,7 @@ extension Free86 {
         }
     }
     func aux16Movs() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -501,7 +501,7 @@ extension Free86 {
         }
     }
     func aux16Stos() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -522,7 +522,7 @@ extension Free86 {
         }
     }
     func aux16Cmps() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -564,7 +564,7 @@ extension Free86 {
         }
     }
     func aux16Lods() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -588,7 +588,7 @@ extension Free86 {
         }
     }
     func aux16Scas() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7
@@ -624,7 +624,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -652,7 +652,7 @@ extension Free86 {
         if (cpl > eflags.iopl) {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edx = regs[.EDX] & 0xffff
@@ -678,7 +678,7 @@ extension Free86 {
         }
     }
     func auxMovsd() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -708,7 +708,7 @@ extension Free86 {
         }
     }
     func auxStosd() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
@@ -729,7 +729,7 @@ extension Free86 {
         }
     }
     func auxCmpsd() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         let edi = regs[.EDI]
@@ -771,7 +771,7 @@ extension Free86 {
         }
     }
     func auxLodsd() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let sreg = ipr.segmentRegister
         let esi = regs[.ESI]
         lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -795,7 +795,7 @@ extension Free86 {
         }
     }
     func auxScasd() throws {
-        let mask = ipr.operandSizeMask
+        let mask = ipr.addressSizeMask
         let edi = regs[.EDI]
         lax = segs[.ES].shadow.base &+ (edi & mask)
         operation = 7

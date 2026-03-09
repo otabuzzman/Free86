@@ -16,7 +16,7 @@ func conrolRegister0FlagsPositions() {
 func conrolRegister0SetCheckFlags() {
     var cr0: CR0 = 0xDEADBEAF  // 0b1101_1110_1010_1101_1100_1011_1010_1111
     #expect(cr0.isFlagRaised(.PE) == true)
-    cr0.setFlag(.PE, 0)
+    cr0.setFlag(.PE, .zero)
     #expect(cr0 == 0xDEADBEAE)
 }
 

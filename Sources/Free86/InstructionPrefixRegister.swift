@@ -33,8 +33,8 @@ extension InstructionPrefixRegister {
             self = Self(truncatingIfNeeded: newValue + 1)
         }
     }
-    var operandSizeMask: DWord {
-        self.isFlagRaised(.operandSizeOverride) ? 0xFFFF : 0xFFFFFFFF
+    var addressSizeMask: DWord {
+        self.isFlagRaised(.addressSizeOverride) ? 0xFFFF : 0xFFFFFFFF
     }
     var segmentOverride: Bool {
         self & 7 > 0

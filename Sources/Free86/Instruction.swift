@@ -30,7 +30,7 @@ struct Instruction {
         if ipr.isFlagRaised(.operandSizeOverride) {
             switch modRM.mod {
             case 0:
-                if modRM.rM == 6) {
+                if modRM.rM == 6 {
                     length += 2
                 }
                 break
@@ -46,12 +46,9 @@ struct Instruction {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
                 break
             case 0x04:
-                if (length + 1) > 15 {
-                    throw Interrupt(.GP, errorCode: 0)
-                }
-                lax = eipLinear &+ length
+                parent.lax = parent.eipLinear &+ length
                 length += 1
-                let sib = try ld8ReadonlyCpl3()
+                let sib = try parent.ld8ReadonlyCpl3()
                 if sib.base == 5 {
                     length += 4
                 }
@@ -68,6 +65,8 @@ struct Instruction {
             case 0x14:
                 length += 5
                 break
+            default:
+                break  // exhaustive
             }
         }
         return length

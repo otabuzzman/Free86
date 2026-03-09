@@ -541,6 +541,7 @@ extension Free86 {
         eflags.setFlag(.AC, .zero)
     }
     func raiseInterruptProtectedMode(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
+        assert((0...255).contains(id), "fatal error: invalid interrupt id")
         var ss = SegmentSelector(0), ssd = SegmentDescriptor(0), esp: DWord, ssBase: DWord, ssMask: DWord
         var dpl: DWord = 0, isInterlevel: Bool, pushErrorCode = false
         if !isSW && !isHW {
@@ -561,7 +562,7 @@ extension Free86 {
                 pushErrorCode = true
                 break
             default:
-                break
+                break  // exhaustive
             }
         }
         if (id * 8 + 7) > idt.shadow.limit {

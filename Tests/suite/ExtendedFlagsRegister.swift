@@ -21,7 +21,7 @@ func extendedFlagsRegisterPositions() {
 func extendedFlagsRegisterSetCheck() {
     var eflags: DWord = 0xDEADBEAF  // 1101_1110_1010_1101_1011_1110_1010_1111
     #expect(eflags.isFlagRaised(.CF) == true)
-    eflags.setFlag(.CF, 0)
+    eflags.setFlag(.CF, .zero)
     #expect(eflags == 0xDEADBEAE)
 }
 

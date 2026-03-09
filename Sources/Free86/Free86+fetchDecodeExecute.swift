@@ -57,12 +57,7 @@ extension Free86 {
                         }
                     }
                 }
-                var result: OpcodeDecoder
-                if ipr.isFlagRaised(.operandSizeOverride) {
-                    result = try oneByte16Decoder[Int(opcode)]()
-                } else {
-                    result = try oneByteDecoder[Int(opcode)]()
-                }
+                let result = try oneByteDecoder[Int(opcode)]()
                 switch result {
                 case .success(let resume):
                     switch resume {
