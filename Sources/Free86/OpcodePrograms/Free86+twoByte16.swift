@@ -110,7 +110,7 @@ extension Free86 {
             regs[rM].wordX = u
         } else {
             segmentTranslation()
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = calculate16(rm, regs[reg])
             try st16WritableCpl3(word: u)
             regs[reg].wordX = rm
@@ -120,22 +120,23 @@ extension Free86 {
     /// 0x1a0  PUSH FS
     /// 0x1a8  PUSH GS
     func Ox10f1a8() throws -> Result<Resume, Never> {
-        push16(segs[(opcode >> 3) & 7].selector)
+        try push16(segs[(opcode >> 3) & 7].selector)
         return .success(.endFetchLoop)
     }
     /// 0x1a1  POP FS
     /// 0x1a9  POP GS
     func Ox10f1a9() throws -> Result<Resume, Never> {
-        m = pop16()
+        m = DWord(try pop16())
         let sreg = SegmentRegister.Name(rawValue: (opcode >> 3) & 7)!
-        setSegmentRegister(sreg, m)
+        try setSegmentRegister(sreg, SegmentSelector(m))
         return .success(.endFetchLoop)
     }
     /// 0x1b2  LSS
     /// 0x1b4  LFS
     /// 0x1b5  LGS
     func Ox10f1b5() throws -> Result<Resume, Never> {
-        try ldFarPointer16(opcode & 7)
+        let sreg = SegmentRegister.Name(rawValue: opcode & 7)!
+        try ldFarPointer16(sreg)
         return .success(.endFetchLoop)
     }
     /// 0x1a4  SHLD
@@ -151,7 +152,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = aux16ShrdShld(rm, r, imm)
             try st16WritableCpl3(word: u)
         }
@@ -168,7 +169,7 @@ extension Free86 {
             regs[rM].wordX = aux16ShrdShld(regs[rM], r, regs[.ECX])
         } else {
             segmentTranslation()
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = aux16ShrdShld(rm, r, regs[.ECX])
             try st16WritableCpl3(word: u)
         }
@@ -205,7 +206,7 @@ extension Free86 {
             } else {
                 segmentTranslation()
                 imm = DWord(fetch8())
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 u = aux16BtsBtrBtc(rm, imm)
                 try st16WritableCpl3(word: u)
             }
@@ -244,7 +245,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             lax = lax &+ ((r.lowerHalf >> 4) << 1)
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = aux16BtsBtrBtc(rm, r)
             try st16WritableCpl3(word: u)
         }
@@ -287,7 +288,7 @@ extension Free86 {
             }
         } else {
             segmentTranslation()
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = calculate16(regs[.EAX], rm)
             if u == 0 {
                 try st16WritableCpl3(word: regs[reg])

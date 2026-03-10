@@ -76,7 +76,7 @@ extension Free86 {
         if al == 0 {
             flags.setFlag(.ZF)
         }
-        flags.setFlag(.PF, Free86.parityLUT[Int(al)])
+        flags.setFlag(.PF, Free86.parityLUT[al])
         if (al & 0x80) != 0 {
             flags.setFlag(.SF)
         }
@@ -106,7 +106,7 @@ extension Free86 {
         if al == 0 {
             flags.setFlag(.ZF)
         }
-        flags.setFlag(.PF, Free86.parityLUT[Int(al)])
+        flags.setFlag(.PF, Free86.parityLUT[al])
         if (al & 0x80) != 0 {
             flags.setFlag(.SF)
         }

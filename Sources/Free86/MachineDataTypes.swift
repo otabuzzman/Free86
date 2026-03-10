@@ -54,3 +54,10 @@ extension DWord {
         DWord(bitPattern: Int32(bitPattern: self) >> count)
     }
 }
+
+extension Array {
+    subscript (_ element: DWord) -> Element {
+        get { self[Int(element)] }
+        set { self[Int(element)] = newValue }
+    }
+}

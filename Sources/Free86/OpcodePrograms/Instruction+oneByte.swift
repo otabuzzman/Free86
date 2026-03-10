@@ -439,6 +439,6 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         opcode = DWord(try parent.ld8ReadonlyCpl3())
-        return try twoByteDecoder[Int(opcode)]()
+        return try twoByteDecoder[opcode]()
     }
 }

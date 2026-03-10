@@ -11,7 +11,7 @@ class Instruction {
         _length = 1
         fetchLoop:
         while true {  // loop over instruction bytes (fetch)
-            let result = try oneByteDecoder[Int(opcode)]()
+            let result = try oneByteDecoder[opcode]()
             switch result {
             case .success(let resume):
                 switch resume {

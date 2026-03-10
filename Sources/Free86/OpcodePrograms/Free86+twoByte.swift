@@ -145,9 +145,9 @@ extension Free86 {
             fallthrough
         case 1:  // STR
             if operation == 0 {
-                u = ldt.selector
+                u = DWord(ldt.selector)
             } else {
-                u = tr.selector
+                u = DWord(tr.selector)
             }
             if modRM.mod == 3 {
                 regs[modRM.rM].wordX = u
@@ -169,9 +169,9 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             if operation == 2 {
-                auxLdtr(rm)
+                try auxLdtr(SegmentSelector(rm))
             } else {
-                auxLtr(rm)
+                try auxLtr(SegmentSelector(rm))
             }
             break
         case 4:  // VERR
@@ -183,7 +183,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            auxVerrVerw(rm, ((operation & 1) != 0))
+            try auxVerrVerw(SegmentSelector(rm), ((operation & 1) != 0))
             break
         default:
             throw Interrupt(.UD)
@@ -209,11 +209,15 @@ extension Free86 {
             lax += 2
             m = try ldReadonlyCpl3()
             if operation == 2 {
-                gdt.shadow.base = m
-                gdt.shadow.limit = m16
+                var xdt = gdt.shadow
+                xdt.base = m
+                xdt.limit = DWord(m16)
+                gdt = .init(gdt.selector, xdt)
             } else {
-                idt.shadow.base = m
-                idt.shadow.limit = m16
+                var xdt = idt.shadow
+                xdt.base = m
+                xdt.limit = DWord(m16)
+                idt = .init(idt.selector, xdt)
             }
             break
         case 7:  // INVLPG (80486)
@@ -234,7 +238,7 @@ extension Free86 {
     /// 0x02  LAR
     /// 0x03  LSL
     func Ox0f03() throws -> Result<Resume, Never> {
-        auxLarLsl(!ipr.isFlagRaised(.operandSizeOverride), ((opcode & 1) != 0))
+        try auxLarLsl(!ipr.isFlagRaised(.operandSizeOverride), ((opcode & 1) != 0))
         return .success(.endFetchLoop)
     }
     /// 0x20  MOV
@@ -321,7 +325,8 @@ extension Free86 {
     /// 0xb4  LFS
     /// 0xb5  LGS
     func Ox0fb5() throws -> Result<Resume, Never> {
-        try ldFarPointer(opcode & 7)
+        let sreg = SegmentRegister.Name(rawValue: opcode & 7)!
+        try ldFarPointer(sreg)
         return .success(.endFetchLoop)
     }
     /// 0xa2  CPUID (80486)
@@ -525,7 +530,7 @@ extension Free86 {
             regs[rM].byteLH = u
         } else {
             segmentTranslation()
-            rm = try ld8WritableCpl3()
+            rm = DWord(try ld8WritableCpl3())
             u = calculate8(rm, (regs[reg & 3] >> ((reg & 4) << 1)))
             try st8WritableCpl3(byte: (u))
             regs[reg].byteLH = rm
@@ -570,7 +575,7 @@ extension Free86 {
             }
         } else {
             segmentTranslation()
-            rm = try ld8WritableCpl3()
+            rm = DWord(try ld8WritableCpl3())
             u = calculate8(regs[.EAX], rm)
             if u == 0 {
                 try st8WritableCpl3(byte: ((regs[reg & 3] >> ((reg & 4) << 1))))
@@ -610,15 +615,15 @@ extension Free86 {
     /// 0xa0  PUSH FS
     /// 0xa8  PUSH GS
     func Ox0fa8() throws -> Result<Resume, Never> {
-        push(segs[(opcode >> 3) & 7].selector)
+        try push(segs[(opcode >> 3) & 7].selector)
         return .success(.endFetchLoop)
     }
     /// 0xa1  POP FS
     /// 0xa9  POP GS
     func Ox0fa9() throws -> Result<Resume, Never> {
-        m = pop()
+        m = try pop()
         let sreg = SegmentRegister.Name(rawValue: (opcode >> 3) & 7)!
-        setSegmentRegister(sreg, Word(truncatingIfNeeded: m))
+        try setSegmentRegister(sreg, SegmentSelector(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
     }
     /// 0xc8  -

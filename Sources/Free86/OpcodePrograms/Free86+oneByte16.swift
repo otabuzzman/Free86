@@ -87,7 +87,7 @@ extension Free86 {
             regs[rM].wordX = regs[reg]
         } else {
             segmentTranslation()
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             try st16WritableCpl3(word: regs[reg])
         }
         regs[reg].wordX = rm
@@ -95,12 +95,12 @@ extension Free86 {
     }
     /// 0x1c4  LES
     func Ox1c4() throws -> Result<Resume, Never> {
-        try ldFarPointer16(0)
+        try ldFarPointer16(.ES)
         return .success(.endFetchLoop)
     }
     /// 0x1c5  LDS
     func Ox1c5() throws -> Result<Resume, Never> {
-        try ldFarPointer16(3)
+        try ldFarPointer16(.DS)
         return .success(.endFetchLoop)
     }
     /// 0x101  ADD
@@ -122,7 +122,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             if operation != 7 {
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 u = calculate16(rm, r)
                 try st16WritableCpl3(word: u)
             } else {
@@ -180,7 +180,7 @@ extension Free86 {
             segmentTranslation()
             imm = DWord(fetch16())
             if operation != 7 {
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 u = calculate16(rm, imm)
                 try st16WritableCpl3(word: u)
             } else {
@@ -204,7 +204,7 @@ extension Free86 {
             segmentTranslation()
             v = DWord(fetch8()).signExtendedByte
             if operation != 7 {
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 u = calculate16(rm, v)
                 try st16WritableCpl3(word: u)
             } else {
@@ -316,7 +316,7 @@ extension Free86 {
                 regs[rM].wordX = ~regs[rM]
             } else {
                 segmentTranslation()
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 try st16WritableCpl3(word: ~rm)
             }
             break
@@ -329,7 +329,7 @@ extension Free86 {
             } else {
                 operation = 5
                 segmentTranslation()
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 u = calculate16(0, rm)
                 try st16WritableCpl3(word: u)
             }
@@ -363,7 +363,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            aux16Div(rm)
+            try aux16Div(rm)
             break
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
@@ -372,7 +372,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            aux16Idiv(rm)
+            try aux16Idiv(rm)
             break
         default:
             throw Interrupt(.UD)
@@ -390,7 +390,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = shift16(rm, imm)
             try st16WritableCpl3(word: u)
         }
@@ -405,7 +405,7 @@ extension Free86 {
             regs[rM].wordX = shift16(regs[rM], 1)
         } else {
             segmentTranslation()
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = shift16(rm, 1)
             try st16WritableCpl3(word: u)
         }
@@ -420,7 +420,7 @@ extension Free86 {
             regs[rM].wordX = shift16(regs[rM], regs[.ECX] & 0xff)
         } else {
             segmentTranslation()
-            rm = try ld16WritableCpl3()
+            rm = DWord(try ld16WritableCpl3())
             u = shift16(rm, regs[.ECX] & 0xff)
             try st16WritableCpl3(word: u)
         }
@@ -449,7 +449,7 @@ extension Free86 {
     /// 0x156  PUSH SI
     /// 0x157  PUSH DI
     func Ox157() throws -> Result<Resume, Never> {
-        push16(regs[opcode & 7])
+        try push16(regs[opcode & 7])
         return .success(.endFetchLoop)
     }
     /// 0x158  POP A
@@ -461,29 +461,29 @@ extension Free86 {
     /// 0x15e  POP SI
     /// 0x15f  POP DI
     func Ox15f() throws -> Result<Resume, Never> {
-        m = pop16()
+        m = DWord(try pop16())
         regs[opcode & 7].wordX = m
         return .success(.endFetchLoop)
     }
     /// 0x160  PUSHA
     func Ox160() throws -> Result<Resume, Never> {
-        aux16Pusha()
+        try aux16Pusha()
         return .success(.endFetchLoop)
     }
     /// 0x161  POPA
     func Ox161() throws -> Result<Resume, Never> {
-        aux16Popa()
+        try aux16Popa()
         return .success(.endFetchLoop)
     }
     /// 0x18f  POP
     func Ox18f() throws -> Result<Resume, Never> {
         modRM = fetch8()
         if modRM.mod == 3 {
-            m = pop16()
+            m = DWord(try pop16())
             regs[modRM.rM].wordX = m
         } else {
             u = regs[.ESP]
-            m = pop16()
+            m = DWord(try pop16())
             v = regs[.ESP]
             segmentTranslation()
             regs[.ESP] = u
@@ -495,23 +495,23 @@ extension Free86 {
     /// 0x168  PUSH
     func Ox168() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
-        push16(imm)
+        try push16(imm)
         return .success(.endFetchLoop)
     }
     /// 0x16a  PUSH
     func Ox16a() throws -> Result<Resume, Never> {
         u = DWord(fetch8()).signExtendedByte
-        push16(u)
+        try push16(u)
         return .success(.endFetchLoop)
     }
     /// 0x1c8  ENTER
     func Ox1c8() throws -> Result<Resume, Never> {
-        aux16Enter()
+        try aux16Enter()
         return .success(.endFetchLoop)
     }
     /// 0x1c9  LEAVE
     func Ox1c9() throws -> Result<Resume, Never> {
-        aux16Leave()
+        try aux16Leave()
         return .success(.endFetchLoop)
     }
     /// 0x106  PUSH
@@ -519,16 +519,16 @@ extension Free86 {
     /// 0x116  PUSH
     /// 0x11e  PUSH
     func Ox11e() throws -> Result<Resume, Never> {
-        push16(segs[(opcode >> 3) & 3].selector)
+        try push16(segs[(opcode >> 3) & 3].selector)
         return .success(.endFetchLoop)
     }
     /// 0x107  POP
     /// 0x117  POP
     /// 0x11f  POP
     func Ox11f() throws -> Result<Resume, Never> {
-        m = pop16()
+        m = DWord(try pop16())
         let sreg = SegmentRegister.Name(rawValue: (opcode >> 3) & 3)!
-        setSegmentRegister(sreg, m)
+        try setSegmentRegister(sreg, SegmentSelector(m))
         return .success(.endFetchLoop)
     }
     /// 0x18d  LEA
@@ -555,7 +555,7 @@ extension Free86 {
                 regs[rM].wordX = aux16Inc(regs[rM])
             } else {
                 segmentTranslation()
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 u = aux16Inc(rm)
                 try st16WritableCpl3(word: u)
             }
@@ -567,7 +567,7 @@ extension Free86 {
                 regs[rM].wordX = aux16Dec(regs[rM])
             } else {
                 segmentTranslation()
-                rm = try ld16WritableCpl3()
+                rm = DWord(try ld16WritableCpl3())
                 u = aux16Dec(rm)
                 try st16WritableCpl3(word: u)
             }
@@ -579,7 +579,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            push16((eip &+ far &- farStart))
+            try push16((eip &+ far &- farStart))
             eip = rm
             far = 0
             farStart = 0
@@ -595,9 +595,9 @@ extension Free86 {
             lax = lax &+ 2
             m16 = try ld16ReadonlyCpl3()
             if operation == 3 {
-                auxCallf(0, m16, m, (eip &+ far &- farStart))
+                try auxCallf(false, m16, m, (eip &+ far &- farStart))
             } else {
-                auxJmpf(m16, m)
+                try auxJmpf(m16, m)
             }
             break
         case 6:  // PUSH
@@ -607,7 +607,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            push16(rm)
+            try push16(rm)
             break
         case 4:  // JMP
             if modRM.mod == 3 {
@@ -659,7 +659,7 @@ extension Free86 {
     /// 0x17f  JNLE
     func Ox17f() throws -> Result<Resume, Never> {
         u = DWord(fetch8()).signExtendedByte
-        if canJmp(Int(opcode & 0xf)) {
+        if canJmp(condition: Int(opcode & 0xf)) {
             eip = (eip &+ far &- farStart &+ u).lowerHalf
             far = 0
             farStart = 0
@@ -669,7 +669,7 @@ extension Free86 {
     /// 0x1c2  RET
     func Ox1c2() throws -> Result<Resume, Never> {
         u = DWord(fetch16()).signExtendedWord
-        m = try ld16Stack()
+        m = DWord(try ld16Stack())
         regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 2 &+ u) & ssMask)
         eip = m
         far = 0
@@ -678,7 +678,7 @@ extension Free86 {
     }
     /// 0x1c3  RET
     func Ox1c3() throws -> Result<Resume, Never> {
-        m = pop16()
+        m = DWord(try pop16())
         eip = m
         far = 0
         farStart = 0
@@ -687,7 +687,7 @@ extension Free86 {
     /// 0x1e8  CALL
     func Ox1e8() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
-        push16((eip &+ far &- farStart))
+        try push16((eip &+ far &- farStart))
         eip = (eip &+ far &- farStart &+ imm).lowerHalf
         far = 0
         farStart = 0
@@ -695,42 +695,42 @@ extension Free86 {
     }
     /// 0x162  BOUND
     func Ox162() throws -> Result<Resume, Never> {
-        aux16Bound()
+        try aux16Bound()
         return .success(.endFetchLoop)
     }
     /// 0x1a5  MOVSW/D
     func Ox1a5() throws -> Result<Resume, Never> {
-        aux16Movs()
+        try aux16Movs()
         return .success(.endFetchLoop)
     }
     /// 0x1a7  CMPSW/D
     func Ox1a7() throws -> Result<Resume, Never> {
-        aux16Cmps()
+        try aux16Cmps()
         return .success(.endFetchLoop)
     }
     /// 0x1ad  LOSW/D
     func Ox1ad() throws -> Result<Resume, Never> {
-        aux16Lods()
+        try aux16Lods()
         return .success(.endFetchLoop)
     }
     /// 0x1af  SCASW/D
     func Ox1af() throws -> Result<Resume, Never> {
-        aux16Scas()
+        try aux16Scas()
         return .success(.endFetchLoop)
     }
     /// 0x1ab  STOSW/D
     func Ox1ab() throws -> Result<Resume, Never> {
-        aux16Stos()
+        try aux16Stos()
         return .success(.endFetchLoop)
     }
     /// 0x16d  INSW/D
     func Ox16d() throws -> Result<Resume, Never> {
-        aux16Ins()
+        try aux16Ins()
         return .success(.endOnInterrupt)
     }
     /// 0x16f  OUTSW/D
     func Ox16f() throws -> Result<Resume, Never> {
-        aux16Outs()
+        try aux16Outs()
         return .success(.endOnInterrupt)
     }
     /// 0x1e5  IN AX,
@@ -739,7 +739,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         imm = DWord(fetch8())
-        regs[.EAX].wordX = io?[imm]
+        regs[.EAX].wordX = io?[imm] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0x1e7  OUT ,AX
@@ -756,7 +756,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        regs[.EAX].wordX = io?[regs[.EDX].lowerHalf]
+        regs[.EAX].wordX = io?[regs[.EDX].lowerHalf] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0x1ef  OUT DX,AX
@@ -889,7 +889,7 @@ extension Free86 {
     func Ox10f() throws -> Result<Resume, Never> {
         opcode = DWord(fetch8())
         opcode.setBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
-        if ipr.isBitRaised(.lockSignal) {
+        if ipr.isFlagRaised(.lockSignal) {
             switch opcode {
                 case 0x1a3,  // BT
                     0x1ab,  // BTS
@@ -903,6 +903,6 @@ extension Free86 {
                     throw Interrupt(.UD)
             }
         }
-        return try twoByte16Decoder[Int(opcode)]()
+        return try twoByteDecoder[opcode]()
     }
 }

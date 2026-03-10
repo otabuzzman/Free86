@@ -21,3 +21,24 @@ protocol PagedMemory {
     func st16WritableCpl3(word: Word) throws
     func stWritableCpl3(dword: DWord) throws
 }
+
+extension PagedMemory {
+    func st8WritableCplX(byte: Word) throws {
+        try self.st8WritableCplX(byte: Byte(byte & 0xff))
+    }
+    func st8WritableCplX(byte: DWord) throws {
+        try self.st8WritableCplX(byte: Byte(byte & 0xff))
+    }
+    func st16WritableCplX(word: DWord) throws {
+        try self.st16WritableCplX(word: Word(word & 0xffff))
+    }
+    func st8WritableCpl3(byte: Word) throws {
+        try self.st8WritableCpl3(byte: Byte(byte & 0xff))
+    }
+    func st8WritableCpl3(byte: DWord) throws {
+        try self.st8WritableCpl3(byte: Byte(byte & 0xff))
+    }
+    func st16WritableCpl3(word: DWord) throws {
+        try self.st16WritableCpl3(word: Word(word & 0xffff))
+    }
+}

@@ -200,7 +200,7 @@ extension Free86 {
             }
             break
         case 2:
-            c = Free86.shift8LUT[Int(count & 0x1f)]
+            c = Free86.shift8LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
                 res = (res << c) | (cf << (c - 1))
@@ -217,7 +217,7 @@ extension Free86 {
             }
             break
         case 3:
-            c = Free86.shift8LUT[Int(count & 0x1f)]
+            c = Free86.shift8LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
                 res = (res >> c) | (cf << (8 - c))
@@ -298,7 +298,7 @@ extension Free86 {
             }
             break
         case 2:
-            c = Free86.shift16LUT[Int(count) & 0x1f]
+            c = Free86.shift16LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
                 res = (res << c) | (cf << (c - 1))
@@ -315,7 +315,7 @@ extension Free86 {
             }
             break
         case 3:
-            c = Free86.shift16LUT[Int(count) & 0x1f]
+            c = Free86.shift16LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
                 res = (res >> c) | (cf << (16 - c))

@@ -78,7 +78,7 @@ extension Free86 {
         if osm == 24 {
             return ((osmSrc >> 2) & 1) != 0
         } else {
-            return Free86.parityLUT[Int(osmDst & 0xff)] != 0
+            return Free86.parityLUT[osmDst & 0xff] != 0
         }
     }
     func isAF() -> Bool {  // adjust (bit 4)

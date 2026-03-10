@@ -79,7 +79,7 @@ extension Free86 {
                             throw Interrupt(.UD)
                     }
                 }
-                let result = try oneByteDecoder[Int(opcode)]()
+                let result = try oneByteDecoder[opcode]()
                 switch result {
                 case .success(let resume):
                     switch resume {

@@ -396,6 +396,12 @@ extension Free86 {
         try st16WritableCpl3(word: word)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
     }
+    func push16(_ word: DWord) throws {
+        try push16(Word(word & 0xffff))
+    }
+    func push(_ dword: Word) throws {
+        try push(DWord(dword))
+    }
     func push(_ dword: DWord) throws {
         let esp = regs[.ESP] &- 4
         lax = ssBase &+ (esp & ssMask)

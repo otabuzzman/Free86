@@ -229,7 +229,7 @@ extension Free86 {
             rm = DWord(try ld16ReadonlyCpl3())
         }
         let sreg = SegmentRegister.Name(rawValue: reg)!
-        setSegmentRegister(sreg, rm)
+        try setSegmentRegister(sreg, SegmentSelector(rm))
         return .success(.endFetchLoop)
     }
     /// 0x8c  MOV
@@ -263,8 +263,8 @@ extension Free86 {
             regs[rM].byteLH = regs[reg & 3] >> ((reg & 4) << 1)
         } else {
             segmentTranslation()
-            rm = try ld8WritableCpl3()
-            try st8WritableCpl3(byte: ((regs[reg & 3] >> ((reg & 4) << 1))))
+            rm = DWord(try ld8WritableCpl3())
+            try st8WritableCpl3(byte: regs[reg & 3] >> ((reg & 4) << 1))
         }
         regs[reg].byteLH = rm
         return .success(.endFetchLoop)
@@ -341,7 +341,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             if operation != 7 {
-                rm = try ld8WritableCpl3()
+                rm = DWord(try ld8WritableCpl3())
                 u = calculate8(rm, r)
                 try st8WritableCpl3(byte: (u))
             } else {
@@ -552,7 +552,7 @@ extension Free86 {
             segmentTranslation()
             imm = DWord(fetch8())
             if operation != 7 {
-                rm = try ld8WritableCpl3()
+                rm = DWord(try ld8WritableCpl3())
                 u = calculate8(rm, imm)
                 try st8WritableCpl3(byte: (u))
             } else {
@@ -764,7 +764,7 @@ extension Free86 {
                 regs[rM].byteLH = ~(regs[rM & 3] >> ((rM & 4) << 1))
             } else {
                 segmentTranslation()
-                rm = try ld8WritableCpl3()
+                rm = DWord(try ld8WritableCpl3())
                 try st8WritableCpl3(byte: (~rm))
             }
             break
@@ -776,7 +776,7 @@ extension Free86 {
                 regs[rM].byteLH = calculate8(0, regs[rM & 3] >> ((rM & 4) << 1))
             } else {
                 segmentTranslation()
-                rm = try ld8WritableCpl3()
+                rm = DWord(try ld8WritableCpl3())
                 u = calculate8(0, rm)
                 try st8WritableCpl3(byte: (u))
             }
@@ -811,7 +811,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
-            aux8Div(rm)
+            try aux8Div(rm)
             break
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
@@ -821,7 +821,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
-            aux8Idiv(rm)
+            try aux8Idiv(rm)
             break
         default:
             throw Interrupt(.UD)
@@ -898,7 +898,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = try ldReadonlyCpl3()
             }
-            auxDiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
+            try auxDiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
             regs[.EAX] = u
             regs[.EDX] = v
             break
@@ -909,7 +909,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = try ldReadonlyCpl3()
             }
-            auxIdiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
+            try auxIdiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
             regs[.EAX] = u
             regs[.EDX] = v
             break
@@ -929,7 +929,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
-            rm = try ld8WritableCpl3()
+            rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, imm)
             try st8WritableCpl3(byte: (u))
         }
@@ -961,7 +961,7 @@ extension Free86 {
             regs[rM].byteLH = shift8(regs[rM & 3] >> ((rM & 4) << 1), 1)
         } else {
             segmentTranslation()
-            rm = try ld8WritableCpl3()
+            rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, 1)
             try st8WritableCpl3(byte: (u))
         }
@@ -991,7 +991,7 @@ extension Free86 {
             regs[rM].byteLH = shift8(regs[rM & 3] >> ((rM & 4) << 1), regs[.ECX] & 0xff)
         } else {
             segmentTranslation()
-            rm = try ld8WritableCpl3()
+            rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, regs[.ECX] & 0xff)
             try st8WritableCpl3(byte: (u))
         }
@@ -1037,7 +1037,7 @@ extension Free86 {
             try stWritableCpl3(dword: r)
             regs[.ESP] = lax
         } else {
-            push(r)
+            try push(r)
         }
         return .success(.endFetchLoop)
     }
@@ -1136,7 +1136,7 @@ extension Free86 {
         if !ipr.isFlagRaised(.operandSizeOverride) {
             try push(u)
         } else {
-            push16(u)
+            try push16(u)
         }
         return .success(.endFetchLoop)
     }
@@ -1149,7 +1149,7 @@ extension Free86 {
             m = try pop()
             u = 0xffffffff
         } else {
-            m = pop16()
+            m = DWord(try pop16())
             u = 0xffff
         }
         v = 0x00000100 | 0x00004000 | 0x00040000 | 0x00200000
@@ -1168,7 +1168,7 @@ extension Free86 {
     /// 0x16  PUSH
     /// 0x1e  PUSH
     func Ox1e() throws -> Result<Resume, Never> {
-        push(segs[opcode >> 3].selector)
+        try push(segs[opcode >> 3].selector)
         return .success(.endFetchLoop)
     }
     /// 0x07  POP
@@ -1177,7 +1177,7 @@ extension Free86 {
     func Ox1f() throws -> Result<Resume, Never> {
         m = try pop()
         let sreg = SegmentRegister.Name(rawValue: opcode >> 3)!
-        setSegmentRegister(sreg, Word(truncatingIfNeeded: m))
+        try setSegmentRegister(sreg, SegmentSelector(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
     }
     /// 0x8d  LEA
@@ -1203,7 +1203,7 @@ extension Free86 {
                 regs[rM].byteLH = aux8Inc(regs[rM & 3] >> ((rM & 4) << 1))
             } else {
                 segmentTranslation()
-                rm = try ld8WritableCpl3()
+                rm = DWord(try ld8WritableCpl3())
                 u = aux8Inc(rm)
                 try st8WritableCpl3(byte: (u))
             }
@@ -1215,7 +1215,7 @@ extension Free86 {
                 regs[rM].byteLH = aux8Dec(regs[rM & 3] >> ((rM & 4) << 1))
             } else {
                 segmentTranslation()
-                rm = try ld8WritableCpl3()
+                rm = DWord(try ld8WritableCpl3())
                 u = aux8Dec(rm)
                 try st8WritableCpl3(byte: (u))
             }
@@ -1292,7 +1292,7 @@ extension Free86 {
                 try stWritableCpl3(dword: u)
                 regs[.ESP] = lax
             } else {
-                push(u)
+                try push(u)
             }
             eip = rm
             far = 0
@@ -1309,9 +1309,9 @@ extension Free86 {
             lax = lax &+ 4
             m16 = try ld16ReadonlyCpl3()
             if operation == 3 {
-                auxCallf(true, m16, m, (eip &+ far &- farStart))
+                try auxCallf(true, m16, m, (eip &+ far &- farStart))
             } else {
-                auxJmpf(m16, m)
+                try auxJmpf(m16, m)
             }
             break
         case 4:  // JMP
@@ -1337,7 +1337,7 @@ extension Free86 {
                 try stWritableCpl3(dword: rm)
                 regs[.ESP] = lax
             } else {
-                push(rm)
+                try push(rm)
             }
             break
         default:
@@ -1364,8 +1364,8 @@ extension Free86 {
         } else {
             imm = DWord(fetch16())
         }
-        imm16 = DWord(fetch16())
-        auxJmpf(imm16, imm)
+        imm16 = fetch16()
+        try auxJmpf(imm16, imm)
         return .success(.endFetchLoop)
     }
     /// 0x70  JO
@@ -1612,14 +1612,14 @@ extension Free86 {
     }
     /// 0x9a  CALLF
     func Ox9a() throws -> Result<Resume, Never> {
-        u = ((ipr >> 8) & 1) ^ 1
-        if ipr.isFlagRaised(.operandSizeOverride) {
+        let o32 = !ipr.isFlagRaised(.operandSizeOverride)
+        if o32 {
             imm = fetch()
         } else {
             imm = DWord(fetch16())
         }
-        imm16 = DWord(fetch16())
-        try auxCallf(u, imm16, imm, (eip &+ far &- farStart))
+        imm16 = fetch16()
+        try auxCallf(o32, imm16, imm, (eip &+ far &- farStart))
         return .success(.endOnInterrupt)
     }
     /// 0xca  RET
@@ -1655,7 +1655,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         u = eip &+ far &- farStart
-        try raiseInterrupt(Int(imm), 0, false, true, u)
+        try raiseInterrupt(Byte(imm), 0, false, true, u)
         return .success(.endFetchLoop)
     }
     /// 0xce  INTO
@@ -1720,7 +1720,7 @@ extension Free86 {
     }
     /// 0x9e  SAHF
     func Ox9e() throws -> Result<Resume, Never> {
-        osmSrc = ((regs[.EAX] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | (isOF() << 11)
+        osmSrc = ((regs[.EAX] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | ((isOF() ? 1 : 0) << 11)
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
@@ -1963,6 +1963,6 @@ extension Free86 {
                     throw Interrupt(.UD)
             }
         }
-        return try twoByteDecoder[Int(opcode)]()
+        return try twoByteDecoder[opcode]()
     }
 }
