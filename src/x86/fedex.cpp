@@ -1394,10 +1394,9 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 ipr_as_mask = (ipr & 0x0080) ? 0xffff : 0xffffffff;
                 u = (regs[1] - 1) & ipr_as_mask;
                 regs[1] = (regs[1] & ~ipr_as_mask) | u;
-                opcode &= 3;
-                if (opcode == 0) {
+                if ((opcode & 3) == 0) {
                     v = osm_dst != 0;
-                } else if (opcode == 1) {
+                } else if ((opcode & 3) == 1) {
                     v = osm_dst == 0;
                 } else {
                     v = 1;
@@ -3293,6 +3292,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 case 0x1f1: // -
                 case 0x10f: // 2-byte instruction escape
                     opcode = fetch8();
+                    opcode |= 0x0100;
                     if (ipr & 0x0040) {
                         switch (opcode) {
                             case 0x1a3: // BT
@@ -3307,7 +3307,6 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                                 abort(6);
                         }
                     }
-                    opcode |= 0x0100;
                     switch (opcode) {
                     case 0x180: // JO
                     case 0x181: // JNO

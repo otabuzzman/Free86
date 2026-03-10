@@ -96,7 +96,7 @@ class Free86 {
     }
 
     virtual int get_irq() = 0;
-    virtual int get_iid() = 0;
+    virtual int get_iid() = 0; // data bus bits 0-7
 
     virtual uint32_t io_read(uint32_t port) = 0;
     virtual void io_write(uint32_t port, uint32_t data) = 0;
