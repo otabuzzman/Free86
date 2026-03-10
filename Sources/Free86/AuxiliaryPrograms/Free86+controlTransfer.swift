@@ -503,14 +503,14 @@ extension Free86 {
             }
         }
     }
-    func raiseInterrupt(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
+    func raiseInterrupt(_ id: Byte, _ errorCode: DWord, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
         if !cr0.isProtectedMode {
             try raiseInterruptRealOrV86Mode(id, isSW, home)
         } else {
             try raiseInterruptProtectedMode(id, errorCode, isHW, isSW, home)
         }
     }
-    func raiseInterruptRealOrV86Mode(_ id: Int, _ isSW: Bool, _ home: LinearAddress) throws {
+    func raiseInterruptRealOrV86Mode(_ id: Byte, _ isSW: Bool, _ home: LinearAddress) throws {
         if (id * 4 + 3) > idt.shadow.limit {
            throw Interrupt(.GP, errorCode: DWord(id * 4 + 2))
         }
@@ -540,7 +540,7 @@ extension Free86 {
         eflags.setFlag(.RF, .zero)
         eflags.setFlag(.AC, .zero)
     }
-    func raiseInterruptProtectedMode(_ id: Int, _ errorCode: Int, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
+    func raiseInterruptProtectedMode(_ id: Byte, _ errorCode: DWord, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
         assert((0...255).contains(id), "fatal error: invalid interrupt id")
         var ss = SegmentSelector(0), ssd = SegmentDescriptor(0), esp: DWord, ssBase: DWord, ssMask: DWord
         var dpl: DWord = 0, isInterlevel: Bool, pushErrorCode = false

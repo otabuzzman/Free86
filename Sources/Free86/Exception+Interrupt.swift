@@ -19,11 +19,11 @@ enum Exception: Byte {
 }
 
 struct Interrupt: Error, Equatable {
-    var vector: Byte
+    var id: Byte
     var errorCode: DWord
 
     init(_ vector: Byte, errorCode: DWord = 0) {
-        self.vector = vector
+        self.id = vector
         self.errorCode = errorCode
     }
 }

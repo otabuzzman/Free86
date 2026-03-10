@@ -21,9 +21,8 @@ extension Free86 {
         if eflags.isFlagRaised(.IF) {
             let irq = try await INTR.probe()
             if irq {
-                if let id = try await DB8.probe() {
-                    try raiseInterrupt(id, 0, true, false, 0)
-                }
+                let id = try await DB8.probe()
+                try raiseInterrupt(id, 0, true, false, 0)
             }
         }
         cyclesLoop:
