@@ -18,7 +18,7 @@ extension Free86 {
     /// 0x18f  JNLE
     func Ox10f18f() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
-        if canJmp(Int(opcode & 0xf)) {
+        if canJmp(condition: Int(opcode & 0xf)) {
             eip = (eip &+ far &- farStart &+ imm).lowerHalf
             far = 0
             farStart = 0
@@ -49,7 +49,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld16ReadonlyCpl3())
         }
-        if canJmp(Int(opcode & 0xf)) {
+        if canJmp(condition: Int(opcode & 0xf)) {
             regs[modRM.reg].wordX = rm
         }
         return .success(.endFetchLoop)
@@ -92,7 +92,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld16ReadonlyCpl3())
         }
-        aux16_IMUL(regs[reg], rm)
+        aux16Imul(regs[reg], rm)
         regs[reg].wordX = u
         return .success(.endFetchLoop)
     }
@@ -147,12 +147,12 @@ extension Free86 {
         if modRM.mod == 3 {
             imm = DWord(fetch8())
             rM = modRM.rM
-            regs[rM].wordX = aux16_SHRD_SHLD(regs[rM], r, imm)
+            regs[rM].wordX = aux16ShrdShld(regs[rM], r, imm)
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
             rm = try ld16WritableCpl3()
-            u = aux16_SHRD_SHLD(rm, r, imm)
+            u = aux16ShrdShld(rm, r, imm)
             try st16WritableCpl3(word: u)
         }
         return .success(.endFetchLoop)
@@ -165,11 +165,11 @@ extension Free86 {
         operation = (opcode >> 3) & 1
         if modRM.mod == 3 {
             rM = modRM.rM
-            regs[rM].wordX = aux16_SHRD_SHLD(regs[rM], r, regs[.ECX])
+            regs[rM].wordX = aux16ShrdShld(regs[rM], r, regs[.ECX])
         } else {
             segmentTranslation()
             rm = try ld16WritableCpl3()
-            u = aux16_SHRD_SHLD(rm, r, regs[.ECX])
+            u = aux16ShrdShld(rm, r, regs[.ECX])
             try st16WritableCpl3(word: u)
         }
         return .success(.endFetchLoop)
@@ -189,22 +189,24 @@ extension Free86 {
                 imm = DWord(fetch8())
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            aux16_BT(rm, imm)
+            aux16Bt(rm, imm)
             break
         case 5:
+            fallthrough
         case 6:
+            fallthrough
         case 7:
             operation &= 3
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
                 imm = DWord(fetch8())
-                regs[rM] = aux16_BTS_BTR_BTC(regs[rM], imm)
+                regs[rM] = aux16BtsBtrBtc(regs[rM], imm)
             } else {
                 segmentTranslation()
                 imm = DWord(fetch8())
                 rm = try ld16WritableCpl3()
-                u = aux16_BTS_BTR_BTC(rm, imm)
+                u = aux16BtsBtrBtc(rm, imm)
                 try st16WritableCpl3(word: u)
             }
             break
@@ -225,7 +227,7 @@ extension Free86 {
             lax = lax &+ ((r.lowerHalf >> 4) << 1)
             rm = DWord(try ld16ReadonlyCpl3())
         }
-        aux16_BT(rm, r)
+        aux16Bt(rm, r)
         return .success(.endFetchLoop)
     }
     /// 0x1ab  BTS
@@ -238,12 +240,12 @@ extension Free86 {
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            regs[rM].wordX = aux16_BTS_BTR_BTC(regs[rM], r)
+            regs[rM].wordX = aux16BtsBtrBtc(regs[rM], r)
         } else {
             segmentTranslation()
             lax = lax &+ ((r.lowerHalf >> 4) << 1)
             rm = try ld16WritableCpl3()
-            u = aux16_BTS_BTR_BTC(rm, r)
+            u = aux16BtsBtrBtc(rm, r)
             try st16WritableCpl3(word: u)
         }
         return .success(.endFetchLoop)
@@ -260,10 +262,10 @@ extension Free86 {
             rm = DWord(try ld16ReadonlyCpl3())
         }
         r = regs[reg]
-        if opcode & 1 {
-            u = aux16_BSR(r, rm)
+        if (opcode & 1) != 0 {
+            u = aux16Bsr(r, rm)
         } else {
-            u = aux16_BSF(r, rm)
+            u = aux16Bsf(r, rm)
         }
         regs[reg].wordX = u
         return .success(.endFetchLoop)

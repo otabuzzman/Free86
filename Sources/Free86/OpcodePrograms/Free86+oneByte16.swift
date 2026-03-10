@@ -225,7 +225,7 @@ extension Free86 {
     /// 0x147  INC DI
     func Ox147() throws -> Result<Resume, Never> {
         reg = opcode & 7
-        regs[reg].wordX = aux16_INC(regs[reg])
+        regs[reg].wordX = aux16Inc(regs[reg])
         return .success(.endFetchLoop)
     }
     /// 0x148  DEC A
@@ -238,7 +238,7 @@ extension Free86 {
     /// 0x14f  DEC DI
     func Ox14f() throws -> Result<Resume, Never> {
         reg = opcode & 7
-        regs[reg].wordX = aux16_DEC(regs[reg])
+        regs[reg].wordX = aux16Dec(regs[reg])
         return .success(.endFetchLoop)
     }
     /// 0x16b  IMUL
@@ -252,7 +252,7 @@ extension Free86 {
             rm = DWord(try ld16ReadonlyCpl3())
         }
         v = DWord(fetch8()).signExtendedByte
-        aux16_IMUL(rm, v)
+        aux16Imul(rm, v)
         regs[reg].wordX = u
         return .success(.endFetchLoop)
     }
@@ -267,7 +267,7 @@ extension Free86 {
             rm = DWord(try ld16ReadonlyCpl3())
         }
         imm = DWord(fetch16())
-        aux16_IMUL(rm, imm)
+        aux16Imul(rm, imm)
         regs[reg].wordX = u
         return .success(.endFetchLoop)
     }
@@ -341,7 +341,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            aux16_MUL(regs[.EAX], rm)
+            aux16Mul(regs[.EAX], rm)
             regs[.EAX].wordX = u
             regs[.EDX].wordX = u >> 16
             break
@@ -352,7 +352,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            aux16_IMUL(regs[.EAX], rm)
+            aux16Imul(regs[.EAX], rm)
             regs[.EAX].wordX = u
             regs[.EDX].wordX = u >> 16
             break
@@ -363,7 +363,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            aux16_DIV(rm)
+            aux16Div(rm)
             break
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
@@ -372,7 +372,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            aux16_IDIV(rm)
+            aux16Idiv(rm)
             break
         default:
             throw Interrupt(.UD)
@@ -467,12 +467,12 @@ extension Free86 {
     }
     /// 0x160  PUSHA
     func Ox160() throws -> Result<Resume, Never> {
-        aux16_PUSHA()
+        aux16Pusha()
         return .success(.endFetchLoop)
     }
     /// 0x161  POPA
     func Ox161() throws -> Result<Resume, Never> {
-        aux16_POPA()
+        aux16Popa()
         return .success(.endFetchLoop)
     }
     /// 0x18f  POP
@@ -506,12 +506,12 @@ extension Free86 {
     }
     /// 0x1c8  ENTER
     func Ox1c8() throws -> Result<Resume, Never> {
-        aux16_ENTER()
+        aux16Enter()
         return .success(.endFetchLoop)
     }
     /// 0x1c9  LEAVE
     func Ox1c9() throws -> Result<Resume, Never> {
-        aux16_LEAVE()
+        aux16Leave()
         return .success(.endFetchLoop)
     }
     /// 0x106  PUSH
@@ -552,11 +552,11 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].wordX = aux16_INC(regs[rM])
+                regs[rM].wordX = aux16Inc(regs[rM])
             } else {
                 segmentTranslation()
                 rm = try ld16WritableCpl3()
-                u = aux16_INC(rm)
+                u = aux16Inc(rm)
                 try st16WritableCpl3(word: u)
             }
             break
@@ -564,11 +564,11 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].wordX = aux16_DEC(regs[rM])
+                regs[rM].wordX = aux16Dec(regs[rM])
             } else {
                 segmentTranslation()
                 rm = try ld16WritableCpl3()
-                u = aux16_DEC(rm)
+                u = aux16Dec(rm)
                 try st16WritableCpl3(word: u)
             }
             break
@@ -585,6 +585,7 @@ extension Free86 {
             farStart = 0
             break
         case 3:  // CALL
+            fallthrough
         case 5:  // JMP
             if modRM.mod == 3 {
                 throw Interrupt(.UD)
@@ -594,9 +595,9 @@ extension Free86 {
             lax = lax &+ 2
             m16 = try ld16ReadonlyCpl3()
             if operation == 3 {
-                aux_CALLF(0, m16, m, (eip &+ far &- farStart))
+                auxCallf(0, m16, m, (eip &+ far &- farStart))
             } else {
-                aux_JMPF(m16, m)
+                auxJmpf(m16, m)
             }
             break
         case 6:  // PUSH
@@ -694,42 +695,42 @@ extension Free86 {
     }
     /// 0x162  BOUND
     func Ox162() throws -> Result<Resume, Never> {
-        aux16_BOUND()
+        aux16Bound()
         return .success(.endFetchLoop)
     }
     /// 0x1a5  MOVSW/D
     func Ox1a5() throws -> Result<Resume, Never> {
-        aux16_MOVS()
+        aux16Movs()
         return .success(.endFetchLoop)
     }
     /// 0x1a7  CMPSW/D
     func Ox1a7() throws -> Result<Resume, Never> {
-        aux16_CMPS()
+        aux16Cmps()
         return .success(.endFetchLoop)
     }
     /// 0x1ad  LOSW/D
     func Ox1ad() throws -> Result<Resume, Never> {
-        aux16_LODS()
+        aux16Lods()
         return .success(.endFetchLoop)
     }
     /// 0x1af  SCASW/D
     func Ox1af() throws -> Result<Resume, Never> {
-        aux16_SCAS()
+        aux16Scas()
         return .success(.endFetchLoop)
     }
     /// 0x1ab  STOSW/D
     func Ox1ab() throws -> Result<Resume, Never> {
-        aux16_STOS()
+        aux16Stos()
         return .success(.endFetchLoop)
     }
     /// 0x16d  INSW/D
     func Ox16d() throws -> Result<Resume, Never> {
-        aux16_INS()
+        aux16Ins()
         return .success(.endOnInterrupt)
     }
     /// 0x16f  OUTSW/D
     func Ox16f() throws -> Result<Resume, Never> {
-        aux16_OUTS()
+        aux16Outs()
         return .success(.endOnInterrupt)
     }
     /// 0x1e5  IN AX,

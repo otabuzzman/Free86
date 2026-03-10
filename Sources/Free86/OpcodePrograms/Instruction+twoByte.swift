@@ -66,7 +66,7 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         let modRM = try parent.ld8ReadonlyCpl3()
-        _length += modRMBytesNumber(modRM)
+        _length += try modRMBytesNumber(modRM)
         if _length > 15 {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -122,7 +122,7 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         let modRM = try parent.ld8ReadonlyCpl3()
-        _length += modRMBytesNumber(modRM)
+        _length += try modRMBytesNumber(modRM)
         if _length > 15 {
             throw Interrupt(.GP, errorCode: 0)
         }

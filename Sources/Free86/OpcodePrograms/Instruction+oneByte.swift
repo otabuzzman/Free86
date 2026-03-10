@@ -15,7 +15,7 @@ extension Instruction {
         }
         parent.lax = parent.eipLinear &+ _length
         _length += 1
-        opcode = try parent.ld8ReadonlyCpl3()
+        opcode = DWord(try parent.ld8ReadonlyCpl3())
         return .success(.goOnFetching)
     }
     /// 0x66  operand-size override prefix
@@ -32,7 +32,7 @@ extension Instruction {
         }
         parent.lax = parent.eipLinear &+ _length
         _length += 1
-        opcode = try parent.ld8ReadonlyCpl3()
+        opcode = DWord(try parent.ld8ReadonlyCpl3())
         return .success(.goOnFetching)
     }
     /// 0x67  address-size override prefix
@@ -47,7 +47,7 @@ extension Instruction {
         }
         parent.lax = parent.eipLinear &+ _length
         _length += 1
-        opcode = try parent.ld8ReadonlyCpl3()
+        opcode = DWord(try parent.ld8ReadonlyCpl3())
         return .success(.goOnFetching)
     }
     /// 0x00  ADD
@@ -119,7 +119,7 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         let modRM = try parent.ld8ReadonlyCpl3()
-        _length += modRMBytesNumber(modRM)
+        _length += try modRMBytesNumber(modRM)
         if _length > 15 {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -311,7 +311,7 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         let modRM = try parent.ld8ReadonlyCpl3()
-        _length += modRMBytesNumber(modRM)
+        _length += try modRMBytesNumber(modRM)
         if _length > 15 {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -335,7 +335,7 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         let modRM = try parent.ld8ReadonlyCpl3()
-        _length += modRMBytesNumber(modRM)
+        _length += try modRMBytesNumber(modRM)
         if _length > 15 {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -394,7 +394,7 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         let modRM = try parent.ld8ReadonlyCpl3()
-        _length += modRMBytesNumber(modRM)
+        _length += try modRMBytesNumber(modRM)
         if _length > 15 {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -414,7 +414,7 @@ extension Instruction {
         parent.lax = parent.eipLinear &+ _length
         _length += 1
         let modRM = try parent.ld8ReadonlyCpl3()
-        _length += modRMBytesNumber(modRM)
+        _length += try modRMBytesNumber(modRM)
         if _length > 15 {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -438,7 +438,7 @@ extension Instruction {
         }
         parent.lax = parent.eipLinear &+ _length
         _length += 1
-        opcode = try parent.ld8ReadonlyCpl3()
+        opcode = DWord(try parent.ld8ReadonlyCpl3())
         return try twoByteDecoder[Int(opcode)]()
     }
 }

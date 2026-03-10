@@ -120,7 +120,7 @@ extension Free86 {
             regs[rM & 3] = (regs[rM & 3] & ~(0xff << hL)) | ((r & 0xff) << hL)
         } else {
             segmentTranslation()
-            try st8WritableCpl3(byte: (r)
+            try st8WritableCpl3(byte: (r))
         }
         return .success(.endFetchLoop)
     }
@@ -180,7 +180,7 @@ extension Free86 {
     /// 0xa2  MOV ,AL
     func Oxa2() throws -> Result<Resume, Never> {
         try ldMemoryOffset(true)
-        try st8WritableCpl3(byte: (regs[.EAX])
+        try st8WritableCpl3(byte: (regs[.EAX]))
         return .success(.endFetchLoop)
     }
     /// 0xa3  MOV ,AX
@@ -198,7 +198,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
-            try st8WritableCpl3(byte: (imm)
+            try st8WritableCpl3(byte: (imm))
         }
         return .success(.endFetchLoop)
     }
@@ -228,7 +228,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld16ReadonlyCpl3())
         }
-        let sreg = segmentRegister.Name(rawValue: reg)!
+        let sreg = SegmentRegister.Name(rawValue: reg)!
         setSegmentRegister(sreg, rm)
         return .success(.endFetchLoop)
     }
@@ -264,7 +264,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             rm = try ld8WritableCpl3()
-            try st8WritableCpl3(byte: ((regs[reg & 3] >> ((reg & 4) << 1)))
+            try st8WritableCpl3(byte: ((regs[reg & 3] >> ((reg & 4) << 1))))
         }
         regs[reg].byteLH = rm
         return .success(.endFetchLoop)
@@ -306,20 +306,19 @@ extension Free86 {
         if ipr.isFlagRaised(.addressSizeOverride) {
             lax &= 0xffff
         }
-        sreg = ipr.segmentRegister
-        lax = segs[sreg].shadow.base &+ lax
+        lax = segs[ipr.segmentRegister].shadow.base &+ lax
         m = DWord(try ld8ReadonlyCpl3())
         regs[.EAX].byteLH = m
         return .success(.endFetchLoop)
     }
     /// 0xc4  LES
     func Oxc4() throws -> Result<Resume, Never> {
-        try ldFarPointer(0)
+        try ldFarPointer(.ES)
         return .success(.endFetchLoop)
     }
     /// 0xc5  LDS
     func Oxc5() throws -> Result<Resume, Never> {
-        try ldFarPointer(3)
+        try ldFarPointer(.DS)
         return .success(.endFetchLoop)
     }
     /// 0x00  ADD
@@ -344,7 +343,7 @@ extension Free86 {
             if operation != 7 {
                 rm = try ld8WritableCpl3()
                 u = calculate8(rm, r)
-                try st8WritableCpl3(byte: (u)
+                try st8WritableCpl3(byte: (u))
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -555,7 +554,7 @@ extension Free86 {
             if operation != 7 {
                 rm = try ld8WritableCpl3()
                 u = calculate8(rm, imm)
-                try st8WritableCpl3(byte: (u)
+                try st8WritableCpl3(byte: (u))
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -677,7 +676,7 @@ extension Free86 {
             rm = try ldReadonlyCpl3()
         }
         imm = fetch()
-        aux_IMUL(rm, imm)
+        auxImul(rm, imm)
         regs[reg] = u
         return .success(.endFetchLoop)
     }
@@ -692,7 +691,7 @@ extension Free86 {
             rm = try ldReadonlyCpl3()
         }
         v = DWord(fetch8()).signExtendedByte
-        aux_IMUL(rm, v)
+        auxImul(rm, v)
         regs[reg] = u
         return .success(.endFetchLoop)
     }
@@ -766,7 +765,7 @@ extension Free86 {
             } else {
                 segmentTranslation()
                 rm = try ld8WritableCpl3()
-                try st8WritableCpl3(byte: (~rm)
+                try st8WritableCpl3(byte: (~rm))
             }
             break
         case 3:  // NEG
@@ -779,7 +778,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = try ld8WritableCpl3()
                 u = calculate8(0, rm)
-                try st8WritableCpl3(byte: (u)
+                try st8WritableCpl3(byte: (u))
             }
             break
         case 4:  // MUL AL/X
@@ -790,7 +789,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
-            aux8_MUL(regs[.EAX], rm)
+            aux8Mul(regs[.EAX], rm)
             regs[.EAX].wordX = u
             break
         case 5:  // IMUL AL/X
@@ -801,7 +800,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
-            aux8_IMUL(regs[.EAX], rm)
+            aux8Imul(regs[.EAX], rm)
             regs[.EAX].wordX = u
             break
         case 6:  // DIV AL/X
@@ -812,7 +811,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
-            aux8_DIV(rm)
+            aux8Div(rm)
             break
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
@@ -822,7 +821,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
-            aux8_IDIV(rm)
+            aux8Idiv(rm)
             break
         default:
             throw Interrupt(.UD)
@@ -877,7 +876,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = try ldReadonlyCpl3()
             }
-            aux_MUL(regs[.EAX], rm)
+            auxMul(regs[.EAX], rm)
             regs[.EAX] = u
             regs[.EDX] = v
             break
@@ -888,7 +887,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = try ldReadonlyCpl3()
             }
-            aux_IMUL(regs[.EAX], rm)
+            auxImul(regs[.EAX], rm)
             regs[.EAX] = u
             regs[.EDX] = v
             break
@@ -899,7 +898,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = try ldReadonlyCpl3()
             }
-            aux_DIV(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
+            auxDiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
             regs[.EAX] = u
             regs[.EDX] = v
             break
@@ -910,7 +909,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = try ldReadonlyCpl3()
             }
-            aux_IDIV(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
+            auxIdiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
             regs[.EAX] = u
             regs[.EDX] = v
             break
@@ -932,7 +931,7 @@ extension Free86 {
             imm = DWord(fetch8())
             rm = try ld8WritableCpl3()
             u = shift8(rm, imm)
-            try st8WritableCpl3(byte: (u)
+            try st8WritableCpl3(byte: (u))
         }
         return .success(.endFetchLoop)
     }
@@ -964,7 +963,7 @@ extension Free86 {
             segmentTranslation()
             rm = try ld8WritableCpl3()
             u = shift8(rm, 1)
-            try st8WritableCpl3(byte: (u)
+            try st8WritableCpl3(byte: (u))
         }
         return .success(.endFetchLoop)
     }
@@ -994,7 +993,7 @@ extension Free86 {
             segmentTranslation()
             rm = try ld8WritableCpl3()
             u = shift8(rm, regs[.ECX] & 0xff)
-            try st8WritableCpl3(byte: (u)
+            try st8WritableCpl3(byte: (u))
         }
         return .success(.endFetchLoop)
     }
@@ -1056,30 +1055,30 @@ extension Free86 {
             m = try ldReadonlyCpl3()
             regs[.ESP] = lax &+ 4
         } else {
-            m = pop()
+            m = try pop()
         }
         regs[opcode & 7] = m
         return .success(.endFetchLoop)
     }
     /// 0x60  PUSHA
     func Ox60() throws -> Result<Resume, Never> {
-        aux_PUSHA()
+        try auxPusha()
         return .success(.endFetchLoop)
     }
     /// 0x61  POPA
     func Ox61() throws -> Result<Resume, Never> {
-        aux_POPA()
+        try auxPopa()
         return .success(.endFetchLoop)
     }
     /// 0x8f  POP
     func Ox8f() throws -> Result<Resume, Never> {
         modRM = fetch8()
         if modRM.mod == 3 {
-            m = pop()
+            m = try pop()
             regs[modRM.rM] = m
         } else {
             u = regs[.ESP]
-            m = pop()
+            m = try pop()
             v = regs[.ESP]
             segmentTranslation()
             regs[.ESP] = u
@@ -1096,7 +1095,7 @@ extension Free86 {
             try stWritableCpl3(dword: imm)
             regs[.ESP] = lax
         } else {
-            push(imm)
+            try push(imm)
         }
         return .success(.endFetchLoop)
     }
@@ -1108,13 +1107,13 @@ extension Free86 {
             try stWritableCpl3(dword: u)
             regs[.ESP] = lax
         } else {
-            push(u)
+            try push(u)
         }
         return .success(.endFetchLoop)
     }
     /// 0xc8  ENTER
     func Oxc8() throws -> Result<Resume, Never> {
-        aux_ENTER()
+        try auxEnter()
         return .success(.endFetchLoop)
     }
     /// 0xc9  LEAVE
@@ -1124,7 +1123,7 @@ extension Free86 {
             regs[.EBP] = try ldReadonlyCpl3()
             regs[.ESP] = lax &+ 4
         } else {
-            aux_LEAVE()
+            try auxLeave()
         }
         return .success(.endFetchLoop)
     }
@@ -1133,9 +1132,9 @@ extension Free86 {
         if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
             throw Interrupt(.GP, errorCode: 0)
         }
-        u = get_EFLAGS() & ~(0x00010000 | 0x00020000)
+        u = getEflags() & ~(0x00010000 | 0x00020000)
         if !ipr.isFlagRaised(.operandSizeOverride) {
-            push(u)
+            try push(u)
         } else {
             push16(u)
         }
@@ -1147,7 +1146,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         if !ipr.isFlagRaised(.operandSizeOverride) {
-            m = pop()
+            m = try pop()
             u = 0xffffffff
         } else {
             m = pop16()
@@ -1157,11 +1156,11 @@ extension Free86 {
         if cpl == 0 {
             v |= 0x00000200 | 0x00003000
         } else {
-            if cpl <= iopl {
+            if cpl <= eflags.iopl {
                 v |= 0x00000200
             }
         }
-        set_EFLAGS(m, v & u)
+        setEflags(m, v & u)
         return .success(.endOnInterrupt)
     }
     /// 0x06  PUSH
@@ -1176,7 +1175,7 @@ extension Free86 {
     /// 0x17  POP
     /// 0x1f  POP
     func Ox1f() throws -> Result<Resume, Never> {
-        m = pop()
+        m = try pop()
         let sreg = SegmentRegister.Name(rawValue: opcode >> 3)!
         setSegmentRegister(sreg, Word(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
@@ -1201,24 +1200,24 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].byteLH = aux8_INC(regs[rM & 3] >> ((rM & 4) << 1))
+                regs[rM].byteLH = aux8Inc(regs[rM & 3] >> ((rM & 4) << 1))
             } else {
                 segmentTranslation()
                 rm = try ld8WritableCpl3()
-                u = aux8_INC(rm)
-                try st8WritableCpl3(byte: (u)
+                u = aux8Inc(rm)
+                try st8WritableCpl3(byte: (u))
             }
             break
         case 1:  // DEC
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].byteLH = aux8_DEC(regs[rM & 3] >> ((rM & 4) << 1))
+                regs[rM].byteLH = aux8Dec(regs[rM & 3] >> ((rM & 4) << 1))
             } else {
                 segmentTranslation()
                 rm = try ld8WritableCpl3()
-                u = aux8_DEC(rm)
-                try st8WritableCpl3(byte: (u)
+                u = aux8Dec(rm)
+                try st8WritableCpl3(byte: (u))
             }
             break
         default:
@@ -1300,6 +1299,7 @@ extension Free86 {
             farStart = 0
             break
         case 3:  // CALLF
+            fallthrough
         case 5:  // JMPF
             if modRM.mod == 3 {
                 throw Interrupt(.UD)
@@ -1309,9 +1309,9 @@ extension Free86 {
             lax = lax &+ 4
             m16 = try ld16ReadonlyCpl3()
             if operation == 3 {
-                aux_CALLF(1, m16, m, (eip &+ far &- farStart))
+                auxCallf(true, m16, m, (eip &+ far &- farStart))
             } else {
-                aux_JMPF(m16, m)
+                auxJmpf(m16, m)
             }
             break
         case 4:  // JMP
@@ -1365,7 +1365,7 @@ extension Free86 {
             imm = DWord(fetch16())
         }
         imm16 = DWord(fetch16())
-        aux_JMPF(imm16, imm)
+        auxJmpf(imm16, imm)
         return .success(.endFetchLoop)
     }
     /// 0x70  JO
@@ -1450,7 +1450,7 @@ extension Free86 {
     }
     /// 0x78  JS
     func Ox78() throws -> Result<Resume, Never> {
-        if osm == 24 ? ((osmSrc >> 7) & 1) : (osmDst & 0x80000000 ? 1 : 0) {
+        if (osm == 24 ? (osmSrc >> 7) & 1 : (osmDst >> 31) & 1) != 0 {
             u = DWord(fetch8()).signExtendedByte
             far = far &+ u
         } else {
@@ -1460,7 +1460,7 @@ extension Free86 {
     }
     /// 0x79  JNS
     func Ox79() throws -> Result<Resume, Never> {
-        if (osm == 24 ? ((osmSrc >> 7) & 1) : (osmDst & 0x80000000 ? 1 : 0)) == 0 {
+        if (osm == 24 ? (osmSrc >> 7) & 1 : (osmDst >> 31) & 1) == 0 {
             u = DWord(fetch8()).signExtendedByte
             far = far &+ u
         } else {
@@ -1533,16 +1533,21 @@ extension Free86 {
     /// 0xe2  LOOP
     func Oxe2() throws -> Result<Resume, Never> {
         w = DWord(fetch8()).signExtendedByte
-        u = (regs[.ECX] &- 1) & ipr.operandSizeMask
-        regs[.ECX] = (regs[.ECX] & ~ipr.operandSizeMask) | u
-        if (opcode & 3) == 0){
-            v = osmDst != 0 ? 1 : 0
-        } else if (opcode & 3) == 1 {
-            v = osmDst == 0 ? 1 : 0
-        } else {
-            v = 1
+        u = (regs[.ECX] &- 1) & ipr.addressSizeMask
+        regs[.ECX] = (regs[.ECX] & ~ipr.addressSizeMask) | u
+        let b: Bool
+        switch opcode & 3 {
+        case 0:
+            b = osmDst != 0
+            break
+        case 1:
+            b = osmDst == 0
+            break
+        default:
+            b = true
+            break
         }
-        if u && v {
+        if (u != 0) && b {
             if ipr.isFlagRaised(.operandSizeOverride) {
                 eip = (eip &+ far &- farStart &+ w).lowerHalf
                 far = 0
@@ -1556,7 +1561,7 @@ extension Free86 {
     /// 0xe3  JCXZ
     func Oxe3() throws -> Result<Resume, Never> {
         u = DWord(fetch8()).signExtendedByte
-        if (regs[.ECX] & ipr.operandSizeMask) == 0 {
+        if (regs[.ECX] & ipr.addressSizeMask) == 0 {
             if ipr.isFlagRaised(.operandSizeOverride) {
                 eip = (eip &+ far &- farStart &+ u).lowerHalf
                 far = 0
@@ -1584,7 +1589,7 @@ extension Free86 {
             m = try ldReadonlyCpl3()
             regs[.ESP] = regs[.ESP] &+ 4
         } else {
-            m = pop()
+            m = try pop()
         }
         eip = m
         far = 0
@@ -1600,7 +1605,7 @@ extension Free86 {
             try stWritableCpl3(dword: u)
             regs[.ESP] = lax
         } else {
-            push(u)
+            try push(u)
         }
         far = far &+ imm
         return .success(.endFetchLoop)
@@ -1614,23 +1619,23 @@ extension Free86 {
             imm = DWord(fetch16())
         }
         imm16 = DWord(fetch16())
-        aux_CALLF(u, imm16, imm, (eip &+ far &- farStart))
+        try auxCallf(u, imm16, imm, (eip &+ far &- farStart))
         return .success(.endOnInterrupt)
     }
     /// 0xca  RET
     func Oxca() throws -> Result<Resume, Never> {
         u = DWord(fetch16()).signExtendedWord
-        aux_RETF(!ipr.isFlagRaised(.operandSizeOverride), u)
+        try auxRetf(!ipr.isFlagRaised(.operandSizeOverride), u)
         return .success(.endOnInterrupt)
     }
     /// 0xcb  RET
     func Oxcb() throws -> Result<Resume, Never> {
-        aux_RETF(!ipr.isFlagRaised(.operandSizeOverride), 0)
+        try auxRetf(!ipr.isFlagRaised(.operandSizeOverride), 0)
         return .success(.endOnInterrupt)
     }
     /// 0xcf  IRET
     func Oxcf() throws -> Result<Resume, Never> {
-        aux_IRET(!ipr.isFlagRaised(.operandSizeOverride))
+        try auxIret(!ipr.isFlagRaised(.operandSizeOverride))
         return .success(.endOnInterrupt)
     }
     /// 0x90  NOP
@@ -1646,7 +1651,6 @@ extension Free86 {
     /// 0xcd  INT
     func Oxcd() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        iopl = (eflags >> 12) & 3
         if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
             throw Interrupt(.GP, errorCode: 0)
         }
@@ -1664,26 +1668,26 @@ extension Free86 {
     }
     /// 0x62  BOUND
     func Ox62() throws -> Result<Resume, Never> {
-        aux_BOUND()
+        try auxBound()
         return .success(.endFetchLoop)
     }
     /// 0xf5  CMC
     func Oxf5() throws -> Result<Resume, Never> {
-        osmSrc = compile_EFLAGS() ^ 0x0001
+        osmSrc = compileEflags() ^ 0x0001
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }
     /// 0xf8  CLC
     func Oxf8() throws -> Result<Resume, Never> {
-        osmSrc = compile_EFLAGS() & ~0x0001
+        osmSrc = compileEflags() & ~0x0001
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }
     /// 0xf9  STC
     func Oxf9() throws -> Result<Resume, Never> {
-        osmSrc = compile_EFLAGS() | 0x0001
+        osmSrc = compileEflags() | 0x0001
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
@@ -1723,7 +1727,7 @@ extension Free86 {
     }
     /// 0x9f  LAHF
     func Ox9f() throws -> Result<Resume, Never> {
-        u = get_EFLAGS()
+        u = getEflags()
         regs[.ESP].byteLH = u  // actually EAX
         return .success(.endFetchLoop)
     }
@@ -1737,72 +1741,72 @@ extension Free86 {
     }
     /// 0xa4  MOVSB
     func Oxa4() throws -> Result<Resume, Never> {
-        aux_MOVSB()
+        try auxMovsb()
         return .success(.endFetchLoop)
     }
     /// 0xa5  MOVSW/D
     func Oxa5() throws -> Result<Resume, Never> {
-        ipr.isFlagRaised(.operandSizeOverride) ? aux_MOVSW() : aux_MOVSD()
+        ipr.isFlagRaised(.operandSizeOverride) ? try auxMovsw() : try auxMovsd()
         return .success(.endFetchLoop)
     }
     /// 0xaa  STOSB
     func Oxaa() throws -> Result<Resume, Never> {
-        aux_STOSB()
+        try auxStosb()
         return .success(.endFetchLoop)
     }
     /// 0xab  STOSW/D
     func Oxab() throws -> Result<Resume, Never> {
-        ipr.isFlagRaised(.operandSizeOverride) ? aux_STOSW() : aux_STOSD()
+        ipr.isFlagRaised(.operandSizeOverride) ? try auxStosw() : try auxStosd()
         return .success(.endFetchLoop)
     }
     /// 0xa6  CMPSB
     func Oxa6() throws -> Result<Resume, Never> {
-        aux_CMPSB()
+        try auxCmpsb()
         return .success(.endFetchLoop)
     }
     /// 0xa7  CMPSW/D
     func Oxa7() throws -> Result<Resume, Never> {
-        ipr.isFlagRaised(.operandSizeOverride) ? aux_CMPSW() : aux_CMPSD()
+        ipr.isFlagRaised(.operandSizeOverride) ? try auxCmpsw() : try auxCmpsd()
         return .success(.endFetchLoop)
     }
     /// 0xac  LOSB
     func Oxac() throws -> Result<Resume, Never> {
-        aux_LODSB()
+        try auxLodsb()
         return .success(.endFetchLoop)
     }
     /// 0xad  LOSW/D
     func Oxad() throws -> Result<Resume, Never> {
-        ipr.isFlagRaised(.operandSizeOverride) ? aux_LODSW() : aux_LODSD()
+        ipr.isFlagRaised(.operandSizeOverride) ? try auxLodsw() : try auxLodsd()
         return .success(.endFetchLoop)
     }
     /// 0xae  SCASB
     func Oxae() throws -> Result<Resume, Never> {
-        aux_SCASB()
+        try auxScasb()
         return .success(.endFetchLoop)
     }
     /// 0xaf  SCASW/D
     func Oxaf() throws -> Result<Resume, Never> {
-        ipr.isFlagRaised(.operandSizeOverride) ? aux_SCASW() : aux_SCASD()
+        ipr.isFlagRaised(.operandSizeOverride) ? try auxScasw() : try auxScasd()
         return .success(.endFetchLoop)
     }
     /// 0x6c  INSB
     func Ox6c() throws -> Result<Resume, Never> {
-        aux_INSB()
+        try auxInsb()
         return .success(.endOnInterrupt)
     }
     /// 0x6d  INSW/D
     func Ox6d() throws -> Result<Resume, Never> {
-        ipr.isFlagRaised(.operandSizeOverride) ? aux_INSW() : aux_INSD()
+        ipr.isFlagRaised(.operandSizeOverride) ? try auxInsw() : try auxInsd()
         return .success(.endOnInterrupt)
     }
     /// 0x6e  OUTSB
     func Ox6e() throws -> Result<Resume, Never> {
-        aux_OUTSB()
+        try auxOutsb()
         return .success(.endOnInterrupt)
     }
     /// 0x6f  OUTSW/D
     func Ox6f() throws -> Result<Resume, Never> {
-        ipr.isFlagRaised(.operandSizeOverride) ? aux_OUTSW() : aux_OUTSD()
+        ipr.isFlagRaised(.operandSizeOverride) ? try auxOutsw() : try auxOutsd()
         return .success(.endOnInterrupt)
     }
     /// 0xd8  ESC (80387) 11011XXX
@@ -1836,7 +1840,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         imm = DWord(fetch8())
-        regs[.EAX].byteLH = io?[imm]
+        regs[.EAX].byteLH = io?[imm] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0xe5  IN AX,
@@ -1845,7 +1849,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         imm = DWord(fetch8())
-        regs[.EAX] = io?[imm]
+        regs[.EAX] = io?[imm] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0xe6  OUT ,AL
@@ -1871,7 +1875,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        regs[.EAX].byteLH = io?[regs[.EDX].lowerHalf]
+        regs[.EAX].byteLH = io?[regs[.EDX].lowerHalf] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0xed  IN AX,DX
@@ -1879,7 +1883,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        regs[.EAX] = io?[regs[.EDX].lowerHalf]
+        regs[.EAX] = io?[regs[.EDX].lowerHalf] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0xee  OUT DX,AL
@@ -1900,39 +1904,39 @@ extension Free86 {
     }
     /// 0x27  DAA
     func Ox27() throws -> Result<Resume, Never> {
-        aux_DAA()
+        auxDaa()
         return .success(.endFetchLoop)
     }
     /// 0x2f  DAS
     func Ox2f() throws -> Result<Resume, Never> {
-        aux_DAS()
+        auxDas()
         return .success(.endFetchLoop)
     }
     /// 0x37  AAA
     func Ox37() throws -> Result<Resume, Never> {
-        aux_AAA()
+        auxAaa()
         return .success(.endFetchLoop)
     }
     /// 0x3f  AAS
     func Ox3f() throws -> Result<Resume, Never> {
-        aux_AAS()
+        auxAas()
         return .success(.endFetchLoop)
     }
     /// 0xd4  AAM
     func Oxd4() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        aux_AAM(imm)
+        try auxAam(imm)
         return .success(.endFetchLoop)
     }
     /// 0xd5  AAD
     func Oxd5() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        aux_AAD(imm)
+        auxAad(imm)
         return .success(.endFetchLoop)
     }
     /// 0x63  ARPL
     func Ox63() throws -> Result<Resume, Never> {
-        aux_ARPL()
+        try auxArpl()
         return .success(.endFetchLoop)
     }
     /// 0xd6  -

@@ -1,9 +1,10 @@
-struct Instruction {
+class Instruction {
     var parent: Free86
     var opcode: DWord = 0, ipr: DWord = 0
     var stride: DWord = 4, _length: DWord = 1
+
     @discardableResult
-    mutating func length() throws -> Int {
+    func length() throws -> Int {
         opcode = parent.opcode
         ipr = parent.iprDefault
         stride = ipr.isFlagRaised(.addressSizeOverride) ? 2 : 4
@@ -25,7 +26,8 @@ struct Instruction {
         }
         return Int(_length)
     }
-    mutating func modRMBytesNumber(_ modRM: ModRM) throws -> DWord {
+
+    func modRMBytesNumber(_ modRM: ModRM) throws -> DWord {
         var length: DWord = 0
         if ipr.isFlagRaised(.operandSizeOverride) {
             switch modRM.mod {
@@ -115,4 +117,8 @@ struct Instruction {
         /* 0x0e0 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid,
         /* 0x0f0 */ invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid
     ]
+    
+    init(parent: Free86) {
+        self.parent = parent
+    }
 }
