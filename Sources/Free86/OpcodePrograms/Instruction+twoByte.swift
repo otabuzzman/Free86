@@ -60,6 +60,16 @@ extension Instruction {
     /// 0xc0  XADD (80486)
     /// 0xc1  XADD (80486)
     func Ox0fc1() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        let modRM = try parent.ld8ReadonlyCpl3()
+        _length += modRMBytesNumber(modRM)
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x06  CLTS
@@ -97,12 +107,29 @@ extension Instruction {
     /// 0x8e  JLE
     /// 0x8f  JNLE
     func Ox0f8f() throws -> Result<Resume, Never> {
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xa4  SHLD
     /// 0xac  SHRD
     /// 0xba  G8 (-, -, -, -, BT, BTS, BTR, BTC)
     func Ox0fba() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        let modRM = try parent.ld8ReadonlyCpl3()
+        _length += modRMBytesNumber(modRM)
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        _length += 1
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x04  -
@@ -221,6 +248,6 @@ extension Instruction {
     /// 0xc6  -
     /// 0xc7  -
     func Ox0fc7() throws -> Result<Resume, Never> {
-        return .success(.endFetchLoop)
+        throw Interrupt(.UD)
     }
 }

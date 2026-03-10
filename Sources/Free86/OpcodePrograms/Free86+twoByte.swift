@@ -17,6 +17,10 @@ extension Free86 {
     /// 0x8e  JLE
     /// 0x8f  JNLE
     func Ox0f8f() throws -> Result<Resume, Never> {
+        imm = fetch()
+        if canJmp(Int(opcode & 0xf)) {
+            far = far &+ imm
+        }
         return .success(.endFetchLoop)
     }
     /// 0x90  SETO
@@ -36,149 +40,579 @@ extension Free86 {
     /// 0x9e  SETLE
     /// 0x9f  SETNLE
     func Ox0f9f() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        u = canJmp(Int(opcode & 0xf)) ? 1 : 0
+        if modRM.mod == 3 {
+            regs[modRM.rM].byteLH = u
+        } else {
+            segmentTranslation()
+            try st8WritableCpl3(byte: (u)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x40  CMOVx conditional move (80486) - overflow (OF == 1)
-    /// 0x41  CMOVx   - not overflow (OF == 0)
-    /// 0x42  CMOVx   - below/not above or equal/carry (CF == 1)
-    /// 0x43  CMOVx   - not below/above or equal/not carry (CF == 0)
-    /// 0x44  CMOVx   - zero/equal (ZF == 1)
-    /// 0x45  CMOVx   - not zero/not equal (ZF == 0)
-    /// 0x46  CMOVx   - below or equal/not above (CF == 1 OR ZF == 1)
-    /// 0x47  CMOVx   - not below or equal/above (CF == 0 AND ZF == 0)
-    /// 0x48  CMOVx   - sign (SF == 1)
-    /// 0x49  CMOVx   - not sign (SF == 0)
-    /// 0x4a  CMOVx   - parity/parity even (PF == 1)
-    /// 0x4b  CMOVx   - not parity/parity odd (PF == 0)
-    /// 0x4c  CMOVx   - less/not greater (SF != OF)
-    /// 0x4d  CMOVx   - not less/greater or equal (SF == OF)
-    /// 0x4e  CMOVx   - less or equal/not greater ((ZF == 1) OR (SF != OF))
-    /// 0x4f  CMOVx   - not less nor equal/greater ((ZF == 0) AND (SF == OF))
+    /// 0x41  CMOVx - not overflow (OF == 0)
+    /// 0x42  CMOVx - below/not above or equal/carry (CF == 1)
+    /// 0x43  CMOVx - not below/above or equal/not carry (CF == 0)
+    /// 0x44  CMOVx - zero/equal (ZF == 1)
+    /// 0x45  CMOVx - not zero/not equal (ZF == 0)
+    /// 0x46  CMOVx - below or equal/not above (CF == 1 OR ZF == 1)
+    /// 0x47  CMOVx - not below or equal/above (CF == 0 AND ZF == 0)
+    /// 0x48  CMOVx - sign (SF == 1)
+    /// 0x49  CMOVx - not sign (SF == 0)
+    /// 0x4a  CMOVx - parity/parity even (PF == 1)
+    /// 0x4b  CMOVx - not parity/parity odd (PF == 0)
+    /// 0x4c  CMOVx - less/not greater (SF != OF)
+    /// 0x4d  CMOVx - not less/greater or equal (SF == OF)
+    /// 0x4e  CMOVx - less or equal/not greater ((ZF == 1) OR (SF != OF))
+    /// 0x4f  CMOVx - not less nor equal/greater ((ZF == 0) AND (SF == OF))
     func Ox0f4f() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        if modRM.mod == 3 {
+            rm = regs[modRM.rM]
+        } else {
+            segmentTranslation()
+            rm = try ldReadonlyCpl3()
+        }
+        if canJmp(Int(opcode & 0xf)) {
+            regs[modRM.reg] = rm
+        }
         return .success(.endFetchLoop)
     }
     /// 0xb6  MOVZX
     func Ox0fb6() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            rM = modRM.rM
+            rm = (regs[rM & 3] >> ((rM & 4) << 1)) & 0xff
+        } else {
+            segmentTranslation()
+            rm = DWord(try ld8ReadonlyCpl3())
+        }
+        regs[reg] = rm
         return .success(.endFetchLoop)
     }
     /// 0xb7  MOVZX
     func Ox0fb7() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            rm = regs[modRM.rM].lowerHalf
+        } else {
+            segmentTranslation()
+            rm = DWord(try ld16ReadonlyCpl3())
+        }
+        regs[reg] = rm
         return .success(.endFetchLoop)
     }
     /// 0xbe  MOVSX
     func Ox0fbe() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            rM = modRM.rM
+            rm = regs[rM & 3] >> ((rM & 4) << 1)
+        } else {
+            segmentTranslation()
+            rm = DWord(try ld8ReadonlyCpl3())
+        }
+        regs[reg] = rm.signExtendedByte
         return .success(.endFetchLoop)
     }
     /// 0xbf  MOVSX
     func Ox0fbf() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            rm = regs[modRM.rM]
+        } else {
+            segmentTranslation()
+            rm = DWord(try ld16ReadonlyCpl3())
+        }
+        regs[reg] = rm.signExtendedWord
         return .success(.endFetchLoop)
     }
     /// 0x00  G6 (SLDT, STR, LLDT, LTR, VERR, VERW, -)
     func Ox0f00() throws -> Result<Resume, Never> {
+        if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
+            throw Interrupt(.UD)
+        }
+        modRM = fetch8()
+        operation = modRM.opcode
+        switch operation {
+        case 0:  // SLDT
+        case 1:  // STR
+            if operation == 0 {
+                u = ldt.selector
+            } else {
+                u = tr.selector
+            }
+            if modRM.mod == 3 {
+                regs[modRM.rM].wordX = u
+            } else {
+                segmentTranslation()
+                try st16WritableCpl3(word: u)
+            }
+            break
+        case 2:  // LDTR
+        case 3:  // LTR
+            if cpl != 0 {
+                throw Interrupt(.GP, errorCode: 0)
+            }
+            if modRM.mod == 3 {
+                rm = regs[modRM.rM].lowerHalf
+            } else {
+                segmentTranslation()
+                rm = DWord(try ld16ReadonlyCpl3())
+            }
+            if operation == 2 {
+                aux_LDTR(rm)
+            } else {
+                aux_LTR(rm)
+            }
+            break
+        case 4:  // VERR
+        case 5:  // VERW
+            if modRM.mod == 3 {
+                rm = regs[modRM.rM].lowerHalf
+            } else {
+                segmentTranslation()
+                rm = DWord(try ld16ReadonlyCpl3())
+            }
+            aux_VERR_VERW(rm, operation & 1)
+            break
+        default:
+            throw Interrupt(.UD)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x01  G7 (SGDT, SIDT, LGDT, LIDT, SMSW, -, LMSW, -)
     func Ox0f01() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        operation = modRM.opcode
+        switch operation {
+        case 2:  // LGDT
+        case 3:  // LIDT
+            if modRM.mod == 3 {
+                throw Interrupt(.UD)
+            }
+            if cpl != 0 {
+                throw Interrupt(.GP, errorCode: 0)
+            }
+            segmentTranslation()
+            m16 = try ld16ReadonlyCpl3()
+            lax += 2
+            m = try ldReadonlyCpl3()
+            if operation == 2 {
+                gdt.shadow.base = m
+                gdt.shadow.limit = m16
+            } else {
+                idt.shadow.base = m
+                idt.shadow.limit = m16
+            }
+            break
+        case 7:  // INVLPG (80486)
+            if cpl != 0 {
+                throw Interrupt(.GP, errorCode: 0)
+            }
+            if modRM.mod == 3 {
+                throw Interrupt(.UD)
+            }
+            segmentTranslation()
+            tlbFlush(pageContainingAddress: lax)
+            break
+        default:
+            throw Interrupt(.UD)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x02  LAR
     /// 0x03  LSL
     func Ox0f03() throws -> Result<Resume, Never> {
+        aux_LAR_LSL(!ipr.isFlagRaised(.operandSizeOverride), opcode & 1)
         return .success(.endFetchLoop)
     }
     /// 0x20  MOV
     func Ox0f20() throws -> Result<Resume, Never> {
+        if cpl != 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        modRM = fetch8()
+        if modRM.mod != 3 {
+            throw Interrupt(.UD)
+        }
+        switch modRM.reg {
+        case 0:
+            u = cr0
+            break
+        case 2:
+            u = cr2
+            break
+        case 3:
+            u = cr3
+            break
+        case 4:
+            u = cr4
+            break
+        default:
+            throw Interrupt(.UD)
+        }
+        regs[modRM.rM] = u
         return .success(.endFetchLoop)
     }
     /// 0x22  MOV
     func Ox0f22() throws -> Result<Resume, Never> {
+        if cpl != 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        modRM = fetch8()
+        if modRM.mod != 3 {
+            throw Interrupt(.UD)
+        }
+        rm = regs[modRM.rM]
+        switch modRM.reg {
+        case 0:
+            cr0 = rm
+            break
+        case 2:
+            cr2 = rm
+            break
+        case 3:
+            cr3 = rm
+            break
+        case 4:
+            cr4 = rm
+            break
+        default:
+            throw Interrupt(.UD)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x06  CLTS
     func Ox0f06() throws -> Result<Resume, Never> {
+        if cpl != 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        cr0.setFlag(.TS, .zero)
         return .success(.endFetchLoop)
     }
     /// 0x23  MOV
     func Ox0f23() throws -> Result<Resume, Never> {
+        if cpl != 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        modRM = fetch8()
+        if modRM.mod != 3 {
+            throw Interrupt(.UD)
+        }
+        reg = modRM.reg
+        rm = regs[modRM.rM]
+        if reg == .ESP || reg == .EBP {
+            throw Interrupt(.UD)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xb2  LSS
     /// 0xb4  LFS
     /// 0xb5  LGS
     func Ox0fb5() throws -> Result<Resume, Never> {
+        try ldFarPointer(opcode & 7)
         return .success(.endFetchLoop)
     }
     /// 0xa2  CPUID (80486)
     func Ox0fa2() throws -> Result<Resume, Never> {
+        aux_CPUID()
         return .success(.endFetchLoop)
     }
     /// 0xa4  SHLD
     func Ox0fa4() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        r = regs[modRM.reg]
+        if modRM.mod == 3 {
+            imm = DWord(fetch8())
+            rM = modRM.rM
+            regs[rM] = aux_SHLD(regs[rM], r, imm)
+        } else {
+            segmentTranslation()
+            imm = DWord(fetch8())
+            rm = try ldWritableCpl3()
+            u = aux_SHLD(rm, r, imm)
+            try stWritableCpl3(dword: u)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xa5  SHLD
     func Ox0fa5() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        r = regs[modRM.reg]
+        if modRM.mod == 3 {
+            rM = modRM.rM
+            regs[rM] = aux_SHLD(regs[rM], r, regs[.ECX])
+        } else {
+            segmentTranslation()
+            rm = try ldWritableCpl3()
+            u = aux_SHLD(rm, r, regs[.ECX])
+            try stWritableCpl3(dword: u)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xac  SHRD
     func Ox0fac() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        r = regs[modRM.reg]
+        if modRM.mod == 3 {
+            imm = DWord(fetch8())
+            rM = modRM.rM
+            regs[rM] = aux_SHRD(regs[rM], r, imm)
+        } else {
+            segmentTranslation()
+            imm = DWord(fetch8())
+            rm = try ldWritableCpl3()
+            u = aux_SHRD(rm, r, imm)
+            try stWritableCpl3(dword: u)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xad  SHRD
     func Ox0fad() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        r = regs[modRM.reg]
+        if modRM.mod == 3 {
+            rM = modRM.rM
+            regs[rM] = aux_SHRD(regs[rM], r, regs[.ECX])
+        } else {
+            segmentTranslation()
+            rm = try ldWritableCpl3()
+            u = aux_SHRD(rm, r, regs[.ECX])
+            try stWritableCpl3(dword: u)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xba  G8 (-, -, -, -, BT, BTS, BTR, BTC)
     func Ox0fba() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        operation = modRM.opcode
+        switch operation {
+        case 4:  // BT
+            if modRM.mod == 3 {
+                // LOCK prefix not allowed
+                rm = regs[modRM.rM]
+                imm = DWord(fetch8())
+            } else {
+                segmentTranslation()
+                imm = DWord(fetch8())
+                rm = try ldReadonlyCpl3()
+            }
+            aux_BT(rm, imm)
+            break
+        case 5:  // BTS
+        case 6:  // BTR
+        case 7:  // BTC
+            operation &= 3
+            if modRM.mod == 3 {
+                // LOCK prefix not allowed
+                rM = modRM.rM
+                imm = DWord(fetch8())
+                regs[rM] = aux_BTS_BTR_BTC(regs[rM], imm)
+            } else {
+                segmentTranslation()
+                imm = DWord(fetch8())
+                rm = try ldWritableCpl3()
+                u = aux_BTS_BTR_BTC(rm, imm)
+                try stWritableCpl3(dword: u)
+            }
+            break
+        default:
+            throw Interrupt(.UD)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xa3  BT
     func Ox0fa3() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        r = regs[modRM.reg]
+        if modRM.mod == 3 {
+            // LOCK prefix not allowed
+            rm = regs[modRM.rM]
+        } else {
+            segmentTranslation()
+            lax = lax &+ ((r >> 5) << 2)
+            rm = try ldReadonlyCpl3()
+        }
+        aux_BT(rm, r)
         return .success(.endFetchLoop)
     }
     /// 0xab  BTS
     /// 0xb3  BTR
     /// 0xbb  BTC
     func Ox0fbb() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        r = regs[modRM.reg]
+        operation = (opcode >> 3) & 3
+        if modRM.mod == 3 {
+            // LOCK prefix not allowed
+            rM = modRM.rM
+            regs[rM] = aux_BTS_BTR_BTC(regs[rM], r)
+        } else {
+            segmentTranslation()
+            lax = lax &+ ((r >> 5) << 2)
+            rm = try ldWritableCpl3()
+            u = aux_BTS_BTR_BTC(rm, r)
+            try stWritableCpl3(dword: u)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xbc  BSF
     /// 0xbd  BSR
     func Ox0fbd() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            rm = regs[modRM.rM]
+        } else {
+            segmentTranslation()
+            rm = try ldReadonlyCpl3()
+        }
+        if opcode & 1 {
+            regs[reg] = aux_BSR(regs[reg], rm)
+        } else {
+            regs[reg] = aux_BSF(regs[reg], rm)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xaf  IMUL
     func Ox0faf() throws -> Result<Resume, Never> {
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            rm = regs[modRM.rM]
+        } else {
+            segmentTranslation()
+            rm = try ldReadonlyCpl3()
+        }
+        aux_IMUL(regs[reg], rm)
+        regs[reg] = u
         return .success(.endFetchLoop)
     }
     /// 0x31  RDTSC (80486)
     func Ox0f31() throws -> Result<Resume, Never> {
+        if cr4.isFlagRaised(.TSD) && cpl != 0 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        let t: QWord = self.cycles &+ (cyclesRequested &- cyclesRemaining)
+        regs[.EAX] = DWord(t & 0xffffffff)
+        regs[.EDX] = DWord(t >> 32)
         return .success(.endFetchLoop)
     }
     /// 0xc0  XADD (80486)
     func Ox0fc0() throws -> Result<Resume, Never> {
+        operation = 0
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            // LOCK prefix not allowed
+            rM = modRM.rM
+            r = regs[rM & 3] >> ((rM & 4) << 1)
+            u = calculate8(r, (regs[reg & 3] >> ((reg & 4) << 1)))
+            regs[reg].byteLH = r
+            regs[rM].byteLH = u
+        } else {
+            segmentTranslation()
+            rm = try ld8WritableCpl3()
+            u = calculate8(rm, (regs[reg & 3] >> ((reg & 4) << 1)))
+            try st8WritableCpl3(byte: (u)
+            regs[reg].byteLH = rm
+        }
         return .success(.endFetchLoop)
     }
     /// 0xc1  XADD (80486)
     func Ox0fc1() throws -> Result<Resume, Never> {
+        operation = 0
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            // LOCK prefix not allowed
+            rM = modRM.rM
+            r = regs[rM]
+            u = calculate(r, regs[reg])
+            regs[reg] = r
+            regs[rM] = u
+        } else {
+            segmentTranslation()
+            rm = try ldWritableCpl3()
+            u = calculate(rm, regs[reg])
+            try stWritableCpl3(dword: u)
+            regs[reg] = rm
+        }
         return .success(.endFetchLoop)
     }
     /// 0xb0  CMPXCHG (80486)
     func Ox0fb0() throws -> Result<Resume, Never> {
+        operation = 5
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            // LOCK prefix not allowed
+            rM = modRM.rM
+            r = regs[rM & 3] >> ((rM & 4) << 1)
+            u = calculate8(regs[.EAX], r)
+            if u == 0 {
+                regs[rM].byteLH = regs[reg & 3] >> ((reg & 4) << 1)
+            } else {
+                regs[.EAX].byteLH = r
+            }
+        } else {
+            segmentTranslation()
+            rm = try ld8WritableCpl3()
+            u = calculate8(regs[.EAX], rm)
+            if u == 0 {
+                try st8WritableCpl3(byte: ((regs[reg & 3] >> ((reg & 4) << 1)))
+            } else {
+                regs[.EAX].byteLH = rm
+            }
+        }
         return .success(.endFetchLoop)
     }
     /// 0xb1  CMPXCHG (80486)
     func Ox0fb1() throws -> Result<Resume, Never> {
+        operation = 5
+        modRM = fetch8()
+        reg = modRM.reg
+        if modRM.mod == 3 {
+            // LOCK prefix not allowed
+            rM = modRM.rM
+            r = regs[rM]
+            u = calculate(regs[.EAX], r)
+            if u == 0 {
+                regs[rM] = regs[reg]
+            } else {
+                regs[.EAX] = r
+            }
+        } else {
+            segmentTranslation()
+            rm = try ldWritableCpl3()
+            u = calculate(regs[.EAX], rm)
+            if u == 0 {
+                try stWritableCpl3(dword: regs[reg])
+            } else {
+                regs[.EAX] = rm
+            }
+        }
         return .success(.endFetchLoop)
     }
     /// 0xa0  PUSH FS
     /// 0xa8  PUSH GS
     func Ox0fa8() throws -> Result<Resume, Never> {
+        push(segs[(opcode >> 3) & 7].selector)
         return .success(.endFetchLoop)
     }
     /// 0xa1  POP FS
     /// 0xa9  POP GS
     func Ox0fa9() throws -> Result<Resume, Never> {
+        m = pop()
+        let sreg = SegmentRegister.Name(rawValue: (opcode >> 3) & 7)!
+        setSegmentRegister(sreg, Word(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
     }
     /// 0xc8  -
@@ -190,6 +624,9 @@ extension Free86 {
     /// 0xce  -
     /// 0xcf  BSWAP (80486)
     func Ox0fcf() throws -> Result<Resume, Never> {
+        reg = opcode & 7
+        r = regs[reg]
+        regs[reg] = ((r >> 24) & 0xff) | ((r >> 8) & 0xff00) | ((r << 8) & 0xff0000) | (r << 24)
         return .success(.endFetchLoop)
     }
     /// 0x04  -
@@ -356,6 +793,6 @@ extension Free86 {
     /// 0xfe  -
     /// 0xff  -
     func Ox0fff() throws -> Result<Resume, Never> {
-        return .success(.endFetchLoop)
+        throw Interrupt(.UD)
     }
 }

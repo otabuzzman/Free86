@@ -10,14 +10,44 @@ extension Instruction {
     /// 0xf2  REPN[EZ] repeat string operation prefix
     /// 0xf3  REP[EZ] repeat string operation prefix
     func Oxf3() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        opcode = try parent.ld8ReadonlyCpl3()
         return .success(.goOnFetching)
     }
     /// 0x66  operand-size override prefix
     func Ox66() throws -> Result<Resume, Never> {
+        if parent.iprDefault.isFlagRaised(.operandSizeOverride) {
+            stride = 4
+            ipr.setFlag(.operandSizeOverride, .zero)
+        } else {
+            stride = 2
+            ipr.setFlag(.operandSizeOverride)
+        }
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        opcode = try parent.ld8ReadonlyCpl3()
         return .success(.goOnFetching)
     }
     /// 0x67  address-size override prefix
     func Ox67() throws -> Result<Resume, Never> {
+        if parent.iprDefault.isFlagRaised(.addressSizeOverride) {
+            ipr.setFlag(.addressSizeOverride, .zero)
+        } else {
+            ipr.setFlag(.addressSizeOverride)
+        }
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        opcode = try parent.ld8ReadonlyCpl3()
         return .success(.goOnFetching)
     }
     /// 0x00  ADD
@@ -83,6 +113,16 @@ extension Instruction {
     /// 0xfe  G4 (INC, DEC, -, -, -, -, -)
     /// 0xff  G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
     func Oxff() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        let modRM = try parent.ld8ReadonlyCpl3()
+        _length += modRMBytesNumber(modRM)
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x04  ADD
@@ -132,6 +172,10 @@ extension Instruction {
     /// 0xe7  OUT ,AX
     /// 0xeb  JMP
     func Oxeb() throws -> Result<Resume, Never> {
+        _length += 1
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x05  ADD
@@ -155,6 +199,10 @@ extension Instruction {
     /// 0xe8  CALL
     /// 0xe9  JMP
     func Oxe9() throws -> Result<Resume, Never> {
+        _length += stride
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x06  PUSH
@@ -257,6 +305,20 @@ extension Instruction {
     /// 0x81  G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
     /// 0xc7  MOV
     func Oxc7() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        let modRM = try parent.ld8ReadonlyCpl3()
+        _length += modRMBytesNumber(modRM)
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        _length += stride
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x6b  IMUL
@@ -267,11 +329,29 @@ extension Instruction {
     /// 0xc1  G2 (ROL ROR RCL RCR SHL SHR SAL SAR)
     /// 0xc6  MOV
     func Oxc6() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        let modRM = try parent.ld8ReadonlyCpl3()
+        _length += modRMBytesNumber(modRM)
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        _length += 1
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0x9a  CALLF
     /// 0xea  JMPF
     func Oxea() throws -> Result<Resume, Never> {
+        _length += 2 + stride
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xa0  MOV AL,
@@ -279,32 +359,86 @@ extension Instruction {
     /// 0xa2  MOV ,AL
     /// 0xa3  MOV ,AX
     func Oxa3() throws -> Result<Resume, Never> {
+        if ipr.isFlagRaised(.addressSizeOverride) {
+            _length += 2
+        } else {
+            _length += 4
+        }
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xc2  RET
     /// 0xca  RET
     func Oxca() throws -> Result<Resume, Never> {
+        _length += 2
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xc8  ENTER
     func Oxc8() throws -> Result<Resume, Never> {
+        _length += 3
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
         return .success(.endFetchLoop)
     }
     /// 0xf6  G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
     func Oxf6() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        let modRM = try parent.ld8ReadonlyCpl3()
+        _length += modRMBytesNumber(modRM)
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        if modRM.opcode == 0 {
+            _length += 1
+            if _length > 15 {
+                throw Interrupt(.GP, errorCode: 0)
+            }
+        }
         return .success(.endFetchLoop)
     }
     /// 0xf7  G3 (TEST, -, NOT, NEG, MUL AL/X, IMUL AL/X, DIV AL/X, IDIV AL/X)
     func Oxf7() throws -> Result<Resume, Never> {
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        let modRM = try parent.ld8ReadonlyCpl3()
+        _length += modRMBytesNumber(modRM)
+        if _length > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        if modRM.opcode == 0 {
+            _length += stride
+            if _length > 15 {
+                throw Interrupt(.GP, errorCode: 0)
+            }
+        }
         return .success(.endFetchLoop)
     }
     /// 0xd6  -
     /// 0xf1  -
     func Oxf1() throws -> Result<Resume, Never> {
-        return .success(.endFetchLoop)
+        throw Interrupt(.UD)
     }
     /// 0x0f  2-byte instruction escape
     func Ox0f() throws -> Result<Resume, Never> {
-        return .success(.endFetchLoop)
+        if (_length + 1) > 15 {
+            throw Interrupt(.GP, errorCode: 0)
+        }
+        parent.lax = parent.eipLinear &+ _length
+        _length += 1
+        opcode = try parent.ld8ReadonlyCpl3()
+        return try twoByteDecoder[Int(opcode)]()
     }
 }
