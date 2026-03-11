@@ -7,7 +7,7 @@ class Instruction {
     func length() throws -> Int {
         opcode = parent.opcode
         ipr = parent.iprDefault
-        stride = ipr.isFlagRaised(.addressSizeOverride) ? 2 : 4
+        stride = ipr.isFlagRaised(.operandSizeOverride) ? 2 : 4
         _length = 1
         fetchLoop:
         while true {  // loop over instruction bytes (fetch)
@@ -29,7 +29,7 @@ class Instruction {
 
     func modRMBytesNumber(_ modRM: ModRM) throws -> DWord {
         var length: DWord = 0
-        if ipr.isFlagRaised(.operandSizeOverride) {
+        if ipr.isFlagRaised(.addressSizeOverride) {
             switch modRM.mod {
             case 0:
                 if modRM.rM == 6 {

@@ -18,10 +18,10 @@ class Free86 {
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
-    var eflags: Eflags = 0
+    var eflags = Eflags(0)
 
-    var eip: LinearAddress = 0
-    var eipLinear: LinearAddress = 0
+    var eip = LinearAddress(0)
+    var eipLinear = LinearAddress(0)
 
     /// ES, CS, SS, DS, FS, GS, LDT, TR
     var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 7)
@@ -30,7 +30,7 @@ class Free86 {
     var tr = SegmentRegister(0, .init(0))  // task register
     var idt = SegmentRegister(0, .init(0))  // IDT register
 
-    var _cr0: CR0 = 0
+    var _cr0 = CR0(0)
     var cr0: CR0 {
         get { _cr0 }
         set {
@@ -46,9 +46,8 @@ class Free86 {
             _cr0.setFlag(.ET)  // keep bit 4 raised (80387 present)
         }
     }
-    var cr2: LinearAddress = 0
-    var _cr3: CR3 = 0
-    var cr3: CR3 {
+    var cr2 = LinearAddress(0)
+    var _cr3 = CR3(0)    var cr3: CR3 {
         get { _cr3 }
         set {
             if cr0.isPagingEnabled {
@@ -57,7 +56,7 @@ class Free86 {
             _cr3 = newValue
         }
     }
-    var cr4: CR4 = 0  // 80486
+    var cr4 = CR4(0)  // 80486
 
     var _cpl: DWord = 0  // current privilege level register
     var cpl: DWord {
@@ -212,7 +211,7 @@ class Free86 {
     // 0x0040 LOCK  signal prefix           (0xf0)
     // 0x0080 address-size override prefix  (0x67)
     // 0x0100 operand-size override prefix  (0x66)
-    var ipr: InstructionPrefixRegister = 0
+    var ipr = InstructionPrefixRegister(0)
     var iprDefault: InstructionPrefixRegister {  // reflects D flag (PM (1986), 16.1), also part of SSB (below)
         var ipr = InstructionPrefixRegister(0)
         if segs[.CS].shadow.isFlagRaised(.D) {
@@ -245,7 +244,7 @@ class Free86 {
     /// end of SSB
 
     /// auxiliary variables for inter-method exchange
-    var lax: LinearAddress = 0  // linear address exchange register
+    var lax = LinearAddress(0)  // linear address exchange register
     var operation: DWord = 0  // bits 5..3 of opcode or modR/M byte
     var modRM: ModRM = 0, sib: SIB = 0
     var reg = 0, rM = 0

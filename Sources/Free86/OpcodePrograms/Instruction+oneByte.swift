@@ -359,7 +359,7 @@ extension Instruction {
     /// 0xa2  MOV ,AL
     /// 0xa3  MOV ,AX
     func Oxa3() throws -> Result<Resume, Never> {
-        if ipr.isFlagRaised(.addressSizeOverride) {
+        if ipr.isFlagRaised(.operandSizeOverride) {
             _length += 2
         } else {
             _length += 4

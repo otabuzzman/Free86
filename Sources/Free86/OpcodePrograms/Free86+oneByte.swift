@@ -10,7 +10,8 @@ extension Free86 {
         }
         ipr.segmentRegister = Int((opcode >> 3) & 3)
         opcode = DWord(fetch8())
-        opcode |= ipr.isFlagRaised(.operandSizeOverride) ? 0x0100 : 0
+        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
         return .success(.goOnFetching)
     }
     /// 0x64  FS segment override prefix
@@ -21,7 +22,8 @@ extension Free86 {
         }
         ipr.segmentRegister = Int(opcode & 7)
         opcode = DWord(fetch8())
-        opcode |= ipr.isFlagRaised(.operandSizeOverride) ? 0x0100 : 0
+        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
         return .success(.goOnFetching)
     }
     /// 0xf0  LOCK prefix
@@ -31,7 +33,8 @@ extension Free86 {
         }
         ipr.setFlag(.lockSignal)
         opcode = DWord(fetch8())
-        opcode |= ipr.isFlagRaised(.operandSizeOverride) ? 0x0100 : 0
+        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
         return .success(.goOnFetching)
     }
     /// 0xf2  REPN[EZ] repeat string operation prefix
@@ -41,7 +44,8 @@ extension Free86 {
         }
         ipr.setFlag(.repnzStringOperation)
         opcode = DWord(fetch8())
-        opcode |= ipr.isFlagRaised(.operandSizeOverride) ? 0x0100 : 0
+        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
         return .success(.goOnFetching)
     }
     /// 0xf3  REP[EZ] repeat string operation prefix
@@ -51,8 +55,9 @@ extension Free86 {
         }
         ipr.setFlag(.repzStringOperation)
         opcode = DWord(fetch8())
-        opcode |= ipr.isFlagRaised(.operandSizeOverride) ? 0x0100 : 0
-        return .success(.goOnFetching)
+        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+       return .success(.goOnFetching)
     }
     /// 0x66  operand-size override prefix
     func Ox66() throws -> Result<Resume, Never> {
@@ -65,7 +70,8 @@ extension Free86 {
             ipr.setFlag(.operandSizeOverride)
         }
         opcode = DWord(fetch8())
-        opcode |= ipr.isFlagRaised(.operandSizeOverride) ? 0x0100 : 0
+        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
         return .success(.goOnFetching)
     }
     /// 0x67  address-size override prefix
@@ -79,7 +85,8 @@ extension Free86 {
             ipr.setFlag(.addressSizeOverride)
         }
         opcode = DWord(fetch8())
-        opcode |= ipr.isFlagRaised(.operandSizeOverride) ? 0x0100 : 0
+        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
         return .success(.goOnFetching)
     }
     /// 0xb0  MOV AL
