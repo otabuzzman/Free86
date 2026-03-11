@@ -18,7 +18,7 @@ enum Exception: Byte {
     case AC  // 80486
 }
 
-struct Interrupt: Error, Equatable {
+public struct Interrupt: Error, Equatable {
     var id: Byte
     var errorCode: DWord
 

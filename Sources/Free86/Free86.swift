@@ -1,4 +1,4 @@
-class Free86 {
+public class Free86 {
     /// interrupt pins and data bus low byte
     let INTR = PinIO<Bool>()
     let DB8 = PinIO<Byte>()  // INTR vector
@@ -6,7 +6,7 @@ class Free86 {
     let RESET = PinIO<Bool>()
 
     var _interrupt: Interrupt?
-    var interrupt: Interrupt? {
+    public var interrupt: Interrupt? {
         get {
             let oldValue = _interrupt
             _interrupt = nil
@@ -74,8 +74,8 @@ class Free86 {
         }
     }
 
-    var halted = false
-    var cycles: QWord = 0
+    public internal(set) var halted = false
+    public private(set) var cycles: QWord = 0
 
     /// Fetch address register
     ///
@@ -344,7 +344,7 @@ class Free86 {
         /* 0x1f0 */ invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid
     ]
 
-    init(memory: MemoryIO<DWord>, io: IsolatedIO<DWord>? = nil) {
+    public init(memory: MemoryIO<DWord>, io: IsolatedIO<DWord>? = nil) {
         /// RAM configuration check
         memory.st(at: 0x00000000, dword: 0xDEADBEEF)
         memory.st(at: 0x000FFFF0, dword: 0xC0DECAFE)

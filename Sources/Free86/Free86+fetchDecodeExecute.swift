@@ -1,5 +1,5 @@
 extension Free86 {
-    func fetchDecodeExecute(cycles: QWord) async throws {
+    public func fetchDecodeExecute(cycles: QWord) async throws {
         if halted {
             if eflags.isFlagRaised(.IF) {
                 let irq = try await INTR.probe()
