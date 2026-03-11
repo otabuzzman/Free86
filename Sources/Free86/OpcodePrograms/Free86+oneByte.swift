@@ -246,7 +246,7 @@ extension Free86 {
         if reg.isGeneralRegister(.ESI) || reg.isGeneralRegister(.EDI) {
             throw Interrupt(.UD)
         }
-        u = segs[reg].selector
+        u = DWord(segs[reg].selector)
         if modRM.mod == 3 {
             if !ipr.isFlagRaised(.operandSizeOverride) {
                 regs[modRM.rM] = u
@@ -301,7 +301,7 @@ extension Free86 {
     /// 0x96  XCHG SI
     /// 0x97  XCHG DI
     func Ox97() throws -> Result<Resume, Never> {
-        reg = opcode & 7
+        reg = Int(opcode & 7)
         u = regs[.EAX]
         regs[.EAX] = regs[reg]
         regs[reg] = u
@@ -643,7 +643,7 @@ extension Free86 {
     /// 0x46  INC SI
     /// 0x47  INC DI
     func Ox47() throws -> Result<Resume, Never> {
-        reg = opcode & 7
+        reg = Int(opcode & 7)
         if osm < 25 {
             osmPreserved = osm
             osmDstPreserved = osmDst
@@ -662,7 +662,7 @@ extension Free86 {
     /// 0x4e  DEC SI
     /// 0x4f  DEC DI
     func Ox4f() throws -> Result<Resume, Never> {
-        reg = opcode & 7
+        reg = Int(opcode & 7)
         if osm < 25 {
             osmPreserved = osm
             osmDstPreserved = osmDst
@@ -1183,7 +1183,7 @@ extension Free86 {
     /// 0x1f  POP
     func Ox1f() throws -> Result<Resume, Never> {
         m = try pop()
-        let sreg = SegmentRegister.Name(rawValue: opcode >> 3)!
+        let sreg = SegmentRegister.Name(rawValue: Int(opcode) >> 3)!
         try setSegmentRegister(sreg, SegmentSelector(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
     }

@@ -325,7 +325,7 @@ extension Free86 {
     /// 0xb4  LFS
     /// 0xb5  LGS
     func Ox0fb5() throws -> Result<Resume, Never> {
-        let sreg = SegmentRegister.Name(rawValue: opcode & 7)!
+        let sreg = SegmentRegister.Name(rawValue: Int(opcode) & 7)!
         try ldFarPointer(sreg)
         return .success(.endFetchLoop)
     }
@@ -622,7 +622,7 @@ extension Free86 {
     /// 0xa9  POP GS
     func Ox0fa9() throws -> Result<Resume, Never> {
         m = try pop()
-        let sreg = SegmentRegister.Name(rawValue: (opcode >> 3) & 7)!
+        let sreg = SegmentRegister.Name(rawValue: (Int(opcode) >> 3) & 7)!
         try setSegmentRegister(sreg, SegmentSelector(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
     }
@@ -635,7 +635,7 @@ extension Free86 {
     /// 0xce  -
     /// 0xcf  BSWAP (80486)
     func Ox0fcf() throws -> Result<Resume, Never> {
-        reg = opcode & 7
+        reg = Int(opcode & 7)
         r = regs[reg]
         regs[reg] = ((r >> 24) & 0xff) | ((r >> 8) & 0xff00) | ((r << 8) & 0xff0000) | (r << 24)
         return .success(.endFetchLoop)

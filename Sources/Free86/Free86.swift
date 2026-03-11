@@ -47,7 +47,8 @@ class Free86 {
         }
     }
     var cr2 = LinearAddress(0)
-    var _cr3 = CR3(0)    var cr3: CR3 {
+    var _cr3 = CR3(0)
+    var cr3: CR3 {
         get { _cr3 }
         set {
             if cr0.isPagingEnabled {

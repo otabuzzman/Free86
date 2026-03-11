@@ -70,7 +70,7 @@ extension Free86 {
     /// 0x196  XCHG SI
     /// 0x197  XCHG DI
     func Ox197() throws -> Result<Resume, Never> {
-        reg = opcode & 7
+        reg = Int(opcode & 7)
         u = regs[.EAX]
         regs[.EAX].wordX = regs[reg]
         regs[reg].wordX = u
@@ -224,7 +224,7 @@ extension Free86 {
     /// 0x146  INC SI
     /// 0x147  INC DI
     func Ox147() throws -> Result<Resume, Never> {
-        reg = opcode & 7
+        reg = Int(opcode & 7)
         regs[reg].wordX = aux16Inc(regs[reg])
         return .success(.endFetchLoop)
     }
@@ -237,7 +237,7 @@ extension Free86 {
     /// 0x14e  DEC SI
     /// 0x14f  DEC DI
     func Ox14f() throws -> Result<Resume, Never> {
-        reg = opcode & 7
+        reg = Int(opcode & 7)
         regs[reg].wordX = aux16Dec(regs[reg])
         return .success(.endFetchLoop)
     }
@@ -527,7 +527,7 @@ extension Free86 {
     /// 0x11f  POP
     func Ox11f() throws -> Result<Resume, Never> {
         m = DWord(try pop16())
-        let sreg = SegmentRegister.Name(rawValue: (opcode >> 3) & 3)!
+        let sreg = SegmentRegister.Name(rawValue: (Int(opcode) >> 3) & 3)!
         try setSegmentRegister(sreg, SegmentSelector(m))
         return .success(.endFetchLoop)
     }
