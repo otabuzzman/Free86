@@ -194,7 +194,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 regs[modRM.rM].lowerHalf = u
             } else {
-                try st16WritableCpl3(word: Word(truncatingIfNeeded: u))
+                try st16WritableCpl3(word: u)
             }
             osmSrc.setFlag(.ZF)
         } else {
@@ -253,7 +253,7 @@ extension Free86 {
         lax = ssBase &+ ((regs[.ESP] &- 16) & ssBase)
         for reg in (0...7).reversed() {
             r = regs[reg]
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: r))
+            try st16WritableCpl3(word: r)
             lax = lax &+ 2
         }
         regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 16) & ssBase)
@@ -281,7 +281,7 @@ extension Free86 {
         lax = ssBase &+ (regs[.ESP] & ssBase)
         for reg in (0...7).reversed() {
             if !reg.isGeneralRegister(.ESP) {
-                regs[reg].lowerHalf = DWord(try ldReadonlyCpl3())
+                regs[reg].lowerHalf = try ldReadonlyCpl3()
             }
             lax = lax &+ 4
         }
@@ -306,7 +306,7 @@ extension Free86 {
         var ebp = regs[.EBP]
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: Word(truncatingIfNeeded: ebp))
+        try st16WritableCpl3(word: ebp)
         let exp = esp
         if imm != 0 {
             while imm > 1 {
@@ -320,7 +320,7 @@ extension Free86 {
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: exp))
+            try st16WritableCpl3(word: exp)
         }
         esp = esp &- DWord(imm16)
         lax = ssBase &+ (esp & ssMask)

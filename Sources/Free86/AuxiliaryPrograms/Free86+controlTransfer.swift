@@ -61,7 +61,7 @@ extension Free86 {
         if o32 {
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: DWord(segs[.CS].selector))
+            try stWritableCpl3(dword: segs[.CS].selector)
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
             try stWritableCpl3(dword: home)
@@ -71,7 +71,7 @@ extension Free86 {
             try st16WritableCpl3(word: segs[.CS].selector)
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: home))
+            try st16WritableCpl3(word: home)
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = offset
@@ -114,7 +114,7 @@ extension Free86 {
             if o32 {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: DWord(segs[.CS].selector))
+                try stWritableCpl3(dword: segs[.CS].selector)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCpl3(dword: home)
@@ -124,7 +124,7 @@ extension Free86 {
                 try st16WritableCpl3(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(truncatingIfNeeded: home))
+                try st16WritableCpl3(word: home)
             }
             if offset > xsd.limit {
                 throw Interrupt(.GP, errorCode: DWord(selector.index))
@@ -205,7 +205,7 @@ extension Free86 {
                 if xsd.isType(.CallGate) {  // 32 bit descriptor
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: DWord(segs[.SS].selector))
+                    try stWritableCpl3(dword: segs[.SS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
                     try stWritableCpl3(dword: espStart)
@@ -221,12 +221,12 @@ extension Free86 {
                     try st16WritableCpl3(word: segs[.SS].selector)
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: Word(truncatingIfNeeded: espStart))
+                    try st16WritableCpl3(word: espStart)
                     for _ in (1...gpac).reversed() {
                         u = 0 // Ye(osBase &+ ((espStart &+ (i &- 1) &* 2) & osMask))
                         esp = esp &- 2
                         lax = ssBase &+ (esp & ssMask)
-                        try st16WritableCpl3(word: Word(truncatingIfNeeded: u))
+                        try st16WritableCpl3(word: u)
                     }
                 }
                 segs[.SS] = SegmentRegister(ss.index | Word(ssd.dpl), ssd)
@@ -236,7 +236,7 @@ extension Free86 {
             if xsd.isType(.CallGate) {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: DWord(segs[.CS].selector))
+                try stWritableCpl3(dword: segs[.CS].selector)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCpl3(dword: home)
@@ -246,7 +246,7 @@ extension Free86 {
                 try st16WritableCpl3(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(truncatingIfNeeded: home))
+                try st16WritableCpl3(word: home)
             }
             segs[.CS] = SegmentRegister(gsel.index | Word(cgd.dpl), cgd)
             cpl = cgd.dpl
@@ -521,13 +521,13 @@ extension Free86 {
         var esp = regs[.ESP]
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: Word(truncatingIfNeeded: getEflags()))
+        try st16WritableCpl3(word: getEflags())
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
         try st16WritableCpl3(word: segs[.CS].selector)
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: Word(truncatingIfNeeded: isSW ? home : eip))
+        try st16WritableCpl3(word: isSW ? home : eip)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = DWord(offset)
         far = 0
@@ -545,7 +545,7 @@ extension Free86 {
         var ss = SegmentSelector(0), ssd = SegmentDescriptor(0), esp: DWord, ssBase: DWord, ssMask: DWord
         var dpl: DWord = 0, isInterlevel: Bool, pushErrorCode = false
         if !isSW && !isHW {
-            switch Exception(rawValue: Byte(id)) {
+            switch Exception(rawValue: id) {
             case .DF:  // double exception
                 fallthrough
             case .TS:  // invalid task state segment
@@ -653,20 +653,20 @@ extension Free86 {
                 if eflags.isFlagRaised(.VM) {
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: DWord(segs[.GS].selector))
+                    try stWritableCpl3(dword: segs[.GS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: DWord(segs[.FS].selector))
+                    try stWritableCpl3(dword: segs[.FS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: DWord(segs[.DS].selector))
+                    try stWritableCpl3(dword: segs[.DS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: DWord(segs[.ES].selector))
+                    try stWritableCpl3(dword: segs[.ES].selector)
                 }
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: DWord(segs[.SS].selector))
+                try stWritableCpl3(dword: segs[.SS].selector)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCpl3(dword: regs[.ESP])
@@ -676,14 +676,14 @@ extension Free86 {
             try stWritableCpl3(dword: getEflags())
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: DWord(segs[.CS].selector))
+            try stWritableCpl3(dword: segs[.CS].selector)
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
             try stWritableCpl3(dword: isSW ? home : eip)
             if pushErrorCode {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: DWord(truncatingIfNeeded: errorCode))
+                try stWritableCpl3(dword: errorCode)
             }
         } else {
             if isInterlevel {
@@ -706,21 +706,21 @@ extension Free86 {
                 try st16WritableCpl3(word: segs[.SS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(truncatingIfNeeded: regs[.ESP]))
+                try st16WritableCpl3(word: regs[.ESP])
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: getEflags()))
+            try st16WritableCpl3(word: getEflags())
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCpl3(word: (segs[.CS].selector))
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: isSW ? home : eip))
+            try st16WritableCpl3(word: isSW ? home : eip)
             if pushErrorCode {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: Word(truncatingIfNeeded: errorCode))
+                try st16WritableCpl3(word: errorCode)
             }
         }
         if isInterlevel {

@@ -32,6 +32,12 @@ extension PagedMemory {
     func st16WritableCplX(word: DWord) throws {
         try self.st16WritableCplX(word: Word(word & 0xffff))
     }
+    func stWritableCplX(dword: Word) throws {
+        try self.stWritableCplX(dword: DWord(dword))
+    }
+    func stWritableCplX(dword: QWord) throws {
+        try self.stWritableCplX(dword: DWord(dword & 0xffffffff))
+    }
     func st8WritableCpl3(byte: Word) throws {
         try self.st8WritableCpl3(byte: Byte(byte & 0xff))
     }
@@ -40,5 +46,11 @@ extension PagedMemory {
     }
     func st16WritableCpl3(word: DWord) throws {
         try self.st16WritableCpl3(word: Word(word & 0xffff))
+    }
+    func stWritableCpl3(dword: Word) throws {
+        try self.stWritableCpl3(dword: DWord(dword))
+    }
+    func stWritableCpl3(dword: QWord) throws {
+        try self.stWritableCpl3(dword: DWord(dword & 0xffffffff))
     }
 }

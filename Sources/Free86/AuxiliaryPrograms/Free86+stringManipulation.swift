@@ -13,7 +13,7 @@ extension Free86 {
             }
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
@@ -23,7 +23,7 @@ extension Free86 {
         } else {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
@@ -70,7 +70,7 @@ extension Free86 {
             }
             u = DWord(try ld8ReadonlyCpl3())
             lax = la
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
@@ -81,7 +81,7 @@ extension Free86 {
         } else {
             u = DWord(try ld8ReadonlyCpl3())
             lax = la
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
@@ -95,7 +95,7 @@ extension Free86 {
             if (ecx & mask) == 0 {
                 return
             }
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: regs[.EAX]))
+            try st8WritableCpl3(byte: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
@@ -103,7 +103,7 @@ extension Free86 {
                 far = farStart
             }
         } else {
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: regs[.EAX]))
+            try st8WritableCpl3(byte: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
         }
     }
@@ -220,7 +220,7 @@ extension Free86 {
             }
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
@@ -230,7 +230,7 @@ extension Free86 {
         } else {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
@@ -277,7 +277,7 @@ extension Free86 {
             }
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
@@ -288,7 +288,7 @@ extension Free86 {
         } else {
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
@@ -302,7 +302,7 @@ extension Free86 {
             if (ecx & mask) == 0 {
                 return
             }
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: regs[.EAX]))
+            try st16WritableCpl3(word: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
@@ -310,7 +310,7 @@ extension Free86 {
                 far = farStart
             }
         } else {
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: regs[.EAX]))
+            try st16WritableCpl3(word: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
@@ -427,7 +427,7 @@ extension Free86 {
             }
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
@@ -437,7 +437,7 @@ extension Free86 {
         } else {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
@@ -484,7 +484,7 @@ extension Free86 {
             }
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
@@ -495,7 +495,7 @@ extension Free86 {
         } else {
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
-            try st8WritableCpl3(byte: Byte(truncatingIfNeeded: u))
+            try st8WritableCpl3(byte: u)
             regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
@@ -509,7 +509,7 @@ extension Free86 {
             if (ecx & mask) == 0 {
                 return
             }
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: regs[.EAX]))
+            try st16WritableCpl3(word: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
@@ -517,7 +517,7 @@ extension Free86 {
                 far = farStart
             }
         } else {
-            try st16WritableCpl3(word: Word(truncatingIfNeeded: regs[.EAX]))
+            try st16WritableCpl3(word: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
         }
     }
