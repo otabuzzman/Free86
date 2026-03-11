@@ -99,7 +99,7 @@ extension Free86 {
     /// 0xb7  MOV BH
     func Oxb7() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        let hL = (opcode & 4) << 1
+        let hL = GeneralRegister(opcode & 7).isHByteEncoded ? 8 : 0
         regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << hL)) | ((imm & 0xff) << hL)
         return .success(.endFetchLoop)
     }
@@ -123,7 +123,7 @@ extension Free86 {
         r = regs[reg & 3] >> ((reg & 4) << 1)
         if modRM.mod == 3 {
             rM = modRM.rM
-            let hL = (rM & 4) << 1
+            let hL = GeneralRegister(rM).isHByteEncoded ? 8 : 0
             regs[rM & 3] = (regs[rM & 3] & ~(0xff << hL)) | ((r & 0xff) << hL)
         } else {
             segmentTranslation()
@@ -154,7 +154,7 @@ extension Free86 {
             rm = DWord(try ld8ReadonlyCpl3())
         }
         reg = modRM.reg
-        let hL = (reg & 4) << 1
+        let hL = GeneralRegister(reg).isHByteEncoded ? 8 : 0
         regs[reg & 3] = (regs[reg & 3] & ~(0xff << hL)) | ((rm & 0xff) << hL)
         return .success(.endFetchLoop)
     }
