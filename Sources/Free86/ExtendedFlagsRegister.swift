@@ -1,4 +1,4 @@
-typealias Eflags = DWord
+public typealias Eflags = DWord
 
 enum EflagsFlag: Int {
     case CF = 0

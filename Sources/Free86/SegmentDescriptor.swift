@@ -1,4 +1,4 @@
-struct SegmentDescriptor {
+public struct SegmentDescriptor {
     var upper: DWord = 0
     var lower: DWord = 0
     var qword: QWord {
@@ -38,7 +38,7 @@ enum SegmentDescriptorDataTypeFlag: Int {
     case E      // 1 = expand-down
 }
 
-extension SegmentDescriptor {
+public extension SegmentDescriptor {
     var base: LinearAddress {
         get {
             (lower & 0xFFFF_0000) >> 16 |
@@ -165,7 +165,7 @@ extension SegmentDescriptor {
 }
 
 extension SegmentDescriptor: Equatable {
-    static func == (lhs: SegmentDescriptor, rhs: SegmentDescriptor) -> Bool {
+    public static func == (lhs: SegmentDescriptor, rhs: SegmentDescriptor) -> Bool {
         lhs.upper == rhs.upper && lhs.lower == rhs.lower
     }
 }

@@ -1,7 +1,7 @@
-typealias GeneralRegister = DWord
+public typealias GeneralRegister = DWord
 
 extension GeneralRegister {
-    enum Name: Int {
+    public enum Name: Int {
         case EAX  // AL
         case ECX  // CL
         case EDX  // DL
@@ -48,7 +48,7 @@ extension GeneralRegister {
 }
 
 extension Array where Element == GeneralRegister {
-    subscript (_ register: GeneralRegister.Name) -> Element {
+    public subscript (_ register: GeneralRegister.Name) -> Element {
         get { self[register.rawValue] }
         set { self[register.rawValue] = newValue }
     }

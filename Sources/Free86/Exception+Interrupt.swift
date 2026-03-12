@@ -19,7 +19,7 @@ enum Exception: Byte {
 }
 
 public struct Interrupt: Error, Equatable {
-    var id: Byte
+    public private(set) var id: Byte
     var errorCode: DWord
 
     init(_ vector: Byte, errorCode: DWord = 0) {
@@ -31,5 +31,8 @@ public struct Interrupt: Error, Equatable {
 extension Interrupt {
     init(_ exception: Exception, errorCode: DWord = 0) {
         self.init(exception.rawValue, errorCode: errorCode)
+    }
+    var description: String {
+        "Interrupt id \(id), error code \(errorCode))"
     }
 }

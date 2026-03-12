@@ -1,5 +1,5 @@
 extension Free86: TranslationLookasideBuffer {
-    func tlbLookup(linear: LinearAddress, writable: Bool) throws -> DWord {
+    public func tlbLookup(linear: LinearAddress, writable: Bool) throws -> DWord {
         var hash: Int
         let pxi = linear.pageTablesIndices  // PDE and PTE indices
         if (writable) {

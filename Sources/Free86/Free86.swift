@@ -17,21 +17,21 @@ public class Free86 {
     let io: IsolatedIO<DWord>?
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-    var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
-    var eflags = Eflags(0)
+    public internal(set) var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
+    public internal(set) var eflags = Eflags(0)
 
-    var eip = LinearAddress(0)
+    public internal(set) var eip = LinearAddress(0)
     var eipLinear = LinearAddress(0)
 
     /// ES, CS, SS, DS, FS, GS, LDT, TR
-    var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 7)
+    public internal(set) var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 7)
     var gdt = SegmentRegister(0, .init(0))  // GDT register
     var ldt = SegmentRegister(0, .init(0))  // LDT register
     var tr = SegmentRegister(0, .init(0))  // task register
     var idt = SegmentRegister(0, .init(0))  // IDT register
 
     var _cr0 = CR0(0)
-    var cr0: CR0 {
+    public internal(set) var cr0: CR0 {
         get { _cr0 }
         set {
             /// must flush tlb on change of flags 31, 16, or 0
@@ -46,9 +46,9 @@ public class Free86 {
             _cr0.setFlag(.ET)  // keep bit 4 raised (80387 present)
         }
     }
-    var cr2 = LinearAddress(0)
+    public internal(set) var cr2 = LinearAddress(0)
     var _cr3 = CR3(0)
-    var cr3: CR3 {
+    public internal(set) var cr3: CR3 {
         get { _cr3 }
         set {
             if cr0.isPagingEnabled {

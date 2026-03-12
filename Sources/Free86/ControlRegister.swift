@@ -1,5 +1,5 @@
-typealias CR0 = DWord
-typealias CR3 = DWord
+public typealias CR0 = DWord
+public typealias CR3 = DWord
 typealias CR4 = DWord
 
 enum CR0Flag: Int {
@@ -22,7 +22,7 @@ extension CR0 {
 }
 
 extension CR0 {
-    var isPagingEnabled: Bool {
+    public var isPagingEnabled: Bool {
         isFlagRaised(.PG) && isProtectedMode
     }
     var isProtectedMode: Bool {

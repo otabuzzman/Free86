@@ -1,4 +1,4 @@
-typealias SegmentSelector = Word
+public typealias SegmentSelector = Word
 
 enum SegmentSelectorFlag: Int {
     case TI = 2

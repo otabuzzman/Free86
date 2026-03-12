@@ -1,4 +1,4 @@
-typealias LinearAddress = DWord
+public typealias LinearAddress = DWord
 
 extension LinearAddress {
     var pageTablesIndices: Self {
