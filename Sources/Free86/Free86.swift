@@ -346,10 +346,14 @@ public class Free86 {
 
     public init(memory: MemoryIO<DWord>, io: IsolatedIO<DWord>? = nil) {
         /// RAM configuration check
+        let a = memory.ld(from: 0x00000000)
+        let o = memory.ld(from: 0x000FFFF0)
         memory.st(at: 0x00000000, dword: 0xDEADBEEF)
         memory.st(at: 0x000FFFF0, dword: 0xC0DECAFE)
         assert(memory.ld(from: 0x00000000) == 0xDEADBEEF, "no RAM at address 0x00000000")
         assert(memory.ld(from: 0x000FFFF0) == 0xC0DECAFE, "no RAM at address 0x000FFFF0")
+        memory.st(at: 0x00000000, dword: a)
+        memory.st(at: 0x000FFFF0, dword: o)
 
         self.memory = memory
         memoryCount = DWord(memory.count)

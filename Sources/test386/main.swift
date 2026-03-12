@@ -34,6 +34,32 @@ var history = [String](repeating: "", count: historySize)
 
 while true {
     let cycles = cpu.cycles + fdeCycles
+    let eip15: () -> String = {
+        var linear = cpu.segs[.CS].shadow.base + cpu.eip
+        let physical: DWord
+        var n: Int
+
+        if cpu.cr0.isPagingEnabled {
+            do {
+                physical = try cpu.tlbLookup(linear: linear, writable: false)
+                n = 4096 - Int(linear & 0xfff)  // bytes left to end-of-page...
+                n = min(n, 15)  // ...or up to maximum instruction length bytes
+            } catch {
+                print("\(error)")
+                exit(EXIT_FAILURE)
+            }
+        } else {
+            linear &= 0xfffff
+            physical = linear
+            n = 15
+        }
+        var memory = "[EIP..EIP+\(n - 1)]:"
+        for i in 0..<n {
+            memory += String(format: " %02X", mem.ld8(from: physical + DWord(i)))
+        }
+        return memory
+    }
+
     while cycles > cpu.cycles {
         do {
             try await cpu.fetchDecodeExecute(cycles: cycles)
@@ -53,28 +79,13 @@ while true {
         } catch let interrupt as Interrupt {
             print("\(interrupt)")
             cpu.interrupt = interrupt
-            var linear = cpu.segs[.CS].shadow.base + cpu.eip
-            let physical: DWord
-            var n = 0
-            if cpu.cr0.isPagingEnabled {
-                do {
-                    physical = try cpu.tlbLookup(linear: linear, writable: false)
-                } catch {
-                    print("\(error)")
-                    exit(EXIT_FAILURE)
-                }
-                n = 4096 - Int(linear & 0xfff)  // print bytes left to end-of-page...
-                n = min(n, 15)  // ...or up to maximum instruction length bytes
-            } else {
-                linear &= 0xfffff
-                physical = linear
-                n = 15
+            switch interrupt.id {
+            case 6:
+                print(cpu.compactState() + "\n" + eip15())
+                break
+            default :
+                break
             }
-            var memory = "[EIP..EIP+\(n - 1)]:"
-            for i in 0..<n {
-                memory += String(format: " %02X", mem.ld8(from: physical + DWord(i)))
-            }
-            print(cpu.compactState() + "\n" + memory)
         } catch {
             print("\(error)")
             exit(EXIT_FAILURE)
@@ -92,10 +103,10 @@ extension Free86 {
     //
     //        EFLAGS:00010001_00010001_00001111
     //
+    // ES:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // CS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // SS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // DS:CAFE:CAFE55AA:CAFFE:00010001_00001111
-    // ES:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // FS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // GS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     //
