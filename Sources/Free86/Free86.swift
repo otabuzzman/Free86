@@ -215,7 +215,7 @@ public class Free86 {
     var ipr = InstructionPrefixRegister(0)
     var iprDefault: InstructionPrefixRegister {  // reflects D flag (PM (1986), 16.1), also part of SSB (below)
         var ipr = InstructionPrefixRegister(0)
-        if segs[.CS].shadow.isFlagRaised(.D) {
+        if !segs[.CS].shadow.isFlagRaised(.D) {
             ipr.setFlag(.addressSizeOverride)
             ipr.setFlag(.operandSizeOverride)
         }

@@ -124,7 +124,7 @@ extension SegmentDescriptor {
 
 ///combined S bit and type field
 enum SegmentDescriptorType: DWord {
-    case zero                         = 0b0_0000  // reserved
+    case none                         = 0b0_0000  // reserved
     case TSS16Available               = 0b0_0001
     case LDT                          = 0b0_0010
     case TSS16Busy                    = 0b0_0011

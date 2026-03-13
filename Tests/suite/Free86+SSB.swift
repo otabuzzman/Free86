@@ -26,13 +26,13 @@ func free86SegmentsStateBlock() {
     free86.segs[.SS] = SegmentRegister(0, sd)
     #expect(free86.ssMask == 0xFFFFFFFF)
 
-    #expect(free86.iprDefault == 0)
+    #expect(free86.iprDefault == 0x0180)  // address/ operand size override bits
     cd.setFlag(.D)
     free86.segs[.CS] = SegmentRegister(0, cd)
-    #expect(free86.iprDefault.isFlagRaised(.addressSizeOverride) && free86.iprDefault.isFlagRaised(.operandSizeOverride))
+    #expect(!free86.iprDefault.isFlagRaised(.addressSizeOverride) && !free86.iprDefault.isFlagRaised(.operandSizeOverride))
     cd.setFlag(.D, 0)
     free86.segs[.CS] = SegmentRegister(0, cd)
-    #expect(free86.iprDefault == 0)
+    #expect(free86.iprDefault == 0x0180)
 
     #expect(free86.x8664LongMode == false)  // true if all bases 0 and 32 bit stack segment
     free86.segs[.CS] = .init(0, .init(0))

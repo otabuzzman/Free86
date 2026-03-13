@@ -217,14 +217,14 @@ extension Free86 {
         }
     }
     func setSegmentRegisterRealOrV86Mode(_ sreg: SegmentRegister.Name, _ selector: SegmentSelector) {
-        let la = LinearAddress(selector << 4)
+        let la = LinearAddress(selector) << 4
         if eflags.isFlagRaised(.VM) {
             var xsd = SegmentDescriptor(la, 0xffff, .DataRWAccessed, 3)
             xsd.setFlag(.G)
             xsd.setFlag(.S)
             segs[sreg] = SegmentRegister(selector, xsd)
         } else {
-            segs[sreg] = SegmentRegister(selector, SegmentDescriptor(la, 0xffff, .zero, 0))
+            segs[sreg] = SegmentRegister(selector, SegmentDescriptor(la, 0xffff, .none, 0))
         }
     }
     func setSegmentRegisterProtectedMode(_ sreg: SegmentRegister.Name, _ selector: SegmentSelector) throws {

@@ -11,7 +11,7 @@ extension Free86 {
         far = 0
         farStart = 0
         var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(selector << 4)
+        shadow.base = LinearAddress(selector) << 4
         segs[.CS] = SegmentRegister(selector, shadow)
     }
     func auxJmpfProtectedMode(_ selector: SegmentSelector, _ offset: LinearAddress) throws {
@@ -78,7 +78,7 @@ extension Free86 {
         far = 0
         farStart = 0
         var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(selector << 4)
+        shadow.base = LinearAddress(selector) << 4
         segs[.CS] = SegmentRegister(selector, shadow)
     }
     func auxCallfProtectedMode(_ o32: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
@@ -533,7 +533,7 @@ extension Free86 {
         far = 0
         farStart = 0
         var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(selector << 4)
+        shadow.base = LinearAddress(selector) << 4
         segs[.CS] = SegmentRegister(selector, shadow)
         eflags.setFlag(.TF, .zero)
         eflags.setFlag(.IF, .zero)

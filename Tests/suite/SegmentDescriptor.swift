@@ -39,7 +39,7 @@ func segmentDescriptorSetCheckFlags() {
 
 @Test("segment descriptor type values")
 func segmentDescriptorTypeValues() {
-    #expect(SegmentDescriptorType.zero.rawValue                         == 0b0_0000)
+    #expect(SegmentDescriptorType.none.rawValue                         == 0b0_0000)
     #expect(SegmentDescriptorType.TSS16Available.rawValue               == 0b0_0001)
     #expect(SegmentDescriptorType.LDT.rawValue                          == 0b0_0010)
     #expect(SegmentDescriptorType.TSS16Busy.rawValue                    == 0b0_0011)

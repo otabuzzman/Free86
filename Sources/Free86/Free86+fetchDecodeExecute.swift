@@ -94,9 +94,9 @@ extension Free86 {
                             let irq = try await INTR.probe()  // .keepPendingProbe
                             if irq {
                                 break cyclesLoop
-                            } else {
-                                break fetchLoop
                             }
+                        } else {
+                            break fetchLoop
                         }
                     }
                 }

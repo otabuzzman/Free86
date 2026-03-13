@@ -9,10 +9,10 @@ extension Free86 {
         eip = 0xFFF0
 
         for s in 0..<segs.count {
-            segs[s] = .init(0, .init(0, 0, .zero, 0))
+            segs[s] = .init(0, .init(0, 0, .none, 0))
         }
-        segs[.CS] = .init(0, .init(0xFFFF0000, 0, .CodeExOnly, 0))
-        idt = .init(0, .init(0x03FF, 0, .zero, 0))
+        segs[.CS] = .init(0, .init(0xFFFF0000, 0, .none, 0))
+        idt = .init(0, .init(0x03FF, 0, .none, 0))
 
         cr0 = 0
         cr0.setFlag(.ET)  // 80387 present (Vol. 3A, p. 2-16)
