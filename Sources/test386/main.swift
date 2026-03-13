@@ -183,7 +183,7 @@ extension MemoryIO<DWord> {
 class PostPort<T: UnsignedInteger>: IOPort {
     func rd() -> T { 0xfe }
     func wr(_ iodata: T) {
-        print(String(format: "%02X\n", iodata as! CVarArg))
+        print(String(format: "%02X", iodata as! CVarArg))
     }
 }
 

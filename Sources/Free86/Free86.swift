@@ -75,7 +75,7 @@ public class Free86 {
     }
 
     public internal(set) var halted = false
-    public private(set) var cycles: QWord = 0
+    public internal(set) var cycles: QWord = 0
 
     /// Fetch address register
     ///

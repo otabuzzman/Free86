@@ -1865,7 +1865,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         imm = DWord(fetch8())
-        io?[imm] = regs[.EAX] & 0xff
+        io?[imm] = Byte(regs[.EAX].byteL)
         return .success(.endOnInterrupt)
     }
     /// 0xe7  OUT ,AX
@@ -1874,7 +1874,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         imm = DWord(fetch8())
-        io?[imm] = regs[.EAX]
+        io?[imm] = Word(regs[.EAX].lowerHalf)
         return .success(.endOnInterrupt)
     }
     /// 0xec  IN AL,DX
@@ -1898,7 +1898,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        io?[regs[.EDX].lowerHalf] = regs[.EAX] & 0xff
+        io?[regs[.EDX].lowerHalf] = Byte(regs[.EAX].byteL)
         return .success(.endOnInterrupt)
     }
     /// 0xef  OUT DX,AX
@@ -1906,7 +1906,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        io?[regs[.EDX].lowerHalf] = regs[.EAX]
+        io?[regs[.EDX].lowerHalf] = Word(regs[.EAX].lowerHalf)
         return .success(.endOnInterrupt)
     }
     /// 0x27  DAA
