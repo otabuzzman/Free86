@@ -102,7 +102,7 @@ extension Free86 {
             }
             cyclesRemaining -= 1
         } while cyclesRemaining > 0
-        self.cycles = cycles &+ cyclesRequested &- cyclesRemaining
+        self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
         eip = eip &+ far &- farStart
     }
 }
