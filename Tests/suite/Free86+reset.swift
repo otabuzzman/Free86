@@ -17,7 +17,7 @@ func free86ResetFunction() {
     #expect(free86.segs.count == 7)
     #expect(free86.segs[.CS] == SegmentRegister(0, .init(0xFFFF0000, 0, .none, 0)))
 
-    #expect(free86.idt == SegmentRegister(0, .init(0x03FF, 0, .none, 0)))
+    #expect(free86.idt == SegmentRegister(0, .init(0, 0x03FF, .none, 0)))
 
     #expect(free86.cr0.isFlagRaised(.ET) == true)
     #expect(free86.halted == false)

@@ -16,7 +16,6 @@ extension Free86 {
         farStart = 0
         if let interrupt = self.interrupt {
             try raiseInterrupt(interrupt.id, interrupt.errorCode, false, false, 0)
-            self.interrupt = nil
         }
         if eflags.isFlagRaised(.IF) {
             let irq = try await INTR.probe()
