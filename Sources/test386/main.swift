@@ -6,14 +6,6 @@ let loadAddress: DWord = 0x000f0000
 let postPortAddress: DWord = 0x0190
 let outPortAddress: DWord  = 0x002a
 
-var fdeCycles: QWord = 100000
-
-let argv = CommandLine.arguments
-if argv.count == 3  {
-    fdeCycles = QWord(argv[1])!
-    fileURL = URL(fileURLWithPath: argv[2])
-}
-
 let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
 let data = try Data(contentsOf: fileURL)
 for (offset, byte) in data.enumerated() {
@@ -28,12 +20,18 @@ io.register(port: outPort, at: outPortAddress)
 
 let cpu = Free86(memory: mem, io: io)
 
-let historySkip = 0
-let historySize = 512
+var historySkip = 0
+let historySize = 16
 var history = [String](repeating: "", count: historySize)
 
+let argv = CommandLine.arguments
+if argv.count == 3  {
+    historySkip = Int(argv[1])!
+    fileURL = URL(fileURLWithPath: argv[2])
+}
+
 while true {
-    let cycles = cpu.cycles + fdeCycles
+    let cycles = cpu.cycles + QWord(historySkip > 0 ? 1 : 100000)
     let eip15: () -> String = {
         var linear = cpu.segs[.CS].shadow.base + cpu.eip
         let physical: DWord
@@ -62,15 +60,15 @@ while true {
 
     while cycles > cpu.cycles {
         do {
-            try await cpu.fetchDecodeExecute(cycles: cycles)
-            print(cpu.compactState())
-            if fdeCycles == 1 && cycles > historySkip {
+            try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
+            // print(cpu.compactState())
+            if historySkip > 0 && cycles > historySkip {
                 history[Int(cpu.cycles) % historySize] = cpu.compactState()
             }
             if cpu.halted {
-                if fdeCycles == 1 {
+                if historySkip > 0 {
                     for i in 0..<historySize {
-                        print("\(history[(Int(cpu.cycles) + 1 + i) % historySize])")
+                        print("\(history[(Int(cpu.cycles) + 1 - 4 + i) % historySize])")
                     }
                 }
                 print("\(cpu.cycles)")
