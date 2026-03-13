@@ -50,7 +50,7 @@ extension Free86 {
             rm = DWord(try ld16ReadonlyCpl3())
         }
         if canJmp(condition: Int(opcode & 0xf)) {
-            regs[modRM.reg].wordX = rm
+            regs[modRM.reg].lowerHalf = rm
         }
         return .success(.endFetchLoop)
     }
@@ -65,7 +65,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
         }
-        regs[reg].wordX = rm
+        regs[reg].lowerHalf = rm
         return .success(.endFetchLoop)
     }
     /// 0x1be  MOVSX
@@ -79,7 +79,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
         }
-        regs[reg].wordX = rm.signExtendedByte
+        regs[reg].lowerHalf = rm.signExtendedByte
         return .success(.endFetchLoop)
     }
     /// 0x1af  IMUL
@@ -93,7 +93,7 @@ extension Free86 {
             rm = DWord(try ld16ReadonlyCpl3())
         }
         aux16Imul(regs[reg], rm)
-        regs[reg].wordX = u
+        regs[reg].lowerHalf = u
         return .success(.endFetchLoop)
     }
     /// 0x1c1  XADD (80486)
@@ -106,14 +106,14 @@ extension Free86 {
             rM = modRM.rM
             r = regs[rM]
             u = calculate16(r, regs[reg])
-            regs[reg].wordX = r
-            regs[rM].wordX = u
+            regs[reg].lowerHalf = r
+            regs[rM].lowerHalf = u
         } else {
             segmentTranslation()
             rm = DWord(try ld16WritableCpl3())
             u = calculate16(rm, regs[reg])
             try st16WritableCpl3(word: u)
-            regs[reg].wordX = rm
+            regs[reg].lowerHalf = rm
         }
         return .success(.endFetchLoop)
     }
@@ -148,7 +148,7 @@ extension Free86 {
         if modRM.mod == 3 {
             imm = DWord(fetch8())
             rM = modRM.rM
-            regs[rM].wordX = aux16ShrdShld(regs[rM], r, imm)
+            regs[rM].lowerHalf = aux16ShrdShld(regs[rM], r, imm)
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
@@ -166,7 +166,7 @@ extension Free86 {
         operation = (opcode >> 3) & 1
         if modRM.mod == 3 {
             rM = modRM.rM
-            regs[rM].wordX = aux16ShrdShld(regs[rM], r, regs[.ECX])
+            regs[rM].lowerHalf = aux16ShrdShld(regs[rM], r, regs[.ECX])
         } else {
             segmentTranslation()
             rm = DWord(try ld16WritableCpl3())
@@ -241,7 +241,7 @@ extension Free86 {
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            regs[rM].wordX = aux16BtsBtrBtc(regs[rM], r)
+            regs[rM].lowerHalf = aux16BtsBtrBtc(regs[rM], r)
         } else {
             segmentTranslation()
             lax = lax &+ ((r.lowerHalf >> 4) << 1)
@@ -268,7 +268,7 @@ extension Free86 {
         } else {
             u = aux16Bsf(r, rm)
         }
-        regs[reg].wordX = u
+        regs[reg].lowerHalf = u
         return .success(.endFetchLoop)
     }
     /// 0x1b1  CMPXCHG (40486)
@@ -282,9 +282,9 @@ extension Free86 {
             r = regs[rM]
             u = calculate16(regs[.EAX], r)
             if u == 0 {
-                regs[rM].wordX = regs[reg]
+                regs[rM].lowerHalf = regs[reg]
             } else {
-                regs[.EAX].wordX = r
+                regs[.EAX].lowerHalf = r
             }
         } else {
             segmentTranslation()
@@ -293,7 +293,7 @@ extension Free86 {
             if u == 0 {
                 try st16WritableCpl3(word: regs[reg])
             } else {
-                regs[.EAX].wordX = m
+                regs[.EAX].lowerHalf = m
             }
         }
         return .success(.endFetchLoop)

@@ -19,31 +19,27 @@ extension GeneralRegister {
         get { (self & 0x0000_FF00) >> 8 }
         set { self = (self & ~0x0000_FF00) | (newValue & 0xFF) << 8 }
     }
-    var byteLH: Self {
+    var encodedByte: Self {
         get {
-            if isLByteEncoded {
+            if isByteLEncoded {
                 return byteL
             } else {
                 return byteH
             }
         }
         set {
-            if isLByteEncoded {
+            if isByteLEncoded {
                 byteL = newValue
             } else {
                 byteH = newValue
             }
         }
     }
-    var wordX: Self {
-        get { self.lowerHalf }
-        set { self.lowerHalf = newValue & Self.lowerHalfMask }
-    }
-    var isHByteEncoded: Bool {
+    var isByteHEncoded: Bool {
         self & 0b0100 != 0
     }
-    var isLByteEncoded: Bool {
-        !isHByteEncoded
+    var isByteLEncoded: Bool {
+        !isByteHEncoded
     }
 }
 

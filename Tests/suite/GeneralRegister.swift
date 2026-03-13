@@ -7,12 +7,12 @@ func generalRegisterXHLSetGet() {
     register = 0xDEADCAFE
     #expect(register.byteL == 0xFE)
     #expect(register.byteH == 0xCA)
-    #expect(register.wordX == 0xCAFE)
+    #expect(register.lowerHalf == 0xCAFE)
 
-    register.wordX = 0xBEEF
+    register.lowerHalf = 0xBEEF
     #expect(register.byteL == 0xEF)
     #expect(register.byteH == 0xBE)
-    #expect(register.wordX == 0xBEEF)
+    #expect(register.lowerHalf == 0xBEEF)
 
     register.byteL = 0x55
     register.byteH = 0xAA

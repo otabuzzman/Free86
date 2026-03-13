@@ -43,7 +43,7 @@ extension Free86 {
         modRM = fetch8()
         u = canJmp(condition: Int(opcode & 0xf)) ? 1 : 0
         if modRM.mod == 3 {
-            regs[modRM.rM].byteLH = u
+            regs[modRM.rM].encodedByte = u
         } else {
             segmentTranslation()
             try st8WritableCpl3(byte: (u))
@@ -150,7 +150,7 @@ extension Free86 {
                 u = DWord(tr.selector)
             }
             if modRM.mod == 3 {
-                regs[modRM.rM].wordX = u
+                regs[modRM.rM].lowerHalf = u
             } else {
                 segmentTranslation()
                 try st16WritableCpl3(word: u)
@@ -526,14 +526,14 @@ extension Free86 {
             rM = modRM.rM
             r = regs[rM & 3] >> ((rM & 4) << 1)
             u = calculate8(r, (regs[reg & 3] >> ((reg & 4) << 1)))
-            regs[reg].byteLH = r
-            regs[rM].byteLH = u
+            regs[reg].encodedByte = r
+            regs[rM].encodedByte = u
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
             u = calculate8(rm, (regs[reg & 3] >> ((reg & 4) << 1)))
             try st8WritableCpl3(byte: (u))
-            regs[reg].byteLH = rm
+            regs[reg].encodedByte = rm
         }
         return .success(.endFetchLoop)
     }
@@ -569,9 +569,9 @@ extension Free86 {
             r = regs[rM & 3] >> ((rM & 4) << 1)
             u = calculate8(regs[.EAX], r)
             if u == 0 {
-                regs[rM].byteLH = regs[reg & 3] >> ((reg & 4) << 1)
+                regs[rM].encodedByte = regs[reg & 3] >> ((reg & 4) << 1)
             } else {
-                regs[.EAX].byteLH = r
+                regs[.EAX].encodedByte = r
             }
         } else {
             segmentTranslation()
@@ -580,7 +580,7 @@ extension Free86 {
             if u == 0 {
                 try st8WritableCpl3(byte: ((regs[reg & 3] >> ((reg & 4) << 1))))
             } else {
-                regs[.EAX].byteLH = rm
+                regs[.EAX].encodedByte = rm
             }
         }
         return .success(.endFetchLoop)

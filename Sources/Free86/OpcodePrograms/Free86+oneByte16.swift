@@ -5,7 +5,7 @@ extension Free86 {
         modRM = fetch8()
         r = regs[modRM.reg]
         if modRM.mod == 3 {
-            regs[modRM.rM].wordX = r
+            regs[modRM.rM].lowerHalf = r
         } else {
             segmentTranslation()
             try st16WritableCpl3(word: r)
@@ -21,7 +21,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld16ReadonlyCpl3())
         }
-        regs[modRM.reg].wordX = rm
+        regs[modRM.reg].lowerHalf = rm
         return .success(.endFetchLoop)
     }
     /// 0x1b8  MOV A
@@ -33,14 +33,14 @@ extension Free86 {
     /// 0x1be  MOV SI
     /// 0x1bf  MOV DI
     func Ox1bf() throws -> Result<Resume, Never> {
-        regs[opcode & 7].wordX = DWord(fetch16())
+        regs[opcode & 7].lowerHalf = DWord(fetch16())
         return .success(.endFetchLoop)
     }
     /// 0x1a1  MOV AX,
     func Ox1a1() throws -> Result<Resume, Never> {
         try ldMemoryOffset(false)
         moffs = DWord(try ld16ReadonlyCpl3())
-        regs[0].wordX = moffs
+        regs[0].lowerHalf = moffs
         return .success(.endFetchLoop)
     }
     /// 0x1a3  MOV ,AX
@@ -54,7 +54,7 @@ extension Free86 {
         modRM = fetch8()
         if modRM.mod == 3 {
             imm = DWord(fetch16())
-            regs[modRM.rM].wordX = imm
+            regs[modRM.rM].lowerHalf = imm
         } else {
             segmentTranslation()
             imm = DWord(fetch16())
@@ -72,8 +72,8 @@ extension Free86 {
     func Ox197() throws -> Result<Resume, Never> {
         reg = Int(opcode & 7)
         u = regs[.EAX]
-        regs[.EAX].wordX = regs[reg]
-        regs[reg].wordX = u
+        regs[.EAX].lowerHalf = regs[reg]
+        regs[reg].lowerHalf = u
         return .success(.endFetchLoop)
     }
     /// 0x187  XCHG
@@ -84,13 +84,13 @@ extension Free86 {
             // LOCK prefix not allowed
             rM = modRM.rM
             rm = regs[rM]
-            regs[rM].wordX = regs[reg]
+            regs[rM].lowerHalf = regs[reg]
         } else {
             segmentTranslation()
             rm = DWord(try ld16WritableCpl3())
             try st16WritableCpl3(word: regs[reg])
         }
-        regs[reg].wordX = rm
+        regs[reg].lowerHalf = rm
         return .success(.endFetchLoop)
     }
     /// 0x1c4  LES
@@ -118,7 +118,7 @@ extension Free86 {
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            regs[rM].wordX = calculate16(regs[rM], r)
+            regs[rM].lowerHalf = calculate16(regs[rM], r)
         } else {
             segmentTranslation()
             if operation != 7 {
@@ -150,7 +150,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld16ReadonlyCpl3())
         }
-        regs[reg].wordX = calculate16(regs[reg], rm)
+        regs[reg].lowerHalf = calculate16(regs[reg], rm)
         return .success(.endFetchLoop)
     }
     /// 0x105  ADD
@@ -164,7 +164,7 @@ extension Free86 {
     func Ox13d() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
         operation = (opcode >> 3) & 7
-        regs[0].wordX = calculate16(regs[.EAX], imm)
+        regs[0].lowerHalf = calculate16(regs[.EAX], imm)
         return .success(.endFetchLoop)
     }
     /// 0x181  G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)
@@ -175,7 +175,7 @@ extension Free86 {
             // LOCK prefix not allowed
             rM = modRM.rM
             imm = DWord(fetch16())
-            regs[rM].wordX = calculate16(regs[rM], imm)
+            regs[rM].lowerHalf = calculate16(regs[rM], imm)
         } else {
             segmentTranslation()
             imm = DWord(fetch16())
@@ -199,7 +199,7 @@ extension Free86 {
             // LOCK prefix not allowed
             rM = modRM.rM
             u = DWord(fetch8()).signExtendedByte
-            regs[rM].wordX = calculate16(regs[rM], u)
+            regs[rM].lowerHalf = calculate16(regs[rM], u)
         } else {
             segmentTranslation()
             v = DWord(fetch8()).signExtendedByte
@@ -225,7 +225,7 @@ extension Free86 {
     /// 0x147  INC DI
     func Ox147() throws -> Result<Resume, Never> {
         reg = Int(opcode & 7)
-        regs[reg].wordX = aux16Inc(regs[reg])
+        regs[reg].lowerHalf = aux16Inc(regs[reg])
         return .success(.endFetchLoop)
     }
     /// 0x148  DEC A
@@ -238,7 +238,7 @@ extension Free86 {
     /// 0x14f  DEC DI
     func Ox14f() throws -> Result<Resume, Never> {
         reg = Int(opcode & 7)
-        regs[reg].wordX = aux16Dec(regs[reg])
+        regs[reg].lowerHalf = aux16Dec(regs[reg])
         return .success(.endFetchLoop)
     }
     /// 0x16b  IMUL
@@ -253,7 +253,7 @@ extension Free86 {
         }
         v = DWord(fetch8()).signExtendedByte
         aux16Imul(rm, v)
-        regs[reg].wordX = u
+        regs[reg].lowerHalf = u
         return .success(.endFetchLoop)
     }
     /// 0x169  IMUL
@@ -268,7 +268,7 @@ extension Free86 {
         }
         imm = DWord(fetch16())
         aux16Imul(rm, imm)
-        regs[reg].wordX = u
+        regs[reg].lowerHalf = u
         return .success(.endFetchLoop)
     }
     /// 0x185  TEST
@@ -313,7 +313,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].wordX = ~regs[rM]
+                regs[rM].lowerHalf = ~regs[rM]
             } else {
                 segmentTranslation()
                 rm = DWord(try ld16WritableCpl3())
@@ -325,7 +325,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].wordX = calculate16(0, regs[rM])
+                regs[rM].lowerHalf = calculate16(0, regs[rM])
             } else {
                 operation = 5
                 segmentTranslation()
@@ -342,8 +342,8 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             aux16Mul(regs[.EAX], rm)
-            regs[.EAX].wordX = u
-            regs[.EDX].wordX = u >> 16
+            regs[.EAX].lowerHalf = u
+            regs[.EDX].lowerHalf = u >> 16
             break
         case 5:  // IMUL AL/X
             if modRM.mod == 3 {
@@ -353,8 +353,8 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             aux16Imul(regs[.EAX], rm)
-            regs[.EAX].wordX = u
-            regs[.EDX].wordX = u >> 16
+            regs[.EAX].lowerHalf = u
+            regs[.EDX].lowerHalf = u >> 16
             break
         case 6:  // DIV AL/X
             if modRM.mod == 3 {
@@ -386,7 +386,7 @@ extension Free86 {
         if modRM.mod == 3 {
             imm = DWord(fetch8())
             rM = modRM.rM
-            regs[rM].wordX = shift16(regs[rM], imm)
+            regs[rM].lowerHalf = shift16(regs[rM], imm)
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
@@ -402,7 +402,7 @@ extension Free86 {
         operation = modRM.opcode
         if modRM.mod == 3 {
             rM = modRM.rM
-            regs[rM].wordX = shift16(regs[rM], 1)
+            regs[rM].lowerHalf = shift16(regs[rM], 1)
         } else {
             segmentTranslation()
             rm = DWord(try ld16WritableCpl3())
@@ -417,7 +417,7 @@ extension Free86 {
         operation = modRM.opcode
         if modRM.mod == 3 {
             rM = modRM.rM
-            regs[rM].wordX = shift16(regs[rM], regs[.ECX] & 0xff)
+            regs[rM].lowerHalf = shift16(regs[rM], regs[.ECX] & 0xff)
         } else {
             segmentTranslation()
             rm = DWord(try ld16WritableCpl3())
@@ -428,12 +428,12 @@ extension Free86 {
     }
     /// 0x198  CBW
     func Ox198() throws -> Result<Resume, Never> {
-        regs[.EAX].wordX = regs[.EAX].signExtendedByte
+        regs[.EAX].lowerHalf = regs[.EAX].signExtendedByte
         return .success(.endFetchLoop)
     }
     /// 0x199  CWD
     func Ox199() throws -> Result<Resume, Never> {
-        regs[.EDX].wordX = (regs[.EAX] << 16).signedShiftRight(count: 31)
+        regs[.EDX].lowerHalf = (regs[.EAX] << 16).signedShiftRight(count: 31)
         return .success(.endFetchLoop)
     }
     /// 0x190  NOP
@@ -462,7 +462,7 @@ extension Free86 {
     /// 0x15f  POP DI
     func Ox15f() throws -> Result<Resume, Never> {
         m = DWord(try pop16())
-        regs[opcode & 7].wordX = m
+        regs[opcode & 7].lowerHalf = m
         return .success(.endFetchLoop)
     }
     /// 0x160  PUSHA
@@ -480,7 +480,7 @@ extension Free86 {
         modRM = fetch8()
         if modRM.mod == 3 {
             m = DWord(try pop16())
-            regs[modRM.rM].wordX = m
+            regs[modRM.rM].lowerHalf = m
         } else {
             u = regs[.ESP]
             m = DWord(try pop16())
@@ -539,7 +539,7 @@ extension Free86 {
         }
         ipr.segmentRegister = SegmentRegister.Name.LDT.rawValue
         segmentTranslation()
-        regs[modRM.reg].wordX = lax
+        regs[modRM.reg].lowerHalf = lax
         return .success(.endFetchLoop)
     }
     /// 0x1ff  G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
@@ -552,7 +552,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].wordX = aux16Inc(regs[rM])
+                regs[rM].lowerHalf = aux16Inc(regs[rM])
             } else {
                 segmentTranslation()
                 rm = DWord(try ld16WritableCpl3())
@@ -564,7 +564,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].wordX = aux16Dec(regs[rM])
+                regs[rM].lowerHalf = aux16Dec(regs[rM])
             } else {
                 segmentTranslation()
                 rm = DWord(try ld16WritableCpl3())
@@ -739,7 +739,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         imm = DWord(fetch8())
-        regs[.EAX].wordX = io?[imm] ?? 0
+        regs[.EAX].lowerHalf = io?[imm] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0x1e7  OUT ,AX
@@ -756,7 +756,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        regs[.EAX].wordX = io?[regs[.EDX].lowerHalf] ?? 0
+        regs[.EAX].lowerHalf = io?[regs[.EDX].lowerHalf] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0x1ef  OUT DX,AX
