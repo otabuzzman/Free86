@@ -26,7 +26,7 @@ actor PinIO<Signal> {
         pending = true
     }
 
-    func probe() throws -> Signal {
+    func probe(inspect: Bool = false) throws -> Signal {
         if !pending {
             throw Event.noPendingProbe
         }

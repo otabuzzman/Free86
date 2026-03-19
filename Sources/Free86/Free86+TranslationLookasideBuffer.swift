@@ -99,7 +99,7 @@ extension Free86 {
         if pde.isPresent {
             let pteAddress = pde.pageFrameAddress &+ linear.pageTableOffset
             var pte: PageTableEntry = memory.ld(from: pteAddress)
-            if pde.isPresent {
+            if pte.isPresent {
                 let supervisor = !user
                 let pxe = pde & pte
                 /// error: user request and page not user-accessible
@@ -116,7 +116,7 @@ extension Free86 {
                         memory.st(at: pdeAddress, dword: pde)
                     }
                     let isBlankPage = writable && !pte.isDirty
-                    if isBlankPage && !pte.accessed {
+                    if isBlankPage || !pte.accessed {
                         pte.setFlag(.A)
                         if isBlankPage {
                             pte.setFlag(.D)

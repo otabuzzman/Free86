@@ -29,6 +29,15 @@ extension SegmentSelector {
 }
 
 extension SegmentSelector {
+    var indexTI: Self {
+        self & ~0b0011
+    }
+    var isNull: Bool {
+        indexTI == 0
+    }
+}
+
+extension SegmentSelector {
     init(_ dword: DWord) {
         self = Self(truncatingIfNeeded: dword)
     }

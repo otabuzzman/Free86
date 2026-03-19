@@ -199,10 +199,10 @@ extension Free86 {
             if u == 0 {
                 v = v &+ 1
             }
-    }
-    osmDst = u
-        osmSrc = v - u.signedShiftRight(count: 31)
-    osm = 23
+        }
+        osmDst = u
+        osmSrc = v &- u.signedShiftRight(count: 31)
+        osm = 23
     }
     func multiply(_ multiplicand: DWord, _ multiplier: DWord) {
         var x = QWord(multiplicand) &* QWord(multiplier)

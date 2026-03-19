@@ -163,7 +163,6 @@ extension Free86 {
     func Ox10f1ad() throws -> Result<Resume, Never> {
         modRM = fetch8()
         r = regs[modRM.reg]
-        operation = (opcode >> 3) & 1
         if modRM.mod == 3 {
             rM = modRM.rM
             regs[rM].lowerHalf = aux16ShrdShld(regs[rM], r, regs[.ECX])

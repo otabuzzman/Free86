@@ -21,7 +21,7 @@ io.register(port: outPort, at: outPortAddress)
 let cpu = Free86(memory: mem, io: io)
 
 var historySkip = 0
-let historySize = 16
+let historySize = 32
 var history = [String](repeating: "", count: historySize)
 
 let argv = CommandLine.arguments
@@ -68,7 +68,7 @@ while true {
             if cpu.halted {
                 if historySkip > 0 {
                     for i in 0..<historySize {
-                        print("\(history[(Int(cpu.cycles) + 1 - 4 + i) % historySize])")
+                        print("\(history[(Int(cpu.cycles) + 1 + i) % historySize])")
                     }
                 }
                 print("\(cpu.cycles)")
@@ -188,6 +188,6 @@ class PostPort<T: UnsignedInteger>: IOPort {
 class OutPort<T: UnsignedInteger>: IOPort {
     func rd() -> T { 0xfe }
     func wr(_ iodata: T) {
-        print(String(format: "%c", iodata as! CVarArg))
+        print(String(format: "%c", iodata as! CVarArg), terminator: "")
     }
 }

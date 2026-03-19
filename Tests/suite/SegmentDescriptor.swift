@@ -86,6 +86,7 @@ func segmentDescriptorFieldsAccess() {
     #expect(segmentDescriptor.type == 0b0001_1000)
     segmentDescriptor.type = 0b1_0010
     #expect(segmentDescriptor.type == 0b1_0010)
+    #expect(segmentDescriptor.isType(.DataRW))
     #expect(segmentDescriptor.dpl  == 3)
     segmentDescriptor.dpl = 0
     #expect(segmentDescriptor.dpl  == 0)

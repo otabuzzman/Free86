@@ -38,4 +38,6 @@ func instructionPrefixRegisterFieldsAccess() {
     #expect(ipr.addressSizeMask == 0xFFFF)
     ipr.setFlag(.addressSizeOverride, 0)
     #expect(ipr.addressSizeMask == 0xFFFFFFFF)
+    ipr.segmentRegister = SegmentRegister.Name.CS.rawValue
+    #expect(ipr == 0b1110_0010_1010)
 }

@@ -43,7 +43,7 @@ extension Free86 {
         modRM = fetch8()
         u = canJmp(condition: Int(opcode & 0xf)) ? 1 : 0
         if modRM.mod == 3 {
-            regs[modRM.rM].encodedByte = u
+            setEncodedByte(in: modRM.rM, to: u)
         } else {
             segmentTranslation()
             try st8WritableCpl3(byte: (u))
@@ -526,14 +526,14 @@ extension Free86 {
             rM = modRM.rM
             r = regs[rM & 3] >> ((rM & 4) << 1)
             u = calculate8(r, (regs[reg & 3] >> ((reg & 4) << 1)))
-            regs[reg].encodedByte = r
-            regs[rM].encodedByte = u
+            setEncodedByte(in: reg, to: r)
+            setEncodedByte(in: rM, to: u)
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
             u = calculate8(rm, (regs[reg & 3] >> ((reg & 4) << 1)))
             try st8WritableCpl3(byte: (u))
-            regs[reg].encodedByte = rm
+            setEncodedByte(in: reg, to: rm)
         }
         return .success(.endFetchLoop)
     }
@@ -569,9 +569,9 @@ extension Free86 {
             r = regs[rM & 3] >> ((rM & 4) << 1)
             u = calculate8(regs[.EAX], r)
             if u == 0 {
-                regs[rM].encodedByte = regs[reg & 3] >> ((reg & 4) << 1)
+                setEncodedByte(in: rM, to: regs[reg & 3] >> ((reg & 4) << 1))
             } else {
-                regs[.EAX].encodedByte = r
+                regs[.EAX].byteL = r
             }
         } else {
             segmentTranslation()
@@ -580,7 +580,7 @@ extension Free86 {
             if u == 0 {
                 try st8WritableCpl3(byte: ((regs[reg & 3] >> ((reg & 4) << 1))))
             } else {
-                regs[.EAX].encodedByte = rm
+                regs[.EAX].byteL = rm
             }
         }
         return .success(.endFetchLoop)

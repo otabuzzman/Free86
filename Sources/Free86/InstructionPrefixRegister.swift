@@ -30,7 +30,7 @@ extension InstructionPrefixRegister {
         }
         set {
             assert((0..<7).contains(newValue), "fatal error")
-            self = ~7 | Self(truncatingIfNeeded: newValue + 1)
+            self = self & ~7 | Self(newValue + 1)
         }
     }
     var addressSizeMask: DWord {

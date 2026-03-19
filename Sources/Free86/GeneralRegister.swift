@@ -19,27 +19,22 @@ extension GeneralRegister {
         get { (self & 0x0000_FF00) >> 8 }
         set { self = (self & ~0x0000_FF00) | (newValue & 0xFF) << 8 }
     }
-    var encodedByte: Self {
-        get {
-            if isByteLEncoded {
-                return byteL
-            } else {
-                return byteH
-            }
-        }
-        set {
-            if isByteLEncoded {
-                byteL = newValue
-            } else {
-                byteH = newValue
-            }
-        }
-    }
     var isByteHEncoded: Bool {
         self & 0b0100 != 0
     }
     var isByteLEncoded: Bool {
         !isByteHEncoded
+    }
+}
+
+extension Free86 {
+    func setEncodedByte(in r: Int, to v: DWord) {
+        assert((0..<8).contains(r), "fatal error")
+        if GeneralRegister(r).isByteHEncoded {
+            regs[r & 3].byteH = v
+        } else {
+            regs[r].byteL = v
+        }
     }
 }
 

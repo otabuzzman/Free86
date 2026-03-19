@@ -368,10 +368,10 @@ public class Free86 {
         tlbWritableCpl3 = .allocate(capacity: 0x100000)
         tlbReadonly = tlbReadonlyCplX
         tlbWritable = tlbWritableCplX
-        tlbReadonlyCplX.initialize(repeating: -1, count: 0x10000)
-        tlbWritableCplX.initialize(repeating: -1, count: 0x10000)
-        tlbReadonlyCpl3.initialize(repeating: -1, count: 0x10000)
-        tlbWritableCpl3.initialize(repeating: -1, count: 0x10000)
+        tlbReadonlyCplX.initialize(repeating: -1, count: 0x100000)
+        tlbWritableCplX.initialize(repeating: -1, count: 0x100000)
+        tlbReadonlyCpl3.initialize(repeating: -1, count: 0x100000)
+        tlbWritableCpl3.initialize(repeating: -1, count: 0x100000)
         self.io = io
         reset()
     }

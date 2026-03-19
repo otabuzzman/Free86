@@ -2,12 +2,10 @@ extension Free86 {
     public func fetchDecodeExecute(cycles: QWord) async throws {
         if halted {
             if eflags.isFlagRaised(.IF) {
-                let irq = try await INTR.probe()
-                if irq {
-                    halted = false
-                } else {
-                    return
-                }
+                do {
+                    let irq = try await INTR.probe()
+                    if irq { halted = false } else { return }
+                } catch { return }
             }
         }
         cyclesRequested = cycles
@@ -18,11 +16,13 @@ extension Free86 {
             try raiseInterrupt(interrupt.id, interrupt.errorCode, false, false, 0)
         }
         if eflags.isFlagRaised(.IF) {
-            let irq = try await INTR.probe()
-            if irq {
-                let id = try await DB8.probe()
-                try raiseInterrupt(id, 0, true, false, 0)
-            }
+            do {
+                let irq = try await INTR.probe()
+                if irq {
+                    let id = try await DB8.probe()
+                    try raiseInterrupt(id, 0, true, false, 0)
+                }
+            } catch { }
         }
         cyclesLoop:
         repeat {  // cycles (actually instructions)
@@ -90,13 +90,12 @@ extension Free86 {
                         break cyclesLoop
                     case .endOnInterrupt:
                         if eflags.isFlagRaised(.IF) {
-                            let irq = try await INTR.probe()  // .keepPendingProbe
-                            if irq {
-                                break cyclesLoop
-                            }
-                        } else {
-                            break fetchLoop
+                            do {
+                                let irq = try await INTR.probe()
+                                if irq { break cyclesLoop }
+                            } catch { break fetchLoop }
                         }
+                        break fetchLoop
                     }
                 }
             }

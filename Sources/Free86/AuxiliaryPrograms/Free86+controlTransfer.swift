@@ -15,36 +15,36 @@ extension Free86 {
         segs[.CS] = SegmentRegister(selector, shadow)
     }
     func auxJmpfProtectedMode(_ selector: SegmentSelector, _ offset: LinearAddress) throws {
-        if selector.index == 0 {
+        if selector.isNull {
             throw Interrupt(.GP, errorCode: 0)
         }
         let xsd = try ldXdtEntry(selector)
         if xsd.qword == 0 {
-            throw Interrupt(.GP, errorCode: DWord(selector.index))
+            throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
         }
         assert(!xsd.isSystemSegment, "fatal error: unexpected system segment descriptor")
         if !xsd.isCodeSegment {
-            throw Interrupt(.GP, errorCode: DWord(selector.index))
+            throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
         }
         if xsd.isFlagRaised(.C) {
             if xsd.dpl > cpl {
-                throw Interrupt(.GP, errorCode: DWord(selector.index))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
         } else {
             if selector.rpl > cpl {
-                throw Interrupt(.GP, errorCode: DWord(selector.index))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
             if xsd.dpl != cpl {
-                throw Interrupt(.GP, errorCode: DWord(selector.index))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
         }
         if !xsd.isFlagRaised(.P) {
-            throw Interrupt(.NP, errorCode: DWord(selector.index))
+            throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
         }
         if offset > xsd.limit {
-            throw Interrupt(.GP, errorCode: DWord(selector.index))
+            throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
         }
-        segs[.CS] = SegmentRegister(selector.index | Word(cpl), xsd)
+        segs[.CS] = SegmentRegister(selector.indexTI | Word(cpl), xsd)
         eip = offset
         far = 0
         farStart = 0
@@ -83,32 +83,32 @@ extension Free86 {
     }
     func auxCallfProtectedMode(_ o32: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
         var esp: DWord
-        if selector.index == 0 {
+        if selector.isNull {
             throw Interrupt(.GP, errorCode: 0)
         }
         let xsd = try ldXdtEntry(selector)
         if xsd.qword == 0 {
-            throw Interrupt(.GP, errorCode: DWord(selector.index))
+            throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
         }
         let espStart = regs[.ESP]
         if !xsd.isSystemSegment {
             if !xsd.isCodeSegment {
-                throw Interrupt(.GP, errorCode: DWord(selector.index))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
             if xsd.isFlagRaised(.C) {
                 if xsd.dpl > cpl {
-                    throw Interrupt(.GP, errorCode: DWord(selector.index))
+                    throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
                 }
             } else {
                 if selector.rpl > cpl {
-                    throw Interrupt(.GP, errorCode: DWord(selector.index))
+                    throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
                 }
                 if xsd.dpl != cpl {
-                    throw Interrupt(.GP, errorCode: DWord(selector.index))
+                    throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
                 }
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: DWord(selector.index))
+                throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
             }
             esp = espStart
             if o32 {
@@ -127,10 +127,10 @@ extension Free86 {
                 try st16WritableCpl3(word: home)
             }
             if offset > xsd.limit {
-                throw Interrupt(.GP, errorCode: DWord(selector.index))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
             regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
-            segs[.CS] = SegmentRegister(selector.index | Word(cpl), xsd)
+            segs[.CS] = SegmentRegister(selector.indexTI | Word(cpl), xsd)
             eip = offset
             far = 0
             farStart = 0
@@ -149,13 +149,13 @@ extension Free86 {
             case .CallGate:
                 break
             default:
-                throw Interrupt(.GP, errorCode: DWord(selector.index))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
             if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
-                throw Interrupt(.GP, errorCode: DWord(selector.index))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: DWord(selector.index))
+                throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
             }
             let gsel = SegmentSelector(truncatingIfNeeded: (xsd.qword >> 16) & 0xffff)  // different fields in call gate
             let goff = DWord(truncatingIfNeeded: (xsd.qword >> 32) & 0xffff0000) | DWord(truncatingIfNeeded: xsd.qword & 0x0000ffff)
@@ -165,16 +165,16 @@ extension Free86 {
             }
             let cgd = try ldXdtEntry(gsel)
             if cgd.qword == 0 {
-                throw Interrupt(.GP, errorCode: DWord(gsel.index))
+                throw Interrupt(.GP, errorCode: DWord(gsel.indexTI))
             }
             if !cgd.isCodeSegment {
-                throw Interrupt(.GP, errorCode: DWord(gsel.index))
+                throw Interrupt(.GP, errorCode: DWord(gsel.indexTI))
             }
             if cgd.dpl > cpl {
-                throw Interrupt(.GP, errorCode: DWord(gsel.index))
+                throw Interrupt(.GP, errorCode: DWord(gsel.indexTI))
             }
             if !cgd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: DWord(gsel.index))
+                throw Interrupt(.NP, errorCode: DWord(gsel.indexTI))
             }
             if !cgd.isFlagRaised(.C) && (cgd.dpl < cpl) {  // intralevel
                 let tss = try ldTssStack(cgd.dpl)  // seg:offset
@@ -184,20 +184,20 @@ extension Free86 {
                     throw Interrupt(.TS, errorCode: 0)
                 }
                 if ss.rpl != cgd.dpl {
-                    throw Interrupt(.TS, errorCode: DWord(ss.index))
+                    throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
                 }
                 let ssd = try ldXdtEntry(ss)
                 if ssd.qword == 0 {
-                    throw Interrupt(.TS, errorCode: DWord(ss.index))
+                    throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
                 }
                 if ssd.dpl != cgd.dpl {
-                    throw Interrupt(.TS, errorCode: DWord(ss.index))
+                    throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
                 }
                 if !ssd.isDataSegment || !ssd.isFlagRaised(.W) {
-                    throw Interrupt(.TS, errorCode: DWord(ss.index))
+                    throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
                 }
                 if !ssd.isFlagRaised(.P) {
-                    throw Interrupt(.NP, errorCode: DWord(ss.index))
+                    throw Interrupt(.NP, errorCode: DWord(ss.indexTI))
                 }
                 // osBase = ssBase
                 // osMask = ssMask
@@ -209,8 +209,8 @@ extension Free86 {
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
                     try stWritableCpl3(dword: espStart)
-                    for _ in (1...gpac).reversed() {
-                        u = 0 // Xe(osBase &+ ((espStart &+ (i &- 1) &* 4) & osMask))
+                    for _ in (0..<gpac).reversed() {
+                        u = 0 // Xe(osBase &+ ((espStart &+ i &* 4) & osMask))
                         esp = esp &- 4
                         lax = ssBase &+ (esp & ssMask)
                         try stWritableCpl3(dword: u)
@@ -222,14 +222,14 @@ extension Free86 {
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
                     try st16WritableCpl3(word: espStart)
-                    for _ in (1...gpac).reversed() {
-                        u = 0 // Ye(osBase &+ ((espStart &+ (i &- 1) &* 2) & osMask))
+                    for _ in (0..<gpac).reversed() {
+                        u = 0 // Ye(osBase &+ ((espStart &+ i &* 2) & osMask))
                         esp = esp &- 2
                         lax = ssBase &+ (esp & ssMask)
                         try st16WritableCpl3(word: u)
                     }
                 }
-                segs[.SS] = SegmentRegister(ss.index | Word(ssd.dpl), ssd)
+                segs[.SS] = SegmentRegister(ss.indexTI | Word(ssd.dpl), ssd)
             } else {  // intralevel
                 esp = espStart
             }
@@ -248,7 +248,7 @@ extension Free86 {
                 lax = ssBase &+ (esp & ssMask)
                 try st16WritableCpl3(word: home)
             }
-            segs[.CS] = SegmentRegister(gsel.index | Word(cgd.dpl), cgd)
+            segs[.CS] = SegmentRegister(gsel.indexTI | Word(cgd.dpl), cgd)
             cpl = cgd.dpl
             regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
             eip = goff
@@ -296,7 +296,7 @@ extension Free86 {
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | ((esp &+ releaseStackItems) & ssMask)
         var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(cs << 4)
+        shadow.base = LinearAddress(cs) << 4
         segs[.CS] = SegmentRegister(cs, shadow)
         eip = homeEip
         far = 0
@@ -400,25 +400,25 @@ extension Free86 {
         }
         let csd = try ldXdtEntry(cs)
         if csd.qword == 0 {
-            throw Interrupt(.GP, errorCode: DWord(cs.index))
+            throw Interrupt(.GP, errorCode: DWord(cs.indexTI))
         }
         if !csd.isCodeSegment {
-            throw Interrupt(.GP, errorCode: DWord(cs.index))
+            throw Interrupt(.GP, errorCode: DWord(cs.indexTI))
         }
         if cs.rpl < cpl {
-            throw Interrupt(.GP, errorCode: DWord(cs.index))
+            throw Interrupt(.GP, errorCode: DWord(cs.indexTI))
         }
         if csd.isFlagRaised(.C) {
             if csd.dpl > cs.rpl {
-                throw Interrupt(.GP, errorCode: DWord(cs.index))
+                throw Interrupt(.GP, errorCode: DWord(cs.indexTI))
             }
         } else {
             if csd.dpl != cs.rpl {
-                throw Interrupt(.GP, errorCode: DWord(cs.index))
+                throw Interrupt(.GP, errorCode: DWord(cs.indexTI))
             }
         }
         if !csd.isFlagRaised(.P) {
-            throw Interrupt(.NP, errorCode: DWord(cs.index))
+            throw Interrupt(.NP, errorCode: DWord(cs.indexTI))
         }
         esp = esp &+ releaseStackItems
         if cs.rpl == cpl {
@@ -443,20 +443,20 @@ extension Free86 {
                 throw Interrupt(.GP, errorCode: 0)
             } else {
                 if ss.rpl != cs.rpl {
-                    throw Interrupt(.GP, errorCode: DWord(ss.index))
+                    throw Interrupt(.GP, errorCode: DWord(ss.indexTI))
                 }
                 let ssd = try ldXdtEntry(ss)
                 if ssd.qword == 0 {
-                    throw Interrupt(.GP, errorCode: DWord(ss.index))
+                    throw Interrupt(.GP, errorCode: DWord(ss.indexTI))
                 }
                 if !ssd.isDataSegment || !ssd.isFlagRaised(.W) {
-                    throw Interrupt(.GP, errorCode: DWord(ss.index))
+                    throw Interrupt(.GP, errorCode: DWord(ss.indexTI))
                 }
                 if ssd.dpl != cs.rpl {
-                    throw Interrupt(.GP, errorCode: DWord(ss.index))
+                    throw Interrupt(.GP, errorCode: DWord(ss.indexTI))
                 }
                 if !ssd.isFlagRaised(.P) {
-                    throw Interrupt(.NP, errorCode: DWord(ss.index))
+                    throw Interrupt(.NP, errorCode: DWord(ss.indexTI))
                 }
                 segs[.SS] = SegmentRegister(ss, ssd)
             }
@@ -493,7 +493,7 @@ extension Free86 {
         }
     }
     func resetSegmentRegister(_ sreg: SegmentRegister.Name, _ level: DWord) {
-        if (sreg == .FS || sreg == .GS) && segs[sreg].selector.index == 0 {
+        if (sreg == .FS || sreg == .GS) && segs[sreg].selector.isNull {
             return // null selector in FS, GS
         }
         let xsd = segs[sreg].shadow
@@ -602,13 +602,13 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         if !cgd.isCodeSegment {
-            throw Interrupt(.GP, errorCode: DWord(gsel.index))
+            throw Interrupt(.GP, errorCode: DWord(gsel.indexTI))
         }
         if cgd.dpl > cpl {
-            throw Interrupt(.GP, errorCode: DWord(gsel.index))
+            throw Interrupt(.GP, errorCode: DWord(gsel.indexTI))
         }
         if !cgd.isFlagRaised(.P) {
-            throw Interrupt(.NP, errorCode: DWord(gsel.index))
+            throw Interrupt(.NP, errorCode: DWord(gsel.indexTI))
         }
         if !cgd.isFlagRaised(.C) && (cgd.dpl < cpl) {  // interlevel
             let tss = try ldTssStack(cgd.dpl)  // seg:offset
@@ -618,27 +618,27 @@ extension Free86 {
                 throw Interrupt(.TS, errorCode: 0)
             }
             if ss.rpl != cgd.dpl {
-                throw Interrupt(.TS, errorCode: DWord(ss.index))
+                throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
             }
             ssd = try ldXdtEntry(ss)
             if ssd.qword == 0 {
-                throw Interrupt(.TS, errorCode: DWord(ss.index))
+                throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
             }
             if ssd.dpl != cgd.dpl {
-                throw Interrupt(.TS, errorCode: DWord(ss.index))
+                throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
             }
             if !ssd.isDataSegment || !ssd.isFlagRaised(.W) {
-                throw Interrupt(.TS, errorCode: DWord(ss.index))
+                throw Interrupt(.TS, errorCode: DWord(ss.indexTI))
             }
             if !ssd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: DWord(ss.index))
+                throw Interrupt(.NP, errorCode: DWord(ss.indexTI))
             }
             ssBase = ssd.base
             ssMask = ssd.segmentSizeMask
             isInterlevel = true
         } else if cgd.isFlagRaised(.C) || (cgd.dpl == cpl) {  // intralevel
             if eflags.isFlagRaised(.VM) {
-                throw Interrupt(.GP, errorCode: DWord(gsel.index))
+                throw Interrupt(.GP, errorCode: DWord(gsel.indexTI))
             }
             dpl = cpl
             ssBase = segs[.SS].shadow.base
@@ -646,7 +646,7 @@ extension Free86 {
             esp = regs[.ESP]
             isInterlevel = false
         } else {
-            throw Interrupt(.GP, errorCode: DWord(gsel.index))
+            throw Interrupt(.GP, errorCode: DWord(gsel.indexTI))
         }
         if isd.isType(.InterruptGate) || isd.isType(.TrapGate) {  // 32 bit descriptor (?)
             if isInterlevel {
@@ -730,9 +730,9 @@ extension Free86 {
                 segs[.FS] = SegmentRegister(0, SegmentDescriptor(0))
                 segs[.GS] = SegmentRegister(0, SegmentDescriptor(0))
             }
-            segs[.SS] = SegmentRegister(ss.index | Word(dpl), ssd)
+            segs[.SS] = SegmentRegister(ss.indexTI | Word(dpl), ssd)
         }
-        segs[.CS] = SegmentRegister(gsel.index | Word(dpl), cgd)
+        segs[.CS] = SegmentRegister(gsel.indexTI | Word(dpl), cgd)
         cpl = dpl
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = goff
@@ -753,25 +753,24 @@ extension Free86 {
         } else {
             xdt = gdt
         }
-        let dti = DWord(selector.index)
-        if (dti + 7) > xdt.shadow.limit {
+        if (selector.index + 7) > xdt.shadow.limit {
             return SegmentDescriptor(0)
         }
-        lax = xdt.shadow.base + dti
+        lax = xdt.shadow.base + DWord(selector.index)
         return SegmentDescriptor(try ld64ReadonlyCplX())
     }
     func ldTssStack(_ level: DWord) throws -> QWord {  // seg:offset
         var res: QWord
         if !tr.shadow.isFlagRaised(.P) {
-            throw Interrupt(.NP, errorCode: DWord(tr.selector.index))
+            throw Interrupt(.NP, errorCode: DWord(tr.selector.indexTI))
         }
         if !tr.shadow.isType(.TSSAvailable) && !tr.shadow.isType(.TSS16Available) {
-            throw Interrupt(.GP, errorCode: DWord(tr.selector.index))
+            throw Interrupt(.GP, errorCode: DWord(tr.selector.indexTI))
         }
         let tss32 = tr.shadow.isType(.TSSAvailable) ? 1 : 0
         let offset = (level * 4 + 2) << tss32  // offset of privileged (E)SP in TSS
         if (offset + (4 << tss32) - 1) > tr.shadow.limit {
-            throw Interrupt(.TS, errorCode: DWord(tr.selector.index))
+            throw Interrupt(.TS, errorCode: DWord(tr.selector.indexTI))
         }
         lax = tr.shadow.base &+ offset
         if tss32 == 1 {

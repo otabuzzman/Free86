@@ -1,44 +1,42 @@
 extension Free86 {
     func auxLdtr(_ selector: SegmentSelector) throws {
-        let dti = DWord(selector.index)
-        if dti == 0 {
+        if selector.isNull {
             ldt = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
-            if !selector.isGDT {
-                throw Interrupt(.GP, errorCode: dti)
+            if selector.isLDT {
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
-            if (dti + 7) > gdt.shadow.limit {
-                throw Interrupt(.GP, errorCode: dti)
+            if (selector.index + 7) > gdt.shadow.limit {
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
-            lax = gdt.shadow.base + dti
+            lax = gdt.shadow.base + DWord(selector.index)
             let xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if !xsd.isSystemSegment || !xsd.isType(.LDT) {
-                throw Interrupt(.GP, errorCode: dti)
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: dti)
+                throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
             }
             ldt = SegmentRegister(selector, xsd)
         }
     }
     func auxLtr(_ selector: SegmentSelector) throws {
-        let dti = DWord(selector.index)
-        if dti == 0 {
+        if selector.isNull {
             tr = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
             if !selector.isGDT {
-                throw Interrupt(.GP, errorCode: dti)
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
-            if (dti + 7) > gdt.shadow.limit {
-                throw Interrupt(.GP, errorCode: dti)
+            if (selector.index + 7) > gdt.shadow.limit {
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
-            lax = gdt.shadow.base + dti
+            lax = gdt.shadow.base + DWord(selector.index)
             var xsd = SegmentDescriptor(try ld64ReadonlyCplX())
-            if !xsd.isSystemSegment || !xsd.isType(.TSSAvailable) || !xsd.isType(.TSS16Available) {
-                throw Interrupt(.GP, errorCode: dti)
+            if !xsd.isType(.TSSAvailable) && !xsd.isType(.TSS16Available) {
+                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: dti)
+                throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
             }
             tr = SegmentRegister(selector, xsd)
             xsd.upper.setBit(9)  /// bit 9 distinguishes available (0)/ busy (1) TSS
@@ -74,7 +72,7 @@ extension Free86 {
     }
     func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) throws -> DWord {
         let notok: DWord = 0x80000000
-        if selector.index == 0 {
+        if selector.isNull {
             return notok
         }
         let xsd = try ldXdtEntry(selector)
@@ -143,7 +141,7 @@ extension Free86 {
         osm = 24
     }
     func isSegmentAccessible(_ selector: SegmentSelector, _ writable: Bool) throws -> Bool {
-        if selector.index == 0 {
+        if selector.isNull {
             return false
         }
         let xsd = try ldXdtEntry(selector)
@@ -250,54 +248,54 @@ extension Free86 {
         }
     }
     func aux16Pusha() throws {
-        lax = ssBase &+ ((regs[.ESP] &- 16) & ssBase)
+        lax = ssBase &+ ((regs[.ESP] &- 16) & ssMask)
         for reg in (0...7).reversed() {
             r = regs[reg]
             try st16WritableCpl3(word: r)
             lax = lax &+ 2
         }
-        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 16) & ssBase)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &- 16) & ssMask)
     }
     func auxPusha() throws {
-        lax = ssBase &+ ((regs[.ESP] &- 32) & ssBase)
+        lax = ssBase &+ ((regs[.ESP] &- 32) & ssMask)
         for reg in (0...7).reversed() {
             r = regs[reg]
             try stWritableCpl3(dword: r)
             lax = lax &+ 4
         }
-        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &- 32) & ssBase)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &- 32) & ssMask)
     }
     func aux16Popa() throws {
-        lax = ssBase &+ (regs[.ESP] & ssBase)
+        lax = ssBase &+ (regs[.ESP] & ssMask)
         for reg in (0...7).reversed() {
             if !reg.isGeneralRegister(.ESP) {
                 regs[reg].lowerHalf = DWord(try ld16ReadonlyCpl3())
             }
             lax = lax &+ 2
         }
-        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &+ 16) & ssBase)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 16) & ssMask)
     }
     func auxPopa() throws {
-        lax = ssBase &+ (regs[.ESP] & ssBase)
+        lax = ssBase &+ (regs[.ESP] & ssMask)
         for reg in (0...7).reversed() {
             if !reg.isGeneralRegister(.ESP) {
-                regs[reg].lowerHalf = try ldReadonlyCpl3()
+                regs[reg] = try ldReadonlyCpl3()
             }
             lax = lax &+ 4
         }
-        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((regs[.ESP] &+ 32) & ssBase)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 32) & ssMask)
     }
     func aux16Leave() throws {
         let ebp = regs[.EBP]
-        lax = ssBase &+ (ebp & ssBase)
+        lax = ssBase &+ (ebp & ssMask)
         regs[.EBP].lowerHalf = DWord(try ld16ReadonlyCpl3())
-        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((ebp & 2) & ssBase)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((ebp &+ 2) & ssMask)
     }
     func auxLeave() throws {
         let ebp = regs[.EBP]
-        lax = ssBase &+ (ebp & ssBase)
+        lax = ssBase &+ (ebp & ssMask)
         regs[.EBP] = try ldReadonlyCpl3()
-        regs[.ESP] = (regs[.ESP] & ~ssBase) | ((ebp & 2) & ssBase)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((ebp &+ 4) & ssMask)
     }
     func aux16Enter() throws {
         imm16 = fetch16()
@@ -336,7 +334,7 @@ extension Free86 {
         esp = esp &- 4
         lax = ssBase &+ (esp & ssMask)
         try stWritableCpl3(dword: ebp)
-        let exp = esp
+        let exp = (ebp & ~ssMask) | (esp & ssMask)
         if imm != 0 {
             while imm > 1 {
                 ebp = ebp &- 4
@@ -410,7 +408,7 @@ extension Free86 {
     }
     func pop16() throws -> Word {
         let res = try ld16Stack()
-        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 4) & ssMask)
+        regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 2) & ssMask)
         return res
     }
     func pop() throws -> DWord {

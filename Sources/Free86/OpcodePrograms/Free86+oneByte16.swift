@@ -40,7 +40,7 @@ extension Free86 {
     func Ox1a1() throws -> Result<Resume, Never> {
         try ldMemoryOffset(false)
         moffs = DWord(try ld16ReadonlyCpl3())
-        regs[0].lowerHalf = moffs
+        regs[.EAX].lowerHalf = moffs
         return .success(.endFetchLoop)
     }
     /// 0x1a3  MOV ,AX
@@ -164,7 +164,7 @@ extension Free86 {
     func Ox13d() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
         operation = (opcode >> 3) & 7
-        regs[0].lowerHalf = calculate16(regs[.EAX], imm)
+        regs[.EAX].lowerHalf = calculate16(regs[.EAX], imm)
         return .success(.endFetchLoop)
     }
     /// 0x181  G1 (ADD, OR, ADC, SBB, AND, SUB, XOR, CMP)

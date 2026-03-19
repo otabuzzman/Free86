@@ -66,8 +66,13 @@ public extension SegmentDescriptor {
         upper & 0x00F0_FF00
     }
     var type: DWord {
-        get { (upper & 0x0000_1F00) >> 8 }
-        set { upper = upper & 0xFFFF_E0FF | DWord(newValue) << 8 }
+        get {
+            (upper & 0x0000_1F00) >> 8
+        }
+        set {
+            assert(0x20 > newValue, "fatal error")
+            upper = upper & ~0x0000_1F00 | DWord(newValue) << 8
+        }
     }
     var dpl: DWord {
         get {
@@ -160,7 +165,7 @@ enum SegmentDescriptorType: DWord {
 
 extension SegmentDescriptor {
     func isType(_ type: SegmentDescriptorType) -> Bool {
-        type.rawValue == self.type | (isSystemSegment ? 0b0_0000 : 0b1_0000)
+        type.rawValue == self.type
     }
 }
 

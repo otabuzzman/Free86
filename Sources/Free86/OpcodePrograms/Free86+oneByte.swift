@@ -201,7 +201,7 @@ extension Free86 {
         modRM = fetch8()
         if modRM.mod == 3 {
             imm = DWord(fetch8())
-            regs[modRM.rM].encodedByte = imm
+            setEncodedByte(in: modRM.rM, to: imm)
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
@@ -267,13 +267,13 @@ extension Free86 {
             // LOCK prefix not allowed
             rM = modRM.rM
             rm = regs[rM & 3] >> ((rM & 4) << 1)
-            regs[rM].encodedByte = regs[reg & 3] >> ((reg & 4) << 1)
+            setEncodedByte(in: rM, to: regs[reg & 3] >> ((reg & 4) << 1))
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
             try st8WritableCpl3(byte: regs[reg & 3] >> ((reg & 4) << 1))
         }
-        regs[reg].encodedByte = rm
+        setEncodedByte(in: reg, to: rm)
         return .success(.endFetchLoop)
     }
     /// 0x87  XCHG
@@ -315,7 +315,7 @@ extension Free86 {
         }
         lax = segs[ipr.segmentRegister].shadow.base &+ lax
         m = DWord(try ld8ReadonlyCpl3())
-        regs[.EAX].encodedByte = m
+        regs[.EAX].byteL = m
         return .success(.endFetchLoop)
     }
     /// 0xc4  LES
@@ -344,7 +344,7 @@ extension Free86 {
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            regs[rM].encodedByte = calculate8(regs[rM & 3] >> ((rM & 4) << 1), r)
+            setEncodedByte(in: rM, to: calculate8(regs[rM & 3] >> ((rM & 4) << 1), r))
         } else {
             segmentTranslation()
             if operation != 7 {
@@ -441,7 +441,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
         }
-        regs[reg].encodedByte = calculate8(regs[reg & 3] >> ((reg & 4) << 1), rm)
+        setEncodedByte(in: reg, to: calculate8(regs[reg & 3] >> ((reg & 4) << 1), rm))
         return .success(.endFetchLoop)
     }
     /// 0x03  ADD
@@ -506,7 +506,7 @@ extension Free86 {
     func Ox3c() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
         operation = opcode >> 3
-        regs[.EAX].encodedByte = calculate8(regs[.EAX] & 0xff, imm)
+        regs[.EAX].byteL = calculate8(regs[.EAX] & 0xff, imm)
         return .success(.endFetchLoop)
     }
     /// 0x05  ADD
@@ -554,7 +554,7 @@ extension Free86 {
             // LOCK prefix not allowed
             rM = modRM.rM
             imm = DWord(fetch8())
-            regs[rM].encodedByte = calculate8(regs[rM & 3] >> ((rM & 4) << 1), imm)
+            setEncodedByte(in: rM, to: calculate8(regs[rM & 3] >> ((rM & 4) << 1), imm))
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
@@ -768,7 +768,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].encodedByte = ~(regs[rM & 3] >> ((rM & 4) << 1))
+                setEncodedByte(in: rM, to: ~(regs[rM & 3] >> ((rM & 4) << 1)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
@@ -780,7 +780,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].encodedByte = calculate8(0, regs[rM & 3] >> ((rM & 4) << 1))
+                setEncodedByte(in: rM, to: calculate8(0, regs[rM & 3] >> ((rM & 4) << 1)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
@@ -932,7 +932,7 @@ extension Free86 {
         if modRM.mod == 3 {
             imm = DWord(fetch8())
             rM = modRM.rM
-            regs[rM].encodedByte = shift8(regs[rM & 3] >> ((rM & 4) << 1), imm)
+            setEncodedByte(in: rM, to: shift8(regs[rM & 3] >> ((rM & 4) << 1), imm))
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
@@ -965,7 +965,7 @@ extension Free86 {
         operation = modRM.opcode
         if modRM.mod == 3 {
             rM = modRM.rM
-            regs[rM].encodedByte = shift8(regs[rM & 3] >> ((rM & 4) << 1), 1)
+            setEncodedByte(in: rM, to: shift8(regs[rM & 3] >> ((rM & 4) << 1), 1))
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
@@ -995,7 +995,7 @@ extension Free86 {
         operation = modRM.opcode
         if modRM.mod == 3 {
             rM = modRM.rM
-            regs[rM].encodedByte = shift8(regs[rM & 3] >> ((rM & 4) << 1), regs[.ECX] & 0xff)
+            setEncodedByte(in: rM, to: shift8(regs[rM & 3] >> ((rM & 4) << 1), regs[.ECX] & 0xff))
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
@@ -1207,7 +1207,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].encodedByte = aux8Inc(regs[rM & 3] >> ((rM & 4) << 1))
+                setEncodedByte(in: rM, to: aux8Inc(regs[rM & 3] >> ((rM & 4) << 1)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
@@ -1219,7 +1219,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                regs[rM].encodedByte = aux8Dec(regs[rM & 3] >> ((rM & 4) << 1))
+                setEncodedByte(in: rM, to: aux8Dec(regs[rM & 3] >> ((rM & 4) << 1)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
@@ -1735,7 +1735,7 @@ extension Free86 {
     /// 0x9f  LAHF
     func Ox9f() throws -> Result<Resume, Never> {
         u = getEflags()
-        regs[.ESP].encodedByte = u  // actually EAX
+        regs[.EAX].byteH = u
         return .success(.endFetchLoop)
     }
     /// 0xf4  HLT
@@ -1847,7 +1847,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         imm = DWord(fetch8())
-        regs[.EAX].encodedByte = io?[imm] ?? 0
+        regs[.EAX].byteL = io?[imm] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0xe5  IN AX,
@@ -1882,7 +1882,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        regs[.EAX].encodedByte = io?[regs[.EDX].lowerHalf] ?? 0
+        regs[.EAX].byteL = io?[regs[.EDX].lowerHalf] ?? 0
         return .success(.endOnInterrupt)
     }
     /// 0xed  IN AX,DX

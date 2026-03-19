@@ -28,7 +28,7 @@ func free86PagedMemoryAccess() {
 
     /// test case: access arbitrary linear (0x4711)
     let linear: LinearAddress = 0x4711  // no matching PTE for linear 0...0xFFFFF, thus PF
-    #expect(throws: Interrupt(.PF, errorCode: 7)) {
+    #expect(throws: Interrupt(.PF, errorCode: 6)) {
         try free86.translate(linear, writable: true, user: true)
     }
     #expect(free86.cr2 == linear)  // linear cousing PF in CR2
