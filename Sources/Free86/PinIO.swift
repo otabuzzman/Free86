@@ -2,7 +2,7 @@ actor PinIO<Signal> {
     private var signal: Signal
     private var options: [Option]
 
-    private var pending = false
+    private(set) var pending = false
 
     enum Event: Error {
         case probeIsPending
@@ -26,7 +26,7 @@ actor PinIO<Signal> {
         pending = true
     }
 
-    func probe(inspect: Bool = false) throws -> Signal {
+    func probe() throws -> Signal {
         if !pending {
             throw Event.noPendingProbe
         }

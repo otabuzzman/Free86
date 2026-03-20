@@ -1,11 +1,10 @@
 extension Free86 {
     public func fetchDecodeExecute(cycles: QWord) async throws {
         if halted {
-            if eflags.isFlagRaised(.IF) {
-                do {
-                    let irq = try await INTR.probe()
-                    if irq { halted = false } else { return }
-                } catch { return }
+            if await INTR.pending && eflags.isFlagRaised(.IF) {
+                halted = false
+            } else {
+                return
             }
         }
         cyclesRequested = cycles
@@ -15,14 +14,9 @@ extension Free86 {
         if let interrupt = self.interrupt {
             try raiseInterrupt(interrupt.id, interrupt.errorCode, false, false, 0)
         }
-        if eflags.isFlagRaised(.IF) {
-            do {
-                let irq = try await INTR.probe()
-                if irq {
-                    let id = try await DB8.probe()
-                    try raiseInterrupt(id, 0, true, false, 0)
-                }
-            } catch { }
+        if await INTR.pending && eflags.isFlagRaised(.IF) {
+            let id = try await INTR.probe()
+            try raiseInterrupt(id, 0, true, false, 0)
         }
         cyclesLoop:
         repeat {  // cycles (actually instructions)
@@ -89,13 +83,11 @@ extension Free86 {
                     case .endCyclesLoop:
                         break cyclesLoop
                     case .endOnInterrupt:
-                        if eflags.isFlagRaised(.IF) {
-                            do {
-                                let irq = try await INTR.probe()
-                                if irq { break cyclesLoop }
-                            } catch { break fetchLoop }
+                        if await INTR.pending && eflags.isFlagRaised(.IF) {
+                            break cyclesLoop
+                        } else {
+                            break fetchLoop
                         }
-                        break fetchLoop
                     }
                 }
             }

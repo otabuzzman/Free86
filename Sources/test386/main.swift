@@ -51,7 +51,7 @@ while true {
             physical = linear
             n = 15
         }
-        var memory = "[EIP..EIP+\(n - 1)]:"
+        var memory = String(format: "[EIP..EIP+%02X]:", n - 1)
         for i in 0..<n {
             memory += String(format: " %02X", mem.ld8(from: physical + DWord(i)))
         }
@@ -75,10 +75,10 @@ while true {
                 exit(EXIT_SUCCESS)
             }
         } catch let interrupt as Interrupt {
-            print("\(interrupt)")
             cpu.interrupt = interrupt
             switch interrupt.id {
             case 6:
+                print("interrupt id \(interrupt.id)")
                 print(cpu.compactState() + "\n" + eip15())
                 break
             default :
@@ -114,6 +114,8 @@ extension Free86 {
         let a = cr0.index(cr0.startIndex, offsetBy: 1)
         let o = cr0.index(cr0.startIndex, offsetBy: 30)
         cr0.replaceSubrange(a..<o, with: "..")
+        let _eflags = bin(eflags, divide: true)
+        let from = _eflags.index(_eflags.startIndex, offsetBy: 26, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
         return String(format: """
             EAX:%08X                ESP:%08X
             ECX:%08X                EBP:%08X
@@ -135,7 +137,7 @@ extension Free86 {
             """,
             regs[.EAX], regs[.ESP], regs[.ECX], regs[.EBP],
             regs[.EDX], regs[.EBP], regs[.ESI], regs[.EDI],
-            eip, String(bin(eflags, divide: true).suffix(26)),
+            eip, String(_eflags[from...]),
             segs[.ES].selector, segs[.ES].shadow.base, segs[.ES].shadow.limit, bin(Word((segs[.ES].shadow.flags >> 8) & 0xffff), divide: true),
             segs[.CS].selector, segs[.CS].shadow.base, segs[.CS].shadow.limit, bin(Word((segs[.CS].shadow.flags >> 8) & 0xffff), divide: true),
             segs[.SS].selector, segs[.SS].shadow.base, segs[.SS].shadow.limit, bin(Word((segs[.SS].shadow.flags >> 8) & 0xffff), divide: true),
@@ -146,7 +148,9 @@ extension Free86 {
     }
     // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
     func compactState() -> String {
-        String(format: "A:%08X C:%08X D:%08X B:%08X SI:%08X DI:%08X I:%08X SP:%08X BP:%08X F:%@", regs[.EAX], regs[.ECX], regs[.EDX], regs[.EBX], regs[.ESI], regs[.EDI], eip, regs[.ESP], regs[.EBP], String(bin(eflags, divide: true).suffix(22)))
+        let _eflags = bin(eflags, divide: true)
+        let from = _eflags.index(_eflags.startIndex, offsetBy: 22, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
+        return String(format: "A:%08X C:%08X D:%08X B:%08X SI:%08X DI:%08X I:%08X SP:%08X BP:%08X F:%@", regs[.EAX], regs[.ECX], regs[.EDX], regs[.EBX], regs[.ESI], regs[.EDI], eip, regs[.ESP], regs[.EBP], String(_eflags[from...]))
     }
 
     func bin(_ bits: Byte) -> String {

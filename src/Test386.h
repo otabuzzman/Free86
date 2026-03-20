@@ -33,7 +33,6 @@ class Test386 {
         auto buffer = new uint8_t[size];
         auto _ = fread(buffer, size, 1, f);
 
-        printf("load %lu bytes at 0x%x\n", size, offset);
         for (size_t i = 0; i < size; i++) {
             cpu->st8_direct(offset + i, buffer[i]);
         }
@@ -43,12 +42,6 @@ class Test386 {
     }
     void setup() {
         load("../test386.asm/test386.bin", 0x000f0000);
-
-        printf("\n\n*******************************\n");
-        printf("*******************************\n");
-        printf("*******************************\n");
-        printf("****** Run test386 suite ******\n");
-        printf("*******************************\n\n\n");
     }
     void cycle() {
         uint64_t number = 100000; // a value of 1 enables history recording (slow)
@@ -70,32 +63,15 @@ class Test386 {
                     exit(0);
                 }
             } catch (const Interrupt& e) {
-                int mask = 1 << 6;
-                if ((32 > e.id) && (mask & (1 << e.id))) {
-                    std::string status = compile_status_string();
-                    uint32_t linear, physical;
-                    int n;
-                    linear = cpu->segs[1].shadow.base + cpu->eip; // EIP is offset of linear address
-                    if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
-                        physical = cpu->tlb_lookup(linear, 0); // physical address
-                        n = 4096 - (linear & 0xfff); // print bytes left to end-of-page...
-                        n = std::min(n, 15); // ...or up to maximum instruction length bytes
-                    } else {
-                        linear &= 0xfffff;
-                        physical = linear;
-                        n = 15;
-                    }
-                    std::string memory = "[EIP..EIP+" + hex((char) (n - 1)) + "]:";
-                    for (int i = 0; i < n; i++) {
-                        memory += " " + hex((char) cpu->ld8_direct(physical + i));
-                    }
-                    std::cout
-                        << "interrupt id " << e.id
-                        << ", error code " << e.error_code
-                        << std::endl << status
-                        << std::endl << memory << std::endl;
-                }
                 interrupt = {e.id, e.error_code};
+                switch (e.id) {
+                    case 6:
+                        std::cout
+                            << "interrupt id " << e.id
+                            << std::endl << compile_status_string()
+                            << std::endl << eip_15() << std::endl;
+                        break;
+                }
             } catch (const char *m) {
                 std::cout << m << std::endl;
                 exit(1);
@@ -116,7 +92,7 @@ class Test386 {
         i = " I:" + hex((int) cpu->eip);
         sp = " SP:" + hex(cpu->regs[4]);
         bp = " BP:" + hex(cpu->regs[5]);
-        flags = " F:" + bin(cpu->eflags, true).substr(22, std::string::npos);
+        flags = " F:" + bin(cpu->eflags, true).substr(22);
         if (compact) {
             // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
             return std::string(a + c + d + b + si + di + i + sp + bp + flags);
@@ -147,7 +123,7 @@ class Test386 {
         i = "EIP:" + hex((int) cpu->eip);
         sp = "ESP:" + hex(cpu->regs[4]);
         bp = "EBP:" + hex(cpu->regs[5]);
-        flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9, std::string::npos);
+        flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9);
         cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex(cpu->segs[1].shadow.base) + ":" + hex(cpu->segs[1].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].shadow.flags, true);
         ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex(cpu->segs[2].shadow.base) + ":" + hex(cpu->segs[2].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].shadow.flags, true);
         ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex(cpu->segs[3].shadow.base) + ":" + hex(cpu->segs[3].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].shadow.flags, true);
@@ -174,16 +150,35 @@ class Test386 {
             "\n" + cr0 + "  " + cr2 + "  " + cr3
         );
     }
+    std::string eip_15() {
+        uint32_t linear, physical;
+        int n;
+        linear = cpu->segs[1].shadow.base + cpu->eip; // EIP is offset of linear address
+        if (cpu->cr0 & 0x80000001) { // protected mode and paging enabled
+            physical = cpu->tlb_lookup(linear, 0); // physical address
+            n = 4096 - (linear & 0xfff); // print bytes left to end-of-page...
+            n = std::min(n, 15); // ...or up to maximum instruction length bytes
+        } else {
+            linear &= 0xfffff;
+            physical = linear;
+            n = 15;
+        }
+        std::string memory = "[EIP..EIP+" + hex((char) (n - 1)) + "]:";
+        for (int i = 0; i < n; i++) {
+            memory += " " + hex((char) cpu->ld8_direct(physical + i));
+        }
+        return memory;
+    }
     std::string bin(char bits) {
     #define V(byte) \
-        ((byte) & 80 ? '1' : '0') + \
-        ((byte) & 40 ? '1' : '0') + \
-        ((byte) & 20 ? '1' : '0') + \
-        ((byte) & 10 ? '1' : '0') + \
-        ((byte) &  8 ? '1' : '0') + \
-        ((byte) &  4 ? '1' : '0') + \
-        ((byte) &  2 ? '1' : '0') + \
-        ((byte) &  1 ? '1' : '0')
+        ((byte) & 0x80 ? "1" : "0") + \
+        ((byte) & 0x40 ? "1" : "0") + \
+        ((byte) & 0x20 ? "1" : "0") + \
+        ((byte) & 0x10 ? "1" : "0") + \
+        ((byte) &  8 ? "1" : "0") + \
+        ((byte) &  4 ? "1" : "0") + \
+        ((byte) &  2 ? "1" : "0") + \
+        ((byte) &  1 ? "1" : "0")
         std::string result = "";
         return result + V(bits);
     }
@@ -223,12 +218,11 @@ class Test386 {
     std::string history[history_size];
 };
 uint32_t PlainCPU::io_read(uint32_t port) {
-    printf("*** ioport_read 0x%04x\n", port);
     return 0xff;
 }
 void PlainCPU::io_write(uint32_t port, uint32_t data) {
     if (port == 0x0190) { // default POST_PORT in test386
-        printf("*** ioport_write 0x%04x : 0x%08x\n", port, data);
+        printf("%02X\n", data);
     } else { // any other value considered OUT_PORT
         printf("%c", data);
     }

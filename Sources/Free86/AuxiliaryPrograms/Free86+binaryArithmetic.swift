@@ -96,12 +96,12 @@ extension Free86 {
     }
     func aux16Idiv(_ divisor: DWord) throws {
         let d = Int32(bitPattern: divisor.signExtendedWord)
-        let a = Int32((regs[.EDX] << 16) | (regs[.EAX] & 0xffff))
+        let a = Int32(bitPattern: (regs[.EDX] << 16) | (regs[.EAX] & 0xffff))
         if d == 0 {
             throw Interrupt(.DE)
         }
         let q = a / d
-        if (q << 24) >> 24 != q {
+        if (q << 16) >> 16 != q {
             throw Interrupt(.DE)
         }
         let s = a % d

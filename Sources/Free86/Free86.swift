@@ -1,7 +1,6 @@
 public class Free86 {
     /// interrupt pins and data bus low byte
-    let INTR = PinIO<Bool>()
-    let DB8 = PinIO<Byte>()  // INTR vector
+    let INTR = PinIO<Byte>()
     let NMI = PinIO<Bool>()
     let RESET = PinIO<Bool>()
 
