@@ -1,33 +1,34 @@
 extension Free86 {
     public func fetchDecodeExecute(cycles: QWord) async throws {
-        if halted {
-            if await INTR.pending && eflags.isFlagRaised(.IF) {
-                halted = false
-            } else {
-                return
+        do {
+            if halted {
+                if await INTR.pending && eflags.isFlagRaised(.IF) {
+                    halted = false
+                } else {
+                    return
+                }
             }
-        }
-        cyclesRequested = cycles
-        cyclesRemaining = cycles
-        far = 0
-        farStart = 0
-        if let interrupt = self.interrupt {
-            try raiseInterrupt(interrupt.id, interrupt.errorCode, false, false, 0)
-        }
-        if await INTR.pending && eflags.isFlagRaised(.IF) {
-            let id = try await INTR.probe()
-            try raiseInterrupt(id, 0, true, false, 0)
-        }
+            cyclesRequested = cycles
+            cyclesRemaining = cycles
+            far = 0
+            farStart = 0
+            if let interrupt = self.interrupt {
+                try raiseInterrupt(interrupt.id, interrupt.errorCode, false, false, 0)
+            }
+            if await INTR.pending && eflags.isFlagRaised(.IF) {
+                let id = try await INTR.probe()
+                try raiseInterrupt(id, 0, true, false, 0)
+            }
         cyclesLoop:
-        repeat {  // cycles (actually instructions)
-            try obtainOpcode()
-            ipr = iprDefault
-            let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-            opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+            repeat {  // cycles (actually instructions)
+                try obtainOpcode()
+                ipr = iprDefault
+                let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
+                opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
             fetchLoop:
-            while true {  // loop over instruction bytes (fetch)
-                if ipr.isFlagRaised(.lockSignal) {
-                    switch opcode {
+                while true {  // loop over instruction bytes (fetch)
+                    if ipr.isFlagRaised(.lockSignal) {
+                        switch opcode {
                         case 0x00,  // ADD
                             0x01,  // ADD
                             0x08,  // OR
@@ -70,30 +71,34 @@ extension Free86 {
                             break
                         default:
                             throw Interrupt(.UD)
+                        }
                     }
-                }
-                let result = try oneByteDecoder[opcode]()
-                switch result {
-                case .success(let resume):
-                    switch resume {
-                    case .goOnFetching:
-                        continue fetchLoop
-                    case .endFetchLoop:
-                        break fetchLoop
-                    case .endCyclesLoop:
-                        break cyclesLoop
-                    case .endOnInterrupt:
-                        if await INTR.pending && eflags.isFlagRaised(.IF) {
-                            break cyclesLoop
-                        } else {
+                    let result = try oneByteDecoder[opcode]()
+                    switch result {
+                    case .success(let resume):
+                        switch resume {
+                        case .goOnFetching:
+                            continue fetchLoop
+                        case .endFetchLoop:
                             break fetchLoop
+                        case .endCyclesLoop:
+                            break cyclesLoop
+                        case .endOnInterrupt:
+                            if await INTR.pending && eflags.isFlagRaised(.IF) {
+                                break cyclesLoop
+                            } else {
+                                break fetchLoop
+                            }
                         }
                     }
                 }
-            }
-            cyclesRemaining -= 1
-        } while cyclesRemaining > 0
-        self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
-        eip = eip &+ far &- farStart
+                cyclesRemaining -= 1
+            } while cyclesRemaining > 0
+            self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
+            eip = eip &+ far &- farStart
+        } catch let interrupt as Interrupt {
+            self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
+            throw interrupt
+        }
     }
 }

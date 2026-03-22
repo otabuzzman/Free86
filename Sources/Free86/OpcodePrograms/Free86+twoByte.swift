@@ -511,7 +511,7 @@ extension Free86 {
         if cr4.isFlagRaised(.TSD) && cpl != 0 {
             throw Interrupt(.GP, errorCode: 0)
         }
-        let t: QWord = self.cycles &+ (cyclesRequested &- cyclesRemaining)
+        let t: QWord = self.cycles &+ cyclesRequested &- cyclesRemaining
         regs[.EAX] = DWord(t & 0xffffffff)
         regs[.EDX] = DWord(t >> 32)
         return .success(.endFetchLoop)

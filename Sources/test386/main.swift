@@ -81,7 +81,7 @@ while true {
                 print("interrupt id \(interrupt.id)")
                 print(cpu.compactState() + "\n" + eip15())
                 break
-            default :
+            default:
                 break
             }
         } catch {
