@@ -28,6 +28,10 @@ extension GeneralRegister {
 }
 
 extension Free86 {
+    func getEncodedByte(from r: Int) -> DWord {
+        assert((0..<8).contains(r), "fatal error")
+        return GeneralRegister(r).isByteHEncoded ? regs[r & 3].byteH : regs[r].byteL
+    }
     func setEncodedByte(in r: Int, to v: DWord) {
         assert((0..<8).contains(r), "fatal error")
         if GeneralRegister(r).isByteHEncoded {

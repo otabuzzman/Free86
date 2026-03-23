@@ -120,7 +120,7 @@ extension Free86 {
     func Ox88() throws -> Result<Resume, Never> {
         modRM = fetch8()
         reg = modRM.reg
-        r = regs[reg & 3] >> ((reg & 4) << 1)
+        r = getEncodedByte(from: reg)
         if modRM.mod == 3 {
             rM = modRM.rM
             let hL = GeneralRegister(rM).isByteHEncoded ? 8 : 0
@@ -148,7 +148,7 @@ extension Free86 {
         modRM = fetch8()
         if modRM.mod == 3 {
             rM = modRM.rM
-            rm = regs[rM & 3] >> ((rM & 4) << 1)
+            rm = getEncodedByte(from: rM)
         } else {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
@@ -266,12 +266,12 @@ extension Free86 {
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            rm = regs[rM & 3] >> ((rM & 4) << 1)
-            setEncodedByte(in: rM, to: regs[reg & 3] >> ((reg & 4) << 1))
+            rm = getEncodedByte(from: rM)
+            setEncodedByte(in: rM, to: getEncodedByte(from: reg))
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
-            try st8WritableCpl3(byte: regs[reg & 3] >> ((reg & 4) << 1))
+            try st8WritableCpl3(byte: getEncodedByte(from: reg))
         }
         setEncodedByte(in: reg, to: rm)
         return .success(.endFetchLoop)
@@ -340,11 +340,11 @@ extension Free86 {
         modRM = fetch8()
         operation = opcode >> 3
         reg = modRM.reg
-        r = regs[reg & 3] >> ((reg & 4) << 1)
+        r = getEncodedByte(from: reg)
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            setEncodedByte(in: rM, to: calculate8(regs[rM & 3] >> ((rM & 4) << 1), r))
+            setEncodedByte(in: rM, to: calculate8(getEncodedByte(from: rM), r))
         } else {
             segmentTranslation()
             if operation != 7 {
@@ -436,12 +436,12 @@ extension Free86 {
         reg = modRM.reg
         if modRM.mod == 3 {
             rM = modRM.rM
-            rm = regs[rM & 3] >> ((rM & 4) << 1)
+            rm = getEncodedByte(from: rM)
         } else {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
         }
-        setEncodedByte(in: reg, to: calculate8(regs[reg & 3] >> ((reg & 4) << 1), rm))
+        setEncodedByte(in: reg, to: calculate8(getEncodedByte(from: reg), rm))
         return .success(.endFetchLoop)
     }
     /// 0x03  ADD
@@ -554,7 +554,7 @@ extension Free86 {
             // LOCK prefix not allowed
             rM = modRM.rM
             imm = DWord(fetch8())
-            setEncodedByte(in: rM, to: calculate8(regs[rM & 3] >> ((rM & 4) << 1), imm))
+            setEncodedByte(in: rM, to: calculate8(getEncodedByte(from: rM), imm))
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
@@ -707,13 +707,13 @@ extension Free86 {
         modRM = fetch8()
         if modRM.mod == 3 {
             rM = modRM.rM
-            rm = regs[rM & 3] >> ((rM & 4) << 1)
+            rm = getEncodedByte(from: rM)
         } else {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
         }
         reg = modRM.reg
-        r = regs[reg & 3] >> ((reg & 4) << 1)
+        r = getEncodedByte(from: reg)
         osmDst = (rm & r).signExtendedByte
         osm = 12
         return .success(.endFetchLoop)
@@ -755,7 +755,7 @@ extension Free86 {
         case 0:  // TEST
             if modRM.mod == 3 {
                 rM = modRM.rM
-                rm = regs[rM & 3] >> ((rM & 4) << 1)
+                rm = getEncodedByte(from: rM)
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -768,7 +768,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                setEncodedByte(in: rM, to: ~(regs[rM & 3] >> ((rM & 4) << 1)))
+                setEncodedByte(in: rM, to: ~(getEncodedByte(from: rM)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
@@ -780,7 +780,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                setEncodedByte(in: rM, to: calculate8(0, regs[rM & 3] >> ((rM & 4) << 1)))
+                setEncodedByte(in: rM, to: calculate8(0, getEncodedByte(from: rM)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
@@ -791,7 +791,7 @@ extension Free86 {
         case 4:  // MUL AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
-                rm = regs[rM & 3] >> ((rM & 4) << 1)
+                rm = getEncodedByte(from: rM)
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -802,7 +802,7 @@ extension Free86 {
         case 5:  // IMUL AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
-                rm = regs[rM & 3] >> ((rM & 4) << 1)
+                rm = getEncodedByte(from: rM)
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -813,7 +813,7 @@ extension Free86 {
         case 6:  // DIV AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
-                rm = regs[rM & 3] >> ((rM & 4) << 1)
+                rm = getEncodedByte(from: rM)
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -823,7 +823,7 @@ extension Free86 {
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
-                rm = regs[rM & 3] >> ((rM & 4) << 1)
+                rm = getEncodedByte(from: rM)
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -932,7 +932,7 @@ extension Free86 {
         if modRM.mod == 3 {
             imm = DWord(fetch8())
             rM = modRM.rM
-            setEncodedByte(in: rM, to: shift8(regs[rM & 3] >> ((rM & 4) << 1), imm))
+            setEncodedByte(in: rM, to: shift8(getEncodedByte(from: rM), imm))
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
@@ -965,7 +965,7 @@ extension Free86 {
         operation = modRM.opcode
         if modRM.mod == 3 {
             rM = modRM.rM
-            setEncodedByte(in: rM, to: shift8(regs[rM & 3] >> ((rM & 4) << 1), 1))
+            setEncodedByte(in: rM, to: shift8(getEncodedByte(from: rM), 1))
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
@@ -995,7 +995,7 @@ extension Free86 {
         operation = modRM.opcode
         if modRM.mod == 3 {
             rM = modRM.rM
-            setEncodedByte(in: rM, to: shift8(regs[rM & 3] >> ((rM & 4) << 1), regs[.ECX] & 0xff))
+            setEncodedByte(in: rM, to: shift8(getEncodedByte(from: rM), regs[.ECX] & 0xff))
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
@@ -1207,7 +1207,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                setEncodedByte(in: rM, to: aux8Inc(regs[rM & 3] >> ((rM & 4) << 1)))
+                setEncodedByte(in: rM, to: aux8Inc(getEncodedByte(from: rM)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
@@ -1219,7 +1219,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
                 rM = modRM.rM
-                setEncodedByte(in: rM, to: aux8Dec(regs[rM & 3] >> ((rM & 4) << 1)))
+                setEncodedByte(in: rM, to: aux8Dec(getEncodedByte(from: rM)))
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())

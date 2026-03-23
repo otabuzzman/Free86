@@ -85,7 +85,7 @@ extension Free86 {
         reg = modRM.reg
         if modRM.mod == 3 {
             rM = modRM.rM
-            rm = (regs[rM & 3] >> ((rM & 4) << 1)) & 0xff
+            rm = (getEncodedByte(from: rM)) & 0xff
         } else {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
@@ -112,7 +112,7 @@ extension Free86 {
         reg = modRM.reg
         if modRM.mod == 3 {
             rM = modRM.rM
-            rm = regs[rM & 3] >> ((rM & 4) << 1)
+            rm = getEncodedByte(from: rM)
         } else {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
@@ -524,14 +524,14 @@ extension Free86 {
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            r = regs[rM & 3] >> ((rM & 4) << 1)
-            u = calculate8(r, regs[reg & 3] >> ((reg & 4) << 1))
+            r = getEncodedByte(from: rM)
+            u = calculate8(r, getEncodedByte(from: reg))
             setEncodedByte(in: reg, to: r)
             setEncodedByte(in: rM, to: u)
         } else {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
-            u = calculate8(rm, regs[reg & 3] >> ((reg & 4) << 1))
+            u = calculate8(rm, getEncodedByte(from: reg))
             try st8WritableCpl3(byte: u)
             setEncodedByte(in: reg, to: rm)
         }
@@ -566,10 +566,10 @@ extension Free86 {
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
-            r = regs[rM & 3] >> ((rM & 4) << 1)
+            r = getEncodedByte(from: rM)
             u = calculate8(regs[.EAX], r)
             if u == 0 {
-                setEncodedByte(in: rM, to: regs[reg & 3] >> ((reg & 4) << 1))
+                setEncodedByte(in: rM, to: getEncodedByte(from: reg))
             } else {
                 regs[.EAX].byteL = r
             }
@@ -578,7 +578,7 @@ extension Free86 {
             rm = DWord(try ld8WritableCpl3())
             u = calculate8(regs[.EAX], rm)
             if u == 0 {
-                try st8WritableCpl3(byte: regs[reg & 3] >> ((reg & 4) << 1))
+                try st8WritableCpl3(byte: getEncodedByte(from: reg))
             } else {
                 regs[.EAX].byteL = rm
             }

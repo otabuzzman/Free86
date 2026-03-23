@@ -60,7 +60,7 @@ extension Free86 {
         reg = modRM.reg
         if modRM.mod == 3 {
             rM = modRM.rM
-            rm = (regs[rM & 3] >> ((rM & 4) << 1)) & 0xff
+            rm = (getEncodedByte(from: rM)) & 0xff
         } else {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
@@ -74,7 +74,7 @@ extension Free86 {
         reg = modRM.reg
         if modRM.mod == 3 {
             rM = modRM.rM
-            rm = regs[rM & 3] >> ((rM & 4) << 1)
+            rm = getEncodedByte(from: rM)
         } else {
             segmentTranslation()
             rm = DWord(try ld8ReadonlyCpl3())
