@@ -127,7 +127,7 @@ extension Free86 {
             regs[rM & 3] = (regs[rM & 3] & ~(0xff << hL)) | ((r & 0xff) << hL)
         } else {
             segmentTranslation()
-            try st8WritableCpl3(byte: (r))
+            try st8WritableCpl3(byte: r)
         }
         return .success(.endFetchLoop)
     }
@@ -187,7 +187,7 @@ extension Free86 {
     /// 0xa2  MOV ,AL
     func Oxa2() throws -> Result<Resume, Never> {
         try ldMemoryOffset(true)
-        try st8WritableCpl3(byte: (regs[.EAX]))
+        try st8WritableCpl3(byte: regs[.EAX])
         return .success(.endFetchLoop)
     }
     /// 0xa3  MOV ,AX
@@ -205,7 +205,7 @@ extension Free86 {
         } else {
             segmentTranslation()
             imm = DWord(fetch8())
-            try st8WritableCpl3(byte: (imm))
+            try st8WritableCpl3(byte: imm)
         }
         return .success(.endFetchLoop)
     }
@@ -350,7 +350,7 @@ extension Free86 {
             if operation != 7 {
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(rm, r)
-                try st8WritableCpl3(byte: (u))
+                try st8WritableCpl3(byte: u)
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -561,7 +561,7 @@ extension Free86 {
             if operation != 7 {
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(rm, imm)
-                try st8WritableCpl3(byte: (u))
+                try st8WritableCpl3(byte: u)
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -772,7 +772,7 @@ extension Free86 {
             } else {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
-                try st8WritableCpl3(byte: (~rm))
+                try st8WritableCpl3(byte: ~rm)
             }
             break
         case 3:  // NEG
@@ -785,7 +785,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(0, rm)
-                try st8WritableCpl3(byte: (u))
+                try st8WritableCpl3(byte: u)
             }
             break
         case 4:  // MUL AL/X
@@ -938,7 +938,7 @@ extension Free86 {
             imm = DWord(fetch8())
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, imm)
-            try st8WritableCpl3(byte: (u))
+            try st8WritableCpl3(byte: u)
         }
         return .success(.endFetchLoop)
     }
@@ -970,7 +970,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, 1)
-            try st8WritableCpl3(byte: (u))
+            try st8WritableCpl3(byte: u)
         }
         return .success(.endFetchLoop)
     }
@@ -1000,7 +1000,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, regs[.ECX] & 0xff)
-            try st8WritableCpl3(byte: (u))
+            try st8WritableCpl3(byte: u)
         }
         return .success(.endFetchLoop)
     }
@@ -1212,7 +1212,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
                 u = aux8Inc(rm)
-                try st8WritableCpl3(byte: (u))
+                try st8WritableCpl3(byte: u)
             }
             break
         case 1:  // DEC
@@ -1224,7 +1224,7 @@ extension Free86 {
                 segmentTranslation()
                 rm = DWord(try ld8WritableCpl3())
                 u = aux8Dec(rm)
-                try st8WritableCpl3(byte: (u))
+                try st8WritableCpl3(byte: u)
             }
             break
         default:
@@ -1316,7 +1316,7 @@ extension Free86 {
             lax = lax &+ 4
             m16 = try ld16ReadonlyCpl3()
             if operation == 3 {
-                try auxCallf(true, m16, m, (eip &+ far &- farStart))
+                try auxCallf(true, m16, m, eip &+ far &- farStart)
             } else {
                 try auxJmpf(m16, m)
             }
@@ -1626,7 +1626,7 @@ extension Free86 {
             imm = DWord(fetch16())
         }
         imm16 = fetch16()
-        try auxCallf(o32, imm16, imm, (eip &+ far &- farStart))
+        try auxCallf(o32, imm16, imm, eip &+ far &- farStart)
         return .success(.endOnInterrupt)
     }
     /// 0xca  RET

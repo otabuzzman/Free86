@@ -713,7 +713,7 @@ extension Free86 {
             try st16WritableCpl3(word: getEflags())
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: (segs[.CS].selector))
+            try st16WritableCpl3(word: segs[.CS].selector)
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCpl3(word: isSW ? home : eip)

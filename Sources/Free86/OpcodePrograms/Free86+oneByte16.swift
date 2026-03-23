@@ -595,7 +595,7 @@ extension Free86 {
             lax = lax &+ 2
             m16 = try ld16ReadonlyCpl3()
             if operation == 3 {
-                try auxCallf(false, m16, m, (eip &+ far &- farStart))
+                try auxCallf(false, m16, m, eip &+ far &- farStart)
             } else {
                 try auxJmpf(m16, m)
             }
