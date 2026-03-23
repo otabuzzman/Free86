@@ -181,7 +181,7 @@ extension Free86 {
             la = QWord(fetch16())
             stride = 2  // 16 bit mode
         }
-        if (opcode & 0x01) == 0 {
+        if opcode.isEven {
             stride = 1  // 8 bit mode, opcodes A0, A2
         }
         let sreg = ipr.segmentRegister

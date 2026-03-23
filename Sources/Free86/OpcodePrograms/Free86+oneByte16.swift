@@ -879,7 +879,7 @@ extension Free86 {
     /// 0x1fd  STD
     /// 0x1fe  G4 (INC, DEC, -, -, -, -, -, -)
     func Ox1fe() throws -> Result<Resume, Never> {
-        opcode.setBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue, .zero)
+        opcode.override = false
         return .success(.goOnFetching)
     }
     /// 0x163  ARPL
@@ -888,7 +888,7 @@ extension Free86 {
     /// 0x10f  2-byte instruction escape
     func Ox10f() throws -> Result<Resume, Never> {
         opcode = DWord(fetch8())
-        opcode.setBit(InstructionPrefixRegisterFlag.operandSizeOverride.rawValue)
+        opcode.override = true
         if ipr.isFlagRaised(.lockSignal) {
             switch opcode {
                 case 0x1a3,  // BT

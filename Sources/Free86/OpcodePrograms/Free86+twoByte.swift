@@ -238,7 +238,7 @@ extension Free86 {
     /// 0x02  LAR
     /// 0x03  LSL
     func Ox0f03() throws -> Result<Resume, Never> {
-        try auxLarLsl(!ipr.isFlagRaised(.operandSizeOverride), (opcode & 1) != 0)
+        try auxLarLsl(!ipr.isFlagRaised(.operandSizeOverride), opcode.isOdd)
         return .success(.endFetchLoop)
     }
     /// 0x20  MOV
@@ -485,7 +485,7 @@ extension Free86 {
             segmentTranslation()
             rm = try ldReadonlyCpl3()
         }
-        if (opcode & 1) != 0 {
+        if opcode.isOdd {
             regs[reg] = auxBsr(regs[reg], rm)
         } else {
             regs[reg] = auxBsf(regs[reg], rm)

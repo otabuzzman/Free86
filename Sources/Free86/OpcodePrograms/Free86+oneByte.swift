@@ -10,8 +10,7 @@ extension Free86 {
         }
         ipr.segmentRegister = Int((opcode >> 3) & 3)
         opcode = DWord(fetch8())
-        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+        opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
     }
     /// 0x64  FS segment override prefix
@@ -22,8 +21,7 @@ extension Free86 {
         }
         ipr.segmentRegister = Int(opcode & 7)
         opcode = DWord(fetch8())
-        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+        opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
     }
     /// 0xf0  LOCK prefix
@@ -33,8 +31,7 @@ extension Free86 {
         }
         ipr.setFlag(.lockSignal)
         opcode = DWord(fetch8())
-        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+        opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
     }
     /// 0xf2  REPN[EZ] repeat string operation prefix
@@ -44,8 +41,7 @@ extension Free86 {
         }
         ipr.setFlag(.repnzStringOperation)
         opcode = DWord(fetch8())
-        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+        opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
     }
     /// 0xf3  REP[EZ] repeat string operation prefix
@@ -55,8 +51,7 @@ extension Free86 {
         }
         ipr.setFlag(.repzStringOperation)
         opcode = DWord(fetch8())
-        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+        opcode.override = ipr.isFlagRaised(.operandSizeOverride)
        return .success(.goOnFetching)
     }
     /// 0x66  operand-size override prefix
@@ -70,8 +65,7 @@ extension Free86 {
             ipr.setFlag(.operandSizeOverride)
         }
         opcode = DWord(fetch8())
-        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+        opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
     }
     /// 0x67  address-size override prefix
@@ -85,8 +79,7 @@ extension Free86 {
             ipr.setFlag(.addressSizeOverride)
         }
         opcode = DWord(fetch8())
-        let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-        opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+        opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
     }
     /// 0xb0  MOV AL
@@ -99,8 +92,7 @@ extension Free86 {
     /// 0xb7  MOV BH
     func Oxb7() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        let hL = GeneralRegister(opcode & 7).isByteHEncoded ? 8 : 0
-        regs[opcode & 3] = (regs[opcode & 3] & ~(0xff << hL)) | ((imm & 0xff) << hL)
+        setEncodedByte(in: Int(opcode & 7), to: imm)
         return .success(.endFetchLoop)
     }
     /// 0xb8  MOV A
@@ -123,8 +115,7 @@ extension Free86 {
         r = getEncodedByte(from: reg)
         if modRM.mod == 3 {
             rM = modRM.rM
-            let hL = GeneralRegister(rM).isByteHEncoded ? 8 : 0
-            regs[rM & 3] = (regs[rM & 3] & ~(0xff << hL)) | ((r & 0xff) << hL)
+            setEncodedByte(in: rM, to: r)
         } else {
             segmentTranslation()
             try st8WritableCpl3(byte: r)
@@ -154,8 +145,7 @@ extension Free86 {
             rm = DWord(try ld8ReadonlyCpl3())
         }
         reg = modRM.reg
-        let hL = GeneralRegister(reg).isByteHEncoded ? 8 : 0
-        regs[reg & 3] = (regs[reg & 3] & ~(0xff << hL)) | ((rm & 0xff) << hL)
+        setEncodedByte(in: reg, to: rm)
         return .success(.endFetchLoop)
     }
     /// 0x8b  MOV
@@ -406,7 +396,6 @@ extension Free86 {
     /// 0x39  CMP
     func Ox39() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = opcode >> 3
         r = regs[modRM.reg]
         if modRM.mod == 3 {
             rM = modRM.rM
@@ -482,7 +471,6 @@ extension Free86 {
     /// 0x3b  CMP
     func Ox3b() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = opcode >> 3
         reg = modRM.reg
         if modRM.mod == 3 {
             rm = regs[modRM.rM]

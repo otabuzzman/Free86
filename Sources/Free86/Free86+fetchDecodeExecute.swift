@@ -23,8 +23,7 @@ extension Free86 {
             repeat {  // cycles (actually instructions)
                 try obtainOpcode()
                 ipr = iprDefault
-                let operandSizeOverride = InstructionPrefixRegisterFlag.operandSizeOverride.rawValue
-                opcode.setBit(operandSizeOverride, ipr.isFlagRaised(.operandSizeOverride) ? 1 : 0)
+                opcode.override = ipr.isFlagRaised(.operandSizeOverride)
             fetchLoop:
                 while true {  // loop over instruction bytes (fetch)
                     if ipr.isFlagRaised(.lockSignal) {

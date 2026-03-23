@@ -263,7 +263,7 @@ extension Free86 {
             rm = DWord(try ld16ReadonlyCpl3())
         }
         r = regs[reg]
-        if (opcode & 1) != 0 {
+        if opcode.isOdd {
             u = aux16Bsr(r, rm)
         } else {
             u = aux16Bsf(r, rm)

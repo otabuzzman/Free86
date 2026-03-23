@@ -75,6 +75,7 @@ let package = Package(
                 "ControlRegister.swift",
                 "Exception+Interrupt.swift",
                 "Instruction.swift",  // no tests
+                "Opcode.swift",
                 "ModRM+SIB.swift",
                 "InstructionPrefixRegister.swift",
                 "LogicalAddress+Pointers.swift",  // no tests
@@ -109,6 +110,7 @@ let package = Package(
                 "ExtendedFlagsRegister.swift",
                 "ControlRegister.swift",
                 "Exception+Interrupt.swift",
+                "Opcode.swift",
                 "ModRM+SIB.swift",
                 "InstructionPrefixRegister.swift",
                 "LinearAddress.swift",
