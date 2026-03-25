@@ -159,16 +159,18 @@ class PITChannel {
     var last_irr = 0
     var count = 0
     var count_load_time = 0
-    var pit_time_unit: Float = 0.596591
-    var pseudo_cpu_cycles: Float = 0
+    var pit_time_unit: Double = 0.596591
+    var cpu: Free86
     var latched_count = 0
     var rw_state = 0
     var mode = 0
     var bcd = 0
     var gate = 0
+    init(_ cpu: Free86) {
+        self.cpu = cpu
+    }
     func get_time() -> Int {
-        pseudo_cpu_cycles += 1
-        return Int(pseudo_cpu_cycles * pit_time_unit)
+        Int(floor(Double(cpu.cycles) * pit_time_unit))
     }
     func pit_load_count(_ data: Int) {
         if data == 0 {
@@ -225,9 +227,9 @@ class PIT {
     let pit_channels: [PITChannel]
     var speaker_data_on = 0
     let pic: PIC
-    init(_ pic: PIC) {
+    init(_ cpu: Free86, _ pic: PIC) {
         self.pic = pic
-        self.pit_channels = [PITChannel(), PITChannel(), PITChannel()]
+        self.pit_channels = [PITChannel(cpu), PITChannel(cpu), PITChannel(cpu)]
         for i in 0..<3 {
             pit_channels[i].mode = 3
             pit_channels[i].gate = (i != 2) ? 1 : 0
