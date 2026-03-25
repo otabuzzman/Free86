@@ -26,7 +26,7 @@ var history = [String](repeating: "", count: historySize)
 
 let argv = CommandLine.arguments
 if argv.count == 3  {
-    historySkip = Int(argv[1])!
+    historySkip = Int(argv[1]) ?? 0
     fileURL = URL(fileURLWithPath: argv[2])
 }
 
@@ -36,7 +36,6 @@ while true {
         var linear = cpu.segs[.CS].shadow.base + cpu.eip
         let physical: DWord
         var n: Int
-
         if cpu.cr0.isPagingEnabled {
             do {
                 physical = try cpu.tlbLookup(linear: linear, writable: false)
@@ -57,7 +56,6 @@ while true {
         }
         return memory
     }
-
     while cycles > cpu.cycles {
         do {
             try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
@@ -182,15 +180,15 @@ extension MemoryIO<DWord> {
     }
 }
 
-class PostPort<T: UnsignedInteger>: IOPort {
-    func rd() -> T { 0xfe }
+class PostPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
+    func rd() -> T { 0xff }
     func wr(_ iodata: T) {
         print(String(format: "%02X", iodata as! CVarArg))
     }
 }
 
-class OutPort<T: UnsignedInteger>: IOPort {
-    func rd() -> T { 0xfe }
+class OutPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
+    func rd() -> T { 0xff }
     func wr(_ iodata: T) {
         print(String(format: "%c", iodata as! CVarArg), terminator: "")
     }

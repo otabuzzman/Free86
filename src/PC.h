@@ -2,6 +2,7 @@
 #define PC_H
 
 #include <cmath>
+#include <chrono>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
@@ -503,7 +504,7 @@ class PITChannel {
     int count = 0;
     int count_load_time = 0;
     float pit_time_unit = 0.596591f;
-    Free86 *cpu;
+    int pseudo_cpu_cycles = 0;
 
   public:
     int latched_count = 0;
@@ -511,18 +512,16 @@ class PITChannel {
     int mode = 0;
     int bcd = 0;
     int gate = 0;
-    PITChannel(Free86 *cpu) {
-        this->cpu = cpu;
-    }
     int get_time() {
-        return static_cast<int>(floor(cpu->cycles * pit_time_unit));
+        return pseudo_cpu_cycles++ * pit_time_unit;
     }
     void pit_load_count(int data) {
         if (data == 0) {
-            data = 0x10000;
+            count = 0x10000;
+        } else {
+            count = data;
         }
         count_load_time = get_time();
-        count = data;
     }
     int pit_get_count() {
         int d, dh;
@@ -572,15 +571,13 @@ class PITChannel {
 class PIT {
     PITChannel *pit_channels[3];
     int speaker_data_on = 0;
-    Free86 *cpu;
     PIC *pic;
 
   public:
-    PIT(Free86 *cpu, PIC *pic) {
-        this->cpu = cpu;
+    PIT(PIC *pic) {
         this->pic = pic;
         for (int i = 0; i < 3; i++) {
-            pit_channels[i] = new PITChannel(cpu);
+            pit_channels[i] = new PITChannel();
             pit_channels[i]->mode = 3;
             pit_channels[i]->gate = (i != 2) >> 0;
             pit_channels[i]->pit_load_count(0);
@@ -689,7 +686,7 @@ class WiredCPU : public Free86 {
     WiredCPU(uint32_t memory_size) : Free86(memory_size) {
         cmos = new CMOS();
         pic = new PIC();
-        pit = new PIT(this, pic);
+        pit = new PIT(pic);
         serial = new Serial(pic);
     }
     ~WiredCPU() override {

@@ -1,4 +1,4 @@
-actor PinIO<Signal> {
+public actor PinIO<Signal> {
     private var signal: Signal
     private var options: [Option]
 
@@ -18,7 +18,7 @@ actor PinIO<Signal> {
         self.options = options
     }
 
-    func trigger(_ signal: Signal) throws {
+    public func trigger(_ signal: Signal) throws {
         if pending && !options.contains(.allowMultipleTriggers) {
             throw Event.probeIsPending
         }

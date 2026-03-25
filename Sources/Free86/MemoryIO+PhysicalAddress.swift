@@ -45,8 +45,8 @@ class AnyIOPort {
     }
 
     func rd<T: UnsignedInteger>() -> T {
-        guard let iodata = _rd() as? T else { return .zero }
-        return iodata
+        guard let iodata = _rd() as? any FixedWidthInteger & UnsignedInteger else { return .zero }
+        return T(truncatingIfNeeded: iodata)
     }
 
     func wr<T: UnsignedInteger>(_ iodata: T) {
@@ -55,7 +55,7 @@ class AnyIOPort {
 }
 
 public protocol IOPort {
-    associatedtype Element: UnsignedInteger
+    associatedtype Element: FixedWidthInteger & UnsignedInteger
     func rd() -> Element
     func wr(_ iodata: Element)
 }

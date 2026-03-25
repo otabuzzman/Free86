@@ -1,7 +1,7 @@
 import Testing
 @testable import Free86
 
-final class Port<T: UnsignedInteger>: IOPort {
+final class Port<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     var buffer: T = 0
 
     func rd() -> T { buffer }

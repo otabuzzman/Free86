@@ -19,12 +19,12 @@ extension Free86 {
                 let id = try await INTR.probe()
                 try raiseInterrupt(id, 0, true, false, 0)
             }
-        cyclesLoop:
+            cyclesLoop:
             repeat {  // cycles (actually instructions)
                 try obtainOpcode()
                 ipr = iprDefault
                 opcode.override = ipr.isFlagRaised(.operandSizeOverride)
-            fetchLoop:
+                fetchLoop:
                 while true {  // loop over instruction bytes (fetch)
                     if ipr.isFlagRaised(.lockSignal) {
                         switch opcode {

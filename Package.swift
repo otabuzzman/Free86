@@ -28,6 +28,7 @@ let package = Package(
             dependencies: ["Free86"],
             sources: [
                 "main.swift",
+                "NanoPC.swift",
             ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),

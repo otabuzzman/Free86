@@ -505,14 +505,14 @@ extension Free86 {
     }
     func raiseInterrupt(_ id: Byte, _ errorCode: DWord, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
         if !cr0.isProtectedMode {
-            try raiseInterruptRealOrV86Mode(id, isSW, home)
+            try raiseInterruptRealOrV86Mode(DWord(id), isSW, home)
         } else {
-            try raiseInterruptProtectedMode(id, errorCode, isHW, isSW, home)
+            try raiseInterruptProtectedMode(DWord(id), errorCode, isHW, isSW, home)
         }
     }
-    func raiseInterruptRealOrV86Mode(_ id: Byte, _ isSW: Bool, _ home: LinearAddress) throws {
+    func raiseInterruptRealOrV86Mode(_ id: DWord, _ isSW: Bool, _ home: LinearAddress) throws {
         if (id * 4 + 3) > idt.shadow.limit {
-           throw Interrupt(.GP, errorCode: DWord(id * 4 + 2))
+           throw Interrupt(.GP, errorCode: id * 4 + 2)
         }
         lax = idt.shadow.base &+ DWord((id << 2))
         let offset = try ld16ReadonlyCplX()
@@ -540,12 +540,12 @@ extension Free86 {
         eflags.setFlag(.RF, .zero)
         eflags.setFlag(.AC, .zero)
     }
-    func raiseInterruptProtectedMode(_ id: Byte, _ errorCode: DWord, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
+    func raiseInterruptProtectedMode(_ id: DWord, _ errorCode: DWord, _ isHW: Bool, _ isSW: Bool, _ home: LinearAddress) throws {
         assert((0...255).contains(id), "fatal error: invalid interrupt id")
         var ss = SegmentSelector(0), ssd = SegmentDescriptor(0), esp: DWord, ssBase: DWord, ssMask: DWord
         var dpl: DWord = 0, isInterlevel: Bool, pushErrorCode = false
         if !isSW && !isHW {
-            switch Exception(rawValue: id) {
+            switch Exception(rawValue: Byte(id)) {
             case .DF:  // double exception
                 fallthrough
             case .TS:  // invalid task state segment
@@ -566,9 +566,9 @@ extension Free86 {
             }
         }
         if (id * 8 + 7) > idt.shadow.limit {
-            throw Interrupt(.GP, errorCode: DWord(id * 8 + 2))
+            throw Interrupt(.GP, errorCode: id * 8 + 2)
         }
-        lax = idt.shadow.base + DWord(id * 8)
+        lax = idt.shadow.base + id * 8
         let isd = SegmentDescriptor(try ld64ReadonlyCplX())
         let type = SegmentDescriptorType(rawValue: isd.type)
         switch type {
@@ -584,13 +584,13 @@ extension Free86 {
         case .TrapGate:
             break
         default:
-            throw Interrupt(.GP, errorCode: DWord(id * 8 + 2))
+            throw Interrupt(.GP, errorCode: id * 8 + 2)
         }
         if (isSW && isd.dpl < cpl) {
-            throw Interrupt(.GP, errorCode: DWord(id * 8 + 2))
+            throw Interrupt(.GP, errorCode: id * 8 + 2)
         }
         if !isd.isFlagRaised(.P) {
-            throw Interrupt(.NP, errorCode: DWord(id * 8 + 2))
+            throw Interrupt(.NP, errorCode: id * 8 + 2)
         }
         let gsel = SegmentSelector(truncatingIfNeeded: (isd.qword >> 16) & 0xffff)  // different fields in call gate
         let goff = DWord(truncatingIfNeeded: (isd.qword >> 32) & 0xffff0000) | DWord(truncatingIfNeeded: isd.qword & 0x0000ffff)
