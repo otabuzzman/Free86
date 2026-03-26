@@ -32,34 +32,9 @@ if argv.count == 3  {
 
 while true {
     let cycles = cpu.cycles + QWord(historySkip > 0 ? 1 : 100000)
-    let eip15: () -> String = {
-        var linear = cpu.segs[.CS].shadow.base + cpu.eip
-        let physical: DWord
-        var n: Int
-        if cpu.cr0.isPagingEnabled {
-            do {
-                physical = try cpu.tlbLookup(linear: linear, writable: false)
-                n = 4096 - Int(linear & 0xfff)  // bytes left to end-of-page...
-                n = min(n, 15)  // ...or up to maximum instruction length bytes
-            } catch {
-                print("\(error)")
-                exit(EXIT_FAILURE)
-            }
-        } else {
-            linear &= 0xfffff
-            physical = linear
-            n = 15
-        }
-        var memory = String(format: "[EIP..EIP+%02X]:", n - 1)
-        for i in 0..<n {
-            memory += String(format: " %02X", mem.ld8(from: physical + DWord(i)))
-        }
-        return memory
-    }
     while cycles > cpu.cycles {
         do {
             try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
-            // print(cpu.compactState())
             if historySkip > 0 && cycles > historySkip {
                 history[Int(cpu.cycles) % historySize] = cpu.compactState()
             }
@@ -76,8 +51,11 @@ while true {
             cpu.interrupt = interrupt
             switch interrupt.id {
             case 6:
+                let eip = cpu.segs[.CS].shadow.base + cpu.eip
+                let (eip15, n) = cpu.bytes(at: eip, count: 15)
+                let header = String(format: "[EIP..EIP+%02X]: ", n - 1)
                 print("interrupt id \(interrupt.id)")
-                print(cpu.compactState() + "\n" + eip15())
+                print(cpu.compactState() + "\n" + header + eip15)
                 break
             default:
                 break
@@ -86,6 +64,30 @@ while true {
             print("\(error)")
             exit(EXIT_FAILURE)
         }
+    }
+}
+
+extension MemoryIO<DWord> {
+    convenience init(capacity: A) {
+        assert(capacity % A(A.bankSize) == 0, "fatal error")
+        self.init(defaultBank: DefaultBank<A>())
+        for addr in stride(from: 0, to: capacity, by: A.bankSize) {
+            self.register(bank: RAMBank<A>(), at: addr)
+        }
+    }
+}
+
+class PostPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
+    func rd() -> T { 0xff }
+    func wr(_ iodata: T) {
+        print(String(format: "%02X", iodata as! CVarArg))
+    }
+}
+
+class OutPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
+    func rd() -> T { 0xff }
+    func wr(_ iodata: T) {
+        print(String(format: "%c", iodata as! CVarArg), terminator: "")
     }
 }
 
@@ -150,7 +152,6 @@ extension Free86 {
         let from = _eflags.index(_eflags.startIndex, offsetBy: 22, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
         return String(format: "A:%08X C:%08X D:%08X B:%08X SI:%08X DI:%08X I:%08X SP:%08X BP:%08X F:%@", regs[.EAX], regs[.ECX], regs[.EDX], regs[.EBX], regs[.ESI], regs[.EDI], eip, regs[.ESP], regs[.EBP], String(_eflags[from...]))
     }
-
     func bin(_ bits: Byte) -> String {
         var result = ""
         result.reserveCapacity(8)
@@ -168,28 +169,24 @@ extension Free86 {
     func bin(_ bits: QWord, divide: Bool = false) -> String {
         bin(DWord(bits >> 32), divide: divide) + (divide ? "_" : "") + bin(DWord(bits & 0xffffffff), divide: divide)
     }
-}
-
-extension MemoryIO<DWord> {
-    convenience init(capacity: A) {
-        assert(capacity % A(A.bankSize) == 0, "fatal error")
-        self.init(defaultBank: DefaultBank<A>())
-        for addr in stride(from: 0, to: capacity, by: A.bankSize) {
-            self.register(bank: RAMBank<A>(), at: addr)
+    func bytes(at linear: LinearAddress, count: Int) -> (String, Int) {
+        var physical = linear & 0xfffff
+        var n = count
+        if cr0.isPagingEnabled {
+            do {
+                physical = try tlbLookup(linear: linear, writable: false)
+                n = 4096 - Int(linear & 0xfff)  // bytes left to end-of-page...
+                n = min(n, count)  // ...or up to maximum instruction length bytes
+            } catch {
+                print("\(error)")
+                exit(EXIT_FAILURE)
+            }
         }
-    }
-}
-
-class PostPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
-    func rd() -> T { 0xff }
-    func wr(_ iodata: T) {
-        print(String(format: "%02X", iodata as! CVarArg))
-    }
-}
-
-class OutPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
-    func rd() -> T { 0xff }
-    func wr(_ iodata: T) {
-        print(String(format: "%c", iodata as! CVarArg), terminator: "")
+        var buffer = ""
+        for i in 0..<n {
+            buffer += String(format: "%02X", memory.ld8(from: physical + DWord(i)))
+            buffer += i + 1 == n ? "" : " "
+        }
+        return (buffer, n)
     }
 }

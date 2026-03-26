@@ -91,7 +91,7 @@ public class Free86 {
     var cyclesRequested: QWord = 0
     var cyclesRemaining: QWord = 0
 
-    let memory: MemoryIO<DWord>
+    public internal(set) var memory: MemoryIO<DWord>
     let memoryCount: DWord
 
     /// Translation lookaside buffer

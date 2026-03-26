@@ -338,7 +338,6 @@ class PIC {
                     slave_irq = 7;
                 }
                 intno = pics[1]->irq_base + slave_irq;
-                irq = slave_irq + 8;
             } else {
                 intno = pics[0]->irq_base + irq;
             }

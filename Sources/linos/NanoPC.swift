@@ -105,7 +105,7 @@ class I8259 {
 }
 /// the programmable interrupt controller (two cascaded 8059)
 class PIC {
-    var irq = 0
+    private(set) var irq = 0
     lazy var pics = [I8259(self), I8259(self)]
     init() {
         pics[0].elcr_mask = 0xf8
@@ -128,8 +128,8 @@ class PIC {
              self.irq = 0
          }
     }
-    func read_irq() -> Int {
-        var intno = 0
+    var iid: Int {
+        var iid = 0
         var irq = pics[0].get_irq()
         if irq >= 0 {
             pics[0].intack(irq)
@@ -140,17 +140,16 @@ class PIC {
                 } else {
                     slave_irq = 7
                 }
-                intno = pics[1].irq_base + slave_irq
-                irq = slave_irq + 8
+                iid = pics[1].irq_base + slave_irq
             } else {
-                intno = pics[0].irq_base + irq
+                iid = pics[0].irq_base + irq
             }
         } else {
             irq = 7
-            intno = pics[0].irq_base + irq
+            iid = pics[0].irq_base + irq
         }
         update_irq()
-        return intno
+        return iid
     }
 }
 /// https://elixir.bootlin.com/qemu/v7.0.0/source/hw/timer/i8254.c
@@ -230,10 +229,10 @@ class PIT {
     init(_ cpu: Free86, _ pic: PIC) {
         self.pic = pic
         self.pit_channels = [PITChannel(cpu), PITChannel(cpu), PITChannel(cpu)]
-        for i in 0..<3 {
-            pit_channels[i].mode = 3
-            pit_channels[i].gate = (i != 2) ? 1 : 0
-            pit_channels[i].pit_load_count(0)
+        for slot in 0..<3 {
+            pit_channels[slot].mode = 3
+            pit_channels[slot].gate = (slot != 2) ? 1 : 0
+            pit_channels[slot].pit_load_count(0)
         }
     }
     func set_irq(_ val: Bool) {
