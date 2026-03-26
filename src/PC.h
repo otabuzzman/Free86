@@ -34,6 +34,10 @@ class PC {
 #endif
 
   private:
+    WiredCPU *cpu  = nullptr;
+#ifndef NO_SDL
+    TTF_Font *font = nullptr;
+#endif
     std::string state() {
         // EAX:00000000                ESP:CAFE55AA
         // ECX:00000000                EBP:CAFE55AA
@@ -52,6 +56,8 @@ class PC {
         // GS:CAFE:CAFE55AA:CAFFE:00010001_00001111
         //
         // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
+        std::string a, c, d, b, si, di, i, sp, bp, flags;
+        std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
         a = "EAX:" + hex(cpu->regs[0]);
         c = "ECX:" + hex(cpu->regs[1]);
         d = "EDX:" + hex(cpu->regs[2]);
@@ -91,7 +97,6 @@ class PC {
     std::string compact_state() {
         // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
         std::string a, c, d, b, si, di, i, sp, bp, flags;
-        std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
         a = "A:" + hex(cpu->regs[0]);
         c = " C:" + hex(cpu->regs[1]);
         d = " D:" + hex(cpu->regs[2]);
@@ -160,10 +165,6 @@ class PC {
     std::string hex(uint32_t bits) {
         return hex((short)(bits >> 16)) + hex((short)(bits & 0xffff));
     }
-    WiredCPU *cpu  = nullptr;
-#ifndef NO_SDL
-    TTF_Font *font = nullptr;
-#endif
 };
 
 // https://elixir.bootlin.com/qemu/v7.0.0/source/hw/rtc/mc146818rtc.c
