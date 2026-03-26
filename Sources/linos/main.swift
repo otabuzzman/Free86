@@ -304,7 +304,7 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     }
     func rd() -> T {
         var res = 0
-        let channel = circuit.pit_channels[port]
+        let channel = circuit.pit_channels[slot]
         switch channel.rw_state {
         case 0, 1, 2, 3:
             let ma = channel.pit_get_count();
@@ -331,7 +331,7 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         return T(res)
     }
     func wr(_ iodata: T) {
-        let channel = circuit.pit_channels[port]
+        let channel = circuit.pit_channels[slot]
         switch channel.rw_state {
         case 0:
             channel.pit_load_count(Int(iodata))

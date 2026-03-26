@@ -51,7 +51,7 @@ class Test386 {
             try {
                 cpu->fetch_decode_execute(cycles - cpu->cycles, interrupt);
                 if (number == 1 && cycles > history_skip) {
-                    history[cpu->cycles % history_size] = compile_status_string();
+                    history[cpu->cycles % history_size] = compact_state();
                 }
                 if (cpu->halted) {
                     if (number == 1) {
@@ -98,6 +98,8 @@ class Test386 {
         // GS:CAFE:CAFE55AA:CAFFE:00010001_00001111
         //
         // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
+        std::string a, c, d, b, si, di, i, sp, bp, flags;
+        std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
         a = "EAX:" + hex(cpu->regs[0]);
         c = "ECX:" + hex(cpu->regs[1]);
         d = "EDX:" + hex(cpu->regs[2]);
@@ -137,7 +139,6 @@ class Test386 {
     std::string compact_state() {
         // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
         std::string a, c, d, b, si, di, i, sp, bp, flags;
-        std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
         a = "A:" + hex(cpu->regs[0]);
         c = " C:" + hex(cpu->regs[1]);
         d = " D:" + hex(cpu->regs[2]);
@@ -148,9 +149,7 @@ class Test386 {
         sp = " SP:" + hex(cpu->regs[4]);
         bp = " BP:" + hex(cpu->regs[5]);
         flags = " F:" + bin(cpu->eflags, true).substr(22);
-        if (compact) {
-            return std::string(a + c + d + b + si + di + i + sp + bp + flags);
-        }
+        return std::string(a + c + d + b + si + di + i + sp + bp + flags);
     }
     std::string eip_15() {
         uint32_t linear, physical;
