@@ -83,6 +83,7 @@ void PC::cycle()
 
         try {
             cpu->fetch_decode_execute(cycles - cpu->cycles, interrupt);
+            // std::cout << std::endl << compact_state() << std::endl << eip_15() << std::endl;
             if (cpu->halted)
                 break;
         } catch (const Interrupt& e) {

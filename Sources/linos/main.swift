@@ -82,7 +82,7 @@ io.register(port: port3FC, at: 0x3FC)
 io.register(port: port3FD, at: 0x3FD)
 io.register(port: port3FE, at: 0x3FE)
 io.register(port: port3FF, at: 0x3FF)
-var dump = false
+
 while true {
     let cycles = cpu.cycles + 100000
     let eip15: () -> String = {
@@ -119,9 +119,7 @@ while true {
         }
         do {
             try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
-            if dump {
-                print(cpu.compactState() + "\n" + eip15())
-            }
+            // print(cpu.compactState() + "\n" + eip15())
             if cpu.halted {
                 break
             }
@@ -171,23 +169,27 @@ class Port71<T: FixedWidthInteger & UnsignedInteger>: IOPort {
 class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     var priority = 0
     let circuit: PIC
-    let chip: Int
-    init(_ circuit: PIC, _ chip: Int) {
+    let slot: Int
+    init(_ circuit: PIC, _ slot: Int) {
         self.circuit = circuit
-        self.chip = chip
+        self.slot = slot
     }
     func rd() -> T {
-        if circuit.pics[chip].read_reg_select != 0 {
-            return T(circuit.pics[chip].isr)
+        var res = 0
+        let i8259 = circuit.pics[slot]
+        if i8259.read_reg_select != 0 {
+            res = i8259.isr
         } else {
-            return T(circuit.pics[chip].irr)
+            res = i8259.irr
         }
+        return T(res)
     }
     func wr(_ iodata: T) {
+        let i8259 = circuit.pics[slot]
         if (iodata & 0x10) != 0 {  // ...(bit 4 == 1) is ICW1 (after reset)
-            circuit.pics[chip].reset()
-            circuit.pics[chip].icwn = 1  // start ICW sequence
-            circuit.pics[chip].icw4 = Int(iodata & 1)  // ICW1.IC4
+            i8259.reset()
+            i8259.icwn = 1  // start ICW sequence
+            i8259.icw4 = Int(iodata & 1)  // ICW1.IC4
             if (iodata & 0x02) != 0 {  // ICW1.SNGL
                 assert(false, "ICW1: SNGL == 1 not supported")
             }
@@ -196,25 +198,25 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             }
         } else if (iodata & 0x08) != 0 {  // ...(bit 3 == 1) are OCW3
             if (iodata & 0x02) != 0 {  // OCW3.RR (read register command)
-                circuit.pics[chip].read_reg_select = Int(iodata & 1)
+                i8259.read_reg_select = Int(iodata & 1)
             }
             if (iodata & 0x40) != 0 {  // OCW3.ESMM (special mask mode)
-                circuit.pics[chip].special_mask = Int((iodata >> 5) & 1)
+                i8259.special_mask = Int((iodata >> 5) & 1)
             }
         } else { // ...( bit 4 == 0 && bit 3 == 0) are OCW2
             switch iodata {
             case 0x00,
                  0x80: // rotate in automatic EOI mode (clear)
-                circuit.pics[chip].rotate_on_autoeoi = Int(iodata >> 7)
+                i8259.rotate_on_autoeoi = Int(iodata >> 7)
                 break
             case 0x20, // non-specific EOI command
                  0xa0: // rotate on non-specific EOI command
-                priority = circuit.pics[chip].get_priority(circuit.pics[chip].isr)
+                priority = i8259.get_priority(i8259.isr)
                 if priority >= 0 {
-                    circuit.pics[chip].isr &= ~(1 << ((priority + circuit.pics[chip].priority_add) & 7))
+                    i8259.isr &= ~(1 << ((priority + i8259.priority_add) & 7))
                 }
                 if iodata == 0xa0 {
-                    circuit.pics[chip].priority_add = (circuit.pics[chip].priority_add + 1) & 7
+                    i8259.priority_add = (i8259.priority_add + 1) & 7
                 }
                 break
             case 0x60, // specific EOI command, IR priority level 0
@@ -226,7 +228,7 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                  0x66, // level 6
                  0x67: // level 7
                 priority = Int(iodata & 7)
-                circuit.pics[chip].isr &= ~(1 << priority)
+                i8259.isr &= ~(1 << priority)
                 break;
             case 0xc0, // set priority command, IR priority level 0
                  0xc1, // level 1
@@ -236,7 +238,7 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                  0xc5, // level 5
                  0xc6, // level 6
                  0xc7: // level 7
-                circuit.pics[chip].priority_add = Int((iodata + 1) & 7)
+                i8259.priority_add = Int((iodata + 1) & 7)
                 break
             case 0xe0,  // rotate on specific EOI command, IR level 0
                  0xe1,  // level 1
@@ -247,8 +249,8 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                  0xe6,  // level 6
                  0xe7:  // level 7
                 priority = Int(iodata & 7)
-                circuit.pics[chip].isr &= ~(1 << priority)
-                circuit.pics[chip].priority_add = (priority + 1) & 7
+                i8259.isr &= ~(1 << priority)
+                i8259.priority_add = (priority + 1) & 7
                 break
             default:
                 break
@@ -258,34 +260,35 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
 }
 class PortA1<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     let circuit: PIC
-    let chip: Int
-    init(_ circuit: PIC, _ chip: Int) {
+    let slot: Int
+    init(_ circuit: PIC, _ slot: Int) {
         self.circuit = circuit
-        self.chip = chip
+        self.slot = slot
     }
     func rd() -> T {
-        T(circuit.pics[chip].imr)
+        T(circuit.pics[slot].imr)
     }
     func wr(_ iodata: T) {
-        switch circuit.pics[chip].icwn {
+        let i8259 = circuit.pics[slot]
+        switch i8259.icwn {
         case 0:  // OCW1, set IMR
-            circuit.pics[chip].imr = Int(iodata)
-            circuit.pics[chip].update_irq()
+            i8259.imr = Int(iodata)
+            i8259.update_irq()
             break
         case 1:  // ICW2, set page starting address of service routines
-            circuit.pics[chip].irq_base = Int(iodata & 0xf8)
-            circuit.pics[chip].icwn = 2
+            i8259.irq_base = Int(iodata & 0xf8)
+            i8259.icwn = 2
             break
         case 2:  // ICW3, load slave register if ICW1.SNGL == 0
-            if circuit.pics[chip].icw4 != 0 {
-                circuit.pics[chip].icwn = 3
+            if i8259.icw4 != 0 {
+                i8259.icwn = 3
             } else {
-                circuit.pics[chip].icwn = 0
+                i8259.icwn = 0
             }
             break
         case 3:  // ICW4, program SFNM, BUF, M/S, AEOI and uPM if set
-            circuit.pics[chip].auto_eoi = Int((iodata >> 1) & 1)
-            circuit.pics[chip].icwn = 0
+            i8259.auto_eoi = Int((iodata >> 1) & 1)
+            i8259.icwn = 0
             break
         default:
             break
@@ -294,32 +297,33 @@ class PortA1<T: FixedWidthInteger & UnsignedInteger>: IOPort {
 }
 class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     let circuit: PIT
-    let port: Int
-    init(_ circuit: PIT, _ port: Int) {
+    let slot: Int
+    init(_ circuit: PIT, _ slot: Int) {
         self.circuit = circuit
-        self.port = port
+        self.slot = slot
     }
     func rd() -> T {
         var res = 0
-        switch circuit.pit_channels[port].rw_state {
+        let channel = circuit.pit_channels[port]
+        switch channel.rw_state {
         case 0, 1, 2, 3:
-            let ma = circuit.pit_channels[port].pit_get_count();
-            if (circuit.pit_channels[port].rw_state & 1) != 0 {
+            let ma = channel.pit_get_count();
+            if (channel.rw_state & 1) != 0 {
                 res = (ma >> 8) & 0xff
             } else {
                 res = ma & 0xff
             }
-            if (circuit.pit_channels[port].rw_state & 2) != 0 {
-                circuit.pit_channels[port].rw_state ^= 1
+            if (channel.rw_state & 2) != 0 {
+                channel.rw_state ^= 1
             }
             break
         case 4, 5:
-            if (circuit.pit_channels[port].rw_state & 1) != 0 {
-                res = circuit.pit_channels[port].latched_count >> 8
+            if (channel.rw_state & 1) != 0 {
+                res = channel.latched_count >> 8
             } else {
-                res = circuit.pit_channels[port].latched_count & 0xff
+                res = channel.latched_count & 0xff
             }
-            circuit.pit_channels[port].rw_state ^= 1
+            channel.rw_state ^= 1
             break
         default:
             break
@@ -327,20 +331,21 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         return T(res)
     }
     func wr(_ iodata: T) {
-        switch circuit.pit_channels[port].rw_state {
+        let channel = circuit.pit_channels[port]
+        switch channel.rw_state {
         case 0:
-            circuit.pit_channels[port].pit_load_count(Int(iodata))
+            channel.pit_load_count(Int(iodata))
             break
         case 1:
-            circuit.pit_channels[port].pit_load_count(Int(iodata) << 8)
+            channel.pit_load_count(Int(iodata) << 8)
             break
         case 2, 3:
-            if (circuit.pit_channels[port].rw_state & 1) != 0 {
-                circuit.pit_channels[port].pit_load_count((circuit.pit_channels[port].latched_count & 0xff) | (Int(iodata) << 8))
+            if (channel.rw_state & 1) != 0 {
+                channel.pit_load_count((channel.latched_count & 0xff) | (Int(iodata) << 8))
             } else {
-                circuit.pit_channels[port].latched_count = Int(iodata)
+                channel.latched_count = Int(iodata)
             }
-            circuit.pit_channels[port].rw_state ^= 1
+            channel.rw_state ^= 1
             break
         default:
             break
@@ -498,14 +503,14 @@ class Port3FF<T: FixedWidthInteger & UnsignedInteger>: IOPort {
 
 
 extension Free86 {
-    // EAX:00000000                ESP:CAFE55AA
-    // ECX:00000000                EBP:CAFE55AA
+    // EAX:00000000                ESP:CAFE55AA
+    // ECX:00000000                EBP:CAFE55AA
     // EDX:00000000
     // EBX:00000000
     // ESI:00000000
-    // EDI:00000000                EIP:CAFE55AA
+    // EDI:00000000                EIP:CAFE55AA
     //
-    //        EFLAGS:00010001_00010001_00001111
+    //        EFLAGS:00010001_00010001_00001111
     //
     // ES:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // CS:CAFE:CAFE55AA:CAFFE:00010001_00001111
@@ -514,7 +519,7 @@ extension Free86 {
     // FS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // GS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     //
-    // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
+    // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
     func state() -> String {
         var cr0 = bin(self.cr0, divide: true)
         let a = cr0.index(cr0.startIndex, offsetBy: 1)
@@ -523,14 +528,14 @@ extension Free86 {
         let _eflags = bin(eflags, divide: true)
         let from = _eflags.index(_eflags.startIndex, offsetBy: 26, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
         return String(format: """
-            EAX:%08X                ESP:%08X
-            ECX:%08X                EBP:%08X
+            EAX:%08X                 ESP:%08X
+            ECX:%08X                 EBP:%08X
             EDX:%08X
             EBX:%08X
             ESI:%08X
-            EDI:%08X                EIP:%08X
+            EDI:%08X                 EIP:%08X
 
-                   EFLAGS:%@
+                   EFLAGS:%@
 
             ES:%04X:%08X:%05X:%@
             CS:%04X:%08X:%05X:%@
@@ -539,7 +544,7 @@ extension Free86 {
             FS:%04X:%08X:%05X:%@
             GS:%04X:%08X:%05X:%@
 
-            CR0:%@  CR2:%08X  CR3:%08X
+            CR0:%@  CR2:%08X  CR3:%08X
             """,
             regs[.EAX], regs[.ESP], regs[.ECX], regs[.EBP],
             regs[.EDX], regs[.EBP], regs[.ESI], regs[.EDI],

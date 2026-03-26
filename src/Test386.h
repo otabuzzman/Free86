@@ -68,7 +68,7 @@ class Test386 {
                     case 6:
                         std::cout
                             << "interrupt id " << e.id
-                            << std::endl << compile_status_string()
+                            << std::endl << compact_state()
                             << std::endl << eip_15() << std::endl;
                         break;
                 }
@@ -80,23 +80,7 @@ class Test386 {
     }
 
   private:
-    std::string compile_status_string(bool compact = true) {
-        std::string a, c, d, b, si, di, i, sp, bp, flags;
-        std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
-        a = "A:" + hex(cpu->regs[0]);
-        c = " C:" + hex(cpu->regs[1]);
-        d = " D:" + hex(cpu->regs[2]);
-        b = " B:" + hex(cpu->regs[3]);
-        si = " SI:" + hex(cpu->regs[6]);
-        di = " DI:" + hex(cpu->regs[7]);
-        i = " I:" + hex((int) cpu->eip);
-        sp = " SP:" + hex(cpu->regs[4]);
-        bp = " BP:" + hex(cpu->regs[5]);
-        flags = " F:" + bin(cpu->eflags, true).substr(22);
-        if (compact) {
-            // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
-            return std::string(a + c + d + b + si + di + i + sp + bp + flags);
-        }
+    std::string state() {
         // EAX:00000000                ESP:CAFE55AA
         // ECX:00000000                EBP:CAFE55AA
         // EDX:00000000
@@ -149,6 +133,24 @@ class Test386 {
             gs + "\n" +
             "\n" + cr0 + "  " + cr2 + "  " + cr3
         );
+    }
+    std::string compact_state() {
+        // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
+        std::string a, c, d, b, si, di, i, sp, bp, flags;
+        std::string cs, ss, ds, es, fs, gs, cr0, cr2, cr3;
+        a = "A:" + hex(cpu->regs[0]);
+        c = " C:" + hex(cpu->regs[1]);
+        d = " D:" + hex(cpu->regs[2]);
+        b = " B:" + hex(cpu->regs[3]);
+        si = " SI:" + hex(cpu->regs[6]);
+        di = " DI:" + hex(cpu->regs[7]);
+        i = " I:" + hex((int) cpu->eip);
+        sp = " SP:" + hex(cpu->regs[4]);
+        bp = " BP:" + hex(cpu->regs[5]);
+        flags = " F:" + bin(cpu->eflags, true).substr(22);
+        if (compact) {
+            return std::string(a + c + d + b + si + di + i + sp + bp + flags);
+        }
     }
     std::string eip_15() {
         uint32_t linear, physical;

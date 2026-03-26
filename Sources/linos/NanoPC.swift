@@ -29,7 +29,7 @@ class I8259 {
     var icw4 = 0
     var elcr = 0  // Edge/Level Control Register
     var rotate_on_auto_eoi = false
-    var pic: PIC
+    let pic: PIC
     var elcr_mask = 0
     var irq_base = 0
     init(_ pic: PIC) {
@@ -159,7 +159,7 @@ class PITChannel {
     var last_irr = 0
     var count = 0
     var count_load_time = 0
-    var pit_time_unit: Double = 0.596591
+    var pit_time_unit: Float = 0.596591
     var cpu: Free86
     var latched_count = 0
     var rw_state = 0
@@ -170,7 +170,7 @@ class PITChannel {
         self.cpu = cpu
     }
     func get_time() -> Int {
-        Int(floor(Double(cpu.cycles) * pit_time_unit))
+        Int((Float(cpu.cycles) * pit_time_unit))
     }
     func pit_load_count(_ data: Int) {
         if data == 0 {
@@ -258,7 +258,7 @@ class Serial {
     var scr = 0     // scratch register
     // RingBuffer<int> input_fifo{RingBuffer<int>(1000)}
     // RingBuffer<int> print_fifo{RingBuffer<int>(1000)}
-    var pic: PIC
+    let pic: PIC
     init(_ pic: PIC) {
         self.pic = pic
     }

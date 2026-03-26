@@ -90,14 +90,14 @@ while true {
 }
 
 extension Free86 {
-    // EAX:00000000                ESP:CAFE55AA
-    // ECX:00000000                EBP:CAFE55AA
+    // EAX:00000000                ESP:CAFE55AA
+    // ECX:00000000                EBP:CAFE55AA
     // EDX:00000000
     // EBX:00000000
     // ESI:00000000
-    // EDI:00000000                EIP:CAFE55AA
+    // EDI:00000000                EIP:CAFE55AA
     //
-    //        EFLAGS:00010001_00010001_00001111
+    //        EFLAGS:00010001_00010001_00001111
     //
     // ES:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // CS:CAFE:CAFE55AA:CAFFE:00010001_00001111
@@ -106,7 +106,7 @@ extension Free86 {
     // FS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     // GS:CAFE:CAFE55AA:CAFFE:00010001_00001111
     //
-    // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
+    // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
     func state() -> String {
         var cr0 = bin(self.cr0, divide: true)
         let a = cr0.index(cr0.startIndex, offsetBy: 1)
@@ -115,14 +115,14 @@ extension Free86 {
         let _eflags = bin(eflags, divide: true)
         let from = _eflags.index(_eflags.startIndex, offsetBy: 26, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
         return String(format: """
-            EAX:%08X                ESP:%08X
-            ECX:%08X                EBP:%08X
+            EAX:%08X                ESP:%08X
+            ECX:%08X                EBP:%08X
             EDX:%08X
             EBX:%08X
             ESI:%08X
-            EDI:%08X                EIP:%08X
+            EDI:%08X                EIP:%08X
 
-                   EFLAGS:%@
+                   EFLAGS:%@
 
             ES:%04X:%08X:%05X:%@
             CS:%04X:%08X:%05X:%@
@@ -131,7 +131,7 @@ extension Free86 {
             FS:%04X:%08X:%05X:%@
             GS:%04X:%08X:%05X:%@
 
-            CR0:%@  CR2:%08X  CR3:%08X
+            CR0:%@  CR2:%08X  CR3:%08X
             """,
             regs[.EAX], regs[.ESP], regs[.ECX], regs[.EBP],
             regs[.EDX], regs[.EBP], regs[.ESI], regs[.EDI],
