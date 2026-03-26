@@ -119,7 +119,6 @@ while true {
         }
         do {
             try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
-            // print(cpu.compactState() + "\n" + eip15())
             if cpu.halted {
                 break
             }
