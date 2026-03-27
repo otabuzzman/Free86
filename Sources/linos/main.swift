@@ -97,6 +97,7 @@ while true {
             }
         } catch let interrupt as Interrupt {
             cpu.interrupt = interrupt
+
         } catch {
             print("\(error)")
             exit(EXIT_FAILURE)
@@ -121,7 +122,7 @@ class Port70<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     }
     func rd() -> T { 0xff }
     func wr(_ iodata: T) {
-        circuit.index = Int(iodata & 0x7f)
+        circuit.index = Int(iodata) & 0x7f
     }
 }
 class Port71<T: FixedWidthInteger & UnsignedInteger>: IOPort {
@@ -161,7 +162,7 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         if (iodata & 0x10) != 0 {  // ...(bit 4 == 1) is ICW1 (after reset)
             i8259.reset()
             i8259.icwn = 1  // start ICW sequence
-            i8259.icw4 = Int(iodata & 1)  // ICW1.IC4
+            i8259.icw4 = Int(iodata) & 1  // ICW1.IC4
             if (iodata & 0x02) != 0 {  // ICW1.SNGL
                 assert(false, "ICW1: SNGL == 1 not supported")
             }
@@ -170,16 +171,16 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             }
         } else if (iodata & 0x08) != 0 {  // ...(bit 3 == 1) are OCW3
             if (iodata & 0x02) != 0 {  // OCW3.RR (read register command)
-                i8259.read_reg_select = Int(iodata & 1)
+                i8259.read_reg_select = Int(iodata) & 1
             }
             if (iodata & 0x40) != 0 {  // OCW3.ESMM (special mask mode)
-                i8259.special_mask = Int((iodata >> 5) & 1)
+                i8259.special_mask = (Int(iodata) >> 5) & 1
             }
         } else { // ...( bit 4 == 0 && bit 3 == 0) are OCW2
             switch iodata {
             case 0x00,
                  0x80: // rotate in automatic EOI mode (clear)
-                i8259.rotate_on_autoeoi = Int(iodata >> 7)
+                i8259.rotate_on_autoeoi = Int(iodata) >> 7
                 break
             case 0x20, // non-specific EOI command
                  0xa0: // rotate on non-specific EOI command
@@ -199,7 +200,7 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                  0x65, // level 5
                  0x66, // level 6
                  0x67: // level 7
-                priority = Int(iodata & 7)
+                priority = Int(iodata) & 7
                 i8259.isr &= ~(1 << priority)
                 break;
             case 0xc0, // set priority command, IR priority level 0
@@ -210,7 +211,7 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                  0xc5, // level 5
                  0xc6, // level 6
                  0xc7: // level 7
-                i8259.priority_add = Int((iodata + 1) & 7)
+                i8259.priority_add = (Int(iodata) + 1) & 7
                 break
             case 0xe0,  // rotate on specific EOI command, IR level 0
                  0xe1,  // level 1
@@ -248,7 +249,7 @@ class PortA1<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             i8259.update_irq()
             break
         case 1:  // ICW2, set page starting address of service routines
-            i8259.irq_base = Int(iodata & 0xf8)
+            i8259.irq_base = Int(iodata) & 0xf8
             i8259.icwn = 2
             break
         case 2:  // ICW3, load slave register if ICW1.SNGL == 0
@@ -259,7 +260,7 @@ class PortA1<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             }
             break
         case 3:  // ICW4, program SFNM, BUF, M/S, AEOI and uPM if set
-            i8259.auto_eoi = Int((iodata >> 1) & 1)
+            i8259.auto_eoi = (Int(iodata) >> 1) & 1
             i8259.icwn = 0
             break
         default:
@@ -332,7 +333,7 @@ class Port43<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     }
     func rd() -> T { 0xff }
     func wr(_ iodata: T) {
-        hh = Int(iodata >> 6)
+        hh = Int(iodata) >> 6
         if hh == 3 {
             return
         }
@@ -343,9 +344,9 @@ class Port43<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             circuit.pit_channels[hh].rw_state = 4
             break
         default:
-            circuit.pit_channels[hh].mode = Int((iodata >> 1) & 7)
-            circuit.pit_channels[hh].bcd = Int(iodata & 1)
-            circuit.pit_channels[hh].rw_state = Int(ih - 1 + 0)
+            circuit.pit_channels[hh].mode = (Int(iodata) >> 1) & 7
+            circuit.pit_channels[hh].bcd = Int(iodata) & 1
+            circuit.pit_channels[hh].rw_state = Int(ih) - 1
             break
         }
     }
@@ -361,8 +362,8 @@ class Port61<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         return T(iodata)
     }
     func wr(_ iodata: T) {
-        circuit.speaker_data_on = Int((iodata >> 1) & 1)
-        circuit.pit_channels[2].gate = Int(iodata & 1)
+        circuit.speaker_data_on = (Int(iodata) >> 1) & 1
+        circuit.pit_channels[2].gate = Int(iodata) & 1
     }
 }
 class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
@@ -402,7 +403,7 @@ class Port3F9<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     }
     func rd() -> T {
         if (circuit.lcr & 0x80) != 0 {
-            return T((circuit.divider >> 8) & 0xff)
+            return (T(circuit.divider) >> 8) & 0xff
         } else {
             return T(circuit.ier)
         }
@@ -470,5 +471,105 @@ class Port3FF<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     func rd() -> T { T(circuit.scr) }
     func wr(_ iodata: T) {
         circuit.scr = Int(iodata)
+    }
+}
+
+extension Free86 {
+    // EAX:00000000                ESP:CAFE55AA
+    // ECX:00000000                EBP:CAFE55AA
+    // EDX:00000000
+    // EBX:00000000
+    // ESI:00000000
+    // EDI:00000000                EIP:CAFE55AA
+    //
+    //        EFLAGS:00010001_00010001_00001111
+    //
+    // ES:CAFE:CAFE55AA:CAFFE:00010001_00001111
+    // CS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+    // SS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+    // DS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+    // FS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+    // GS:CAFE:CAFE55AA:CAFFE:00010001_00001111
+    //
+    // CR0:0..01111  CR2:DEADBEAF  CR3:DEADB000
+    func state() -> String {
+        var cr0 = bin(self.cr0, divide: true)
+        let a = cr0.index(cr0.startIndex, offsetBy: 1)
+        let o = cr0.index(cr0.startIndex, offsetBy: 30)
+        cr0.replaceSubrange(a..<o, with: "..")
+        let _eflags = bin(eflags, divide: true)
+        let from = _eflags.index(_eflags.startIndex, offsetBy: 26, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
+        return String(format: """
+            EAX:%08X                ESP:%08X
+            ECX:%08X                EBP:%08X
+            EDX:%08X
+            EBX:%08X
+            ESI:%08X
+            EDI:%08X                EIP:%08X
+
+                   EFLAGS:%@
+
+            ES:%04X:%08X:%05X:%@
+            CS:%04X:%08X:%05X:%@
+            SS:%04X:%08X:%05X:%@
+            DS:%04X:%08X:%05X:%@
+            FS:%04X:%08X:%05X:%@
+            GS:%04X:%08X:%05X:%@
+
+            CR0:%@  CR2:%08X  CR3:%08X
+            """,
+            regs[.EAX], regs[.ESP], regs[.ECX], regs[.EBP],
+            regs[.EDX], regs[.EBP], regs[.ESI], regs[.EDI],
+            eip, String(_eflags[from...]),
+            segs[.ES].selector, segs[.ES].shadow.base, segs[.ES].shadow.limit, bin(Word((segs[.ES].shadow.flags >> 8) & 0xffff), divide: true),
+            segs[.CS].selector, segs[.CS].shadow.base, segs[.CS].shadow.limit, bin(Word((segs[.CS].shadow.flags >> 8) & 0xffff), divide: true),
+            segs[.SS].selector, segs[.SS].shadow.base, segs[.SS].shadow.limit, bin(Word((segs[.SS].shadow.flags >> 8) & 0xffff), divide: true),
+            segs[.DS].selector, segs[.DS].shadow.base, segs[.DS].shadow.limit, bin(Word((segs[.DS].shadow.flags >> 8) & 0xffff), divide: true),
+            segs[.FS].selector, segs[.FS].shadow.base, segs[.FS].shadow.limit, bin(Word((segs[.FS].shadow.flags >> 8) & 0xffff), divide: true),
+            segs[.GS].selector, segs[.GS].shadow.base, segs[.GS].shadow.limit, bin(Word((segs[.GS].shadow.flags >> 8) & 0xffff), divide: true),
+            cr0, cr2, cr3)
+    }
+    // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
+    func compactState() -> String {
+        let _eflags = bin(eflags, divide: true)
+        let from = _eflags.index(_eflags.startIndex, offsetBy: 22, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
+        return String(format: "A:%08X C:%08X D:%08X B:%08X SI:%08X DI:%08X I:%08X SP:%08X BP:%08X F:%@", regs[.EAX], regs[.ECX], regs[.EDX], regs[.EBX], regs[.ESI], regs[.EDI], eip, regs[.ESP], regs[.EBP], String(_eflags[from...]))
+    }
+    func bin(_ bits: Byte) -> String {
+        var result = ""
+        result.reserveCapacity(8)
+        for shift in stride(from: 7, through: 0, by: -1) {
+            result.append(((bits >> shift) & 1) == 1 ? "1" : "0")
+        }
+        return result
+    }
+    func bin(_ bits: Word, divide: Bool = false) -> String {
+        bin(Byte(bits >> 8)) + (divide ? "_" : "") + bin(Byte(bits & 0xff))
+    }
+    func bin(_ bits: DWord, divide: Bool = false) -> String {
+        bin(Word(bits >> 16), divide: divide) + (divide ? "_" : "") + bin(Word(bits & 0xffff), divide: divide)
+    }
+    func bin(_ bits: QWord, divide: Bool = false) -> String {
+        bin(DWord(bits >> 32), divide: divide) + (divide ? "_" : "") + bin(DWord(bits & 0xffffffff), divide: divide)
+    }
+    func bytes(at linear: LinearAddress, count: Int) -> (String, Int) {
+        var physical = linear & 0xfffff
+        var n = count
+        if cr0.isPagingEnabled {
+            do {
+                physical = try tlbLookup(linear: linear, writable: false)
+                n = 4096 - Int(linear & 0xfff)  // bytes left to end-of-page...
+                n = min(n, count)  // ...or up to maximum instruction length bytes
+            } catch {
+                print("\(error)")
+                exit(EXIT_FAILURE)
+            }
+        }
+        var buffer = ""
+        for i in 0..<n {
+            buffer += String(format: "%02X", memory.ld8(from: physical + DWord(i)))
+            buffer += i + 1 == n ? "" : " "
+        }
+        return (buffer, n)
     }
 }

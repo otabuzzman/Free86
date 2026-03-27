@@ -615,7 +615,7 @@ class PIT {
             default:
                 s->mode = (data >> 1) & 7;
                 s->bcd = data & 1;
-                s->rw_state = ih - 1 + 0;
+                s->rw_state = ih - 1;
                 break;
             }
         } else {

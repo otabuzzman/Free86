@@ -738,7 +738,7 @@ extension Free86 {
         eip = goff
         far = 0
         farStart = 0
-        if isd.isType(.TrapGate) {  // .TrapGate (?)
+        if isd.isType(.InterruptGate) {
             eflags.setFlag(.IF, .zero)
         }
         eflags.setFlag(.TF, .zero)

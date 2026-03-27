@@ -1702,7 +1702,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        eflags &= ~0x00000200
+        eflags.setFlag(.IF, .zero)
         return .success(.endFetchLoop)
     }
     /// 0xfb  STI
@@ -1710,7 +1710,7 @@ extension Free86 {
         if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
-        eflags |= 0x00000200
+        eflags.setFlag(.IF)
         return .success(.endOnInterrupt)
     }
     /// 0x9e  SAHF
