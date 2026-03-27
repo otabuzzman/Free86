@@ -26,10 +26,6 @@ class PC {
     void setup();
     void cycle();
 
-    std::string compact_state();
-    std::string state();
-    std::string eip_15();
-
 #ifndef NO_SDL
     void paint(SDL_Renderer *render, int widht, int height);
 #else
@@ -38,14 +34,6 @@ class PC {
 #endif
 
   private:
-    std::string hex(char bits);
-    std::string hex(short bits);
-    std::string hex(int bits);
-    std::string hex(uint32_t bits);
-    std::string bin(char bits);
-    std::string bin(short bits, bool divide = false);
-    std::string bin(int bits, bool divide = false);
-    std::string bin(uint32_t bits, bool divide = false);
     WiredCPU *cpu  = nullptr;
 #ifndef NO_SDL
     TTF_Font *font = nullptr;

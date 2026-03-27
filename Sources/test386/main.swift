@@ -12,13 +12,13 @@ for (offset, byte) in data.enumerated() {
     mem[loadAddress + DWord(offset)] = Byte(byte)
 }
 
+let io = IsolatedIO<DWord>()
+let cpu = Free86(memory: mem, io: io)
+
 let postPort = PostPort<Byte>()
 let outPort = OutPort<Byte>()
-let io = IsolatedIO<DWord>()
 io.register(port: postPort, at: postPortAddress)
 io.register(port: outPort, at: outPortAddress)
-
-let cpu = Free86(memory: mem, io: io)
 
 var historySkip = 0
 let historySize = 32
@@ -52,7 +52,7 @@ while true {
             switch interrupt.id {
             case 6:
                 let eip = cpu.segs[.CS].shadow.base + cpu.eip
-                let (eip15, n) = cpu.bytes(at: eip, count: 15)
+                let (eip15, n) = bytes(at: eip, count: 15, cpu, mem)
                 let header = String(format: "[EIP..EIP+%02X]: ", n - 1)
                 print("interrupt id \(interrupt.id)")
                 print(cpu.compactState() + "\n" + header + eip15)
@@ -89,6 +89,28 @@ class OutPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     func wr(_ iodata: T) {
         print(String(format: "%c", iodata as! CVarArg), terminator: "")
     }
+}
+
+/// returns `count` bytes starting at `linear` address. Stops at memory page boundary.
+func bytes(at linear: LinearAddress, count: Int, _ cpu: Free86, _ mem: MemoryIO<DWord>) -> (String, Int) {
+    var physical = linear & 0xfffff
+    var n = count
+    if cpu.cr0.isPagingEnabled {
+        do {
+            physical = try cpu.tlbLookup(linear: linear, writable: false)
+            n = 4096 - Int(linear & 0xfff)  // bytes left to end-of-page...
+            n = min(n, count)  // ...or up to maximum instruction length bytes
+        } catch {
+            print("\(error)")
+            exit(EXIT_FAILURE)
+        }
+    }
+    var buffer = ""
+    for i in 0..<n {
+        buffer += String(format: "%02X", mem.ld8(from: physical + DWord(i)))
+        buffer += i + 1 == n ? "" : " "
+    }
+    return (buffer, n)
 }
 
 extension Free86 {
@@ -168,25 +190,5 @@ extension Free86 {
     }
     func bin(_ bits: QWord, divide: Bool = false) -> String {
         bin(DWord(bits >> 32), divide: divide) + (divide ? "_" : "") + bin(DWord(bits & 0xffffffff), divide: divide)
-    }
-    func bytes(at linear: LinearAddress, count: Int) -> (String, Int) {
-        var physical = linear & 0xfffff
-        var n = count
-        if cr0.isPagingEnabled {
-            do {
-                physical = try tlbLookup(linear: linear, writable: false)
-                n = 4096 - Int(linear & 0xfff)  // bytes left to end-of-page...
-                n = min(n, count)  // ...or up to maximum instruction length bytes
-            } catch {
-                print("\(error)")
-                exit(EXIT_FAILURE)
-            }
-        }
-        var buffer = ""
-        for i in 0..<n {
-            buffer += String(format: "%02X", memory.ld8(from: physical + DWord(i)))
-            buffer += i + 1 == n ? "" : " "
-        }
-        return (buffer, n)
     }
 }
