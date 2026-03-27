@@ -1127,7 +1127,10 @@ extension Free86 {
         if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
             throw Interrupt(.GP, errorCode: 0)
         }
-        u = getEflags() & ~(0x00010000 | 0x00020000)
+        var mask: Eflags = 0
+        mask |= Eflags.flagMask(for: .RF)
+        mask |= Eflags.flagMask(for: .VM)
+        u = getEflags() & ~mask
         if !ipr.isFlagRaised(.operandSizeOverride) {
             try push(u)
         } else {
@@ -1147,15 +1150,20 @@ extension Free86 {
             m = DWord(try pop16())
             u = 0xffff
         }
-        v = 0x00000100 | 0x00004000 | 0x00040000 | 0x00200000
+        var mask: Eflags = 0
+        mask.setFlag(.TF)
+        mask.setFlag(.NT)
+        mask.setFlag(.AC)
+        mask.setFlag(.ID)
         if cpl == 0 {
-            v |= 0x00000200 | 0x00003000
+            mask.setFlag(.IF)
+            mask.iopl = 3
         } else {
             if cpl <= eflags.iopl {
-                v |= 0x00000200
+                mask.setFlag(.IF)
             }
         }
-        setEflags(m, v & u)
+        setEflags(m, u & mask)
         return .success(.endOnInterrupt)
     }
     /// 0x06  PUSH

@@ -23,6 +23,8 @@ func extendedFlagsRegisterSetCheck() {
     #expect(eflags.isFlagRaised(.CF) == true)
     eflags.setFlag(.CF, .zero)
     #expect(eflags == 0xDEADBEAE)
+    #expect(Eflags.flagMask(for: .DF) == (1 << EflagsFlag.DF.rawValue))
+    #expect(Eflags.flagMask(for: .DF) == 0x00000400)
 }
 
 @Test("EFLAGS fields access")

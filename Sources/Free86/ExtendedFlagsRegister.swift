@@ -26,6 +26,9 @@ extension Eflags {
     mutating func setFlag(_ flag: EflagsFlag, _ value: Int = 1) {
         self.setBit(flag.rawValue, value)
     }
+    static func flagMask(for flag: EflagsFlag) -> Self {
+        return Self.bitMask(for: flag.rawValue)
+    }
 }
 
 extension Eflags {

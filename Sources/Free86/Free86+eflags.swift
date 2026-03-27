@@ -334,7 +334,7 @@ extension Free86 {
     }
     func getEflags() -> DWord {
         var bits = compileEflags()
-        bits |= DWord(bitPattern: df) & 0x00000400
+        bits |= DWord(bitPattern: df) & Eflags.flagMask(for: .DF)
         bits |= eflags
         return bits
     }
