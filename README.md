@@ -1,6 +1,6 @@
 # Free86
 
-An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok. However, there are also some additional 80486 functions required by Linos, including the XADD, CPUID, and RDTSC instructions. Therefore, the name was chosen which sounds like a _three_ when pronounced, but also reflects the freedom of implementation.
+An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ or Swift compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok. However, there are also some additional 80486 functions required by Linos, including the XADD, CPUID, and RDTSC instructions. Therefore, the name was chosen which sounds like a _three_ when pronounced, but also reflects the freedom of implementation.
 
 **Missing features**
 - Full segment limit and rights checks
@@ -14,7 +14,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - `refactor`: Rework of code structure and naming conventions
 
 **Build on Linos (also WSL)**
-- Install C++, CMake
+- Install C++, CMake, Swift toolchain
 - Run commands
   ```
   git clone https://github.com/otabuzzman/Free86.git ; cd Free86
@@ -29,14 +29,17 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   make
   # ...and run 
   exe/free86
+  
+  # compile and run with Swift toolchain
+  swift run -c release linos
   ```
 
 **Build on MacOS**
 - Install CMake, Xcode, Xcode Command Line Tools
 - Run same commands as for Linos
 
-**Build Winos**
-- Install CMake, nmake, Visual Studio Community /w C++
+**Build on Winos**
+- Install CMake, nmake, Visual Studio Community /w C++, Swift toolchain
 - Run commands
   ```
   git clone https://github.com/otabuzzman/Free86.git ; cd Free86
@@ -51,15 +54,18 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   nmake
   # ...and run 
   exe\free86
+  
+  # compile and run with Swift toolchain
+  swift run -c release linos
   ```
 
-**Build Winos/ Cygwin**
+**Build on Winos/ Cygwin**
 - Install development tools, cmake
 - Run same commands as for Linos
 
 **Test386**
 - Install [NASM](https://www.nasm.us/pub/nasm/releasebuilds/) (Netwide Assembler)
-- In the NASM repo’s src/configuration.asm, set OUT_PORT to a non-zero value
+- In the Test386 repo’s src/configuration.asm, set OUT_PORT to a non-zero value
 - Run commands
   ```
   # clone repository beside Free86 folder
@@ -76,6 +82,9 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   
   # run suite and capture results
   exe/free86 >test386-EE-reference.txt
+  
+  # run suite with Swift toolchain
+  swift run -c release test386 >test386-EE-reference.txt
   
   # compare results
   diff ../test386.asm/test386-EE-reference.txt test386-EE-reference.txt

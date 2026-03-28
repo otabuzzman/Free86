@@ -25,9 +25,8 @@ let historySize = 32
 var history = [String](repeating: "", count: historySize)
 
 let argv = CommandLine.arguments
-if argv.count == 3  {
+if argv.count == 2  {
     historySkip = Int(argv[1]) ?? 0
-    fileURL = URL(fileURLWithPath: argv[2])
 }
 
 while true {

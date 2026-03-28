@@ -327,7 +327,6 @@ extension Free86 {
                 rM = modRM.rM
                 regs[rM].lowerHalf = calculate16(0, regs[rM])
             } else {
-                operation = 5
                 segmentTranslation()
                 rm = DWord(try ld16WritableCpl3())
                 u = calculate16(0, rm)

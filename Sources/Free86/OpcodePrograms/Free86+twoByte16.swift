@@ -326,7 +326,7 @@ extension Free86 {
     /// 0x1a2  -
     /// 0x1b0  CMPXCHG (80486)
     func Ox10f1b0() throws -> Result<Resume, Never> {
-        opcode = 0x0f
+        opcode = 0x0f  // consider these 16 bit 2-byte opcodes as aliases for 32 bit 2-byte escape opcode
         far = far &- 1
         return .success(.goOnFetching)
     }
