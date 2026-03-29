@@ -97,7 +97,6 @@ while true {
             }
         } catch let interrupt as Interrupt {
             cpu.interrupt = interrupt
-
         } catch {
             print("\(error)")
             exit(EXIT_FAILURE)

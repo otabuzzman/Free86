@@ -653,74 +653,75 @@ extension Free86 {
                 if eflags.isFlagRaised(.VM) {
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: segs[.GS].selector)
+                    try stWritableCplX(dword: segs[.GS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: segs[.FS].selector)
+                    try stWritableCplX(dword: segs[.FS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: segs[.DS].selector)
+                    try stWritableCplX(dword: segs[.DS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: segs[.ES].selector)
+                    try stWritableCplX(dword: segs[.ES].selector)
                 }
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: segs[.SS].selector)
+                let x = segs[.SS].selector
+                try stWritableCplX(dword: x)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: regs[.ESP])
+                try stWritableCplX(dword: regs[.ESP])
             }
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: getEflags())
+            try stWritableCplX(dword: getEflags())
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: segs[.CS].selector)
+            try stWritableCplX(dword: segs[.CS].selector)
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: isSW ? home : eip)
+            try stWritableCplX(dword: isSW ? home : eip)
             if pushErrorCode {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: errorCode)
+                try stWritableCplX(dword: errorCode)
             }
         } else {
             if isInterlevel {
                 if eflags.isFlagRaised(.VM) {
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: segs[.GS].selector)
+                    try st16WritableCplX(word: segs[.GS].selector)
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: segs[.FS].selector)
+                    try st16WritableCplX(word: segs[.FS].selector)
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: segs[.DS].selector)
+                    try st16WritableCplX(word: segs[.DS].selector)
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: segs[.ES].selector)
+                    try st16WritableCplX(word: segs[.ES].selector)
                 }
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: segs[.SS].selector)
+                try st16WritableCplX(word: segs[.SS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: regs[.ESP])
+                try st16WritableCplX(word: regs[.ESP])
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: getEflags())
+            try st16WritableCplX(word: getEflags())
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: segs[.CS].selector)
+            try st16WritableCplX(word: segs[.CS].selector)
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: isSW ? home : eip)
+            try st16WritableCplX(word: isSW ? home : eip)
             if pushErrorCode {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: errorCode)
+                try st16WritableCplX(word: errorCode)
             }
         }
         if isInterlevel {
