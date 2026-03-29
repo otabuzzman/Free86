@@ -33,7 +33,8 @@ extension Free86 {
     /// 0x1be  MOV SI
     /// 0x1bf  MOV DI
     func Ox1bf() throws -> Result<Resume, Never> {
-        regs[opcode & 7].lowerHalf = DWord(fetch16())
+        reg = opcode.encoded(.generalRegister)
+        regs[reg].lowerHalf = DWord(fetch16())
         return .success(.endFetchLoop)
     }
     /// 0x1a1  MOV AX,
@@ -70,7 +71,7 @@ extension Free86 {
     /// 0x196  XCHG SI
     /// 0x197  XCHG DI
     func Ox197() throws -> Result<Resume, Never> {
-        reg = Int(opcode & 7)
+        reg = opcode.encoded(.generalRegister)
         u = regs[.EAX]
         regs[.EAX].lowerHalf = regs[reg]
         regs[reg].lowerHalf = u
@@ -113,7 +114,7 @@ extension Free86 {
     /// 0x139  CMP
     func Ox139() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = (opcode >> 3) & 7
+        operation = opcode.encoded(.operation)
         r = regs[modRM.reg]
         if modRM.mod == 3 {
             // LOCK prefix not allowed
@@ -142,7 +143,7 @@ extension Free86 {
     /// 0x13b  CMP
     func Ox13b() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = (opcode >> 3) & 7
+        operation = opcode.encoded(.operation)
         reg = modRM.reg
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
@@ -163,7 +164,7 @@ extension Free86 {
     /// 0x13d  CMP
     func Ox13d() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
-        operation = (opcode >> 3) & 7
+        operation = opcode.encoded(.operation)
         regs[.EAX].lowerHalf = calculate16(regs[.EAX], imm)
         return .success(.endFetchLoop)
     }
@@ -224,7 +225,7 @@ extension Free86 {
     /// 0x146  INC SI
     /// 0x147  INC DI
     func Ox147() throws -> Result<Resume, Never> {
-        reg = Int(opcode & 7)
+        reg = opcode.encoded(.generalRegister)
         regs[reg].lowerHalf = aux16Inc(regs[reg])
         return .success(.endFetchLoop)
     }
@@ -237,7 +238,7 @@ extension Free86 {
     /// 0x14e  DEC SI
     /// 0x14f  DEC DI
     func Ox14f() throws -> Result<Resume, Never> {
-        reg = Int(opcode & 7)
+        reg = opcode.encoded(.generalRegister)
         regs[reg].lowerHalf = aux16Dec(regs[reg])
         return .success(.endFetchLoop)
     }
@@ -448,7 +449,8 @@ extension Free86 {
     /// 0x156  PUSH SI
     /// 0x157  PUSH DI
     func Ox157() throws -> Result<Resume, Never> {
-        try push16(regs[opcode & 7])
+        reg = opcode.encoded(.generalRegister)
+        try push16(regs[reg])
         return .success(.endFetchLoop)
     }
     /// 0x158  POP A
@@ -461,7 +463,8 @@ extension Free86 {
     /// 0x15f  POP DI
     func Ox15f() throws -> Result<Resume, Never> {
         m = DWord(try pop16())
-        regs[opcode & 7].lowerHalf = m
+        reg = opcode.encoded(.generalRegister)
+        regs[reg].lowerHalf = m
         return .success(.endFetchLoop)
     }
     /// 0x160  PUSHA
@@ -518,7 +521,8 @@ extension Free86 {
     /// 0x116  PUSH
     /// 0x11e  PUSH
     func Ox11e() throws -> Result<Resume, Never> {
-        try push16(segs[(opcode >> 3) & 3].selector)
+        let sreg = opcode.encoded(.standardSegmentRegister)
+        try push16(segs[sreg].selector)
         return .success(.endFetchLoop)
     }
     /// 0x107  POP
@@ -526,7 +530,7 @@ extension Free86 {
     /// 0x11f  POP
     func Ox11f() throws -> Result<Resume, Never> {
         m = DWord(try pop16())
-        let sreg = SegmentRegister.Name(rawValue: (Int(opcode) >> 3) & 3)!
+        let sreg = SegmentRegister.Name(rawValue: opcode.encoded(.standardSegmentRegister))!
         try setSegmentRegister(sreg, SegmentSelector(m))
         return .success(.endFetchLoop)
     }
@@ -658,7 +662,7 @@ extension Free86 {
     /// 0x17f  JNLE
     func Ox17f() throws -> Result<Resume, Never> {
         u = DWord(fetch8()).signExtendedByte
-        if canJmp(condition: Int(opcode & 0xf)) {
+        if canJmp(condition: opcode.encoded(.condition)) {
             eip = (eip &+ far &- farStart &+ u).lowerHalf
             far = 0
             farStart = 0

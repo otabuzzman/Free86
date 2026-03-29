@@ -13,8 +13,8 @@ extension ModRM {
 }
 
 extension ModRM {
-    var opcode: DWord {
-        DWord(reg)
+    var opcode: Int {
+        reg
     }
     var modRM: Self {
         Self(rM | mod << 3)

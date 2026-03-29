@@ -18,7 +18,7 @@ extension Free86 {
     /// 0x18f  JNLE
     func Ox10f18f() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
-        if canJmp(condition: Int(opcode & 0xf)) {
+        if canJmp(condition: opcode.encoded(.condition)) {
             eip = (eip &+ far &- farStart &+ imm).lowerHalf
             far = 0
             farStart = 0
@@ -49,7 +49,7 @@ extension Free86 {
             segmentTranslation()
             rm = DWord(try ld16ReadonlyCpl3())
         }
-        if canJmp(condition: Int(opcode & 0xf)) {
+        if canJmp(condition: opcode.encoded(.condition)) {
             regs[modRM.reg].lowerHalf = rm
         }
         return .success(.endFetchLoop)
@@ -120,14 +120,15 @@ extension Free86 {
     /// 0x1a0  PUSH FS
     /// 0x1a8  PUSH GS
     func Ox10f1a8() throws -> Result<Resume, Never> {
-        try push16(segs[(opcode >> 3) & 7].selector)
+        let sreg = opcode.encoded(.extendedSegmentRegister)
+        try push16(segs[sreg].selector)
         return .success(.endFetchLoop)
     }
     /// 0x1a1  POP FS
     /// 0x1a9  POP GS
     func Ox10f1a9() throws -> Result<Resume, Never> {
         m = DWord(try pop16())
-        let sreg = SegmentRegister.Name(rawValue: (Int(opcode) >> 3) & 7)!
+        let sreg = SegmentRegister.Name(rawValue: opcode.encoded(.extendedSegmentRegister))!
         try setSegmentRegister(sreg, SegmentSelector(m))
         return .success(.endFetchLoop)
     }
@@ -135,7 +136,7 @@ extension Free86 {
     /// 0x1b4  LFS
     /// 0x1b5  LGS
     func Ox10f1b5() throws -> Result<Resume, Never> {
-        let sreg = SegmentRegister.Name(rawValue: Int(opcode) & 7)!
+        let sreg = SegmentRegister.Name(rawValue: opcode.encoded(.segmentRegister))!
         try ldFarPointer16(sreg)
         return .success(.endFetchLoop)
     }
@@ -144,7 +145,7 @@ extension Free86 {
     func Ox10f1ac() throws -> Result<Resume, Never> {
         modRM = fetch8()
         r = regs[modRM.reg]
-        operation = (opcode >> 3) & 1
+        operation = opcode.encoded(.operation) & 1
         if modRM.mod == 3 {
             imm = DWord(fetch8())
             rM = modRM.rM
@@ -163,7 +164,7 @@ extension Free86 {
     func Ox10f1ad() throws -> Result<Resume, Never> {
         modRM = fetch8()
         r = regs[modRM.reg]
-        operation = (opcode >> 3) & 1
+        operation = opcode.encoded(.operation) & 1
         if modRM.mod == 3 {
             rM = modRM.rM
             regs[rM].lowerHalf = aux16ShrdShld(regs[rM], r, regs[.ECX])
@@ -237,7 +238,7 @@ extension Free86 {
     func Ox10f1bb() throws -> Result<Resume, Never> {
         modRM = fetch8()
         r = regs[modRM.reg]
-        operation = (opcode >> 3) & 3
+        operation = opcode.encoded(.operation) & 3
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
@@ -326,7 +327,7 @@ extension Free86 {
     /// 0x1a2  -
     /// 0x1b0  CMPXCHG (80486)
     func Ox10f1b0() throws -> Result<Resume, Never> {
-        opcode = 0x0f  // consider these 16 bit 2-byte opcodes as aliases for 32 bit 2-byte escape opcode
+        opcode = 0x0f  // 32 bit 2-byte escape opcode aliases
         far = far &- 1
         return .success(.goOnFetching)
     }

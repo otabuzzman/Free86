@@ -245,7 +245,7 @@ public class Free86 {
 
     /// auxiliary variables for inter-method exchange
     var lax = LinearAddress(0)  // linear address exchange register
-    var operation: DWord = 0  // bits 5..3 of opcode or modR/M byte
+    var operation = 0    // bits 5..3 of opcode or modR/M byte
     var modRM: ModRM = 0, sib: SIB = 0
     var reg = 0, rM = 0  // bits 5..3/ bits 2..0 of modR/M byte
     var r: DWord = 0, rm: DWord = 0  // register or register/ memory by modRM

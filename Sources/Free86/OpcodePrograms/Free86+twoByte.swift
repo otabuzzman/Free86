@@ -18,7 +18,7 @@ extension Free86 {
     /// 0x8f  JNLE
     func Ox0f8f() throws -> Result<Resume, Never> {
         imm = fetch()
-        if canJmp(condition: Int(opcode & 0xf)) {
+        if canJmp(condition: opcode.encoded(.condition)) {
             far = far &+ imm
         }
         return .success(.endFetchLoop)
@@ -41,7 +41,7 @@ extension Free86 {
     /// 0x9f  SETNLE
     func Ox0f9f() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        u = canJmp(condition: Int(opcode & 0xf)) ? 1 : 0
+        u = canJmp(condition: opcode.encoded(.condition)) ? 1 : 0
         if modRM.mod == 3 {
             setEncodedByte(in: modRM.rM, to: u)
         } else {
@@ -74,7 +74,7 @@ extension Free86 {
             segmentTranslation()
             rm = try ldReadonlyCpl3()
         }
-        if canJmp(condition: Int(opcode & 0xf)) {
+        if canJmp(condition: opcode.encoded(.condition)) {
             regs[modRM.reg] = rm
         }
         return .success(.endFetchLoop)
@@ -325,7 +325,7 @@ extension Free86 {
     /// 0xb4  LFS
     /// 0xb5  LGS
     func Ox0fb5() throws -> Result<Resume, Never> {
-        let sreg = SegmentRegister.Name(rawValue: Int(opcode) & 7)!
+        let sreg = SegmentRegister.Name(rawValue: opcode.encoded(.segmentRegister))!
         try ldFarPointer(sreg)
         return .success(.endFetchLoop)
     }
@@ -460,7 +460,7 @@ extension Free86 {
     func Ox0fbb() throws -> Result<Resume, Never> {
         modRM = fetch8()
         r = regs[modRM.reg]
-        operation = (opcode >> 3) & 3
+        operation = opcode.encoded(.operation) & 3
         if modRM.mod == 3 {
             // LOCK prefix not allowed
             rM = modRM.rM
@@ -615,14 +615,15 @@ extension Free86 {
     /// 0xa0  PUSH FS
     /// 0xa8  PUSH GS
     func Ox0fa8() throws -> Result<Resume, Never> {
-        try push(segs[(opcode >> 3) & 7].selector)
+        let sreg = opcode.encoded(.extendedSegmentRegister)
+        try push(segs[sreg].selector)
         return .success(.endFetchLoop)
     }
     /// 0xa1  POP FS
     /// 0xa9  POP GS
     func Ox0fa9() throws -> Result<Resume, Never> {
         m = try pop()
-        let sreg = SegmentRegister.Name(rawValue: (Int(opcode) >> 3) & 7)!
+        let sreg = SegmentRegister.Name(rawValue: opcode.encoded(.extendedSegmentRegister))!
         try setSegmentRegister(sreg, SegmentSelector(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
     }
@@ -635,7 +636,7 @@ extension Free86 {
     /// 0xce  -
     /// 0xcf  BSWAP (80486)
     func Ox0fcf() throws -> Result<Resume, Never> {
-        reg = Int(opcode & 7)
+        reg = opcode.encoded(.generalRegister)
         r = regs[reg]
         regs[reg] = ((r >> 24) & 0xff) | ((r >> 8) & 0xff00) | ((r << 8) & 0xff0000) | (r << 24)
         return .success(.endFetchLoop)

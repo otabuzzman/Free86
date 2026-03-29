@@ -8,7 +8,7 @@ extension Free86 {
         if ipr == iprDefault {
             try instruction.length()
         }
-        ipr.segmentRegister = Int((opcode >> 3) & 3)
+        ipr.segmentRegister = opcode.encoded(.standardSegmentRegister) & 3
         opcode = DWord(fetch8())
         opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
@@ -19,7 +19,7 @@ extension Free86 {
         if ipr == iprDefault {
             try instruction.length()
         }
-        ipr.segmentRegister = Int(opcode & 7)
+        ipr.segmentRegister = opcode.encoded(.segmentRegister)
         opcode = DWord(fetch8())
         opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
@@ -92,7 +92,8 @@ extension Free86 {
     /// 0xb7  MOV BH
     func Oxb7() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        setEncodedByte(in: Int(opcode & 7), to: imm)
+        reg = opcode.encoded(.generalRegister)
+        setEncodedByte(in: reg, to: imm)
         return .success(.endFetchLoop)
     }
     /// 0xb8  MOV A
@@ -105,7 +106,8 @@ extension Free86 {
     /// 0xbf  MOV DI
     func Oxbf() throws -> Result<Resume, Never> {
         imm = fetch()
-        regs[opcode & 7] = imm
+        reg = opcode.encoded(.generalRegister)
+        regs[reg] = imm
         return .success(.endFetchLoop)
     }
     /// 0x88  MOV
@@ -291,7 +293,7 @@ extension Free86 {
     /// 0x96  XCHG SI
     /// 0x97  XCHG DI
     func Ox97() throws -> Result<Resume, Never> {
-        reg = Int(opcode & 7)
+        reg = opcode.encoded(.generalRegister)
         u = regs[.EAX]
         regs[.EAX] = regs[reg]
         regs[reg] = u
@@ -328,7 +330,7 @@ extension Free86 {
     /// 0x38  CMP
     func Ox38() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = opcode >> 3
+        operation = opcode.encoded(.operation)
         reg = modRM.reg
         r = getEncodedByte(from: reg)
         if modRM.mod == 3 {
@@ -379,7 +381,7 @@ extension Free86 {
     /// 0x31  XOR
     func Ox31() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = opcode >> 3
+        operation = opcode.encoded(.operation)
         r = regs[modRM.reg]
         if modRM.mod == 3 {
             // LOCK prefix not allowed
@@ -421,7 +423,7 @@ extension Free86 {
     /// 0x3a  CMP
     func Ox3a() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = opcode >> 3
+        operation = opcode.encoded(.operation)
         reg = modRM.reg
         if modRM.mod == 3 {
             rM = modRM.rM
@@ -457,7 +459,7 @@ extension Free86 {
     /// 0x33  XOR
     func Ox33() throws -> Result<Resume, Never> {
         modRM = fetch8()
-        operation = opcode >> 3
+        operation = opcode.encoded(.operation)
         reg = modRM.reg
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
@@ -493,7 +495,7 @@ extension Free86 {
     /// 0x3c  CMP
     func Ox3c() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        operation = opcode >> 3
+        operation = opcode.encoded(.operation)
         regs[.EAX].byteL = calculate8(regs[.EAX] & 0xff, imm)
         return .success(.endFetchLoop)
     }
@@ -513,7 +515,7 @@ extension Free86 {
     /// 0x2d  SUB
     func Ox2d() throws -> Result<Resume, Never> {
         imm = fetch()
-        operation = opcode >> 3
+        operation = opcode.encoded(.operation)
         regs[.EAX] = calculate(regs[.EAX], imm)
         return .success(.endFetchLoop)
     }
@@ -631,7 +633,7 @@ extension Free86 {
     /// 0x46  INC SI
     /// 0x47  INC DI
     func Ox47() throws -> Result<Resume, Never> {
-        reg = Int(opcode & 7)
+        reg = opcode.encoded(.generalRegister)
         if osm < 25 {
             osmPreserved = osm
             osmDstPreserved = osmDst
@@ -650,7 +652,7 @@ extension Free86 {
     /// 0x4e  DEC SI
     /// 0x4f  DEC DI
     func Ox4f() throws -> Result<Resume, Never> {
-        reg = Int(opcode & 7)
+        reg = opcode.encoded(.generalRegister)
         if osm < 25 {
             osmPreserved = osm
             osmDstPreserved = osmDst
@@ -1026,7 +1028,8 @@ extension Free86 {
     /// 0x56  PUSH SI
     /// 0x57  PUSH DI
     func Ox57() throws -> Result<Resume, Never> {
-        r = regs[opcode & 7]
+        reg = opcode.encoded(.generalRegister)
+        r = regs[reg]
         if x8664LongMode {
             lax = regs[.ESP] &- 4
             try stWritableCpl3(dword: r)
@@ -1052,7 +1055,8 @@ extension Free86 {
         } else {
             m = try pop()
         }
-        regs[opcode & 7] = m
+        reg = opcode.encoded(.generalRegister)
+        regs[reg] = m
         return .success(.endFetchLoop)
     }
     /// 0x60  PUSHA
@@ -1171,7 +1175,8 @@ extension Free86 {
     /// 0x16  PUSH
     /// 0x1e  PUSH
     func Ox1e() throws -> Result<Resume, Never> {
-        try push(segs[opcode >> 3].selector)
+        let sreg = opcode.encoded(.standardSegmentRegister)
+        try push(segs[sreg].selector)
         return .success(.endFetchLoop)
     }
     /// 0x07  POP
@@ -1179,7 +1184,7 @@ extension Free86 {
     /// 0x1f  POP
     func Ox1f() throws -> Result<Resume, Never> {
         m = try pop()
-        let sreg = SegmentRegister.Name(rawValue: Int(opcode) >> 3)!
+        let sreg = SegmentRegister.Name(rawValue: opcode.encoded(.standardSegmentRegister))!
         try setSegmentRegister(sreg, SegmentSelector(truncatingIfNeeded: m))
         return .success(.endFetchLoop)
     }
@@ -1825,7 +1830,7 @@ extension Free86 {
             throw Interrupt(.NM)
         }
         modRM = fetch8()
-        operation = ((opcode & 7) << 3) | modRM.opcode
+        operation = (opcode.encoded(.coProcessorOpcode) << 3) | modRM.opcode
         regs[.EAX].lowerHalf = 0xffff
         if modRM.mod == 3 {
         } else {
