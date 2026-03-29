@@ -482,8 +482,11 @@ class Serial {
         }
     }
     void input_fifo_push(int chr) {
-        input_fifo.push(chr);
-        recv_char(chr);
+        if (input_fifo.isempty()) {
+            recv_char(chr);
+        } else {
+            input_fifo.push(chr);
+        }
     }
     void print_fifo_push(int chr) {
         print_fifo.push(chr);
