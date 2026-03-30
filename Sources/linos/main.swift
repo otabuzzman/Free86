@@ -74,6 +74,7 @@ io.register(port: port41, at: 0x41)
 io.register(port: port42, at: 0x42)
 io.register(port: port43, at: 0x43)
 io.register(port: port61, at: 0x61)
+setbuf(stdout, nil)  // unbuffered mode for serial output
 io.register(port: port3F8, at: 0x3F8)
 io.register(port: port3F9, at: 0x3F9)
 io.register(port: port3FA, at: 0x3FA)
@@ -82,6 +83,7 @@ io.register(port: port3FC, at: 0x3FC)
 io.register(port: port3FD, at: 0x3FD)
 io.register(port: port3FE, at: 0x3FE)
 io.register(port: port3FF, at: 0x3FF)
+
 
 while true {
     let cycles = cpu.cycles + 100000

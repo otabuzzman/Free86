@@ -114,17 +114,17 @@ extension Free86 {
             if o32 {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: segs[.CS].selector)
+                try stWritableCplX(dword: segs[.CS].selector)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: home)
+                try stWritableCplX(dword: home)
             } else {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: segs[.CS].selector)
+                try st16WritableCplX(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: home)
+                try st16WritableCplX(word: home)
             }
             if offset > xsd.limit {
                 throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
@@ -205,28 +205,28 @@ extension Free86 {
                 if xsd.isType(.CallGate) {  // 32 bit descriptor
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: segs[.SS].selector)
+                    try stWritableCplX(dword: segs[.SS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCpl3(dword: espStart)
+                    try stWritableCplX(dword: espStart)
                     for _ in (0..<gpac).reversed() {
                         u = 0 // Xe(osBase &+ ((espStart &+ i &* 4) & osMask))
                         esp = esp &- 4
                         lax = ssBase &+ (esp & ssMask)
-                        try stWritableCpl3(dword: u)
+                        try stWritableCplX(dword: u)
                     }
                 } else {
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: segs[.SS].selector)
+                    try st16WritableCplX(word: segs[.SS].selector)
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCpl3(word: espStart)
+                    try st16WritableCplX(word: espStart)
                     for _ in (0..<gpac).reversed() {
                         u = 0 // Ye(osBase &+ ((espStart &+ i &* 2) & osMask))
                         esp = esp &- 2
                         lax = ssBase &+ (esp & ssMask)
-                        try st16WritableCpl3(word: u)
+                        try st16WritableCplX(word: u)
                     }
                 }
                 segs[.SS] = SegmentRegister(ss.indexTI | Word(ssd.dpl), ssd)
@@ -236,17 +236,17 @@ extension Free86 {
             if xsd.isType(.CallGate) {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: segs[.CS].selector)
+                try stWritableCplX(dword: segs[.CS].selector)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCpl3(dword: home)
+                try stWritableCplX(dword: home)
             } else {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: segs[.CS].selector)
+                try st16WritableCplX(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCpl3(word: home)
+                try st16WritableCplX(word: home)
             }
             segs[.CS] = SegmentRegister(gsel.indexTI | Word(cgd.dpl), cgd)
             cpl = cgd.dpl
