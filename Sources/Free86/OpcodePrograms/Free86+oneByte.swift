@@ -1728,7 +1728,13 @@ extension Free86 {
     }
     /// 0x9e  SAHF
     func Ox9e() throws -> Result<Resume, Never> {
-        osmSrc = ((regs[.EAX] >> 8) & (0x0080 | 0x0040 | 0x0010 | 0x0004 | 0x0001)) | ((isOF() ? 1 : 0) << 11)
+        var mask: Eflags = 0
+        mask.setFlag(.CF)
+        mask.setFlag(.PF)
+        mask.setFlag(.AF)
+        mask.setFlag(.ZF)
+        mask.setFlag(.SF)
+        osmSrc = ((regs[.EAX] >> 8) & mask) | ((isOF() ? 1 : 0) << 11)
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)

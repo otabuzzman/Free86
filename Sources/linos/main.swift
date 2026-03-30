@@ -84,7 +84,6 @@ io.register(port: port3FD, at: 0x3FD)
 io.register(port: port3FE, at: 0x3FE)
 io.register(port: port3FF, at: 0x3FF)
 
-
 while true {
     let cycles = cpu.cycles + 100000
     while cycles > cpu.cycles {
