@@ -74,7 +74,6 @@ io.register(port: port41, at: 0x41)
 io.register(port: port42, at: 0x42)
 io.register(port: port43, at: 0x43)
 io.register(port: port61, at: 0x61)
-setbuf(stdout, nil)  // unbuffered mode for serial output
 io.register(port: port3F8, at: 0x3F8)
 io.register(port: port3F9, at: 0x3F9)
 io.register(port: port3FA, at: 0x3FA)
@@ -86,6 +85,12 @@ io.register(port: port3FF, at: 0x3FF)
 
 while true {
     let cycles = cpu.cycles + 100000
+    if !feof(stdin) {
+        let c = getchar()
+        port3F8.rbr = c
+        port3F8.lsr |= 0x01
+        port3F8.update_irq()
+    }
     while cycles > cpu.cycles {
         pit.update_irq()
         if pic.irq > 0 {
@@ -176,14 +181,14 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             if (iodata & 0x40) != 0 {  // OCW3.ESMM (special mask mode)
                 i8259.special_mask = (Int(iodata) >> 5) & 1
             }
-        } else { // ...( bit 4 == 0 && bit 3 == 0) are OCW2
+        } else {  // ...( bit 4 == 0 && bit 3 == 0) are OCW2
             switch iodata {
             case 0x00,
-                 0x80: // rotate in automatic EOI mode (clear)
+                 0x80:  // rotate in automatic EOI mode (clear)
                 i8259.rotate_on_autoeoi = Int(iodata) >> 7
                 break
-            case 0x20, // non-specific EOI command
-                 0xa0: // rotate on non-specific EOI command
+            case 0x20,  // non-specific EOI command
+                 0xa0:  // rotate on non-specific EOI command
                 priority = i8259.get_priority(i8259.isr)
                 if priority >= 0 {
                     i8259.isr &= ~(1 << ((priority + i8259.priority_add) & 7))
@@ -192,25 +197,25 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                     i8259.priority_add = (i8259.priority_add + 1) & 7
                 }
                 break
-            case 0x60, // specific EOI command, IR priority level 0
-                 0x61, // level 1
-                 0x62, // level 2
-                 0x63, // level 3
-                 0x64, // level 4
-                 0x65, // level 5
-                 0x66, // level 6
-                 0x67: // level 7
+            case 0x60,  // specific EOI command, IR priority level 0
+                 0x61,  // level 1
+                 0x62,  // level 2
+                 0x63,  // level 3
+                 0x64,  // level 4
+                 0x65,  // level 5
+                 0x66,  // level 6
+                 0x67:  // level 7
                 priority = Int(iodata) & 7
                 i8259.isr &= ~(1 << priority)
                 break;
-            case 0xc0, // set priority command, IR priority level 0
-                 0xc1, // level 1
-                 0xc2, // level 2
-                 0xc3, // level 3
-                 0xc4, // level 4
-                 0xc5, // level 5
-                 0xc6, // level 6
-                 0xc7: // level 7
+            case 0xc0,  // set priority command, IR priority level 0
+                 0xc1,  // level 1
+                 0xc2,  // level 2
+                 0xc3,  // level 3
+                 0xc4,  // level 4
+                 0xc5,  // level 5
+                 0xc6,  // level 6
+                 0xc7:  // level 7
                 i8259.priority_add = (Int(iodata) + 1) & 7
                 break
             case 0xe0,  // rotate on specific EOI command, IR level 0
@@ -370,6 +375,7 @@ class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     let circuit: Serial
     init(_ circuit: Serial) {
         self.circuit = circuit
+        setbuf(stdout, nil)  // set unbuffered (character) mode for serial output
     }
     func rd() -> T {
         if (circuit.lcr & 0x80) != 0 {

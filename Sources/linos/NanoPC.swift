@@ -27,7 +27,7 @@ class I8259 {
     var auto_eoi = 0
     var rotate_on_autoeoi = 0
     var icw4 = 0
-    var elcr = 0  // Edge/Level Control Register
+    var elcr = 0  // edge/level Control Register
     var rotate_on_auto_eoi = false
     let pic: PIC
     var elcr_mask = 0
@@ -196,20 +196,20 @@ class PITChannel {
         var eh = false
         let d = get_time() - count_load_time
         switch mode {
-        case 0:  // Interrupt on terminal count
+        case 0:  // interrupt on terminal count
             eh = d >= count
             break
-        case 1:  // One shot
+        case 1:  // one shot
             eh = d < count
             break
-        case 2:  // Frequency divider
+        case 2:  // frequency divider
             if (d % count) == 0 && d != 0 {
                 eh = true
             } else {
                 eh = false
             }
             break
-        case 3:  // Square wave
+        case 3:  // square wave
             eh = (d % count) < (count >> 1)
             break
         case 4,  // SW strobe
@@ -247,16 +247,14 @@ class PIT {
 /// https://wiki.osdev.org/Serial_Ports
 class Serial {
     var divider = 0
-    var rbr = 0     // receive buffer
-    var ier = 0     // interrupt enable register
+    var rbr = 0  // receive buffer
+    var ier = 0  // interrupt enable register
     var iir = 0x01  // interrupt identification register
-    var lcr = 0     // line control register
-    var mcr = 0     // modem control register
+    var lcr = 0  // line control register
+    var mcr = 0  // modem control register
     var lsr = 0x40 | 0x20  // line status register
-    var msr = 0     // modem status register
-    var scr = 0     // scratch register
-    // RingBuffer<int> input_fifo{RingBuffer<int>(1000)}
-    // RingBuffer<int> print_fifo{RingBuffer<int>(1000)}
+    var msr = 0  // modem status register
+    var scr = 0  // scratch register
     let pic: PIC
     init(_ pic: PIC) {
         self.pic = pic
