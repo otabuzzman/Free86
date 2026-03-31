@@ -437,10 +437,8 @@ class Serial {
             if (lcr & 0x80) {
                 reg = divider & 0xff;
             } else {
-                reg = rbr;
-                lsr &= ~(0x01 | 0x10);
-                update_irq();
                 input_fifo_pop();
+                reg = rbr;
             }
             break;
         case 1:
@@ -471,22 +469,20 @@ class Serial {
         }
         return reg;
     }
-    void recv_char(int chr) {
-        rbr = chr;
-        lsr |= 0x01;
+    void input_fifo_pop() {
+        if (input_fifo.isempty()) {
+            return;
+        }
+        rbr = input_fifo.pop();
+        if (input_fifo.isempty()) {
+            lsr &= ~(0x01 | 0x10);
+        }
         update_irq();
     }
-    void input_fifo_pop() {
-        if (!input_fifo.isempty() && !(lsr & 0x01)) {
-            recv_char(input_fifo.pop());
-        }
-    }
     void input_fifo_push(int chr) {
-        if (input_fifo.isempty()) {
-            recv_char(chr);
-        } else {
-            input_fifo.push(chr);
-        }
+        input_fifo.push(chr);
+        lsr |= 0x01;
+        update_irq();
     }
     void print_fifo_push(int chr) {
         print_fifo.push(chr);

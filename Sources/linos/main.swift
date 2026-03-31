@@ -85,12 +85,6 @@ io.register(port: port3FF, at: 0x3FF)
 
 while true {
     let cycles = cpu.cycles + 100000
-    if !feof(stdin) {
-        let c = getchar()
-        port3F8.rbr = c
-        port3F8.lsr |= 0x01
-        port3F8.update_irq()
-    }
     while cycles > cpu.cycles {
         pit.update_irq()
         if pic.irq > 0 {
