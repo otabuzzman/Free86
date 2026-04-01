@@ -8,11 +8,6 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - Task gates, 16 bit interrupt and trap gates
 - Test and debug registers
 
-**Branches**
-- `master`: Original repository fixed for Visual Studio Code
-- `test386`: Fixed to additionally pass Test386 suite
-- `refactor`: Rework of code structure and naming conventions
-
 **Build on Linos (also WSL)**
 - Install C++, CMake, Swift toolchain
 - Run commands
