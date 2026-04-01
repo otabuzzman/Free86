@@ -1,7 +1,6 @@
 #ifndef FREE86_H
 #define FREE86_H
 
-#include <fstream>
 #include <vector>
 
 typedef struct SegmentDescriptor {
@@ -96,7 +95,7 @@ class Free86 {
     }
 
     virtual int get_irq() = 0;
-    virtual int get_iid() = 0;
+    virtual int get_iid() = 0; // data bus bits 0-7
 
     virtual uint32_t io_read(uint32_t port) = 0;
     virtual void io_write(uint32_t port, uint32_t data) = 0;
@@ -282,6 +281,11 @@ class Free86 {
    | XOR         |           |   12  | 13 | 14 |           | 0  | M  | M  | -  | M  | 0  |
    +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
                                                                    (PM (1986), Appendix C)
+   +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
+   | ARPL        |           |       |    | 24 |           | -  | -  | M  | -  | -  | -  |
+   | LAR/LSL     |           |       |    | 24 |           | -  | -  | M  | -  | -  | -  |
+   | VERR/VERW   |           |       |    | 24 |           | -  | -  | M  | -  | -  | -  |
+   +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
 
    0 : instruction resets,
    T : tests,
@@ -326,7 +330,7 @@ class Free86 {
     uint32_t ipr; // instruction prefix register
     uint32_t ipr_default; // reflects D flag (PM (1986), 16.1)
                           // also belongs to the SSB (below)
-    uint32_t ipr_os_mask; // operand size override prefix size mask
+    uint32_t ipr_as_mask; // address size override prefix size mask
 /*
    Segments state block
 
@@ -384,7 +388,7 @@ class Free86 {
     [[noreturn]] void abort(int /*interrupt*/ id, int error_code = 0);
 
     void update_SSB();
-    void retrieve_opcode();
+    void obtain_opcode();
 
     int instruction_length(uint32_t opcode);
     int modRM_bytes_number();
@@ -458,17 +462,17 @@ class Free86 {
     void aux_JMPF(uint32_t selector, uint32_t offset);
     void aux_JMPF_real__v86(uint32_t selector, uint32_t offset);
     void aux_JMPF_protected(uint32_t selector, uint32_t offset);
-    void aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
-    void aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
-    void aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, uint32_t return_address);
+    void aux_CALLF(bool o32, uint32_t selector, uint32_t offset, uint32_t home);
+    void aux_CALLF_real__v86(bool o32, uint32_t selector, uint32_t offset, uint32_t home);
+    void aux_CALLF_protected(bool o32, uint32_t selector, uint32_t offset, uint32_t home);
     void aux_RETF(bool o32, uint32_t release_stack_items);
     void return_real__v86(bool o32, bool is_iret, uint32_t release_stack_items);
     void return_protected(bool o32, bool is_iret, uint32_t release_stack_items);
     void reset_segment_register(uint32_t sreg, uint32_t level);
 
-    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
-    void raise_interrupt_real__v86(int id, int is_sw, uint32_t return_address);
-    void raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t return_address);
+    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t home);
+    void raise_interrupt_real__v86(int id, int is_sw, uint32_t home);
+    void raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t home);
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);

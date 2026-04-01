@@ -36,7 +36,7 @@ class PC {
   private:
     WiredCPU *cpu  = nullptr;
 #ifndef NO_SDL
-    TTF_Font    *font = nullptr;
+    TTF_Font *font = nullptr;
 #endif
 };
 
@@ -293,7 +293,7 @@ class I8259 {
         return reg;
     }
 };
-// the programmable interrupt controller (two cascaded 8059)
+// the programmable interrupt controller (two cascaded 8259)
 class PIC {
   public:
     int irq = 0;
@@ -326,7 +326,6 @@ class PIC {
                     slave_irq = 7;
                 }
                 intno = pics[1]->irq_base + slave_irq;
-                irq = slave_irq + 8;
             } else {
                 intno = pics[0]->irq_base + irq;
             }
@@ -438,10 +437,8 @@ class Serial {
             if (lcr & 0x80) {
                 reg = divider & 0xff;
             } else {
-                reg = rbr;
-                lsr &= ~(0x01 | 0x10);
-                update_irq();
                 input_fifo_pop();
+                reg = rbr;
             }
             break;
         case 1:
@@ -472,19 +469,20 @@ class Serial {
         }
         return reg;
     }
-    void recv_char(int chr) {
-        rbr = chr;
-        lsr |= 0x01;
-        update_irq();
-    }
     void input_fifo_pop() {
-        if (!input_fifo.isempty() && !(lsr & 0x01)) {
-            recv_char(input_fifo.pop());
+        if (input_fifo.isempty()) {
+            return;
         }
+        rbr = input_fifo.pop();
+        if (input_fifo.isempty()) {
+            lsr &= ~(0x01 | 0x10);
+        }
+        update_irq();
     }
     void input_fifo_push(int chr) {
         input_fifo.push(chr);
-        recv_char(chr);
+        lsr |= 0x01;
+        update_irq();
     }
     void print_fifo_push(int chr) {
         print_fifo.push(chr);
@@ -519,10 +517,11 @@ class PITChannel {
     }
     void pit_load_count(int data) {
         if (data == 0) {
-            data = 0x10000;
+            count = 0x10000;
+        } else {
+            count = data;
         }
         count_load_time = get_time();
-        count = data;
     }
     int pit_get_count() {
         int d, dh;
@@ -572,12 +571,10 @@ class PITChannel {
 class PIT {
     PITChannel *pit_channels[3];
     int speaker_data_on = 0;
-    Free86 *cpu;
     PIC *pic;
 
   public:
     PIT(Free86 *cpu, PIC *pic) {
-        this->cpu = cpu;
         this->pic = pic;
         for (int i = 0; i < 3; i++) {
             pit_channels[i] = new PITChannel(cpu);
@@ -605,7 +602,7 @@ class PIT {
             default:
                 s->mode = (data >> 1) & 7;
                 s->bcd = data & 1;
-                s->rw_state = ih - 1 + 0;
+                s->rw_state = ih - 1;
                 break;
             }
         } else {
