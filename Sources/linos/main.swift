@@ -1,49 +1,16 @@
 import Foundation
 import Free86
 
-let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
-
-let bootloaderFileURL = URL(fileURLWithPath: "bin/linuxstart.bin")
-let bootloaderAddress: DWord = 0x00010000
-var data = try Data(contentsOf: bootloaderFileURL)
-for (offset, byte) in data.enumerated() {
-    mem[bootloaderAddress + DWord(offset)] = Byte(byte)
-}
-
-let linosKernelFileURL = URL(fileURLWithPath: "bin/vmlinux-2.6.20.bin")
-let linosKernelAddress: DWord = 0x00100000
-data = try Data(contentsOf: linosKernelFileURL)
-for (offset, byte) in data.enumerated() {
-    mem[linosKernelAddress + DWord(offset)] = Byte(byte)
-}
-
-let initRamDiskFileURL = URL(fileURLWithPath: "bin/root.bin")
-let initRamDiskAddress: DWord = 0x00400000
-data = try Data(contentsOf: initRamDiskFileURL)
-for (offset, byte) in data.enumerated() {
-    mem[initRamDiskAddress + DWord(offset)] = Byte(byte)
-}
-
-let cmdLine = "console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1"  // lpj=101131 no-hlt
-let cmdLineAddress: DWord = 0x0000f800
-for (offset, byte) in cmdLine.data(using: .utf8)!.enumerated() {
-    mem[cmdLineAddress + DWord(offset)] = Byte(byte)
-}
-
-let cpuStateInitFileURL = URL(fileURLWithPath: "bin/bootstrap.bin")
-let cpuStateInitAddress: DWord = 0x000f0000
-data = try Data(contentsOf: cpuStateInitFileURL)
-for (offset, byte) in data.enumerated() {
-    mem[cpuStateInitAddress + DWord(offset)] = Byte(byte)
-}
-
+let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)
 let io = IsolatedIO<DWord>()
+
 let cpu = Free86(memory: mem, io: io)
 
 let cmos = CMOS()
 let pic = PIC()
 let pit = PIT(cpu, pic)
 let serial = Serial(pic)
+
 let port70 = Port70<Byte>(cmos)
 let port71 = Port71<Byte>(cmos)
 let port20 = PortA0<Byte>(pic, 0)
@@ -55,7 +22,7 @@ let port41 = Port42<Byte>(pit, 1)
 let port42 = Port42<Byte>(pit, 2)
 let port43 = Port43<Byte>(pit)
 let port61 = Port61<Byte>(pit)
-let port3F8 = Port3F8<Byte>(serial)
+let port3F8 = Port3F8<Byte>(serial)  // stdin, stdout
 let port3F9 = Port3F9<Byte>(serial)
 let port3FA = Port3FA<Byte>(serial)
 let port3FB = Port3FB<Byte>(serial)
@@ -83,9 +50,34 @@ io.register(port: port3FD, at: 0x3FD)
 io.register(port: port3FE, at: 0x3FE)
 io.register(port: port3FF, at: 0x3FF)
 
+try mem.load("bin/bootstrap.bin",  at: 0x000f0000)
+try mem.load("bin/linuxstart.bin", at: 0x00010000)
+try mem.load("bin/vmlinux-2.6.20.bin", at: 0x00100000)
+try mem.load("bin/root.bin", at: 0x00400000)
+try mem.load("console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1", at: 0x0000f800)  // lpj=101131 no-hlt
+
+/// non-blocking stdin
+var tcattr = termios()
+tcgetattr(STDIN_FILENO, &tcattr)
+tcattr.c_lflag &= ~UInt(ICANON | ECHO)
+tcsetattr(STDIN_FILENO, TCSANOW, &tcattr)
+/// https://github.com/eneko/Random.git
+/// Sources/random/Classes/StandardInput.swift
+func hasDataAvailable() -> Bool {
+    guard
+        let stdin = InputStream(fileAtPath: "/dev/tty")
+    else { return false }
+    stdin.open()
+    defer { stdin.close() }
+    return stdin.hasBytesAvailable
+}
+
 while true {
     let cycles = cpu.cycles + 100000
     while cycles > cpu.cycles {
+        if hasDataAvailable() {
+            port3F8.input_fifo_pop()
+        }
         pit.update_irq()
         if pic.irq > 0 {
             try await cpu.INTR.trigger(Byte(pic.iid))
@@ -110,6 +102,18 @@ extension MemoryIO<DWord> {
         self.init(defaultBank: DefaultBank<A>())
         for address in stride(from: 0, to: capacity, by: A.bankSize) {
             self.register(bank: RAMBank<A>(), at: address)
+        }
+    }
+    func load(_ text: String, at address: DWord) throws {
+        let data: Data
+        if FileManager.default.fileExists(atPath: text) {
+            let file = URL(fileURLWithPath: text)
+            data = try Data(contentsOf: file)
+        } else {
+            data = text.data(using: .ascii)!
+        }
+        for (offset, byte) in data.enumerated() {
+            self[address + DWord(offset)] = Byte(byte)
         }
     }
 }
@@ -378,7 +382,6 @@ class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             let reg = circuit.rbr
             circuit.lsr &= ~(0x01 | 0x10)
             circuit.update_irq()
-            // circuit.input_fifo_pop()
             return T(reg)
         }
 }
@@ -388,12 +391,19 @@ class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         } else {
             circuit.lsr &= ~0x20
             circuit.update_irq()
-            // circuit.print_fifo_push(iodata)
-            print(String(format: "%c", iodata as! CVarArg), terminator: "")
+            print_fifo_push(iodata)
             circuit.lsr |= 0x20
             circuit.lsr |= 0x40
             circuit.update_irq()
         }
+    }
+    func input_fifo_pop() {
+        circuit.rbr = Int(getchar())
+        circuit.lsr |= 0x01
+        circuit.update_irq()
+    }
+    func print_fifo_push(_ iodata: T) {
+        print(String(format: "%c", iodata as! CVarArg), terminator: "")
     }
 }
 class Port3F9<T: FixedWidthInteger & UnsignedInteger>: IOPort {
