@@ -83,7 +83,7 @@ public class Free86 {
     var far: DWord = 0       // fetch address register (FAR, aka MAR)
     var farStart: DWord = 0  // first fetch address of current cycle
 
-    var opcode: DWord = 0  // sort of fetch data register (FDR, aka MDR)
+    var opcode = Opcode(0)   // sort of fetch data register (FDR, aka MDR)
 
     /// direction flag (used by string instructions)
     var df: Int32 = 0  // values 1/ -1 reflect EFLAGS.DF false/ true

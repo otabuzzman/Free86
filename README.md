@@ -7,6 +7,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - Full LOCK prefix not allowed handling
 - Task gates, 16 bit interrupt and trap gates
 - Test and debug registers
+- NMI pin handling
 
 **Build on Linos (also WSL)**
 - Install C++, CMake, Swift toolchain

@@ -1,24 +1,26 @@
 extension Free86 {
     public func fetchDecodeExecute(cycles: QWord) async throws {
         do {
-            if halted {
-                if await INTR.pending && eflags.isFlagRaised(.IF) {
-                    halted = false
-                } else {
-                    return
-                }
-            }
-            cyclesRequested = cycles
-            cyclesRemaining = cycles
-            far = 0
-            farStart = 0
             if let interrupt = self.interrupt {
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, false, 0)
             }
+            if await RESET.pending {
+                halted = false
+                _ = try await RESET.probe()
+                reset()
+            }
             if await INTR.pending && eflags.isFlagRaised(.IF) {
+                halted = false
                 let id = try await INTR.probe()
                 try raiseInterrupt(id, 0, true, false, 0)
             }
+            if halted {
+                return
+            }
+            far = 0
+            farStart = 0
+            cyclesRequested = cycles
+            cyclesRemaining = cycles
             cyclesLoop:
             repeat {  // cycles (actually instructions)
                 try obtainOpcode()

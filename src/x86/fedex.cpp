@@ -2,24 +2,21 @@
 
 void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
     uint32_t sreg, hL; // H (0x80) or L (0x00) byte selector
-    if (halted) {
-        if (get_irq() != 0 && (eflags & 0x00000200)) {
-            halted = false;
-        } else {
-            return;
-        }
-    }
-    cycles_requested = cycles;
-    cycles_remaining = cycles;
-    far = far_start = 0;
-    update_SSB(); // init segments state block
     if (interrupt.id >= 0) {
         raise_interrupt(interrupt.id, interrupt.error_code, 0, 0, 0);
         interrupt = {-1, 0};
     }
     if (get_irq() != 0 && (eflags & 0x00000200)) {
+        halted = false;
         raise_interrupt(get_iid(), 0, 1, 0, 0);
     }
+    if (halted) {
+        return;
+    }
+    cycles_requested = cycles;
+    cycles_remaining = cycles;
+    far = far_start = 0;
+    update_SSB(); // init segments state block
     do { // cycles (actually instructions)
         obtain_opcode();
         ipr = ipr_default;

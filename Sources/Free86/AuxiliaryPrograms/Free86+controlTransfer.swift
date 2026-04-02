@@ -544,7 +544,7 @@ extension Free86 {
         assert((0...255).contains(id), "fatal error: invalid interrupt id")
         var ss = SegmentSelector(0), ssd = SegmentDescriptor(0), esp: DWord, ssBase: DWord, ssMask: DWord
         var dpl: DWord = 0, isInterlevel: Bool, pushErrorCode = false
-        if !isSW && !isHW {
+        if !isSW && !isHW {  // isFault
             switch Exception(rawValue: Byte(id)) {
             case .DF:  // double exception
                 fallthrough
