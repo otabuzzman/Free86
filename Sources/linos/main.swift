@@ -56,11 +56,6 @@ try mem.load("bin/vmlinux-2.6.20.bin", at: 0x00100000)
 try mem.load("bin/root.bin", at: 0x00400000)
 try mem.load("console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1", at: 0x0000f800)  // lpj=101131 no-hlt
 
-/// non-blocking stdin
-var tcattr = termios()
-tcgetattr(STDIN_FILENO, &tcattr)
-tcattr.c_lflag &= ~UInt(ICANON | ECHO)
-tcsetattr(STDIN_FILENO, TCSANOW, &tcattr)
 /// https://github.com/eneko/Random.git
 /// Sources/random/Classes/StandardInput.swift
 func hasDataAvailable() -> Bool {
@@ -72,12 +67,34 @@ func hasDataAvailable() -> Bool {
     return stdin.hasBytesAvailable
 }
 
+/// feed COM1 character-wise from stdin
+Task.detached {
+    var tcattr = termios()
+    tcgetattr(STDIN_FILENO, &tcattr)
+    tcattr.c_lflag &= ~UInt(ICANON | ECHO)
+    tcsetattr(STDIN_FILENO, TCSANOW, &tcattr)
+    while true {
+        let c = Int(getchar())
+        await MainActor.run {
+            port3F8.rx(c)
+        }
+        if Task.isCancelled { break }
+    }
+}
+
+// Task.detached {
+//     while true {
+//         try await Task.sleep(nanoseconds: 30000000)
+//         await MainActor.run {
+//             pit.update_irq()
+//         }
+//         if Task.isCancelled { break }
+//     }
+// }
+
 while true {
     let cycles = cpu.cycles + 100000
     while cycles > cpu.cycles {
-        if hasDataAvailable() {
-            port3F8.input_fifo_pop()
-        }
         pit.update_irq()
         if pic.irq > 0 {
             try await cpu.INTR.trigger(Byte(pic.iid))
@@ -391,19 +408,19 @@ class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         } else {
             circuit.lsr &= ~0x20
             circuit.update_irq()
-            print_fifo_push(iodata)
+            tx(Int(iodata))
             circuit.lsr |= 0x20
             circuit.lsr |= 0x40
             circuit.update_irq()
         }
     }
-    func input_fifo_pop() {
-        circuit.rbr = Int(getchar())
+    func rx(_ char: Int) {
+        circuit.rbr = char
         circuit.lsr |= 0x01
         circuit.update_irq()
     }
-    func print_fifo_push(_ iodata: T) {
-        print(String(format: "%c", iodata as! CVarArg), terminator: "")
+    func tx(_ iodata: Int) {
+        print(Character(UnicodeScalar(iodata)!), terminator: "")
     }
 }
 class Port3F9<T: FixedWidthInteger & UnsignedInteger>: IOPort {

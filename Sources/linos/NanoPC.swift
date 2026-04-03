@@ -118,15 +118,15 @@ class PIC {
     func update_irq() {
         let slave_irq = pics[1].get_irq()
         let irq = pics[0].get_irq()
-         if slave_irq >= 0 {
-             pics[0].set_irq(2, true)
-             pics[0].set_irq(2, false)
-         }
-         if irq >= 0 {
-             self.irq = 1
-         } else {
-             self.irq = 0
-         }
+        if slave_irq >= 0 {
+            pics[0].set_irq(2, true)
+            pics[0].set_irq(2, false)
+        }
+        if irq >= 0 {
+            self.irq = 1
+        } else {
+            self.irq = 0
+        }
     }
     var iid: Int {
         var iid = 0
