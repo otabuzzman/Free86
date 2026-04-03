@@ -1653,7 +1653,7 @@ extension Free86 {
     /// 0xcc  INT
     func Oxcc() throws -> Result<Resume, Never> {
         u = eip &+ far &- farStart
-        try raiseInterrupt(3, 0, false, true, u)
+        try raiseInterrupt(3, 0, true, u)
         return .success(.endFetchLoop)
     }
     /// 0xcd  INT
@@ -1663,14 +1663,14 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         u = eip &+ far &- farStart
-        try raiseInterrupt(Byte(imm), 0, false, true, u)
+        try raiseInterrupt(Byte(imm), 0, true, u)
         return .success(.endFetchLoop)
     }
     /// 0xce  INTO
     func Oxce() throws -> Result<Resume, Never> {
         if isOF() {
             u = eip &+ far &- farStart
-            try raiseInterrupt(4, 0, false, true, u)
+            try raiseInterrupt(4, 0, true, u)
         }
         return .success(.endFetchLoop)
     }

@@ -2,7 +2,7 @@ extension Free86 {
     public func fetchDecodeExecute(cycles: QWord) async throws {
         do {
             if let interrupt = self.interrupt {
-                try raiseInterrupt(interrupt.id, interrupt.errorCode, false, false, 0)
+                try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
             if await RESET.pending {
                 halted = false
@@ -12,7 +12,7 @@ extension Free86 {
             if await INTR.pending && eflags.isFlagRaised(.IF) {
                 halted = false
                 let id = try await INTR.probe()
-                try raiseInterrupt(id, 0, true, false, 0)
+                try raiseInterrupt(id, 0, false, 0)
             }
             if halted {
                 return

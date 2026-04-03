@@ -2696,11 +2696,11 @@ void Free86::reset_segment_register(uint32_t sreg, uint32_t level) {
         }
     }
 }
-void Free86::raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t home) {
+void Free86::raise_interrupt(int id, int error_code, int is_sw, uint32_t home) {
     if (!is_protected()) {
         raise_interrupt_real__v86(id, is_sw, home);
     } else {
-        raise_interrupt_protected(id, error_code, is_hw, is_sw, home);
+        raise_interrupt_protected(id, error_code, is_sw, home);
     }
 }
 void Free86::raise_interrupt_real__v86(int id, int is_sw, uint32_t home) {
@@ -2728,13 +2728,13 @@ void Free86::raise_interrupt_real__v86(int id, int is_sw, uint32_t home) {
     segs[1].shadow.base = selector << 4;
     eflags &= ~(0x00000100u | 0x00000200u | 0x00010000u | 0x00040000u);
 }
-void Free86::raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t home) {
+void Free86::raise_interrupt_protected(int id, int error_code, int is_sw, uint32_t home) {
     uint32_t ss, esp, spl, push_error_code, gsel, goff;
     SegmentDescriptor isd{0}, cgd{0}, ssd{0};
     int is_interlevel, type, gate32;
     uint64_t tss_stack;
     push_error_code = 0;
-    if (!is_sw && !is_hw) {
+    if (!is_sw) {
         switch (id) { // with error codes, Intel 64 IA-32 SDM (latest), Vol. 3A, 7.3
         case 8:  // double exception
         case 10: // invalid task state segment

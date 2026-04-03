@@ -3,12 +3,12 @@
 void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
     uint32_t sreg, hL; // H (0x80) or L (0x00) byte selector
     if (interrupt.id >= 0) {
-        raise_interrupt(interrupt.id, interrupt.error_code, 0, 0, 0);
+        raise_interrupt(interrupt.id, interrupt.error_code, 0, 0);
         interrupt = {-1, 0};
     }
     if (get_irq() != 0 && (eflags & 0x00000200)) {
         halted = false;
-        raise_interrupt(get_iid(), 0, 1, 0, 0);
+        raise_interrupt(get_iid(), 0, 0, 0);
     }
     if (halted) {
         return;
@@ -1483,7 +1483,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 goto FETCH_LOOP;
             case 0xcc: // INT
                 u = eip + far - far_start;
-                raise_interrupt(3, 0, 0, 1, u);
+                raise_interrupt(3, 0, 1, u);
                 goto FETCH_LOOP;
             case 0xcd: // INT
                 imm = fetch8();
@@ -1492,12 +1492,12 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     abort(13);
                 }
                 u = eip + far - far_start;
-                raise_interrupt(imm, 0, 0, 1, u);
+                raise_interrupt(imm, 0, 1, u);
                 goto FETCH_LOOP;
             case 0xce: // INTO
                 if (is_OF()) {
                     u = eip + far - far_start;
-                    raise_interrupt(4, 0, 0, 1, u);
+                    raise_interrupt(4, 0, 1, u);
                 }
                 goto FETCH_LOOP;
             case 0x62: // BOUND

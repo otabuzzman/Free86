@@ -470,9 +470,9 @@ class Free86 {
     void return_protected(bool o32, bool is_iret, uint32_t release_stack_items);
     void reset_segment_register(uint32_t sreg, uint32_t level);
 
-    void raise_interrupt(int id, int error_code, int is_hw, int is_sw, uint32_t home);
+    void raise_interrupt(int id, int error_code, int is_sw, uint32_t home);
     void raise_interrupt_real__v86(int id, int is_sw, uint32_t home);
-    void raise_interrupt_protected(int id, int error_code, int is_hw, int is_sw, uint32_t home);
+    void raise_interrupt_protected(int id, int error_code, int is_sw, uint32_t home);
     void aux_IRET(bool o32);
 
     void aux_LAR_LSL(bool o32, bool is_lsl);
