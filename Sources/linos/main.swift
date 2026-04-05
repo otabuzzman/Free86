@@ -76,28 +76,20 @@ Task.detached {
     while true {
         let c = Int(getchar())
         await MainActor.run {
-            port3F8.rx(c)
+            port3F8.rx(c)  // raises HW interrupt 4
         }
         if Task.isCancelled { break }
     }
 }
 
-// Task.detached {
-//     while true {
-//         try await Task.sleep(nanoseconds: 30000000)
-//         await MainActor.run {
-//             pit.update_irq()
-//         }
-//         if Task.isCancelled { break }
-//     }
-// }
-
 while true {
     let cycles = cpu.cycles + 100000
     while cycles > cpu.cycles {
-        pit.update_irq()
-        if pic.irq > 0 {
-            try await cpu.INTR.trigger(Byte(pic.iid))
+        /// NanoPC interrupt handling
+        pit.update_irq()  // raise timer INT 0 to update PIC
+        if pic.irq > 0 {  // raise any INT waiting at PIC
+            let id = Byte(pic.iid)
+            try await cpu.INTR.trigger(id)
         }
         do {
             try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
@@ -346,27 +338,27 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     }
 }
 class Port43<T: FixedWidthInteger & UnsignedInteger>: IOPort {
-    var hh = 0
+    var slot = 0
     let circuit: PIT
     init(_ circuit: PIT) {
         self.circuit = circuit
     }
     func rd() -> T { 0xff }
     func wr(_ iodata: T) {
-        hh = Int(iodata) >> 6
-        if hh == 3 {
+        slot = Int(iodata) >> 6
+        if slot == 3 {
             return
         }
         let ih = (iodata >> 4) & 3
         switch ih {
         case 0:
-            circuit.pit_channels[hh].latched_count = circuit.pit_channels[hh].pit_get_count()
-            circuit.pit_channels[hh].rw_state = 4
+            circuit.pit_channels[slot].latched_count = circuit.pit_channels[slot].pit_get_count()
+            circuit.pit_channels[slot].rw_state = 4
             break
         default:
-            circuit.pit_channels[hh].mode = (Int(iodata) >> 1) & 7
-            circuit.pit_channels[hh].bcd = Int(iodata) & 1
-            circuit.pit_channels[hh].rw_state = Int(ih) - 1
+            circuit.pit_channels[slot].mode = (Int(iodata) >> 1) & 7
+            circuit.pit_channels[slot].bcd = Int(iodata) & 1
+            circuit.pit_channels[slot].rw_state = Int(ih) - 1
             break
         }
     }
