@@ -8,7 +8,7 @@ let cpu = Free86(memory: mem, io: io)
 
 let cmos = CMOS()
 let pic = PIC()
-let pit = PIT(cpu, pic)
+let pit = PIT(pic)
 let serial = Serial(pic)
 
 let port70 = Port70<Byte>(cmos)

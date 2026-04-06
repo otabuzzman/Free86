@@ -500,8 +500,6 @@ class PITChannel {
     int last_irr = 0;
     int count = 0;
     int count_load_time = 0;
-    float pit_time_unit = 0.596591f;
-    Free86 *cpu;
 
   public:
     int latched_count = 0;
@@ -509,23 +507,17 @@ class PITChannel {
     int mode = 0;
     int bcd = 0;
     int gate = 0;
-    PITChannel(Free86 *cpu) {
-        this->cpu = cpu;
-    }
-    int get_time() {
-        return static_cast<int>(floor(cpu->cycles * pit_time_unit));
-    }
     void pit_load_count(int data) {
         if (data == 0) {
             count = 0x10000;
         } else {
             count = data;
         }
-        count_load_time = get_time();
+        count_load_time = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
     }
     int pit_get_count() {
         int d, dh;
-        d = get_time() - count_load_time;
+        d = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time;
         switch (mode) {
         case 0:
         case 1:
@@ -541,7 +533,7 @@ class PITChannel {
     }
     int pit_get_out() {
         int d, eh;
-        d = get_time() - count_load_time;
+        d = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time;
         switch (mode) {
         default:
         case 0: // Interrupt on terminal count
@@ -574,10 +566,10 @@ class PIT {
     PIC *pic;
 
   public:
-    PIT(Free86 *cpu, PIC *pic) {
+    PIT(PIC *pic) {
         this->pic = pic;
         for (int i = 0; i < 3; i++) {
-            pit_channels[i] = new PITChannel(cpu);
+            pit_channels[i] = new PITChannel();
             pit_channels[i]->mode = 3;
             pit_channels[i]->gate = (i != 2) >> 0;
             pit_channels[i]->pit_load_count(0);
@@ -686,7 +678,7 @@ class WiredCPU : public Free86 {
     WiredCPU(uint32_t memory_size) : Free86(memory_size) {
         cmos = new CMOS();
         pic = new PIC();
-        pit = new PIT(this, pic);
+        pit = new PIT(pic);
         serial = new Serial(pic);
     }
     ~WiredCPU() override {
