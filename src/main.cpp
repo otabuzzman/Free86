@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <time.h>
 #include <thread>
-#include <termios.h>
 #include <unistd.h>
 
 #ifndef NO_SDL
@@ -46,12 +45,6 @@ void print_loop(PC *pc)
 }
 void input_loop(PC *pc)
 {
-    // stty -icanon -echo
-    struct termios termios;
-    tcgetattr(STDIN_FILENO, &termios);
-    termios.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &termios);
-
     while (Running) {
         pc->input();
     }
