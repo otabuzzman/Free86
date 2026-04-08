@@ -11,7 +11,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 
 **Build on Linos (also WSL)**
 - Install C++, CMake, Swift toolchain
-- Run commands
+- Run commands (use `stty -icanon -echo` for Linos)
   ```
   git clone https://github.com/otabuzzman/Free86.git ; cd Free86
   
@@ -23,7 +23,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   
   # compile...
   make
-  # ...and run 
+  # ...and run
   exe/free86
   
   # compile and run with Swift toolchain
