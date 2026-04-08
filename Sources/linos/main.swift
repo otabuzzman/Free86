@@ -71,6 +71,9 @@ func hasDataAvailable() -> Bool {
 Task.detached {
     while true {
         let c = Int(getchar())
+        #if os(Windows)
+        try! await Task.sleep(nanoseconds: 60000)  // hack: losing characters without
+        #endif
         await MainActor.run {
             port3F8.rx(c)  // raises HW interrupt 4
         }
