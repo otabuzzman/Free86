@@ -584,8 +584,7 @@ extension Free86 {
             }
             try push16((eip &+ far &- farStart))
             eip = rm
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
             break
         case 3:  // CALL
             fallthrough
@@ -620,8 +619,7 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             eip = rm
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
             break
         default:
             throw Interrupt(.UD)
@@ -632,16 +630,14 @@ extension Free86 {
     func Ox1eb() throws -> Result<Resume, Never> {
         u = DWord(fetch8()).signExtendedByte
         eip = (eip &+ far &- farStart &+ u).lowerHalf
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         return .success(.endFetchLoop)
     }
     /// 0x1e9  JMP
     func Ox1e9() throws -> Result<Resume, Never> {
         imm = DWord(fetch16())
         eip = (eip &+ far &- farStart &+ imm).lowerHalf
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         return .success(.endFetchLoop)
     }
     /// 0x170  JO
@@ -664,8 +660,7 @@ extension Free86 {
         u = DWord(fetch8()).signExtendedByte
         if canJmp(condition: opcode.encoded(.condition)) {
             eip = (eip &+ far &- farStart &+ u).lowerHalf
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
         }
         return .success(.endFetchLoop)
     }
@@ -675,16 +670,14 @@ extension Free86 {
         m = DWord(try ld16Stack())
         regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 2 &+ u) & ssMask)
         eip = m
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         return .success(.endFetchLoop)
     }
     /// 0x1c3  RET
     func Ox1c3() throws -> Result<Resume, Never> {
         m = DWord(try pop16())
         eip = m
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         return .success(.endFetchLoop)
     }
     /// 0x1e8  CALL
@@ -692,8 +685,7 @@ extension Free86 {
         imm = DWord(fetch16())
         try push16((eip &+ far &- farStart))
         eip = (eip &+ far &- farStart &+ imm).lowerHalf
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         return .success(.endFetchLoop)
     }
     /// 0x162  BOUND

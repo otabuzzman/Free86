@@ -20,8 +20,7 @@ extension Free86 {
         imm = DWord(fetch16())
         if canJmp(condition: opcode.encoded(.condition)) {
             eip = (eip &+ far &- farStart &+ imm).lowerHalf
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
         }
         return .success(.endFetchLoop)
     }

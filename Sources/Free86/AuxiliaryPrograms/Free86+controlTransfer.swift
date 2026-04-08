@@ -8,8 +8,7 @@ extension Free86 {
     }
     func auxJmpfRealOrV86Mode(_ selector: SegmentSelector, _ offset: LinearAddress) {
         eip = offset
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         var shadow = segs[.CS].shadow
         shadow.base = LinearAddress(selector) << 4
         segs[.CS] = SegmentRegister(selector, shadow)
@@ -46,8 +45,7 @@ extension Free86 {
         }
         segs[.CS] = SegmentRegister(selector.indexTI | Word(cpl), xsd)
         eip = offset
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
     }
     func auxCallf(_ o32: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
         if !cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
@@ -75,8 +73,7 @@ extension Free86 {
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = offset
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         var shadow = segs[.CS].shadow
         shadow.base = LinearAddress(selector) << 4
         segs[.CS] = SegmentRegister(selector, shadow)
@@ -132,8 +129,7 @@ extension Free86 {
             regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
             segs[.CS] = SegmentRegister(selector.indexTI | Word(cpl), xsd)
             eip = offset
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
         } else {
             let type = SegmentDescriptorType(rawValue: xsd.type)
             switch type {
@@ -252,8 +248,7 @@ extension Free86 {
             cpl = cgd.dpl
             regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
             eip = goff
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
         }
     }
     func auxRetf(_ o32: Bool, _ releaseStackItems: DWord) throws {
@@ -299,8 +294,7 @@ extension Free86 {
         shadow.base = LinearAddress(cs) << 4
         segs[.CS] = SegmentRegister(cs, shadow)
         eip = homeEip
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         if isIret {
             var mask: DWord = 0
             mask.setFlag(.TF)
@@ -375,8 +369,7 @@ extension Free86 {
                     setSegmentRegisterRealOrV86Mode(.FS, fs)
                     setSegmentRegisterRealOrV86Mode(.GS, gs)
                     eip = homeEip & 0xffff
-                    far = 0
-                    farStart = 0
+                    (far, farStart) = (0, 0)
                     regs[.ESP] = (regs[.ESP] & ~ssMask) | (homeEsp & ssMask)
                     self.cpl = 3
                     return
@@ -470,8 +463,7 @@ extension Free86 {
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = homeEip
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         if isIret {
             var mask: DWord = 0
             mask.setFlag(.TF)
@@ -530,8 +522,7 @@ extension Free86 {
         try st16WritableCpl3(word: isSW ? home : eip)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = DWord(offset)
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         var shadow = segs[.CS].shadow
         shadow.base = LinearAddress(selector) << 4
         segs[.CS] = SegmentRegister(selector, shadow)
@@ -737,8 +728,7 @@ extension Free86 {
         cpl = dpl
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = goff
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         if isd.isType(.InterruptGate) {
             eflags.setFlag(.IF, .zero)
         }

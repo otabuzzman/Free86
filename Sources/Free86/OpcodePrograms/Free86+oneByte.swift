@@ -1303,8 +1303,7 @@ extension Free86 {
                 try push(u)
             }
             eip = rm
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
             break
         case 3:  // CALLF
             fallthrough
@@ -1330,8 +1329,7 @@ extension Free86 {
                 rm = try ldReadonlyCpl3()
             }
             eip = rm
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
             break
         case 6:  // PUSH
             if modRM.mod == 3 {
@@ -1558,8 +1556,7 @@ extension Free86 {
         if (u != 0) && b {
             if ipr.isFlagRaised(.operandSizeOverride) {
                 eip = (eip &+ far &- farStart &+ w).lowerHalf
-                far = 0
-                farStart = 0
+                (far, farStart) = (0, 0)
             } else {
                 far = far &+ w
             }
@@ -1572,8 +1569,7 @@ extension Free86 {
         if (regs[.ECX] & ipr.addressSizeMask) == 0 {
             if ipr.isFlagRaised(.operandSizeOverride) {
                 eip = (eip &+ far &- farStart &+ u).lowerHalf
-                far = 0
-                farStart = 0
+                (far, farStart) = (0, 0)
             } else {
                 far = far &+ u
             }
@@ -1586,8 +1582,7 @@ extension Free86 {
         m = try ldStack()
         regs[.ESP] = (regs[.ESP] & ~ssMask) | ((regs[.ESP] &+ 4 &+ u) & ssMask)
         eip = m
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         return .success(.endFetchLoop)
     }
     /// 0xc3  RET
@@ -1600,8 +1595,7 @@ extension Free86 {
             m = try pop()
         }
         eip = m
-        far = 0
-        farStart = 0
+        (far, farStart) = (0, 0)
         return .success(.endFetchLoop)
     }
     /// 0xe8  CALL

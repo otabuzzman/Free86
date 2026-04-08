@@ -17,8 +17,7 @@ extension Free86 {
             if halted {
                 return
             }
-            far = 0
-            farStart = 0
+            (far, farStart) = (0, 0)
             cyclesRequested = cycles
             cyclesRemaining = cycles
             cyclesLoop:
