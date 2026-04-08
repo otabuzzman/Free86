@@ -1,6 +1,7 @@
 #ifndef FREE86_H
 #define FREE86_H
 
+#include <string>
 #include <vector>
 
 typedef struct SegmentDescriptor {

@@ -378,7 +378,7 @@ class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     let circuit: Serial
     init(_ circuit: Serial) {
         self.circuit = circuit
-        setbuf(stdout, nil)  // set unbuffered (character) mode for serial output
+        setvbuf(stdout, nil, _IONBF, 0)  // set unbuffered (character) mode for serial output
     }
     func rd() -> T {
         if (circuit.lcr & 0x80) != 0 {

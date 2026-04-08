@@ -1,11 +1,6 @@
-#include <cstddef>
-
-#include <cstdio>
 #include <iostream>
 #include <signal.h>
-#include <time.h>
 #include <thread>
-#include <unistd.h>
 
 #ifndef NO_SDL
 #define SDL_MAIN_HANDLED

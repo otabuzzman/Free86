@@ -1,8 +1,6 @@
 #include <cstdint>
-#include <cstdio>
 #include <string>
 #include <thread>
-#include <chrono>
 #include <iostream>
 
 #ifndef NO_SDL

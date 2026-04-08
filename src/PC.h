@@ -1,12 +1,6 @@
 #ifndef PC_H
 #define PC_H
 
-#include <cmath>
-#include <cstddef>
-#include <stdexcept>
-#include <vector>
-#include <time.h>
-
 #ifndef NO_SDL
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
