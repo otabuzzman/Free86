@@ -506,8 +506,8 @@ static int clock_gettime_nsec_np(int bogus) {
 // https://elixir.bootlin.com/qemu/v7.0.0/source/hw/timer/i8254_common.c
 class PITChannel {
     int last_irr = 0;
-    int count = 0;
-    int count_load_time = 0;
+    uint32_t count = 0;
+    uint64_t count_load_time = 0;
 
   public:
     int latched_count = 0;
@@ -521,10 +521,10 @@ class PITChannel {
         } else {
             count = data;
         }
-        count_load_time = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) * 1193181 / 1000000000;
+        count_load_time = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
     }
     int pit_get_count() {
-        int d, dh;
+        uint32_t d, dh;
         d = (clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time) * 1193181 / 1000000000;
         switch (mode) {
         case 0:
