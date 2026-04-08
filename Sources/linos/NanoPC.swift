@@ -169,11 +169,11 @@ class PITChannel {
         } else {
             count = data
         }
-        count_load_time = Int(clock_gettime_nsec_np(CLOCK_UPTIME_RAW))
+        count_load_time = Int(Date().timeIntervalSince1970)
     }
     func pit_get_count() -> Int {
         var dh = 0
-        let d = Int(clock_gettime_nsec_np(CLOCK_UPTIME_RAW)) - count_load_time
+        let d = (Int(Date().timeIntervalSince1970) - count_load_time) * 1193181
         switch mode {
         case 0, 1, 4, 5:
             dh = (count - d) & 0xffff
@@ -186,7 +186,7 @@ class PITChannel {
     }
     func pit_get_out() -> Int {
         var eh = false
-        let d = Int(clock_gettime_nsec_np(CLOCK_UPTIME_RAW)) - count_load_time
+        let d = (Int(Date().timeIntervalSince1970) - count_load_time) * 1193181
         switch mode {
         case 0:  // interrupt on terminal count
             eh = d >= count

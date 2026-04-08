@@ -494,6 +494,14 @@ class Serial {
 inline void Serial::set_irq(int val) {
     pic->set_irq(4, val);
 }
+#ifndef __APPLE__
+#define CLOCK_UPTIME_RAW 0  // bogus
+static int clock_gettime_nsec_np(int bogus) {
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    return ts.tv_sec * 1000000000 + ts.tv_nsec;
+}
+#endif
 // https://elixir.bootlin.com/qemu/v7.0.0/source/hw/timer/i8254.c
 // https://elixir.bootlin.com/qemu/v7.0.0/source/hw/timer/i8254_common.c
 class PITChannel {
@@ -513,11 +521,11 @@ class PITChannel {
         } else {
             count = data;
         }
-        count_load_time = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+        count_load_time = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) * 1193181 / 1000000000;
     }
     int pit_get_count() {
         int d, dh;
-        d = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time;
+        d = (clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time) * 1193181 / 1000000000;
         switch (mode) {
         case 0:
         case 1:
@@ -533,7 +541,7 @@ class PITChannel {
     }
     int pit_get_out() {
         int d, eh;
-        d = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time;
+        d = (clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time) * 1193181 / 1000000000;
         switch (mode) {
         default:
         case 0: // Interrupt on terminal count
