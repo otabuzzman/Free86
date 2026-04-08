@@ -69,10 +69,6 @@ func hasDataAvailable() -> Bool {
 
 /// feed COM1 character-wise from stdin
 Task.detached {
-    var tcattr = termios()
-    tcgetattr(STDIN_FILENO, &tcattr)
-    tcattr.c_lflag &= ~UInt(ICANON | ECHO)
-    tcsetattr(STDIN_FILENO, TCSANOW, &tcattr)
     while true {
         let c = Int(getchar())
         await MainActor.run {
