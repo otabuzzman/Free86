@@ -310,7 +310,7 @@ extension Free86 {
             if !o32 {
                 mask &= 0xffff
             }
-            setEflags(homeEflags, mask)
+            updateEflags(homeEflags, mask)
         }
     }
     func returnProtectedMode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
@@ -361,7 +361,7 @@ extension Free86 {
                     mask.setFlag(.VIP)
                     mask.setFlag(.ID)
                     mask.iopl = 3
-                    setEflags(homeEflags, mask)
+                    updateEflags(homeEflags, mask)
                     setSegmentRegisterRealOrV86Mode(.ES, es)
                     setSegmentRegisterRealOrV86Mode(.CS, cs)
                     setSegmentRegisterRealOrV86Mode(.SS, ss)
@@ -481,7 +481,7 @@ extension Free86 {
             if !o32 {
                 mask &= 0xffff
             }
-            setEflags(homeEflags, mask)
+            updateEflags(homeEflags, mask)
         }
     }
     func resetSegmentRegister(_ sreg: SegmentRegister.Name, _ level: DWord) {
@@ -513,7 +513,7 @@ extension Free86 {
         var esp = regs[.ESP]
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: getEflags())
+        try st16WritableCpl3(word: compileEflags())
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
         try st16WritableCpl3(word: segs[.CS].selector)
@@ -665,7 +665,7 @@ extension Free86 {
             }
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCplX(dword: getEflags())
+            try stWritableCplX(dword: compileEflags())
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
             try stWritableCplX(dword: segs[.CS].selector)
@@ -702,7 +702,7 @@ extension Free86 {
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCplX(word: getEflags())
+            try st16WritableCplX(word: compileEflags())
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCplX(word: segs[.CS].selector)

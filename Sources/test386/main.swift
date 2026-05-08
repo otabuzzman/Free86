@@ -135,7 +135,7 @@ extension Free86 {
         let a = cr0.index(cr0.startIndex, offsetBy: 1)
         let o = cr0.index(cr0.startIndex, offsetBy: 30)
         cr0.replaceSubrange(a..<o, with: "..")
-        let _eflags = bin(eflags, divide: true)
+        let _eflags = bin(compileEflags(), divide: true)
         let from = _eflags.index(_eflags.startIndex, offsetBy: 26, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
         return String(format: """
             EAX:%08X                ESP:%08X
@@ -169,7 +169,7 @@ extension Free86 {
     }
     // A:DEADBEAF C:DEADBEAF D:DEADBEAF B:DEADBEAF SI:DEADBEAF DI:DEADBEAF I:CAFE55AA SP:CAFE55AA BP:CAFE55AA F:0001_00001111
     func compactState() -> String {
-        let _eflags = bin(eflags, divide: true)
+        let _eflags = bin(compileSflags(), divide: true)
         let from = _eflags.index(_eflags.startIndex, offsetBy: 22, limitedBy: _eflags.endIndex) ?? _eflags.endIndex
         return String(format: "A:%08X C:%08X D:%08X B:%08X SI:%08X DI:%08X I:%08X SP:%08X BP:%08X F:%@", regs[.EAX], regs[.ECX], regs[.EDX], regs[.EBX], regs[.ESI], regs[.EDI], eip, regs[.ESP], regs[.EBP], String(_eflags[from...]))
     }

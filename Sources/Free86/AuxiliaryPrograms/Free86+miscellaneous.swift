@@ -56,7 +56,7 @@ extension Free86 {
             selector = try ld16ReadonlyCpl3()
         }
         u = try ldDescriptorFields(selector, isLsl)
-        osmSrc = compileEflags()
+        osmSrc = compileSflags()
         if u == 0x80000000 {  // notok
             osmSrc.setFlag(.ZF, .zero)
         } else {
@@ -131,7 +131,7 @@ extension Free86 {
         }
     }
     func auxVerrVerw(_ selector: SegmentSelector, _ writable: Bool) throws {
-        osmSrc = compileEflags()
+        osmSrc = compileSflags()
         if try isSegmentAccessible(selector, writable) {
             osmSrc.setFlag(.ZF)
         } else {
@@ -186,7 +186,7 @@ extension Free86 {
             rm = DWord(try ld16WritableCpl3())
         }
         r = regs[modRM.reg]
-        osmSrc = compileEflags()
+        osmSrc = compileSflags()
         if (rm & 3) < (r & 3) {
             u = (rm & ~3) | (r & 3)
             if modRM.mod == 3 {

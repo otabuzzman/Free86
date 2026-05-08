@@ -115,6 +115,10 @@ class Free86 {
     void st8_direct(uint32_t address, uint32_t byte);
     void st8_direct(uint32_t address, std::string data);
 
+    // eflfags.cpp
+    uint32_t compile_SFLAGS();
+    uint32_t compile_EFLAGS();
+
   private:
     uint32_t eip_linear;
 /*
@@ -580,9 +584,6 @@ class Free86 {
     bool is_LE(); // less or equal, unsigned comparison
     bool is_LT(); // less than
     bool can_jmp(int condition);
-    uint32_t compile_EFLAGS(bool shift = false);
-
-    uint32_t get_EFLAGS();
-    void set_EFLAGS(uint32_t bits, uint32_t mask);
+    void update_EFLAGS(uint32_t bits, uint32_t mask);
 };
 #endif // FREE86_H

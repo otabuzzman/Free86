@@ -19,7 +19,7 @@ extension Free86 {
         osm = 12
     }
     func auxAaa() {
-        var flags = compileEflags()
+        var flags = compileSflags()
         var al = regs[.EAX] & 0xff
         var ah = (regs[.EAX] >> 8) & 0xff
         let of: DWord = al > 0xf9 ? 1 : 0
@@ -39,7 +39,7 @@ extension Free86 {
         osm = 24
     }
     func auxAas() {
-        var flags = compileEflags()
+        var flags = compileSflags()
         var al = regs[.EAX] & 0xff
         var ah = (regs[.EAX] >> 8) & 0xff
         let of: DWord = al < 6 ? 1 : 0
@@ -59,7 +59,7 @@ extension Free86 {
         osm = 24
     }
     func auxDaa() {
-        var flags = compileEflags()
+        var flags = compileSflags()
         let f0 = flags.isFlagRaised(.CF)
         let f4 = flags.isFlagRaised(.AF)
         var al = regs[.EAX] & 0xff
@@ -85,7 +85,7 @@ extension Free86 {
         osm = 24
     }
     func auxDas() {
-        var flags = compileEflags()
+        var flags = compileSflags()
         let f0 = flags.isFlagRaised(.CF)
         let f4 = flags.isFlagRaised(.AF)
         var al = regs[.EAX] & 0xff

@@ -171,17 +171,18 @@ extension Free86 {
     func shift8(_ src: DWord, _ count: DWord) -> DWord {
         let c: DWord, cf: DWord
         let s = src & 0xff
-        var res = s
+        var res = s, f: Eflags
         switch operation & 7 {
         case 0:
             if (count & 0x1f) != 0 {
                 c = count & 0x7
                 res = (res << c) | (res >> (8 - c))
-                osmSrc = compileEflags(true)
-                osmSrc |= res & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(res) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) << 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -190,11 +191,12 @@ extension Free86 {
             if (count & 0x1f) != 0 {
                 c = count & 0x7
                 res = (res >> c) | (res << (8 - c))
-                osmSrc = compileEflags(true)
-                osmSrc |= (res >> 7) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(res >> 7) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) << 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -207,11 +209,12 @@ extension Free86 {
                 if (c > 1) {
                     res |= s >> (9 - c)
                 }
-                osmSrc = compileEflags(true)
-                osmSrc |= (s >> (8 - c)) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(s >> (8 - c)) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) << 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -224,11 +227,12 @@ extension Free86 {
                 if c > 1 {
                     res |= s << (9 - c)
                 }
-                osmSrc = compileEflags(true)
-                osmSrc |= (s >> (c - 1)) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(s >> (c - 1)) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) << 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -269,17 +273,18 @@ extension Free86 {
     func shift16(_ src: DWord, _ count: DWord) -> DWord {
         let c: DWord, cf: DWord
         let s = src & 0xffff
-        var res = s
+        var res = s, f: Eflags
         switch operation & 7 {
          case 0:
             if (count & 0x1f) != 0 {
                 c = count & 0xf
                 res = (res << c) | (res >> (16 - c))
-                osmSrc = compileEflags(true)
-                osmSrc |= res & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(res) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -288,11 +293,12 @@ extension Free86 {
             if (count & 0x1f) != 0 {
                 c = count & 0xf
                 res = (res >> c) | (res << (16 - c))
-                osmSrc = compileEflags(true)
-                osmSrc |= (res >> 15) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(res >> 15) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -305,11 +311,12 @@ extension Free86 {
                 if c > 1 {
                     res |= s >> (17 - c)
                 }
-                osmSrc = compileEflags(true)
-                osmSrc |= (s >> (16 - c)) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(s >> (16 - c)) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -322,11 +329,12 @@ extension Free86 {
                 if c > 1 {
                     res |= s << (17 - c)
                 }
-                osmSrc = compileEflags(true)
-                osmSrc |= (s >> (c - 1)) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(s >> (c - 1)) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 4) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -367,17 +375,18 @@ extension Free86 {
     func shift(_ src: DWord, _ count: DWord) -> DWord {
         let c: DWord, cf: DWord
         let s = src
-        var res = s
+        var res = s, f: Eflags
         switch operation & 7 {
         case 0:
             c = count & 0x1f
             if c != 0 {
                 res = (res << c) | (res >> (32 - c))
-                osmSrc = compileEflags(true)
-                osmSrc |= res & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(res) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 20) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -386,11 +395,12 @@ extension Free86 {
             c = count & 0x1f
             if c != 0 {
                 res = (res >> c) | (res << (32 - c))
-                osmSrc = compileEflags(true)
-                osmSrc |= (res >> 31) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(res >> 31) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 20) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -403,11 +413,12 @@ extension Free86 {
                 if c > 1 {
                     res |= s >> (33 - c)
                 }
-                osmSrc = compileEflags(true)
-                osmSrc |= (s >> (32 - c)) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(s >> (32 - c)) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 20) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
@@ -420,11 +431,12 @@ extension Free86 {
                 if c > 1 {
                     res |= s << (33 - c)
                 }
-                osmSrc = compileEflags(true)
-                osmSrc |= (s >> (c - 1)) & 0x0001
+                f = compileSflags()
+                f.setFlag(.CF, Int(s >> (c - 1)) & 1)
                 if c == 1 {
-                    osmSrc |= ((s ^ res) >> 20) & 0x0800
+                    f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
+                osmSrc = f
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }

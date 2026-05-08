@@ -320,36 +320,37 @@ extension Free86 {
         }
         return ((f ? 1 : 0) ^ (condition & 1)) != 0
     }
-    func compileEflags(_ shift: Bool = false) -> DWord {
-        var f0: DWord = 0, f11: DWord = 0
-        if !shift {
-            f0 = (isCF() ? 1 : 0) << 0
-            f11 = (isOF() ? 1 : 0) << 11
-        }
+    public func compileSflags() -> DWord {
+        let f0: DWord = (isCF() ? 1 : 0) << 0
         let f2: DWord = (isPF() ? 1 : 0) << 2
         let f4: DWord = (isAF() ? 1 : 0) << 4
         let f6: DWord = (osmDst == 0 ? 1 : 0) << 6
         let f7: DWord = (osm == 24 ? ((osmSrc >> 7) & 1) : (osmDst >> 31) & 1) << 7
-        return f0 | f2 | f4 | f6 | f7 | f11
+        let f11: DWord = (isOF() ? 1 : 0) << 11
+        return f11 | f7 | f6 | f4 | f2 | f0
     }
-    func getEflags() -> DWord {
-        var bits = compileEflags()
+    public func compileEflags() -> DWord {
+        var bits = compileSflags()
         bits |= DWord(bitPattern: df) & Eflags.flagMask(for: .DF)
         bits |= eflags
         return bits
     }
-    func setEflags(_ bits: DWord, _ mask: DWord) {
-        var _mask: DWord = 0
-        _mask.setFlag(.OF)
-        _mask.setFlag(.SF)
-        _mask.setFlag(.ZF)
-        _mask.setFlag(.AF)
-        _mask.setFlag(.PF)
-        _mask.setFlag(.CF)
-        osmSrc = bits & _mask
+    func updateEflags(_ bits: DWord, _ mask: DWord) {
+        osmSrc = bits & Eflags.sFlagsMask()
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         df = 1 - Int32(2 * ((bits >> 10) & 1))
         eflags = (eflags & ~mask) | (bits & mask)
+    }
+}
+
+extension Eflags {
+    static func sFlagsMask() -> Eflags {
+        Eflags.flagMask(for: .OF) |
+        Eflags.flagMask(for: .SF) |
+        Eflags.flagMask(for: .ZF) |
+        Eflags.flagMask(for: .AF) |
+        Eflags.flagMask(for: .PF) |
+        Eflags.flagMask(for: .CF)
     }
 }

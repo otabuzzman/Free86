@@ -1134,7 +1134,7 @@ extension Free86 {
         var mask: Eflags = 0
         mask |= Eflags.flagMask(for: .RF)
         mask |= Eflags.flagMask(for: .VM)
-        u = getEflags() & ~mask
+        u = compileEflags() & ~mask
         if !ipr.isFlagRaised(.operandSizeOverride) {
             try push(u)
         } else {
@@ -1167,7 +1167,7 @@ extension Free86 {
                 mask.setFlag(.IF)
             }
         }
-        setEflags(m, u & mask)
+        updateEflags(m, u & mask)
         return .success(.endOnInterrupt)
     }
     /// 0x06  PUSH
@@ -1675,21 +1675,21 @@ extension Free86 {
     }
     /// 0xf5  CMC
     func Oxf5() throws -> Result<Resume, Never> {
-        osmSrc = compileEflags() ^ 0x0001
+        osmSrc = compileSflags() ^ 0x0001
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }
     /// 0xf8  CLC
     func Oxf8() throws -> Result<Resume, Never> {
-        osmSrc = compileEflags() & ~0x0001
+        osmSrc = compileSflags() & ~0x0001
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }
     /// 0xf9  STC
     func Oxf9() throws -> Result<Resume, Never> {
-        osmSrc = compileEflags() | 0x0001
+        osmSrc = compileSflags() | 0x0001
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
@@ -1735,7 +1735,7 @@ extension Free86 {
     }
     /// 0x9f  LAHF
     func Ox9f() throws -> Result<Resume, Never> {
-        u = getEflags()
+        u = compileEflags()
         regs[.EAX].byteH = u
         return .success(.endFetchLoop)
     }

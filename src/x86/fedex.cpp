@@ -1045,7 +1045,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if ((eflags & 0x00020000) && iopl != 3) {
                     abort(13);
                 }
-                u = get_EFLAGS() & ~(0x00010000u | 0x00020000u);
+                u = compile_EFLAGS() & ~(0x00010000u | 0x00020000u);
                 if (((ipr >> 8) & 1) ^ 1) {
                     push(u);
                 } else {
@@ -1072,7 +1072,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                         v |= 0x00000200;
                     }
                 }
-                set_EFLAGS(m, v & u);
+                update_EFLAGS(m, v & u);
                 if (get_irq() != 0 && (eflags & 0x00000200)) {
                     goto OUTER_LOOP;
                 }
@@ -1504,17 +1504,17 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 aux_BOUND();
                 goto FETCH_LOOP;
             case 0xf5: // CMC
-                osm_src = compile_EFLAGS() ^ 0x0001;
+                osm_src = compile_SFLAGS() ^ 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto FETCH_LOOP;
             case 0xf8: // CLC
-                osm_src = compile_EFLAGS() & ~0x0001u;
+                osm_src = compile_SFLAGS() & ~0x0001u;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto FETCH_LOOP;
             case 0xf9: // STC
-                osm_src = compile_EFLAGS() | 0x0001;
+                osm_src = compile_SFLAGS() | 0x0001;
                 osm_dst = ((osm_src >> 6) & 1) ^ 1;
                 osm = 24;
                 goto FETCH_LOOP;
@@ -1547,7 +1547,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 osm = 24;
                 goto FETCH_LOOP;
             case 0x9f: // LAHF
-                u = get_EFLAGS();
+                u = compile_EFLAGS();
                 set_lower_byte(4, u);
                 goto FETCH_LOOP;
             case 0xf4: // HLT

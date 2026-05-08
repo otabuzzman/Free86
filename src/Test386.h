@@ -107,7 +107,7 @@ class Test386 {
         i = "EIP:" + hex((int) cpu->eip);
         sp = "ESP:" + hex(cpu->regs[4]);
         bp = "EBP:" + hex(cpu->regs[5]);
-        flags = "EFLAGS:" + bin(cpu->eflags, true).substr(9);
+        flags = "EFLAGS:" + bin(cpu->compile_EFLAGS(), true).substr(9);
         cs = "CS:" + hex((short) cpu->segs[1].selector) + ":" + hex(cpu->segs[1].shadow.base) + ":" + hex(cpu->segs[1].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[1].shadow.flags, true);
         ss = "SS:" + hex((short) cpu->segs[2].selector) + ":" + hex(cpu->segs[2].shadow.base) + ":" + hex(cpu->segs[2].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[2].shadow.flags, true);
         ds = "DS:" + hex((short) cpu->segs[3].selector) + ":" + hex(cpu->segs[3].shadow.base) + ":" + hex(cpu->segs[3].shadow.limit).substr(3, std::string::npos) + ":" + bin((short) cpu->segs[3].shadow.flags, true);
@@ -146,7 +146,7 @@ class Test386 {
         i = " I:" + hex((int) cpu->eip);
         sp = " SP:" + hex(cpu->regs[4]);
         bp = " BP:" + hex(cpu->regs[5]);
-        flags = " F:" + bin(cpu->eflags, true).substr(22);
+        flags = " F:" + bin(cpu->compile_SFLAGS(), true).substr(22);
         return std::string(a + c + d + b + si + di + i + sp + bp + flags);
     }
     std::string eip_15() {
