@@ -4,8 +4,6 @@ project(free86)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/exe)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-file(GLOB sourcefiles "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
-
 if(APPLE)
     add_compile_options(
       -Weverything
@@ -51,12 +49,16 @@ else()
     message("System not supported.")
 endif()
 
-add_executable(${PROJECT_NAME} ${sourcefiles})
+file(GLOB src "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
 
-set_property(TARGET free86 PROPERTY CXX_STANDARD 20)
+add_executable(linos ${src})
+set_target_properties(linos PROPERTIES CXX_STANDARD 20)
 
-option(NO_SDL "Disable SDL support" OFF)
-option(TEST386 "Run test386 suite" OFF)
+add_executable(test386 ${src})
+set_target_properties(test386 PROPERTIES CXX_STANDARD 20)
+target_compile_definitions(test386 PUBLIC TEST386)
+
+option(NO_SDL "Disable SDL support" ON)
 
 if(NO_SDL)
     add_compile_definitions(NO_SDL)
@@ -64,9 +66,4 @@ if(NO_SDL)
 else()
     find_package(OpenGL)
     target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL2_image SDL2_ttf SDL2 SDL2main)
-endif()
-
-if(TEST386)
-    add_compile_definitions(TEST386)
-    message(STATUS "Run test386 suite.")
 endif()

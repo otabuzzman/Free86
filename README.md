@@ -15,16 +15,13 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   ```
   git clone https://github.com/otabuzzman/Free86.git ; cd Free86
   
-  # build for Linos boot
-  cmake -DNO_SDL=ON -DTEST386=OFF -G "Unix Makefiles" .
-  
-  # build for Test386 suite (see comment on setup below)
-  cmake -DNO_SDL=ON -DTEST386=ON -G "Unix Makefiles" .
+  # build for Linos boot and Test386 suite (see comment on setup below)
+  cmake -G "Unix Makefiles" .
   
   # compile...
   make
-  # ...and run
-  exe/free86
+  # ...and run Linos
+  exe/linos
   
   # compile and run with Swift toolchain
   swift run -c release linos
@@ -40,16 +37,13 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   ```
   git clone https://github.com/otabuzzman/Free86.git ; cd Free86
   
-  # build for Linos boot
-  cmake -DNO_SDL=ON -DTEST386=OFF -G "NMake Makefiles" .
-  
-  # build for Test386 suite (see comment on setup below)
-  cmake -DNO_SDL=ON -DTEST386=ON -G "NMake Makefiles" .
+  # build for Linos boot and Test386 suite (see comment on setup below)
+  cmake -G "NMake Makefiles" .
   
   # compile...
   nmake
-  # ...and run 
-  exe\free86
+  # ...and run Linos
+  exe\linos
   
   # compile and run with Swift toolchain
   swift run -c release linos
@@ -77,7 +71,7 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   cd ../Free86
   
   # run suite and capture results
-  exe/free86 >test386-EE-reference.txt
+  exe/test386 >test386-EE-reference.txt
   
   # run suite with Swift toolchain
   swift run -c release test386 >test386-EE-reference.txt
