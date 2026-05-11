@@ -339,7 +339,7 @@ extension Free86 {
         osmSrc = bits & Eflags.sFlagsMask()
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
-        df = 1 - Int32(2 * ((bits >> 10) & 1))
+        df = 1 - Int32(2 * ((bits >> EflagsFlag.DF.rawValue) & 1))
         eflags = (eflags & ~mask) | (bits & mask)
     }
 }
