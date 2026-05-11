@@ -7,7 +7,7 @@
 #endif
 
 #include "ringbuffer.h"
-#include "lib/free86.h"
+#include "../free86.h"
 
 class WiredCPU;
 

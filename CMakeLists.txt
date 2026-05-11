@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(free86)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/exe)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/exe)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
@@ -52,15 +53,15 @@ else()
     message("System not supported.")
 endif()
 
-file(GLOB srclib "src/lib/*.h" "src/lib/*.cpp")
-file(GLOB srcexe "src/ringbuffer.h" "src/main.cpp" "src/PC.h" "src/PC.cpp")
+file(GLOB srclib "src/*.h" "src/*.cpp")
+file(GLOB srcexe "src/exe/ringbuffer.h" "src/exe/main.cpp" "src/exe/PC.h" "src/exe/PC.cpp")
 
 add_library(free86 SHARED ${srclib})
 
 add_executable(linos ${srcexe})
 target_link_libraries(linos PRIVATE free86)
 
-add_executable(test386 ${srcexe} src/Test386.h)
+add_executable(test386 ${srcexe} src/exe/Test386.h)
 target_compile_definitions(test386 PUBLIC TEST386)
 target_link_libraries(test386 PRIVATE free86)
 
