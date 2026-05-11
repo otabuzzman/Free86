@@ -2,9 +2,5 @@
     "cmake.debugConfig": {
         "cwd": "${workspaceFolder}"
     },
-    "cmake.configureArgs": [
-        "-DNO_SDL=ON",
-        "-DTEST386=OFF"
-    ],
     "C_Cpp.default.cppStandard": "c++20",
 }

@@ -3,6 +3,7 @@ project(free86)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/exe)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 20)
 
 if(APPLE)
     add_compile_options(
@@ -24,11 +25,13 @@ if(APPLE)
       -Wno-unused-parameter
       -Wno-unused-private-field
       -Wno-unused-variable
+      -Wno-unused-but-set-variable
 # careful with these...
       -Wno-implicit-int-conversion
       -Wno-shadow
+      -Wno-shift-bool
       -Wno-sign-compare
-#      -Wno-sign-conversion
+      -Wno-sign-conversion
     )
     add_compile_definitions(
       _CRT_SECURE_NO_WARNINGS
@@ -49,14 +52,17 @@ else()
     message("System not supported.")
 endif()
 
-file(GLOB src "src/x86/*.h" "src/x86/*.cpp" "src/*.h" "src/*.cpp")
+file(GLOB libsrc "src/x86/*.h" "src/x86/*.cpp")
+file(GLOB exesrc "src/ringbuffer.h" "src/main.cpp" "src/PC.h" "src/PC.cpp")
 
-add_executable(linos ${src})
-set_target_properties(linos PROPERTIES CXX_STANDARD 20)
+add_library(free86 SHARED ${libsrc})
 
-add_executable(test386 ${src})
-set_target_properties(test386 PROPERTIES CXX_STANDARD 20)
+add_executable(linos ${exesrc})
+target_link_libraries(linos PRIVATE free86)
+
+add_executable(test386 ${exesrc} src/Test386.h)
 target_compile_definitions(test386 PUBLIC TEST386)
+target_link_libraries(test386 PRIVATE free86)
 
 option(NO_SDL "Disable SDL support" ON)
 
