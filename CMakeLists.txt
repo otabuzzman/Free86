@@ -52,15 +52,15 @@ else()
     message("System not supported.")
 endif()
 
-file(GLOB libsrc "src/x86/*.h" "src/x86/*.cpp")
-file(GLOB exesrc "src/ringbuffer.h" "src/main.cpp" "src/PC.h" "src/PC.cpp")
+file(GLOB srclib "src/lib/*.h" "src/lib/*.cpp")
+file(GLOB srcexe "src/ringbuffer.h" "src/main.cpp" "src/PC.h" "src/PC.cpp")
 
-add_library(free86 SHARED ${libsrc})
+add_library(free86 SHARED ${srclib})
 
-add_executable(linos ${exesrc})
+add_executable(linos ${srcexe})
 target_link_libraries(linos PRIVATE free86)
 
-add_executable(test386 ${exesrc} src/Test386.h)
+add_executable(test386 ${srcexe} src/Test386.h)
 target_compile_definitions(test386 PUBLIC TEST386)
 target_link_libraries(test386 PRIVATE free86)
 
