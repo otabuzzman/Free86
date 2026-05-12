@@ -49,6 +49,7 @@ elseif(WIN32)
     add_compile_options(
       /W4
     )
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 else()
     message("System not supported.")
 endif()
@@ -65,6 +66,8 @@ add_executable(test386 ${srcexe} src/exe/Test386.h)
 target_compile_definitions(test386 PUBLIC TEST386)
 target_link_libraries(test386 PRIVATE free86)
 
+set_target_properties(linos test386 PROPERTIES LINKER_LANGUAGE CXX)
+
 option(NO_SDL "Disable SDL support" ON)
 
 if(NO_SDL)
@@ -72,5 +75,5 @@ if(NO_SDL)
     message(STATUS "SDL support disabled.")
 else()
     find_package(OpenGL)
-    target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} SDL2_image SDL2_ttf SDL2 SDL2main)
+    target_link_libraries(linos PRIVATE ${OPENGL_LIBRARIES} SDL2_image SDL2_ttf SDL2 SDL2main)
 endif()
