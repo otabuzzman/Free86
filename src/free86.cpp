@@ -2471,7 +2471,7 @@ void Free86::aux_RETF(bool o32, uint32_t release_stack_items) {
     }
 }
 void Free86::return_real__v86(bool o32, bool is_iret, uint32_t release_stack_items) {
-    uint32_t cs, esp, home_eip, home_eflags;
+    uint32_t cs, esp, home_eip, home_eflags = 0;
     esp = regs[4];
     SS_base = segs[2].shadow.base;
     SS_mask = 0xffff;

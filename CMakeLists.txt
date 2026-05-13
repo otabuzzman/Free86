@@ -35,19 +35,33 @@ if(APPLE)
       -Wno-sign-conversion
     )
     add_compile_definitions(
-      _CRT_SECURE_NO_WARNINGS
+      _CRT_SECURE_NO_WARNINGS # disable deprecation of `gmtime', `fopen'
     )
 elseif(LINUX)
     add_compile_options(
       -Wall
+      -Wno-sign-compare
+      -Wno-unused-variable
+      -Wno-unused-but-set-variable
     )
 elseif(CYGWIN)
     add_compile_options(
       -Wall
+      -Wno-sign-compare
+      -Wno-unused-variable
+      -Wno-unused-but-set-variable
     )
 elseif(WIN32)
     add_compile_options(
       /W4
+      /wd4018 # Konflikt zwischen "signed" und "unsigned"
+      /wd4100 # Unreferenzierter formaler Parameter
+      /wd4189 # Lokale Variable ist initialisiert aber nicht referenziert
+      /wd4244 # Konvertierung von "uint64_t" in "uint32_t", möglicher Datenverlust
+      /wd4267 # Konvertierung von "size_t" nach "uint32_t", Datenverlust möglich
+      /wd4389 # Konflikt zwischen "signed" und "unsigned"
+      /wd4458 # Deklaration blendet Klassenmember aus
+      /wd4996 # This function or variable may be unsafe
     )
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 else()
@@ -60,11 +74,11 @@ file(GLOB srcexe "src/exe/ringbuffer.h" "src/exe/main.cpp" "src/exe/PC.h" "src/e
 add_library(free86 SHARED ${srclib})
 
 add_executable(linos ${srcexe})
-target_link_libraries(linos PRIVATE free86)
+target_link_libraries(linos free86)
 
 add_executable(test386 ${srcexe} src/exe/Test386.h)
-target_compile_definitions(test386 PUBLIC TEST386)
-target_link_libraries(test386 PRIVATE free86)
+target_compile_definitions(test386 PRIVATE TEST386)
+target_link_libraries(test386 free86)
 
 set_target_properties(linos test386 PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -75,5 +89,5 @@ if(NO_SDL)
     message(STATUS "SDL support disabled.")
 else()
     find_package(OpenGL)
-    target_link_libraries(linos PRIVATE ${OPENGL_LIBRARIES} SDL2_image SDL2_ttf SDL2 SDL2main)
+    target_link_libraries(linos ${OPENGL_LIBRARIES} SDL2_image SDL2_ttf SDL2 SDL2main)
 endif()

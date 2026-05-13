@@ -37,7 +37,7 @@ size_t PC::load(std::string path, uint32_t offset)
     auto buffer = new uint8_t[size];
     auto _ = fread(buffer, size, 1, f);
 
-    printf("load %lu bytes at 0x%x\n", size, offset);
+    printf("load %zu bytes at 0x%x\n", size, offset);
     for (size_t i = 0; i < size; i++) {
         cpu->st8_direct(offset + i, buffer[i]);
     }
