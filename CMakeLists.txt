@@ -54,14 +54,14 @@ elseif(CYGWIN)
 elseif(WIN32)
     add_compile_options(
       /W4
-      /wd4018 # Konflikt zwischen "signed" und "unsigned"
-      /wd4100 # Unreferenzierter formaler Parameter
-      /wd4189 # Lokale Variable ist initialisiert aber nicht referenziert
-      /wd4244 # Konvertierung von "uint64_t" in "uint32_t", möglicher Datenverlust
-      /wd4267 # Konvertierung von "size_t" nach "uint32_t", Datenverlust möglich
-      /wd4389 # Konflikt zwischen "signed" und "unsigned"
-      /wd4458 # Deklaration blendet Klassenmember aus
-      /wd4996 # This function or variable may be unsafe
+      /wd4018 # signed/unsigned mismatch
+      /wd4100 # unreferenced parameter
+      /wd4189 # local variable is initialized but not referenced
+      /wd4244 # possible loss of data uint64_t to uint32_t
+      /wd4267 # possible loss of data size_t  to uint32_t
+      /wd4389 # signed/unsigned mismatch
+      /wd4458 # declaration of 'identifier' hides class member
+      /wd4996 # function or variable may be unsafe
     )
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 else()

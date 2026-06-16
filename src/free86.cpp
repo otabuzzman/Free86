@@ -72,7 +72,7 @@ void Free86::obtain_opcode() {
     if ((page_offset + n) > 4096) { // instruction extends page boundary
         far = far_start = memory_size; // point FAR to buffer on top of memory
         for (u = 0; u < n; u++) { // copy instruction bytewise to buffer
-            lax = eip_linear + u;   // paged memory functions expect address in LAX
+            lax = eip_linear + u; // paged memory functions expect address in LAX
             st8_direct(far + u, ld8_readonly_cpl3()); // copy [LAX] to physical [FAR]
         }
         far++; // adjust FAR for upcomming fetches from buffer

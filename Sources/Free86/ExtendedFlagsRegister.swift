@@ -6,8 +6,8 @@ enum EflagsFlag: Int {
     case AF = 4
     case ZF = 6
     case SF = 7
-    case TF = 8  // systems flag
-    case IF = 9  // systems flag
+    case TF = 8   // systems flag
+    case IF = 9   // systems flag
     case DF = 10  // control flag
     case OF = 11
     case NT = 14  // systems flag
