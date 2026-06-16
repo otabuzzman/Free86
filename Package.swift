@@ -18,6 +18,10 @@ let package = Package(
             name: "test386",
             targets: ["test386"]
         ),
+        .executable(
+            name: "testINT",
+            targets: ["testINT"]
+        ),
         .library(
             name: "Free86",
             targets: ["Free86"],
@@ -39,6 +43,16 @@ let package = Package(
         ),
         .executableTarget(
             name: "test386",
+            dependencies: ["Free86"],
+            sources: [
+                "main.swift",
+            ],
+            swiftSettings: [
+                .define("DEBUG", .when(configuration: .debug)),
+            ],
+        ),
+        .executableTarget(
+            name: "testINT",
             dependencies: ["Free86"],
             sources: [
                 "main.swift",

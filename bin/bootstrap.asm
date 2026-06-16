@@ -94,7 +94,7 @@ GDTR:
     dd C_SEG_REAL * 16 + GDT_alpha ; base
 
 ; ----------------------------------------------------------------
-;   fill-in NOPs until 0xfff0 where execution starts after reset
+; fill-in NOPs until 0xfff0 where execution starts after reset
 ; ----------------------------------------------------------------
 times 0xfff0-($-$$) nop
 
