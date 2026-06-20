@@ -1,5 +1,8 @@
 extension Free86: PagedMemory {
     func ld8ReadonlyCplX() throws -> Byte {
+        if cr0.isRealOrV86Mode {
+            return memory.ld8(from: lax)
+        }
         var hash = tlbReadonlyCplX[lax.pageTablesIndices]
         if hash == -1 {
             try translate(lax, writable: false, user: false)
@@ -8,6 +11,9 @@ extension Free86: PagedMemory {
         return memory.ld8(from: lax ^ DWord(hash))
     }
     func ld16ReadonlyCplX() throws -> Word {
+        if cr0.isRealOrV86Mode {
+            return memory.ld16(from: lax)
+        }
         let hash = tlbReadonlyCplX[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 1) != 0) {
             var word: Word = 0
@@ -20,6 +26,9 @@ extension Free86: PagedMemory {
         return memory.ld16(from: lax ^ DWord(hash))
     }
     func ldReadonlyCplX() throws -> DWord {
+        if cr0.isRealOrV86Mode {
+            return memory.ld(from: lax)
+        }
         let hash = tlbReadonlyCplX[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
             var dword: DWord = 0
@@ -126,6 +135,10 @@ extension Free86: PagedMemory {
         return memory.ld(from: lax ^ DWord(hash))
     }
     func st8WritableCplX(byte: Byte) throws {
+        if cr0.isRealOrV86Mode {
+            memory.st8(at: lax, byte: byte)
+            return
+        }
         var hash = tlbWritableCplX[lax.pageTablesIndices]
         if hash == -1 {
             try translate(lax, writable: true, user: false)
@@ -134,6 +147,10 @@ extension Free86: PagedMemory {
         memory.st8(at: lax ^ DWord(hash), byte: byte)
     }
     func st16WritableCplX(word: Word) throws {
+        if cr0.isRealOrV86Mode {
+            memory.st16(at: lax, word: word)
+            return
+        }
         let hash = tlbWritableCplX[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 1) != 0) {
             try st8WritableCplX(byte: word.lowerHalf)
@@ -145,6 +162,10 @@ extension Free86: PagedMemory {
         }
     }
     func stWritableCplX(dword: DWord) throws {
+        if cr0.isRealOrV86Mode {
+            memory.st(at: lax, dword: dword)
+            return
+        }
         let hash = tlbWritableCplX[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
             try st16WritableCplX(word: dword)
@@ -169,6 +190,7 @@ extension Free86: PagedMemory {
     func st8WritableCpl3(byte: Byte) throws {
         if cr0.isRealOrV86Mode {
             memory.st8(at: lax, byte: byte)
+            return
         }
         var hash = tlbWritable[lax.pageTablesIndices]
         if hash == -1 {
@@ -180,6 +202,7 @@ extension Free86: PagedMemory {
     func st16WritableCpl3(word: Word) throws {
         if cr0.isRealOrV86Mode {
             memory.st16(at: lax, word: word)
+            return
         }
         let hash = tlbWritable[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 1) != 0) {
@@ -194,6 +217,7 @@ extension Free86: PagedMemory {
     func stWritableCpl3(dword: DWord) throws {
         if cr0.isRealOrV86Mode {
             memory.st(at: lax, dword: dword)
+            return
         }
         let hash = tlbWritable[lax.pageTablesIndices]
         if (((hash | Int(lax)) & 3) != 0) {
