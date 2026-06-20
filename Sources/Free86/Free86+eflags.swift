@@ -256,7 +256,8 @@ extension Free86 {
             f = ((((osmSrc >> 7) ^ (osmSrc >> 11)) | (osmSrc >> 6)) & 1) != 0
             break
         default:
-            f = (((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 : 0)) | (osmDst == 0 ? 1 : 0)) != 0
+            /// f = (((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 : 0)) | (osmDst == 0 ? 1 : 0)) != 0
+            f = (osmDst > 0) == isOF() || osmDst == 0  // simplified
             break
         }
         return f
@@ -282,7 +283,8 @@ extension Free86 {
             f = (((osmSrc >> 7) ^ (osmSrc >> 11)) & 1) != 0
             break
         default:
-            f = ((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 :0)) != 0
+            /// f = ((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 :0)) != 0
+            f = (osmDst > 0) == isOF()  // simplified
             break
         }
         return f
