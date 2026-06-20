@@ -2,7 +2,7 @@ public class Free86 {
     /// interrupt pins and data bus low byte
     public internal(set) var INTR = PinIO<Byte>()
     let NMI = PinIO<Bool>()
-    let RESET = PinIO<Bool>()
+    public let RESET = PinIO<Bool>()
 
     var _interrupt: Interrupt?
     public var interrupt: Interrupt? {

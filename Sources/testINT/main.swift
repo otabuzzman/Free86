@@ -1,9 +1,9 @@
 import Foundation
 import Free86
 
-var fileURL = URL(fileURLWithPath: "testINT.bin")
+var fileURL = URL(fileURLWithPath: "bin/testINT.bin")
 let loadAddress: DWord = 0x000f0000
-let debugPortAddress: DWord  = 0x002a
+let debugPortAddress: DWord  = 0x2a
 
 let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
 let data = try Data(contentsOf: fileURL)
@@ -14,8 +14,30 @@ for (offset, byte) in data.enumerated() {
 let io = IsolatedIO<DWord>()
 let cpu = Free86(memory: mem, io: io)
 
-let outPort = OutPort<Byte>()
-io.register(port: outPort, at: debugPortAddress)
+let debugPort = DebugPort<Byte>()
+io.register(port: debugPort, at: debugPortAddress)
+
+Task.detached {
+    while true {
+        let c = Int(getchar())
+        switch c {
+        case 105, 73:  // 'i', 'I'
+            let intr = Byte(Int.random(in: 0..<256))
+            print("INTR \(intr) ", terminator: "")
+            Task { @MainActor in
+                try await cpu.INTR.trigger(intr)
+            }
+        case 114, 82:  // 'r', 'R'
+            print("RESET")
+            Task { @MainActor in
+                try await cpu.RESET.trigger(true)
+            }
+        default:
+            break
+        }
+        if Task.isCancelled { break }
+    }
+}
 
 while true {
     let cycles = cpu.cycles + 100000
@@ -45,7 +67,7 @@ extension MemoryIO<DWord> {
     }
 }
 
-class OutPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
+class DebugPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     func rd() -> T { 0xff }
     func wr(_ iodata: T) {
         print(String(format: "%c", iodata as! CVarArg))

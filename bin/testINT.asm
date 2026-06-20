@@ -26,16 +26,16 @@ start:
     push cs
     pop ds
 
+    ; ES = 0 to have IVT at physical address 0 (ES used by stosw)
+    xor ax, ax
+    mov es, ax
+
     lidt [idtr]
 
     ; fill IVT with 256 ISRs
     xor di, di
     mov si, ivt
     mov cx, 256
-
-    ; ES = 0 to have IVT at physical address 0 (ES used by stosw)
-    xor ax, ax
-    mov es, ax
 
 .setup_ivt:
     lodsw
@@ -47,7 +47,7 @@ start:
     sti
 
 .loop:
-    hlt                 ; wait for next INT/ NMI
+    nop                 ; wait for next INT/ NMI
     jmp .loop
 
 idtr:
