@@ -16,6 +16,7 @@ cpu 386
 bits 16
 start:
     cli
+    cld
 
     ; set stack
     xor ax, ax
@@ -30,9 +31,7 @@ start:
     xor ax, ax
     mov es, ax
 
-    lidt [idtr]
-
-    ; fill IVT with 256 ISRs
+    ; copy IVT to physical address 0
     xor di, di
     mov si, ivt
     mov cx, 256
@@ -43,6 +42,8 @@ start:
     mov ax, cs
     stosw
     loop .setup_ivt
+
+    lidt [idtr]
 
     sti
 

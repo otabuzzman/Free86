@@ -70,6 +70,6 @@ extension MemoryIO<DWord> {
 class DebugPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     func rd() -> T { 0xff }
     func wr(_ iodata: T) {
-        print(String(format: "%c", iodata as! CVarArg))
+        print(String(format: "%d", iodata as! CVarArg))
     }
 }
