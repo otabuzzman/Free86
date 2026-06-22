@@ -86,7 +86,9 @@ public class Free86 {
     var opcode = Opcode(0)   // sort of fetch data register (FDR, aka MDR)
 
     /// direction flag (used by string instructions)
-    var df: Int32 = 0  // values 1/ -1 reflect EFLAGS.DF false/ true
+    var df: Int32 {  // values 1/ -1 reflect EFLAGS.DF false/ true
+        eflags.isFlagRaised(EflagsFlag.DF) ? -1 : 1
+    }
 
     var cyclesRequested: QWord = 0
     var cyclesRemaining: QWord = 0

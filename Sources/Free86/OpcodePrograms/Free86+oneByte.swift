@@ -1696,12 +1696,12 @@ extension Free86 {
     }
     /// 0xfc  CLD
     func Oxfc() throws -> Result<Resume, Never> {
-        df = 1
+        eflags.setFlag(.DF, .zero)
         return .success(.endFetchLoop)
     }
     /// 0xfd  STD
     func Oxfd() throws -> Result<Resume, Never> {
-        df = -1
+        eflags.setFlag(.DF)
         return .success(.endFetchLoop)
     }
     /// 0xfa  CLI
