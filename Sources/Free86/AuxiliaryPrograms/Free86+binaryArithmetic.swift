@@ -169,7 +169,7 @@ extension Free86 {
         let mr = multiplier.signExtendedByte
         u = md &* mr
         osmDst = u.signExtendedByte
-        osmSrc = (u != osmDst) ? 1 : 0
+        osmSrc = u != osmDst ? 1 : 0
         osm = 21
     }
     func aux16Imul(_ multiplicand: DWord, _ multiplier: DWord) {
@@ -177,7 +177,7 @@ extension Free86 {
         let mr = multiplier.signExtendedWord
         u = md &* mr
         osmDst = u.signExtendedWord
-        osmSrc = (u != osmDst) ? 1 : 0
+        osmSrc = u != osmDst ? 1 : 0
         osm = 22
     }
     func auxImul(_ multiplicand: DWord, _ multiplier: DWord) {

@@ -223,7 +223,7 @@ class PIT {
         self.pit_channels = [PITChannel(), PITChannel(), PITChannel()]
         for slot in 0..<3 {
             pit_channels[slot].mode = 3
-            pit_channels[slot].gate = (slot != 2) ? 1 : 0
+            pit_channels[slot].gate = slot != 2 ? 1 : 0
             pit_channels[slot].pit_load_count(0)
         }
     }
