@@ -14,7 +14,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -24,7 +24,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
         }
     }
     func auxOutsb() throws {
@@ -43,7 +43,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld8ReadonlyCpl3())
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -53,7 +53,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld8ReadonlyCpl3())
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
         }
     }
     func auxMovsb() throws {
@@ -71,8 +71,8 @@ extension Free86 {
             u = DWord(try ld8ReadonlyCpl3())
             lax = la
             try st8WritableCpl3(byte: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -82,8 +82,8 @@ extension Free86 {
             u = DWord(try ld8ReadonlyCpl3())
             lax = la
             try st8WritableCpl3(byte: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
         }
     }
     func auxStosb() throws {
@@ -96,7 +96,7 @@ extension Free86 {
                 return
             }
             try st8WritableCpl3(byte: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -104,7 +104,7 @@ extension Free86 {
             }
         } else {
             try st8WritableCpl3(byte: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
         }
     }
     func auxCmpsb() throws {
@@ -124,8 +124,8 @@ extension Free86 {
             lax = la
             v = DWord(try ld8ReadonlyCpl3())
             calculate8(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -145,8 +145,8 @@ extension Free86 {
             lax = la
             v = DWord(try ld8ReadonlyCpl3())
             calculate8(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
         }
     }
     func auxLodsb() throws {
@@ -161,7 +161,7 @@ extension Free86 {
             }
             u = DWord(try ld8ReadonlyCpl3())
             regs[.EAX] = (regs[.EAX] & 0xffffff00) | u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -170,7 +170,7 @@ extension Free86 {
         } else {
             u = DWord(try ld8ReadonlyCpl3())
             regs[.EAX] = (regs[.EAX] & 0xffffff00) | u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
         }
     }
     func auxScasb() throws {
@@ -185,7 +185,7 @@ extension Free86 {
             }
             u = DWord(try ld8ReadonlyCpl3())
             calculate8(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -203,7 +203,7 @@ extension Free86 {
         } else {
             u = DWord(try ld8ReadonlyCpl3())
             calculate8(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 0)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
         }
     }
     func auxInsw() throws {
@@ -221,7 +221,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -231,7 +231,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func auxOutsw() throws {
@@ -250,7 +250,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -260,7 +260,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
         }
     }
     func auxMovsw() throws {
@@ -278,8 +278,8 @@ extension Free86 {
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
             try st16WritableCpl3(word: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -289,8 +289,8 @@ extension Free86 {
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
             try st16WritableCpl3(word: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func auxStosw() throws {
@@ -303,7 +303,7 @@ extension Free86 {
                 return
             }
             try st16WritableCpl3(word: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -311,7 +311,7 @@ extension Free86 {
             }
         } else {
             try st16WritableCpl3(word: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func auxCmpsw() throws {
@@ -331,8 +331,8 @@ extension Free86 {
             lax = la
             v = DWord(try ld16ReadonlyCpl3())
             calculate16(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -352,8 +352,8 @@ extension Free86 {
             lax = la
             v = DWord(try ld16ReadonlyCpl3())
             calculate16(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func auxLodsw() throws {
@@ -368,7 +368,7 @@ extension Free86 {
             }
             u = DWord(try ld16ReadonlyCpl3())
             regs[.EAX] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -377,7 +377,7 @@ extension Free86 {
         } else {
             u = DWord(try ld16ReadonlyCpl3())
             regs[.EAX] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
         }
     }
     func auxScasw() throws {
@@ -392,7 +392,7 @@ extension Free86 {
             }
             u = DWord(try ld16ReadonlyCpl3())
             calculate16(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -410,7 +410,7 @@ extension Free86 {
         } else {
             u = DWord(try ld16ReadonlyCpl3())
             calculate16(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func aux16Ins() throws {
@@ -428,7 +428,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -438,7 +438,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try st8WritableCpl3(byte: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func aux16Outs() throws {
@@ -457,7 +457,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -467,7 +467,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = DWord(try ld16ReadonlyCpl3())
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
         }
     }
     func aux16Movs() throws {
@@ -485,8 +485,8 @@ extension Free86 {
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
             try st16WritableCpl3(word: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -496,8 +496,8 @@ extension Free86 {
             u = DWord(try ld16ReadonlyCpl3())
             lax = la
             try st16WritableCpl3(word: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func aux16Stos() throws {
@@ -510,7 +510,7 @@ extension Free86 {
                 return
             }
             try st16WritableCpl3(word: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -518,7 +518,7 @@ extension Free86 {
             }
         } else {
             try st16WritableCpl3(word: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func aux16Cmps() throws {
@@ -538,8 +538,8 @@ extension Free86 {
             lax = la
             v = DWord(try ld16ReadonlyCpl3())
             calculate16(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -559,8 +559,8 @@ extension Free86 {
             lax = la
             v = DWord(try ld16ReadonlyCpl3())
             calculate16(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func aux16Lods() throws {
@@ -575,7 +575,7 @@ extension Free86 {
             }
             u = DWord(try ld16ReadonlyCpl3())
             regs[.EAX] = (regs[.EAX] & 0xffff0000) | u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -584,7 +584,7 @@ extension Free86 {
         } else {
             u = DWord(try ld16ReadonlyCpl3())
             regs[.EAX] = (regs[.EAX] & 0xffff0000) | u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
         }
     }
     func aux16Scas() throws {
@@ -599,7 +599,7 @@ extension Free86 {
             }
             u = DWord(try ld16ReadonlyCpl3())
             calculate16(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -617,7 +617,7 @@ extension Free86 {
         } else {
             u = DWord(try ld16ReadonlyCpl3())
             calculate16(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 1)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
         }
     }
     func auxInsd() throws {
@@ -635,7 +635,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try stWritableCpl3(dword: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -645,7 +645,7 @@ extension Free86 {
             u = io?[edx] ?? 0
             lax = segs[.ES].shadow.base &+ (edi & mask)
             try stWritableCpl3(dword: u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
         }
     }
     func auxOutsd() throws {
@@ -664,7 +664,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = try ldReadonlyCpl3()
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -674,7 +674,7 @@ extension Free86 {
             lax = segs[sreg].shadow.base &+ (esi & mask)
             u = try ldReadonlyCpl3()
             io?[edx] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
         }
     }
     func auxMovsd() throws {
@@ -692,8 +692,8 @@ extension Free86 {
             u = try ldReadonlyCpl3()
             lax = la
             try stWritableCpl3(dword: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -703,8 +703,8 @@ extension Free86 {
             u = try ldReadonlyCpl3()
             lax = la
             try stWritableCpl3(dword: u)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
         }
     }
     func auxStosd() throws {
@@ -717,7 +717,7 @@ extension Free86 {
                 return
             }
             try stWritableCpl3(dword: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -725,7 +725,7 @@ extension Free86 {
             }
         } else {
             try stWritableCpl3(dword: regs[.EAX])
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
         }
     }
     func auxCmpsd() throws {
@@ -745,8 +745,8 @@ extension Free86 {
             lax = la
             v = try ldReadonlyCpl3()
             calculate(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -766,8 +766,8 @@ extension Free86 {
             lax = la
             v = try ldReadonlyCpl3()
             calculate(u, v)
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
         }
     }
     func auxLodsd() throws {
@@ -782,7 +782,7 @@ extension Free86 {
             }
             u = try ldReadonlyCpl3()
             regs[.EAX] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
             if (ecx & mask) != 0 {
@@ -791,7 +791,7 @@ extension Free86 {
         } else {
             u = try ldReadonlyCpl3()
             regs[.EAX] = u
-            regs[.ESI] = (esi & ~mask) | ((esi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
         }
     }
     func auxScasd() throws {
@@ -806,7 +806,7 @@ extension Free86 {
             }
             u = try ldReadonlyCpl3()
             calculate(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
              if ipr.isFlagRaised(.repzStringOperation) {
@@ -824,7 +824,7 @@ extension Free86 {
         } else {
             u = try ldReadonlyCpl3()
             calculate(regs[.EAX], u)
-            regs[.EDI] = (edi & ~mask) | ((edi &+ (DWord(bitPattern: df) << 2)) & mask)
+            regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
         }
     }
 }
