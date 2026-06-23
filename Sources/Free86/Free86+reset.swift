@@ -1,6 +1,6 @@
 extension Free86 {
     func reset() {
-        /// chip state (PM (1986), 10.1, Intel 64 IA-32 SDM, Vol. 3A, 11.1.1)
+        /// processor state after reset or power-on (PM (1986), 10.1, Intel 64 IA-32 SDM, Vol. 3A, 11.1.1)
         for r in 0..<regs.count {
             regs[r] = .init(0)
         }
@@ -16,8 +16,5 @@ extension Free86 {
 
         cr0 = 0
         cr0.setFlag(.ET)  // 80387 present (Vol. 3A, p. 2-16)
-
-        /// emulator state
-        halted = false
     }
 }

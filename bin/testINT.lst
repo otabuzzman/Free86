@@ -23,25 +23,25 @@
     23 00000004 8ED0                        mov ss, ax
     24 00000006 BC007C                      mov sp, 0x7c00
     25                                  
-    26                                      ; DS = CS for accessing interrupt tables and service routines
+    26                                      ; set data to point at code segment
     27 00000009 0E                          push cs
     28 0000000A 1F                          pop ds
     29                                  
-    30                                      ; ES = 0 to have IVT at physical address 0 (ES used by stosw)
+    30                                      ; set ES (stosw) to point at physical address 0
     31 0000000B 31C0                        xor ax, ax
     32 0000000D 8EC0                        mov es, ax
     33                                  
     34                                      ; copy IVT to physical address 0
-    35 0000000F 31FF                        xor di, di
-    36 00000011 BE[2D00]                    mov si, ivt
+    35 0000000F 31FF                        xor di, di          ; destination ES:di (stosw)
+    36 00000011 BE[2D00]                    mov si, ivt         ; source DS:si (lodsw)
     37 00000014 B90001                      mov cx, 256
     38                                  
-    39                                  .setup_ivt:
+    39                                  .copy_ivt:
     40 00000017 AD                          lodsw
     41 00000018 AB                          stosw
     42 00000019 8CC8                        mov ax, cs
     43 0000001B AB                          stosw
-    44 0000001C E2F9                        loop .setup_ivt
+    44 0000001C E2F9                        loop .copy_ivt
     45                                  
     46 0000001E 0F011E[2700]                lidt [idtr]
     47                                  
