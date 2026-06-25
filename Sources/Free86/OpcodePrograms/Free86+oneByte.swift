@@ -1638,6 +1638,7 @@ extension Free86 {
     /// 0xcf  IRET
     func Oxcf() throws -> Result<Resume, Never> {
         try auxIret(!ipr.isFlagRaised(.operandSizeOverride))
+        ifr.decrement(.current)
         return .success(.endOnInterrupt)
     }
     /// 0x90  NOP

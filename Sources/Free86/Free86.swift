@@ -20,7 +20,7 @@ public class Free86 {
     /// The Interrupts in-flight register (IFR) indicates hardware interrupt handlers
     /// in execution (active). IFR is specific to this emulator and not part of the
     /// genuine processor architecture.
-    var ifr = InterruptsInFlightRegister(0)
+    var ifr = InterruptsInFlightRegister()
 
     let io: IsolatedIO<DWord>?
 

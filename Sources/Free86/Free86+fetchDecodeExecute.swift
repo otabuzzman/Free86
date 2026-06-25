@@ -10,14 +10,20 @@ extension Free86 {
             }
             /// internal interrupt, exception, or fault
             if let interrupt = self.interrupt {
+                ifr.increment(.internal)
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
-            if await NMI.pending {
+            if await NMI.pending
+                && ifr.noHigherPriority(than: .NMI) {
+                ifr.increment(.NMI)
                 halted = false
                 _ = try await NMI.probe()
                 try raiseInterrupt(2, 0, false, 0)
             }
-            if await INTR.pending && eflags.isFlagRaised(.IF) {
+            if await INTR.pending
+                && ifr.noHigherPriority(than: .INTR)
+                && eflags.isFlagRaised(.IF) {
+                ifr.increment(.INTR)
                 halted = false
                 let id = try await INTR.probe()
                 try raiseInterrupt(id, 0, false, 0)
