@@ -1,9 +1,10 @@
 public class Free86 {
-    /// interrupt pins
+    /// hardware interrupts (pins)
     public internal(set) var INTR = PinIO<Byte>()
     public let NMI = PinIO<Bool>()
     public let RESET = PinIO<Bool>()
 
+    /// internal interrupts (exceptions)
     var _interrupt: Interrupt?
     public var interrupt: Interrupt? {
         get {
@@ -13,6 +14,14 @@ public class Free86 {
         }
         set { _interrupt = newValue }
     }
+
+    /// Interrupts in-flight register
+    ///
+    /// The Interrupts in-flight register (IFR) indicates hardware interrupt handlers
+    /// in execution (active). IFR is specific to this emulator and not part of the
+    /// genuine processor architecture.
+    var ifr = InterruptsInFlightRegister(0)
+
     let io: IsolatedIO<DWord>?
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
@@ -125,8 +134,8 @@ public class Free86 {
     /// The operand size mode (OSM) of an instruction defines how each status flag modified by
     /// the instruction is calculated from the source and destination operands of the instruction.
     /// Instructions with multiple operand sizes may have multiple OSM or share an OSM with some
-    /// or all sizes. OSM is specific to this emulator and not part of the processor architecture,
-    /// from which it was derived. There are 31 OSMs, which are encoded by integers 0 to 30.
+    /// or all sizes. OSM is specific to this emulator and not part of the genuine processor
+    /// architecture. There are 31 OSMs, which are encoded by integers 0 to 30.
     //                           +-------+----+----+-----------+
     //                           |  (implicit) OSM             |
     // +-------------+-----------+-------+----+----+-----------+----+----+----+----+----+----+
@@ -200,8 +209,7 @@ public class Free86 {
     ///
     /// The instruction prefix register (IPR) captures the instruction prefixes
     /// of the current fetch cycle, each in its own bit. IPR is specific to
-    /// this emulator and not part of the processor architecture, from which
-    /// it was derived.
+    /// this emulator and not part of the genuine processor architecture.
     // 0x0001 ES segment override prefix    (0x26)
     // 0x0002 CS segment override prefix    (0x2e)
     // 0x0003 SS segment override prefix    (0x36)
