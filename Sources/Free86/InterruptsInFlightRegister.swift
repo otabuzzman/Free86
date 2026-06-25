@@ -1,6 +1,6 @@
 public typealias InterruptsInFlightRegister = DWord
 
-enum InterruptsInFlightRegisterFlag {
+enum InterruptsInFlightRegisterFlag: Int {
     case `internal`
     case NMI
     case INTR

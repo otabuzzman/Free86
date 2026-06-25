@@ -12,7 +12,7 @@ func interruptsInFlightRegisterFlagsPositions() {
 
 @Test("interrupts in-flight register set/ check flags")
 func interruptsInFlightRegisterCheckFlags() {
-    let ifr = InterruptsInFlightRegister(0b1010)
+    var ifr = InterruptsInFlightRegister(0b1010)
     #expect(ifr.isFlagRaised(.software) == true)
     #expect(ifr.isFlagRaised(.NMI) == true)
     #expect(ifr.isFlagRaised(.INTR) == false)
@@ -26,12 +26,13 @@ func interruptsInFlightRegisterCheckFlags() {
 @Test("interrupts in-flight priority checks",
     arguments: [
         (ifr: 0b0000 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.software, expected: false),
-        (ifr: 0b0001 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.software, expected: false),
-        (ifr: 0b0010 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.software, expected: false),
+        (ifr: 0b0001 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.internal, expected: false),
+        (ifr: 0b0010 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.NMI, expected: false),
+        (ifr: 0b0010 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.INTR, expected: true),
         (ifr: 0b1000 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.software, expected: false),
         (ifr: 0b0011 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.software, expected: true),
         (ifr: 0b1010 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.software, expected: true),
-        (ifr: 0b1111 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.internal, expected: true)
+        (ifr: 0b1111 as InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag.software, expected: true)
     ]
 )
 func interruptsInFlightRegisterPriorityChecks(tuple: (ifr: InterruptsInFlightRegister, flag: InterruptsInFlightRegisterFlag, expected: Bool)) {
