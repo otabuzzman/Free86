@@ -27,11 +27,11 @@ Task.detached {
             Task { @MainActor in
                 try await cpu.INTR.trigger(intr)
             }
-//        case 110, 78:  // 'n', 'N'
-//            print("NMI ", terminator: "")
-//            Task { @MainActor in
-//                try await cpu.NMI.trigger(true)
-//            }
+        case 110, 78:  // 'n', 'N'
+            print("NMI ", terminator: "")
+            Task { @MainActor in
+                try await cpu.NMI.trigger(true)
+            }
         case 114, 82:  // 'r', 'R'
             print("RESET")
             Task { @MainActor in

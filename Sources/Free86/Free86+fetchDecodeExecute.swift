@@ -5,11 +5,17 @@ extension Free86 {
                 halted = false
                 _ = try await RESET.probe()
                 reset()
+                _ = try? await NMI.probe()
                 _ = try? await INTR.probe()
             }
             /// internal interrupt, exception, or fault
             if let interrupt = self.interrupt {
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
+            }
+            if await NMI.pending {
+                halted = false
+                _ = try await NMI.probe()
+                try raiseInterrupt(2, 0, false, 0)
             }
             if await INTR.pending && eflags.isFlagRaised(.IF) {
                 halted = false
