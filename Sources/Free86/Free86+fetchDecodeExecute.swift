@@ -7,14 +7,26 @@ extension Free86 {
                 reset()
                 _ = try? await NMI.probe()
                 _ = try? await INTR.probe()
+                ifr.reset()
             }
-            /// internal interrupt, exception, or fault
+            /// internal exception or fault
             if let interrupt = self.interrupt {
-                ifr.increment(.internal)
+                guard
+                    3 > ifr.increment(.internal)  // triple exception
+                else {
+                    reset()
+                    _ = try? await NMI.probe()
+                    _ = try? await INTR.probe()
+                    ifr.reset()
+                    return
+                }
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
             if await NMI.pending {
-                if ifr.noHigherPriority(than: .NMI) {
+                if ifr.isRaised(.NMI) {
+                    _ = try await NMI.probe()  // block nested
+                } else {
+                    ifr.noHigherPriority(than: .NMI) {
                     ifr.increment(.NMI)
                     halted = false
                     _ = try await NMI.probe()

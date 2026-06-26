@@ -5,7 +5,7 @@ struct InterruptsInFlightRegister {
         case INTR
         case current  // pseudo interrupt
     }
-    var storage: [InterruptsInFlightRegister.Name: Int] = [
+    var ifr: [InterruptsInFlightRegister.Name: Int] = [
         .`internal`: 0,
         .NMI:  0,
         .INTR: 0
@@ -16,23 +16,32 @@ struct InterruptsInFlightRegister {
 extension InterruptsInFlightRegister {
     func isRaised(_ name: InterruptsInFlightRegister.Name) -> Bool {
         guard name != .current else { return false }
-        return storage[name]! > 0
+        return ifr[name]! > 0
     }
-    mutating func increment(_ name: InterruptsInFlightRegister.Name) {
+    @discardableResult
+    mutating func increment(_ name: InterruptsInFlightRegister.Name) -> Int {
         var effective = name
         if name == .current {
             guard let current = current else { return }
             effective = current
         }
-        storage[effective]! += 1
+        ifr[effective]! += 1
+        return ifr[effective]!
     }
-    mutating func decrement(_ name: InterruptsInFlightRegister.Name) {
+    @discardableResult
+    mutating func decrement(_ name: InterruptsInFlightRegister.Name) -> Int {
         var effective = name
         if name == .current {
             guard let current = current else { return }
             effective = current
         }
-        storage[effective]! -= 1
+        ifr[effective]! -= 1
+        return ifr[effective]!
+    }
+    mutating func reset() {
+        ifr[.internal]! = 0
+        ifr[.NMI]!  = 0
+        ifr[.INTR]! = 0
     }
     private var current: InterruptsInFlightRegister.Name? {
         var result: InterruptsInFlightRegister.Name? = nil
