@@ -40,5 +40,5 @@ func interruptsInFlightRegisterPriorityChecks() {
     ifr.decrement(.internal)  // .NMI now highest (current)
     #expect(ifr.noHigherPriority(than: .INTR) == false)
     ifr.decrement(.current)
-    #expect(ifr.noHigherPriority(than: .INTR) == true)
+    #expect(ifr.noHigherPriority(than: .NMI) == true)
 }

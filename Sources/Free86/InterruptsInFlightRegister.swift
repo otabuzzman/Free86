@@ -35,7 +35,7 @@ extension InterruptsInFlightRegister {
         storage[effective]! -= 1
     }
     private var current: InterruptsInFlightRegister.Name? {
-        var result = nil
+        var result: InterruptsInFlightRegister.Name? = nil
         if isRaised(.internal) { result = .internal }
         if isRaised(.NMI)  { result = .NMI }
         if isRaised(.INTR) { result = .INTR }
