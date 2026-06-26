@@ -1641,7 +1641,7 @@ extension Free86 {
         if let current = ifr.current {
             ifr.setFlag(current, .zero)
         }
-        if ifr.isFlagRaised(.double) {
+        if ifr.isFlagRaised(.doubleFault) {
             halted = true
         }
         return .success(.endOnInterrupt)

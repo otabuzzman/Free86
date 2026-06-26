@@ -11,12 +11,12 @@ extension Free86 {
             }
             /// internal exception or fault
             if let interrupt = self.interrupt {
-                if ifr.isFlagRaised(.double) {
+                if ifr.isFlagRaised(.doubleFault) {
                     halted = true
                     return
                 }
                 if interrupt == .DF {
-                    ifr.setFlag(.double, .zero)
+                    ifr.setFlag(.doubleFault, .zero)
                 }
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
