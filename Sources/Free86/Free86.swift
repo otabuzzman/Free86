@@ -15,13 +15,6 @@ public class Free86 {
         set { _interrupt = newValue }
     }
 
-    /// Interrupts in-flight register
-    ///
-    /// The Interrupts in-flight register (IFR) indicates hardware interrupt handlers
-    /// in execution (active). IFR is specific to this emulator and not part of the
-    /// genuine processor architecture.
-    var ifr = InterruptsInFlightRegister()
-
     let io: IsolatedIO<DWord>?
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI

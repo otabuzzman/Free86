@@ -22,7 +22,7 @@ extension InterruptsInFlightRegister {
     mutating func increment(_ name: InterruptsInFlightRegister.Name) -> Int {
         var effective = name
         if name == .current {
-            guard let current = current else { return }
+            guard let current = current else { return 0 }
             effective = current
         }
         ifr[effective]! += 1
@@ -32,7 +32,7 @@ extension InterruptsInFlightRegister {
     mutating func decrement(_ name: InterruptsInFlightRegister.Name) -> Int {
         var effective = name
         if name == .current {
-            guard let current = current else { return }
+            guard let current = current else { return 0 }
             effective = current
         }
         ifr[effective]! -= 1
@@ -43,7 +43,7 @@ extension InterruptsInFlightRegister {
         ifr[.NMI]!  = 0
         ifr[.INTR]! = 0
     }
-    private var current: InterruptsInFlightRegister.Name? {
+    var current: InterruptsInFlightRegister.Name? {
         var result: InterruptsInFlightRegister.Name? = nil
         if isRaised(.internal) { result = .internal }
         if isRaised(.NMI)  { result = .NMI }
