@@ -11,14 +11,18 @@ extension Free86 {
             }
             /// internal exception or fault
             if let interrupt = self.interrupt {
-                if ifr.isFlagRaised(.doubleFault) {
-                    halted = true
-                    return
+                if ifr.isFlagRaised(.double) {  // triple fault
+                    halted = false
+                    reset()
+                    _ = try? await NMI.probe()
+                    _ = try? await INTR.probe()
+                    ifr = .init(0)
+                } else {
+                    if interrupt == .DF {
+                        ifr.setFlag(.double, .zero)
+                    }
+                    try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
                 }
-                if interrupt == .DF {
-                    ifr.setFlag(.doubleFault, .zero)
-                }
-                try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
             if await NMI.pending && !ifr.isFlagRaised(.NMI) {  // no nested NMI
                 halted = false
@@ -98,7 +102,7 @@ extension Free86 {
                         case .endCyclesLoop:
                             break cyclesLoop
                         case .endOnInterrupt:
-                            if await INTR.pending && eflags.isFlagRaised(.IF) || halted {
+                            if await INTR.pending && eflags.isFlagRaised(.IF) {
                                 break cyclesLoop
                             } else {
                                 break fetchLoop

@@ -1,9 +1,9 @@
 ; Free86/ testINT
-; - loop on wait for INT/ NMI
-; - output vector number on port 2a
+; - wait in loop for INT/ NMI
+; - output vector on port 0x2a
 ;
-; - load 64k image at segment f000
-; - interrupt vector at f000:fff0
+; - load image at segment 0xf000
+; - interrupt vector at 0xf000:0xfff0
 ;
 ; compile:
 ;   nasm -f bin testINT.asm -l testINT.lst -o testINT.bin

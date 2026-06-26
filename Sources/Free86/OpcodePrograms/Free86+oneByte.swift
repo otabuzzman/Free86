@@ -1640,9 +1640,7 @@ extension Free86 {
         try auxIret(!ipr.isFlagRaised(.operandSizeOverride))
         if let current = ifr.current {
             ifr.setFlag(current, .zero)
-        }
-        if ifr.isFlagRaised(.doubleFault) {
-            halted = true
+            ifr.setFlag(.double, .zero)
         }
         return .success(.endOnInterrupt)
     }
