@@ -1,68 +1,42 @@
-struct InterruptsInFlightRegister {
-    enum Name: Int, CaseIterable {  // in priority order
-        case `internal`
-        case NMI
-        case INTR
-        case current  // pseudo interrupt
-    }
-    var ifr: [InterruptsInFlightRegister.Name: Int] = [
-        .`internal`: 0,
-        .NMI:  0,
-        .INTR: 0
-    ]
+typealias InterruptsInFlightRegister = DWord
+
+enum InterruptsInFlightRegisterFlag: Int, CaseIterable {  // in priority order
+    case `internal`
+    case NMI
+    case INTR
+    case current  // pseudo interrupt
 }
 
-/// all force-unwraps save
 extension InterruptsInFlightRegister {
-    func isRaised(_ name: InterruptsInFlightRegister.Name) -> Bool {
-        guard name != .current else { return false }
-        return ifr[name]! > 0
+    func isFlagRaised(_ flag: InterruptsInFlightRegisterFlag) -> Bool {
+        self.isBitRaised(flag.rawValue)
     }
-    @discardableResult
-    mutating func increment(_ name: InterruptsInFlightRegister.Name) -> Int {
-        var effective = name
-        if name == .current {
-            guard let current = current else { return 0 }
-            effective = current
-        }
-        ifr[effective]! += 1
-        return ifr[effective]!
+    mutating func setFlag(_ flag: InterruptsInFlightRegisterFlag, _ value: Int = 1) {
+        self.setBit(flag.rawValue, value)
     }
-    @discardableResult
-    mutating func decrement(_ name: InterruptsInFlightRegister.Name) -> Int {
-        var effective = name
-        if name == .current {
-            guard let current = current else { return 0 }
-            effective = current
-        }
-        ifr[effective]! -= 1
-        return ifr[effective]!
-    }
-    mutating func reset() {
-        ifr[.internal]! = 0
-        ifr[.NMI]!  = 0
-        ifr[.INTR]! = 0
-    }
-    var current: InterruptsInFlightRegister.Name? {
-        var result: InterruptsInFlightRegister.Name? = nil
-        if isRaised(.internal) { result = .internal }
-        if isRaised(.NMI)  { result = .NMI }
-        if isRaised(.INTR) { result = .INTR }
-        return result
+    static func maskFlag(_ flag: InterruptsInFlightRegisterFlag) -> Self {
+        Self.bitMask(for: flag.rawValue)
     }
 }
 
 extension InterruptsInFlightRegister {
-    func noHigherPriority(than name: InterruptsInFlightRegister.Name) -> Bool {
+    func noHigherPriority(than flag: InterruptsInFlightRegisterFlag) -> Bool {
         var result = true
-        for higherPriorityInterrupt in Name.allCases {
-            if higherPriorityInterrupt.rawValue >= name.rawValue {
+        for higherPriorityInterrupt in InterruptsInFlightRegisterFlag.allCases {
+            if higherPriorityInterrupt.rawValue >= flag.rawValue {
                 break
             }
-            if isRaised(higherPriorityInterrupt) {
+            if isFlagRaised(higherPriorityInterrupt) {
                 result = false
             }
         }
+        return result
+    }
+    var current: InterruptsInFlightRegisterFlag? {
+        var result: InterruptsInFlightRegisterFlag? = nil
+        if isFlagRaised(.internal) { result = .internal }
+        if isFlagRaised(.NMI)  { result = .NMI }
+        if isFlagRaised(.INTR) { result = .INTR }
         return result
     }
 }
