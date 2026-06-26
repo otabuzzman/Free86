@@ -1638,9 +1638,11 @@ extension Free86 {
     /// 0xcf  IRET
     func Oxcf() throws -> Result<Resume, Never> {
         try auxIret(!ipr.isFlagRaised(.operandSizeOverride))
-        ifr.setFlag(ifr.current, .zero)
-        if ifr.isFlagRaised(.DF) {
-            haltet = true
+        if let current = ifr.current {
+            ifr.setFlag(current, .zero)
+        }
+        if ifr.isFlagRaised(.double) {
+            halted = true
         }
         return .success(.endOnInterrupt)
     }

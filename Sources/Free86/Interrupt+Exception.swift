@@ -36,3 +36,9 @@ extension Interrupt {
         "Interrupt id \(id), error code \(errorCode))"
     }
 }
+
+extension Interrupt {
+    static func == (lhs: Interrupt, rhs: Exception) -> Bool {
+        lhs.id == rhs.rawValue
+    }
+}

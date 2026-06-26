@@ -7,15 +7,16 @@ extension Free86 {
                 reset()
                 _ = try? await NMI.probe()
                 _ = try? await INTR.probe()
+                ifr = .init(0)
             }
             /// internal exception or fault
             if let interrupt = self.interrupt {
-                if ifr.isFlagRaised(.DF) {  // triple-fault
+                if ifr.isFlagRaised(.double) {
                     halted = true
                     return
                 }
-                if interrupt.id == Exception.DF.rawValue {
-                    ifr.setFlag(.DF, .zero)
+                if interrupt == .DF {
+                    ifr.setFlag(.double, .zero)
                 }
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
@@ -97,7 +98,7 @@ extension Free86 {
                         case .endCyclesLoop:
                             break cyclesLoop
                         case .endOnInterrupt:
-                            if await INTR.pending && eflags.isFlagRaised(.IF) || haltet {
+                            if await INTR.pending && eflags.isFlagRaised(.IF) || halted {
                                 break cyclesLoop
                             } else {
                                 break fetchLoop

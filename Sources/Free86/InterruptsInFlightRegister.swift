@@ -5,7 +5,7 @@ enum InterruptsInFlightRegisterFlag: Int, CaseIterable {
     case NMI
     case INTR
     case current  // pseudo flag
-    case DF = 8   // double fault
+    case double = 8
 }
 
 extension InterruptsInFlightRegister {
