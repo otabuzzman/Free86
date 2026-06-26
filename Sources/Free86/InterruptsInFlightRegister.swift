@@ -1,10 +1,11 @@
 typealias InterruptsInFlightRegister = DWord
 
-enum InterruptsInFlightRegisterFlag: Int, CaseIterable {  // in priority order
-    case `internal`
+enum InterruptsInFlightRegisterFlag: Int, CaseIterable {
+    case `internal`  // in priority order
     case NMI
     case INTR
-    case current  // pseudo interrupt
+    case current  // pseudo flag
+    case DF = 8   // double fault
 }
 
 extension InterruptsInFlightRegister {
