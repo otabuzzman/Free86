@@ -17,9 +17,9 @@ func interruptsInFlightRegisterCheckFlags() {
     #expect(ifr.isFlagRaised(.INTR) == false)
     #expect(ifr.isFlagRaised(.internal) == false)
     ifr.setFlag(.INTR)
-    #expect(ifr.isRaised(.INTR) == true)
+    #expect(ifr.isFlagRaised(.INTR) == true)
     ifr.setFlag(.INTR, .zero)
-    #expect(ifr.isRaised(.INTR) == false)
+    #expect(ifr.isFlagRaised(.INTR) == false)
 }
 
 @Test("interrupts in-flight priority checks")
