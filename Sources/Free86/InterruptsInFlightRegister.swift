@@ -1,6 +1,6 @@
 struct InterruptsInFlightRegister {
-    enum Name: Int, CaseIterable {
-        case `internal`  // priority order
+    enum Name: Int, CaseIterable {  // in priority order
+        case `internal`
         case NMI
         case INTR
         case current  // pseudo interrupt
@@ -35,23 +35,25 @@ extension InterruptsInFlightRegister {
         storage[effective]! -= 1
     }
     private var current: InterruptsInFlightRegister.Name? {
-        if isRaised(.internal) { return .internal }
-        if isRaised(.NMI)  { return .NMI }
-        if isRaised(.INTR) { return .INTR }
-        return nil
+        var result = nil
+        if isRaised(.internal) { result = .internal }
+        if isRaised(.NMI)  { result = .NMI }
+        if isRaised(.INTR) { result = .INTR }
+        return result
     }
 }
 
 extension InterruptsInFlightRegister {
     func noHigherPriority(than name: InterruptsInFlightRegister.Name) -> Bool {
+        var result = true
         for higherPriorityInterrupt in Name.allCases {
             if higherPriorityInterrupt.rawValue >= name.rawValue {
                 break
             }
             if isRaised(higherPriorityInterrupt) {
-                return false
+                result = false
             }
         }
-        return true
+        return result
     }
 }
