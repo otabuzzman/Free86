@@ -24,40 +24,33 @@ start:
     mov ss, ax
     mov sp, 0x7c00
 
-    mov byte [bootstrap], 0xf4 ; prepare to HLT after reset on triple fault
+    ; prepare to HLT after reset on triple fault
+    mov byte [bootstrap], 0xf4
 
     call setup_ivt
 
-    ; Test 1: Hardware Interrupt an INTR (z.B. IRQ)
-    call write_test_number      ; → 01 auf Port 0x2A
     sti
-    hlt                         ; Warte auf INTR
 
-    ; Test 2: Hardware Interrupt an NMI
-test2:
-    call write_test_number      ; → 02
-    hlt                         ; Warte auf NMI
+    ; test 1: hardware interrupt on INTR
+    hlt                         ; wait for INTR
 
-    ; Test 3: Exception (Divide by Zero)
-test3:
-    call write_test_number      ; → 03
+    ; test 2: hardware interrupt on NMI
+    hlt                         ; wait for NMI
+
+    ; test 3: divide by 0 exception (#DE)
     mov ax, 1
     xor bx, bx
-    div bx                      ; #DE Exception (Vektor 0)
+    div bx                      ; #DE
 
-    ; ================================================
-    ; Ab hier werden die Tests von den Handlern gesteuert
-    ; ================================================
+    ; test 4: nested INTR allowed (sti)
+    hlt                         ; wait for INTR
 
-; ------------------------------------------------
-; Test 4: Im INTR-Handler weiteren INTR auslösen
 intr_handler:
-    call write_test_number      ; Test 4 (wird bei verschachteltem INTR aufgerufen)
-    ; User triggert **erneut** INTR → Test 4
+    sti
+    hlt                         ; wait for nested INTR
     iret
 
-; ------------------------------------------------
-; Test 5: Im INTR-Handler CLI + weiteren INTR
+    ; test 5: Im INTR-Handler CLI + weiteren INTR
 intr_handler_cli:
     call write_test_number      ; Test 5
     cli
@@ -143,8 +136,7 @@ setup_ivt:
 
 ; INTR Haupt-Handler
 intr_handler_main:
-    ; Test 1 wurde schon beim ersten Aufruf gemacht
-    ; Für verschachtelte Tests springen wir gezielt
+    call write_test_number
     cmp byte [test_num], 4
     je intr_handler          ; Test 4
     cmp byte [test_num], 5
@@ -177,6 +169,7 @@ div0_handler:
 
 .normal_exception:
     call write_test_number
+    add dword [esp], 2       ; adjust EIP
     iret
 
 ; Double Fault Handler
@@ -191,13 +184,13 @@ double_fault_handler:
 ; ================================================================
 write_test_number:
     push ax
+    inc byte [test_num]
     mov al, [test_num]
     out DEBUG_PORT, al
-    inc byte [test_num]
     pop ax
     ret
 
-test_num db 1
+test_num db 0
 
 times 0xfff0-($-$$) nop
 
