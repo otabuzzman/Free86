@@ -23,10 +23,16 @@ try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 try await cpu.INTR.trigger(0x20)  // test 1
 try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 
-try await cpu.NMI.trigger(true)  // test 2
+try await cpu.NMI.trigger(true)   // test 2
 try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 
 try await cpu.INTR.trigger(0x20)  // test 4
+try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
+
+try await cpu.INTR.trigger(0x20)  // test 4 (blocked)
+try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
+
+try await cpu.INTR.trigger(0x20)  // test 4 (blocked)
 try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 
 extension MemoryIO<DWord> {

@@ -24,38 +24,44 @@ start:
     mov ss, ax
     mov sp, 0x7c00
 
-    ; prepare to HLT after reset on triple fault
-    mov byte [bootstrap], 0xf4
-
     call setup_ivt
 
     sti
 
+    cmp byte [test_cli], 1
+    je test5
+
     ; test 1: hardware interrupt on INTR
-    hlt                         ; wait for INTR
-
+    hlt         ; wait for INTR
     ; test 2: hardware interrupt on NMI
-    hlt                         ; wait for NMI
-
+    hlt         ; wait for INTR
     ; test 3: divide by 0 exception (#DE)
     mov ax, 1
     xor bx, bx
-    div bx                      ; #DE
+    div bx      ; cause #DE
+    ; test 4: nested INTR blocked (default)
+    hlt         ; wait for INTR
+test5:
+    ; test 5: nested INTR allowed (sti)
+    hlt         ; wait for INTR
 
-    ; test 4: nested INTR allowed (sti)
-    hlt                         ; wait for INTR
 
-intr_handler:
-    sti
-    hlt                         ; wait for nested INTR
+
+    hlt ; debug
+
+
+
+    ; HLT after reset on triple fault
+    mov byte [bootstrap], 0xf4
+
+intr_handler:      ; in test 4
+    inc byte [test_cli]
+    hlt ; wait for nested INTR
     iret
 
-    ; test 5: Im INTR-Handler CLI + weiteren INTR
-intr_handler_cli:
-    call write_test_number      ; Test 5
-    cli
-    ; User triggert jetzt INTR → sollte **nicht** ausgeführt werden (CLI)
-    ; Danach STI + IRET im nächsten Handler
+intr_handler_sti:  ; in test 5
+    sti
+    hlt ; wait for nested INTR
     iret
 
 ; ------------------------------------------------
@@ -134,43 +140,38 @@ setup_ivt:
 ; Haupt-Handler (mit Test-Steuerung)
 ; ================================================================
 
-; INTR Haupt-Handler
+; INTR ISR
 intr_handler_main:
     call write_test_number
     cmp byte [test_num], 4
-    je intr_handler          ; Test 4
+    je intr_handler           ; test 4
     cmp byte [test_num], 5
-    je intr_handler_cli      ; Test 5
+    je intr_handler_sti       ; test 5
     cmp byte [test_num], 7
-    je intr_handler_nmi      ; Test 7
+    je intr_handler_nmi       ; test 7
     cmp byte [test_num], 8
-    je intr_handler_exception; Test 8
+    je intr_handler_exception ; test 8
+    ; fallthrough
+    iret                      ; test 1
 
-    ; Normaler Fall (Test 1)
-    call write_test_number
-    iret
-
-; NMI Haupt-Handler
+; NMI ISR
 nmi_handler_main:
+    call write_test_number
     cmp byte [test_num], 6
-    je nmi_handler           ; Test 6
+    je nmi_handler            ; test 6
     cmp byte [test_num], 9
-    je nmi_handler_exception ; Test 9
+    je nmi_handler_exception  ; test 9
+    ; fallthrough
+    iret                      ; test 2
 
-    call write_test_number   ; Test 2
-    iret
-
-; Divide by Zero Handler
+; #DE ISR
 div0_handler:
-    cmp byte [test_num], 3
-    je .normal_exception
+    call write_test_number
     cmp byte [test_num], 10
     je double_fault_test
-
-.normal_exception:
-    call write_test_number
-    add dword [esp], 2       ; adjust EIP
-    iret
+    ; fallthrough
+    add dword [esp], 2        ; adjust EIP
+    iret                      ; test 3
 
 ; Double Fault Handler
 double_fault_handler:
@@ -191,6 +192,7 @@ write_test_number:
     ret
 
 test_num db 0
+test_cli db 0
 
 times 0xfff0-($-$$) nop
 
