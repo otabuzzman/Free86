@@ -1,7 +1,7 @@
 import Foundation
 import Free86
 
-var fileURL = URL(fileURLWithPath: "bin/testINTr.bin")
+var fileURL = URL(fileURLWithPath: "bin/testINT.bin")
 let loadAddress: DWord = 0x000f0000
 let debugPortAddress: DWord  = 0x2a
 
@@ -17,23 +17,50 @@ let cpu = Free86(memory: mem, io: io)
 let debugPort = DebugPort<Byte>()
 io.register(port: debugPort, at: debugPortAddress)
 
-var cycles = cpu.cycles + 100000
-try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
+Task.detached {
+    while true {
+        let c = Int(getchar())
+        switch c {
+        case 105, 73:  // 'i', 'I'
+            let intr = Byte(Int.random(in: 0..<256))
+            print("INTR \(intr) ", terminator: "")
+            Task { @MainActor in
+                try await cpu.INTR.trigger(intr)
+            }
+        case 110, 78:  // 'n', 'N'
+            print("NMI ", terminator: "")
+            Task { @MainActor in
+                try await cpu.NMI.trigger(true)
+            }
+        case 114, 82:  // 'r', 'R'
+            print("RESET")
+            Task { @MainActor in
+                try await cpu.RESET.trigger(true)
+            }
+        default:
+            break
+        }
+        if Task.isCancelled { break }
+    }
+}
 
-try await cpu.INTR.trigger(0x20)  // test 1
-try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-
-try await cpu.NMI.trigger(true)   // test 2
-try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-
-try await cpu.INTR.trigger(0x20)  // test 4
-try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-
-try await cpu.INTR.trigger(0x20)  // test 4 (blocked)
-try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-
-try await cpu.INTR.trigger(0x20)  // test 4 (blocked)
-try await cpu.fetchDecodeExecuteLoop(cycles: cycles)
+while true {
+    let cycles = cpu.cycles + 100000
+    while cycles > cpu.cycles {
+        do {
+            try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
+            if cpu.halted {
+                print("\(cpu.cycles)")
+                exit(EXIT_SUCCESS)
+            }
+        } catch let interrupt as Interrupt {
+            cpu.interrupt = interrupt
+        } catch {
+            print("\(error)")
+            exit(EXIT_FAILURE)
+        }
+    }
+}
 
 extension MemoryIO<DWord> {
     convenience init(capacity: A) {
@@ -48,25 +75,6 @@ extension MemoryIO<DWord> {
 class DebugPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     func rd() -> T { 0xff }
     func wr(_ iodata: T) {
-        print(String(format: "0x%02X", iodata as! CVarArg))
-    }
-}
-
-extension Free86 {
-    func fetchDecodeExecuteLoop(cycles: QWord, stopOnHalt: Bool = true) async throws {
-        while cycles > self.cycles {
-            do {
-                try await fetchDecodeExecute(cycles: cycles - self.cycles)
-                if self.halted {
-                    print("\(self.cycles) cycles")
-                    break
-                }
-            } catch let interrupt as Interrupt {
-                self.interrupt = interrupt
-            } catch {
-                print("\(error)")
-                exit(EXIT_FAILURE)
-            }
-        }
+        print(String(format: "%d", iodata as! CVarArg))
     }
 }
