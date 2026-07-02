@@ -17,9 +17,20 @@ public class Free86 {
 
     /// Interrupts in-flight register
     ///
-    /// The Interrupts in-flight register (IFR) indicates hardware interrupt handlers
-    /// in execution (active). IFR is specific to this emulator and not part of the
-    /// genuine processor architecture.
+    /// The Interrupts in-flight register (IFR) indicates hardware interrupt handlers (ISR)
+    /// in execution and flags for double/ triple fault handling. IFR is specific to this emulator
+    /// and not part of the genuine processor architecture.
+    // +----------------------------------+----------------------------------+
+    // |             IFR flags            |         interrupt types          |
+    // +---------+---------+--------------+---------+---------+--------------+
+    // |   PF    |   DF    | contributory |  INTR   |   NMI   |   internal   |
+    // +---------+---------+--------------+---------+---------+--------------+
+    // |  bit 14 |  bit 8  |     bit 4    |  bit 2  |  bit 1  |     bit 0    |
+    // +---------+---------+--------------+---------+---------+--------------+
+    // PF : current interrupt in-flight is page fault exception
+    // DF : current interrupt in-flight is double fault exception
+    // contributory: class of exceptions comprising DE, TS, NM, SS, and GP
+    //               nested exceptions in these and PF yields DF exceptions
     var ifr = InterruptsInFlightRegister(0)
 
     let io: IsolatedIO<DWord>?

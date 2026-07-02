@@ -11,26 +11,42 @@ extension Free86 {
             }
             /// internal exception or fault
             if let interrupt = self.interrupt {
-                if ifr.isFlagRaised(.double) {  // triple fault
-                    halted = false
-                    reset()
-                    _ = try? await NMI.probe()
-                    _ = try? await INTR.probe()
-                    ifr = .init(0)
+                if ifr.isBitRaised(Int(Exception.DF.rawValue)) && interrupt.isContributory {  // triple fault
+                    halted = true  // shutdown state
                 } else {
-                    if interrupt == .DF {
-                        ifr.setFlag(.double, .zero)
+                    var id = interrupt.id
+                    if ifr.isFlagRaised(.contributory) || ifr.isBitRaised(Int(Exception.PF.rawValue)) {
+                        if  interrupt.isContributory {
+                            ifr.setBit(Int(Exception.DF.rawValue))
+                            id = Exception.DF.rawValue
+                        } else {
+                            if interrupt == .PF {
+                                ifr.setFlag(.contributory)
+                            }
+                        }
+                    } else {
+                        if interrupt.isContributory {
+                            ifr.setFlag(.contributory)
+                        }
+                        if interrupt == .PF {
+                            ifr.setBit(Int(Exception.PF.rawValue))
+                        }
                     }
-                    try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
+                    ifr.setFlag(.internal)
+                    try raiseInterrupt(id, interrupt.errorCode, false, 0)
                 }
             }
-            if await NMI.pending && !ifr.isFlagRaised(.NMI) {  // no nested NMI
+            if await NMI.pending
+                && !(ifr.isFlagRaised(.NMI) || ifr.isFlagRaised(.internal)) {
                 halted = false
+                ifr.setFlag(.NMI)
                 _ = try await NMI.probe()
                 try raiseInterrupt(2, 0, false, 0)
             }
-            if await INTR.pending && eflags.isFlagRaised(.IF) {
+            if await INTR.pending && eflags.isFlagRaised(.IF)
+                && !(ifr.isFlagRaised(.NMI) || ifr.isFlagRaised(.internal)) {
                 halted = false
+                ifr.setFlag(.INTR)
                 let id = try await INTR.probe()
                 try raiseInterrupt(id, 0, false, 0)
             }

@@ -1,11 +1,10 @@
 typealias InterruptsInFlightRegister = DWord
 
-enum InterruptsInFlightRegisterFlag: Int, CaseIterable {
+enum InterruptsInFlightRegisterFlag: Int {
     case `internal`  // in priority order
     case NMI
     case INTR
-    case current  // pseudo flag
-    case double = 8
+    case contributory = 4  // DE, TS, NM, SS, or GP ISR executing
 }
 
 extension InterruptsInFlightRegister {
@@ -21,23 +20,10 @@ extension InterruptsInFlightRegister {
 }
 
 extension InterruptsInFlightRegister {
-    func noHigherPriority(than flag: InterruptsInFlightRegisterFlag) -> Bool {
-        var result = true
-        for higherPriorityInterrupt in InterruptsInFlightRegisterFlag.allCases {
-            if higherPriorityInterrupt.rawValue >= flag.rawValue {
-                break
-            }
-            if isFlagRaised(higherPriorityInterrupt) {
-                result = false
-            }
-        }
-        return result
-    }
     var current: InterruptsInFlightRegisterFlag? {
-        var result: InterruptsInFlightRegisterFlag? = nil
-        if isFlagRaised(.internal) { result = .internal }
-        if isFlagRaised(.NMI)  { result = .NMI }
-        if isFlagRaised(.INTR) { result = .INTR }
-        return result
+        if isFlagRaised(.internal) { return .internal }
+        if isFlagRaised(.NMI)  { return .NMI }
+        if isFlagRaised(.INTR) { return .INTR }
+        return nil
     }
 }

@@ -1,0 +1,199 @@
+; Free86/ testINTr - real mode interrupt tests
+; - run various INTR/ NMI tests
+; - output test number on port 0x2a
+;
+; - load image at segment 0xf000
+;
+; compile:
+;   nasm -f bin testINTr.asm -l testINTr.lst -o testINTr.bin
+
+C_SEG_REAL equ 0xf000
+DEBUG_PORT equ 0x2a
+
+cpu 386
+
+bits 16
+start:
+    cli
+
+    push cs
+    pop ds
+
+    xor ax, ax
+    mov ss, ax
+    mov sp, 0x7c00
+
+    call setup_ivt
+
+    sti
+
+    ; test 1: divide by 0 exception (#DE)
+    mov ax, 1
+    xor bx, bx
+    div bx ; cause #DE
+
+test_loop:
+    ; test 2: HW interrupt on INTR
+    ; test 3: HW interrupt on NMI
+    ; test 4: HW interrupt on INTR
+    ;         - nested INTR blocked
+    ;         - RESET to continue
+    ; test 5: divide by 0 exception (#DE)
+    ; test 6: HW interrupt on INTR (sti in ISR)
+    ; test 7: nested INTR allowed
+    ; test 8: HW interrupt on NMI
+    ;         - nested NMI blocked
+    ;         - nested INTR blocked
+    ;         - RESET to continue
+    ; test 9: divide by 0 exception (#DE)
+    ;         - nested NMI blocked
+    ;         - nested INTR blocked
+    ;         - RESET to continue
+    ; test 10: divide by 0 exception (#DE)
+    ; test 11: HW interrupt on INTR
+    ; test 12: nested #DE in INTR ISR
+    ; test 13: HW interrupt on NMI
+    ; test 14: nested #DE in NMI ISR
+    ; test 15: nested #DE in #DE ISR (double fault)
+    ; test 16: triple fault
+    inc byte [test_number]
+    hlt
+    jmp test_loop
+
+intr_test4:
+    call write_test_number
+    hlt ; wait for nested INTR
+    ; not reached due to RESET
+
+intr_test6:
+    call write_test_number
+    inc byte [test_number]
+    sti
+    hlt ; wait for nested INTR
+    iret
+
+intr_test7:
+    call write_test_number
+    iret
+
+nmi_test8:
+    call write_test_number
+    hlt ; wait for nested INTR
+    ; not reached due to RESET
+
+div0_test9:
+    call write_test_number
+    add dword [esp], 2 ; adjust EIP
+    hlt ; wait for nested interrupts
+    iret
+
+intr_test11:
+    call write_test_number
+    mov ax, 1
+    xor bx, bx
+    div bx ; cause #DE
+    iret
+
+div0_test12:
+    call write_test_number
+    add dword [esp], 2 ; adjust EIP
+    iret
+
+nmi_test13:
+    call write_test_number
+    mov ax, 1
+    xor bx, bx
+    div bx ; cause #DE
+    iret
+
+div0_test14:
+    call write_test_number
+    mov ax, 1
+    xor bx, bx
+    div bx ; cause #DE
+    ; not reached
+
+setup_ivt:
+    xor ax, ax
+    mov es, ax
+
+    ; vector 0: divide error (#DE)
+    mov word [es:0x00], div0_dispatcher
+    mov word [es:0x02], cs
+
+    ; vector 2: hardware NMI
+    mov word [es:0x08], nmi_dispatcher
+    mov word [es:0x0A], cs
+
+    ; vector 8: double fault (#DF)
+    mov word [es:0x20], double_fault_dispatcher
+    mov word [es:0x22], cs
+
+    ; vector 32: hardware INTR
+    mov word [es:0x80], intr_dispatcher
+    mov word [es:0x82], cs
+
+    ret
+
+; #DE ISR (vector 0)
+div0_dispatcher:
+    inc byte [test_number]
+    cmp byte [test_number], 9
+    je div0_test9
+    cmp byte [test_number], 12
+    je div0_test12
+    cmp byte [test_number], 14
+    je div0_test14
+    ; fallthrough
+    call write_test_number
+    add dword [esp], 2 ; adjust EIP
+    iret ; tests 1, 5
+
+; NMI ISR (vector 2)
+nmi_dispatcher:
+    cmp byte [test_number], 8
+    je nmi_test8
+    cmp byte [test_number], 13
+    je nmi_test13
+    ; fallthrough
+    call write_test_number
+    iret ; test 3
+
+; #DF ISR (vector 8)
+double_fault_dispatcher:
+    inc byte [test_number]
+    call write_test_number
+    mov ax, 1
+    xor bx, bx
+    div bx ; cause triple fault
+    ; not reached
+
+; INTR ISR (vector 32)
+intr_dispatcher:
+    cmp byte [test_number], 4
+    je intr_test4
+    cmp byte [test_number], 6
+    je intr_test6
+    cmp byte [test_number], 7
+    je intr_test7
+    cmp byte [test_number], 11
+    je intr_test11
+    ; fallthrough
+    call write_test_number
+    iret ; test 2
+
+write_test_number:
+    push ax
+    mov al, [test_number]
+    out DEBUG_PORT, al
+    pop ax
+    ret
+
+test_number db 0
+
+times 0xfff0-($-$$) nop
+
+bootstrap:
+    jmp C_SEG_REAL:start ; implicitly loads CS with C_SEG_REAL
+
+times 0x10000-($-$$) nop
