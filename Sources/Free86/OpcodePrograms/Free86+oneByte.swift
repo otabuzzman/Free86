@@ -1639,10 +1639,13 @@ extension Free86 {
     func Oxcf() throws -> Result<Resume, Never> {
         try auxIret(!ipr.isFlagRaised(.operandSizeOverride))
         if let current = ifr.current {
-            ifr.setFlag(current, .zero)
-            ifr.setFlag(.contributory, .zero)
-            ifr.setBit(Int(Exception.DF.rawValue), .zero)
-            ifr.setBit(Int(Exception.PF.rawValue), .zero)
+            if ifr.isBitRaised(Int(Exception.DF.rawValue)) {
+                halted = true
+            } else {
+                ifr.setFlag(current, .zero)
+                ifr.setFlag(.contributory, .zero)
+                ifr.setBit(Int(Exception.PF.rawValue), .zero)
+            }
         }
         return .success(.endOnInterrupt)
     }

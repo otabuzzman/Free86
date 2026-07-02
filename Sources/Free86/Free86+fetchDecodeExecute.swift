@@ -11,25 +11,25 @@ extension Free86 {
             }
             /// internal exception or fault
             if let interrupt = self.interrupt {
-                if ifr.isBitRaised(Int(Exception.DF.rawValue)) && interrupt.isContributory {  // triple fault
-                    halted = true  // shutdown state
-                } else {
-                    if ifr.isFlagRaised(.contributory) && interrupt.isContributory
-                        || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt.isContributory
-                        || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt == .PF {  // double fault
-                        ifr.setBit(Int(Exception.DF.rawValue))
-                        throw Interrupt(.DF)
-                    } else {
-                        if interrupt.isContributory {
-                            ifr.setFlag(.contributory)
-                        }
-                        if interrupt == .PF {
-                            ifr.setBit(Int(Exception.PF.rawValue))
-                        }
-                    }
-                    ifr.setFlag(.internal)
-                    try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
+                if ifr.isBitRaised(Int(Exception.DF.rawValue)) {  // triple fault
+                    halted = true
                 }
+                var interrupt = interrupt
+                if ifr.isFlagRaised(.contributory) && interrupt.isContributory
+                    || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt.isContributory
+                    || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt == .PF {  // double fault
+                    ifr.setBit(Int(Exception.DF.rawValue))
+                    interrupt = .init(.DF)
+                }
+                if interrupt == .PF || interrupt.isContributory {
+                    if interrupt == .PF {
+                        ifr.setBit(Int(Exception.PF.rawValue))
+                    } else {
+                        ifr.setFlag(.contributory)
+                    }
+                }
+                ifr.setFlag(.internal)
+                try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
             if await NMI.pending
                 && !(ifr.isFlagRaised(.NMI) || ifr.isFlagRaised(.internal)) {
