@@ -133,6 +133,7 @@ assert(cpu.regs[.ESP] == 0x7c00)
 try await cpu.NMI.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.halted == true)  // shutdown state
+assert(cpu.regs[.ESP] == 0x7bee)
 
 
 

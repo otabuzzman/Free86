@@ -14,16 +14,11 @@ extension Free86 {
                 if ifr.isBitRaised(Int(Exception.DF.rawValue)) && interrupt.isContributory {  // triple fault
                     halted = true  // shutdown state
                 } else {
-                    var id = interrupt.id
-                    if ifr.isFlagRaised(.contributory) || ifr.isBitRaised(Int(Exception.PF.rawValue)) {
-                        if  interrupt.isContributory {
-                            ifr.setBit(Int(Exception.DF.rawValue))
-                            id = Exception.DF.rawValue
-                        } else {
-                            if interrupt == .PF {
-                                ifr.setFlag(.contributory)
-                            }
-                        }
+                    if ifr.isFlagRaised(.contributory) && interrupt.isContributory
+                        || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt.isContributory
+                        || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt == .PF {  // double fault
+                        ifr.setBit(Int(Exception.DF.rawValue))
+                        throw Interrupt(.DF)
                     } else {
                         if interrupt.isContributory {
                             ifr.setFlag(.contributory)
@@ -33,7 +28,7 @@ extension Free86 {
                         }
                     }
                     ifr.setFlag(.internal)
-                    try raiseInterrupt(id, interrupt.errorCode, false, 0)
+                    try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
                 }
             }
             if await NMI.pending
