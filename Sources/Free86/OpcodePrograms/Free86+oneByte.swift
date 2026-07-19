@@ -1638,14 +1638,8 @@ extension Free86 {
     /// 0xcf  IRET
     func Oxcf() throws -> Result<Resume, Never> {
         try auxIret(!ipr.isFlagRaised(.operandSizeOverride))
-        if let current = ifr.current {
-            if ifr.isBitRaised(Int(Exception.DF.rawValue)) {
-                halted = true
-            } else {
-                ifr.setFlag(current, .zero)
-                ifr.setFlag(.contributory, .zero)
-                ifr.setBit(Int(Exception.PF.rawValue), .zero)
-            }
+        if ifr.isFlagRaised(.NMI) {
+            ifr.setFlag(.NMI, .zero)  // NMI IRET problem (https://lwn.net/Articles/484932/)
         }
         return .success(.endOnInterrupt)
     }

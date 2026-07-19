@@ -36,17 +36,3 @@ extension Interrupt {
         "Interrupt id \(id), error code \(errorCode))"
     }
 }
-
-extension Interrupt {
-    static func == (lhs: Interrupt, rhs: Exception) -> Bool {
-        lhs.id == rhs.rawValue
-    }
-    var isContributory: Bool {
-        switch Exception(rawValue: id) {
-        case .DE, .TS, .NM, .SS, .GP:
-            return true
-        default:
-            return false
-        }
-    }
-}

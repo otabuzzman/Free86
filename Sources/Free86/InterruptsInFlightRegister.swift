@@ -1,10 +1,8 @@
 typealias InterruptsInFlightRegister = DWord
 
 enum InterruptsInFlightRegisterFlag: Int {
-    case `internal`  // in priority order
-    case NMI
-    case INTR
-    case contributory = 4  // DE, TS, NM, SS, or GP ISR executing
+    case FV  = 7
+    case NMI = 10  // NMI id (2) << 8
 }
 
 extension InterruptsInFlightRegister {
@@ -20,10 +18,8 @@ extension InterruptsInFlightRegister {
 }
 
 extension InterruptsInFlightRegister {
-    var current: InterruptsInFlightRegisterFlag? {
-        if isFlagRaised(.internal) { return .internal }
-        if isFlagRaised(.NMI)  { return .NMI }
-        if isFlagRaised(.INTR) { return .INTR }
-        return nil
+    var fex: Int {
+        get { Int(self & 0x0000001f) }
+        set { self = (self & ~0x0000001f) | Self(newValue) }
     }
 }

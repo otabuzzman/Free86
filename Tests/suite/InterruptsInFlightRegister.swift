@@ -3,24 +3,25 @@ import Testing
 
 @Test("interrupts in-flight register flags positions")
 func interruptsInFlightRegisterFlagsPositions() {
-    #expect(InterruptsInFlightRegisterFlag.internal.rawValue == 0)
-    #expect(InterruptsInFlightRegisterFlag.NMI.rawValue == 1)
-    #expect(InterruptsInFlightRegisterFlag.INTR.rawValue == 2)
+    #expect(InterruptsInFlightRegisterFlag.FV.rawValue == 7)
+    #expect(InterruptsInFlightRegisterFlag.NMI.rawValue == 10)
 }
 
 
 @Test("interrupts in-flight register set/ check flags")
 func interruptsInFlightRegisterCheckFlags() {
     var ifr = InterruptsInFlightRegister()
-    #expect(ifr.current == nil)
+    ifr.setFlag(.FV)
+    #expect(ifr.isFlagRaised(.FV) == true)
     ifr.setFlag(.NMI)
-    #expect(ifr.current == .NMI)
     #expect(ifr.isFlagRaised(.NMI) == true)
-    #expect(ifr.isFlagRaised(.INTR) == false)
-    #expect(ifr.isFlagRaised(.internal) == false)
-    ifr.setFlag(.INTR)
-    #expect(ifr.current == .NMI)
-    #expect(ifr.isFlagRaised(.INTR) == true)
-    ifr.setFlag(.INTR, .zero)
-    #expect(ifr.isFlagRaised(.INTR) == false)
+    #expect(ifr.fex == 0)
+    ifr.fex = 4
+    #expect(ifr.fex == 4)
+    ifr.fex = 2
+    #expect(ifr.fex == 2)
+    #expect(ifr.isFlagRaised(.NMI) == true)
+    ifr.setFlag(.FV, .zero)
+    #expect(ifr.isFlagRaised(.FV) == false)
+    #expect(ifr.fex == 2)
 }

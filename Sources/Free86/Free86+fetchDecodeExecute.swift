@@ -11,37 +11,16 @@ extension Free86 {
             }
             /// internal exception or fault
             if let interrupt = self.interrupt {
-                if ifr.isBitRaised(Int(Exception.DF.rawValue)) {  // triple fault
-                    halted = true
-                }
-                var interrupt = interrupt
-                if ifr.isFlagRaised(.contributory) && interrupt.isContributory
-                    || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt.isContributory
-                    || ifr.isBitRaised(Int(Exception.PF.rawValue)) && interrupt == .PF {  // double fault
-                    ifr.setBit(Int(Exception.DF.rawValue))
-                    interrupt = .init(.DF)
-                }
-                if interrupt == .PF || interrupt.isContributory {
-                    if interrupt == .PF {
-                        ifr.setBit(Int(Exception.PF.rawValue))
-                    } else {
-                        ifr.setFlag(.contributory)
-                    }
-                }
-                ifr.setFlag(.internal)
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
-            if await NMI.pending
-                && !(ifr.isFlagRaised(.NMI) || ifr.isFlagRaised(.internal)) {
+            if await NMI.pending && !ifr.isFlagRaised(.NMI) {
                 halted = false
                 ifr.setFlag(.NMI)
                 _ = try await NMI.probe()
                 try raiseInterrupt(2, 0, false, 0)
             }
-            if await INTR.pending && eflags.isFlagRaised(.IF)
-                && !(ifr.isFlagRaised(.NMI) || ifr.isFlagRaised(.internal)) {
+            if await INTR.pending && !ifr.isFlagRaised(.NMI) && eflags.isFlagRaised(.IF) {
                 halted = false
-                ifr.setFlag(.INTR)
                 let id = try await INTR.probe()
                 try raiseInterrupt(id, 0, false, 0)
             }
