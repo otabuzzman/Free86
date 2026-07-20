@@ -1,11 +1,11 @@
-; Free86/ testINT - simple interrupt test program
+; Free86/ testINTs - simple interrupt test program
 ; - wait in loop for INT/ NMI
 ; - output vector on port 0x2a
 ;
 ; - load image at segment 0xf000
 ;
 ; compile:
-;   nasm -f bin testINT.asm -l testINT.lst -o testINT.bin
+;   nasm -f bin testINTs.asm -l testINTs.lst -o testINTs.bin
 
 C_SEG_REAL  equ 0xf000
 DEBUG_PORT  equ 0x2a

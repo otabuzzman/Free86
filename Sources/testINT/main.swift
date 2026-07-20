@@ -1,6 +1,7 @@
 import Foundation
 import Free86
 
+// var fileURL = URL(fileURLWithPath: "bin/testINTs.bin")
 var fileURL = URL(fileURLWithPath: "bin/testINTr.bin")
 let loadAddress: DWord = 0x000f0000
 let debugPortAddress: DWord  = 0x2a
@@ -172,11 +173,11 @@ while true {
 */
 
 extension Free86 {
-    func fetchDecodeExecuteLoop(cycles: QWord, stopOnHalt: Bool = true) async {
+    func fetchDecodeExecuteLoop(cycles: QWord) async {
         while cycles > self.cycles {
             do {
                 try await self.fetchDecodeExecute(cycles: cycles - self.cycles)
-                if self.halted && stopOnHalt {
+                if self.halted {
                     print("\(self.cycles) cycles")
                     break
                 }
