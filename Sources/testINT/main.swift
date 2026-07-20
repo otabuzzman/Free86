@@ -37,16 +37,16 @@ assert(cpu.regs[.ESP] == 0x7c00)
 /// test 4: HW interrupt on INTR
 try await cpu.INTR.trigger(32)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 72)  // for later inspection
+assert(cpu.cycles == 70)  // for later inspection
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 4: nested INTR blocked
 try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 72)  // ...blocked
+assert(cpu.cycles == 70)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 72)  // ...blocked
+assert(cpu.cycles == 70)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 4: RESET to continue
 try await cpu.RESET.trigger(true)
@@ -68,41 +68,41 @@ assert(cpu.regs[.ESP] == 0x7c00)
 /// test 8: HW interrupt on NMI
 try await cpu.NMI.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 142)  // for later inspection
+assert(cpu.cycles == 140)  // for later inspection
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 8: nested NMI blocked
 try await cpu.NMI.trigger(true)   // nested NMI...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 142)  // ...blocked
+assert(cpu.cycles == 140)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.NMI.trigger(true)   // nested NMI...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 142)  // ...blocked
+assert(cpu.cycles == 140)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 8: nested INTR blocked
 try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 142)  // ...blocked
+assert(cpu.cycles == 140)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 142)  // ...blocked
+assert(cpu.cycles == 140)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 8: RESET to continue
 try await cpu.RESET.trigger(true)
 
 /// test 9: divide by 0 exception (#DE)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 174)  // for later inspection
+assert(cpu.cycles == 172)  // for later inspection
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 9: nested INTR blocked
 try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 174)  // ...blocked
+assert(cpu.cycles == 172)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 174)  // ...blocked
+assert(cpu.cycles == 172)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 9: NMI to continue
 try await cpu.NMI.trigger(true)
@@ -116,7 +116,7 @@ await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.regs[.ESP] == 0x7c00)
 
 /// test 12: HW interrupt on NMI
-/// test 14: nested #DE allowed
+/// test 13: nested #DE allowed
 try await cpu.NMI.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.halted == true)
