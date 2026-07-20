@@ -57,6 +57,7 @@ test_loop:
     jmp test_loop
 
 intr_test4:
+nmi_test8:
     call write_test_number
     hlt ; wait for nested INTR
     ; not reached due to RESET
@@ -68,15 +69,6 @@ intr_test6:
     hlt ; wait for nested INTR
     iret
 
-intr_test7:
-    call write_test_number
-    iret
-
-nmi_test8:
-    call write_test_number
-    hlt ; wait for nested INTR
-    ; not reached due to RESET
-
 div0_test9:
     call write_test_number
     add dword [esp], 2 ; adjust EIP
@@ -84,12 +76,6 @@ div0_test9:
     iret
 
 intr_test10:
-    call write_test_number
-    mov ax, 1
-    xor bx, bx
-    div bx ; cause #DE
-    iret
-
 nmi_test12:
     call write_test_number
     mov ax, 1
@@ -154,13 +140,11 @@ intr_dispatcher:
     je intr_test4
     cmp byte [test_number], 6
     je intr_test6
-    cmp byte [test_number], 7
-    je intr_test7
     cmp byte [test_number], 10
     je intr_test10
     ; fallthrough
     call write_test_number
-    iret ; test 2
+    iret ; test 2, 7
 
 write_test_number:
     push ax
