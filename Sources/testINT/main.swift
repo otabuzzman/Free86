@@ -95,15 +95,6 @@ try await cpu.RESET.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.cycles == 182)  // for later inspection
 assert(cpu.regs[.ESP] == 0x7bfa)
-/// test 9: nested NMI blocked
-try await cpu.NMI.trigger(true)   // nested NMI...
-await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 182)  // ...blocked
-assert(cpu.regs[.ESP] == 0x7bfa)
-try await cpu.NMI.trigger(true)   // nested NMI...
-await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 182)  // ...blocked
-assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 9: nested INTR blocked
 try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
@@ -113,24 +104,19 @@ try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.cycles == 182)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
-/// test 9: RESET to continue
-try await cpu.RESET.trigger(true)
+/// test 9: NMI to continue
+try await cpu.NMI.trigger(true)
+await cpu.fetchDecodeExecuteLoop(cycles: cycles)
+assert(cpu.regs[.ESP] == 0x7c00)
 
-/// test 10: divide by 0 exception (#DE)
+/// test 10: HW interrupt on INTR
+/// test 11: nested #DE allowed
 try await cpu.INTR.trigger(32)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.regs[.ESP] == 0x7c00)
 
-/// test 11: HW interrupt on INTR
-/// test 12: nested #DE in INTR ISR
-try await cpu.INTR.trigger(32)
-await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.regs[.ESP] == 0x7c00)
-
-/// test 13: HW interrupt on NMI
-/// test 14: nested #DE in NMI ISR
-/// test 15: nested #DE in #DE ISR (double fault)
-/// test 16: triple fault
+/// test 12: HW interrupt on NMI
+/// test 14: nested #DE allowed
 try await cpu.NMI.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.halted == true)  // shutdown state
@@ -138,7 +124,7 @@ assert(cpu.regs[.ESP] == 0x7be8)
 
 
 
-/*
+/* /// bin/testINTs.bin
 Task.detached {
     while true {
         let c = Int(getchar())
@@ -171,6 +157,8 @@ while true {
     await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 }
 */
+
+
 
 extension Free86 {
     func fetchDecodeExecuteLoop(cycles: QWord) async {

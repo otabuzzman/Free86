@@ -46,16 +46,12 @@ test_loop:
     ;         - nested INTR blocked
     ;         - RESET to continue
     ; test 9: divide by 0 exception (#DE)
-    ;         - nested NMI blocked
     ;         - nested INTR blocked
-    ;         - RESET to continue
-    ; test 10: divide by 0 exception (#DE)
-    ; test 11: HW interrupt on INTR
-    ; test 12: nested #DE in INTR ISR
-    ; test 13: HW interrupt on NMI
-    ; test 14: nested #DE in NMI ISR
-    ; test 15: nested #DE in #DE ISR (double fault)
-    ; test 16: triple fault
+    ;         - NMI to continue
+    ; test 10: HW interrupt on INTR
+    ; test 11: nested #DE allowed
+    ; test 12: HW interrupt on NMI
+    ; test 13: nested #DE allowed
     inc byte [test_number]
     hlt
     jmp test_loop
@@ -87,31 +83,19 @@ div0_test9:
     hlt ; wait for nested interrupts
     iret
 
-intr_test11:
+intr_test10:
     call write_test_number
     mov ax, 1
     xor bx, bx
     div bx ; cause #DE
     iret
 
-div0_test12:
-    call write_test_number
-    add dword [esp], 2 ; adjust EIP
-    iret
-
-nmi_test13:
+nmi_test12:
     call write_test_number
     mov ax, 1
     xor bx, bx
     div bx ; cause #DE
     iret
-
-div0_test14:
-    call write_test_number
-    mov ax, 1
-    xor bx, bx
-    div bx ; cause #DE
-    ; not reached
 
 setup_ivt:
     xor ax, ax
@@ -140,24 +124,20 @@ div0_dispatcher:
     inc byte [test_number]
     cmp byte [test_number], 9
     je div0_test9
-    cmp byte [test_number], 12
-    je div0_test12
-    cmp byte [test_number], 14
-    je div0_test14
     ; fallthrough
     call write_test_number
     add dword [esp], 2 ; adjust EIP
-    iret ; tests 1, 5
+    iret ; tests 1, 5, 11, 13
 
 ; NMI ISR (vector 2)
 nmi_dispatcher:
     cmp byte [test_number], 8
     je nmi_test8
-    cmp byte [test_number], 13
-    je nmi_test13
+    cmp byte [test_number], 12
+    je nmi_test12
     ; fallthrough
     call write_test_number
-    iret ; test 3
+    iret ; test 3, 9
 
 ; #DF ISR (vector 8)
 double_fault_dispatcher:
@@ -176,8 +156,8 @@ intr_dispatcher:
     je intr_test6
     cmp byte [test_number], 7
     je intr_test7
-    cmp byte [test_number], 11
-    je intr_test11
+    cmp byte [test_number], 10
+    je intr_test10
     ; fallthrough
     call write_test_number
     iret ; test 2
