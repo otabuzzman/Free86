@@ -144,7 +144,7 @@ intr_dispatcher:
     je intr_test10
     ; fallthrough
     call write_test_number
-    iret ; test 2, 7
+    iret ; test 2, 7, 9
 
 write_test_number:
     push ax

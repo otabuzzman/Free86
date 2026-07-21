@@ -496,18 +496,22 @@ extension Free86 {
         }
     }
     func raiseInterrupt(_ id: Byte, _ errorCode: DWord, _ isSW: Bool, _ home: LinearAddress) throws {
-        let sex = Int(id)
-        if ifr.isFlagRaised(.FV) {
-            try doubleFaultDecoder[ifr.fex * 32 + sex]?()
+        if 16 > id {  // probably DF condition
+            let sex = Int(id)
+            if ifr.isFlagRaised(.FC) {
+                try doubleFaultDecoder[ifr.fex * 16 + sex]?()
+            }
+            ifr.fex = sex
+            ifr.setFlag(.FC)
         }
-        ifr.fex = sex
-        ifr.setFlag(.FV)
         if !cr0.isProtectedMode {
             try raiseInterruptRealOrV86Mode(DWord(id), isSW, home)
         } else {
             try raiseInterruptProtectedMode(DWord(id), errorCode, isSW, home)
         }
-        ifr.setFlag(.FV, .zero)
+        if 16 > id {
+            ifr.setFlag(.FC, .zero)
+        }
     }
     func raiseInterruptRealOrV86Mode(_ id: DWord, _ isSW: Bool, _ home: LinearAddress) throws {
         if (id * 4 + 3) > idt.shadow.limit {

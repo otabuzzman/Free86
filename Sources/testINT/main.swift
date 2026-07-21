@@ -104,7 +104,7 @@ try await cpu.INTR.trigger(32)   // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.cycles == 172)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
-/// test 9: NMI to continue
+/// test 9: NMI to continue (ISR and pending (blocked) INTR ISR both output test #9)
 try await cpu.NMI.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.regs[.ESP] == 0x7c00)
@@ -121,44 +121,6 @@ try await cpu.NMI.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.halted == true)
 assert(cpu.regs[.ESP] == 0x7c00)
-
-
-
-/* /// bin/testINTs.bin
-Task.detached {
-    while true {
-        let c = Int(getchar())
-        switch c {
-        case 105, 73:  // 'i', 'I'
-            let intr = Byte(Int.random(in: 0..<256))
-            print("INTR \(intr) ", terminator: "")
-            Task { @MainActor in
-                try await cpu.INTR.trigger(intr)
-            }
-        case 110, 78:  // 'n', 'N'
-            print("NMI ", terminator: "")
-            Task { @MainActor in
-                try await cpu.NMI.trigger(true)
-            }
-        case 114, 82:  // 'r', 'R'
-            print("RESET")
-            Task { @MainActor in
-                try await cpu.RESET.trigger(true)
-            }
-        default:
-            break
-        }
-        if Task.isCancelled { break }
-    }
-}
-
-while true {
-    let cycles = cpu.cycles + 100000
-    await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-}
-*/
-
-
 
 extension Free86 {
     func fetchDecodeExecuteLoop(cycles: QWord) async {
@@ -195,3 +157,40 @@ class DebugPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         print(String(format: "%d", iodata as! CVarArg))
     }
 }
+
+
+
+/*
+/// use with bin/testINTs.bin
+Task.detached {
+    while true {
+        let c = Int(getchar())
+        switch c {
+        case 105, 73:  // 'i', 'I'
+            let intr = Byte(Int.random(in: 0..<256))
+            print("INTR \(intr) ", terminator: "")
+            Task { @MainActor in
+                try await cpu.INTR.trigger(intr)
+            }
+        case 110, 78:  // 'n', 'N'
+            print("NMI ", terminator: "")
+            Task { @MainActor in
+                try await cpu.NMI.trigger(true)
+            }
+        case 114, 82:  // 'r', 'R'
+            print("RESET")
+            Task { @MainActor in
+                try await cpu.RESET.trigger(true)
+            }
+        default:
+            break
+        }
+        if Task.isCancelled { break }
+    }
+}
+
+while true {
+    let cycles = cpu.cycles + 100000
+    await cpu.fetchDecodeExecuteLoop(cycles: cycles)
+}
+*/

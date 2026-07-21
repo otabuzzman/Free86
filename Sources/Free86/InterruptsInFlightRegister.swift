@@ -1,7 +1,7 @@
 typealias InterruptsInFlightRegister = DWord
 
 enum InterruptsInFlightRegisterFlag: Int {
-    case FV  = 7
+    case FC  = 7
     case NMI = 10  // NMI id (2) << 8
 }
 

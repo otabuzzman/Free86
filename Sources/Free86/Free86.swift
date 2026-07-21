@@ -18,11 +18,11 @@ public class Free86 {
     /// Interrupts in-flight register
     ///
     /// The interrupts in-flight register (IFR) indicates an NMI hardware interrupt handler (ISR)
-    /// in execution. If FV is set bits 0 to 4 contain the id of the first internal exception to be
-    /// used for double fault detection. IFR is specific to this emulator and not part of the
-    /// genuine processor architecture.
+    /// in execution. If FC is set bits 0 to 4 contain the id of the first internal exception to be
+    /// used for double fault condition check. IFR is specific to this emulator and not part of
+    /// the genuine processor architecture.
     // +-----+-----+----+-----+-----+-----+-----+-----+-----+
-    // | NMI | ... | FV | ... |   first internal exception  |
+    // | NMI | ... | FC | ... |   first internal exception  |
     // +-----+-----+----+-----+-----+-----+-----+-----+-----+
     // | b10 | ... | b7 | ... |  b4 |  b3 |  b3 |  b1 |  b0 |
     // +-----+-----+----+-----+-----+-----+-----+-----+-----+
@@ -370,39 +370,23 @@ public class Free86 {
         halted = true
     }
     lazy var doubleFaultDecoder: DoubleFaultDecoder = [  // rows/ cols : first / second exception
-        //         0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0a 0x0b 0x0c 0x0d 0x0e 0x0f 0x10 0x11 0x12 0x13 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f
-        /* 0x00 */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x01 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x02 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x03 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x04 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x05 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x06 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x07 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x08 */ tripleFault, nil, nil, nil, nil, nil, nil, nil, nil, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x09 */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x0a */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x0b */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x0c */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x0d */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x0e */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x0f */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x10 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x11 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x12 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x13 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x14 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x15 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x16 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x17 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x18 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x19 */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x1a */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x1b */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x1c */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x1d */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x1e */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
-        /* 0x1f */ nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
+        //         0x00         0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09         0x0a         0x0b         0x0c         0x0d         0x0e         0x0f
+        /* 0x00 */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
+        /* 0x01 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
+        /* 0x02 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
+        /* 0x03 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
+        /* 0x04 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
+        /* 0x05 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
+        /* 0x06 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
+        /* 0x07 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
+        /* 0x08 */ tripleFault, nil, nil, nil, nil, nil, nil, nil, nil, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, nil,
+        /* 0x09 */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
+        /* 0x0a */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
+        /* 0x0b */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
+        /* 0x0c */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
+        /* 0x0d */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
+        /* 0x0e */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,
+        /* 0x0f */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil
     ]
 
     public init(memory: MemoryIO<DWord>, io: IsolatedIO<DWord>? = nil) {

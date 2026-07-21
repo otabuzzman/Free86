@@ -144,7 +144,7 @@
    144 000000C1 0F8470FF                    je intr_test10
    145                                      ; fallthrough
    146 000000C5 E80100                      call write_test_number
-   147 000000C8 CF                          iret ; test 2, 7
+   147 000000C8 CF                          iret ; test 2, 7, 9
    148                                  
    149                                  write_test_number:
    150 000000C9 50                          push ax
