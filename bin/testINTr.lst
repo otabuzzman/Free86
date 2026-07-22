@@ -23,7 +23,7 @@
     23 00000005 8ED0                        mov ss, ax
     24 00000007 BC007C                      mov sp, 0x7c00
     25                                  
-    26 0000000A E83300                      call setup_ivt
+    26 0000000A E85D00                      call setup_ivt
     27                                  
     28 0000000D FB                          sti
     29                                  
@@ -52,112 +52,129 @@
     52                                      ; test 11: nested #DE allowed
     53                                      ; test 12: HW interrupt on NMI
     54                                      ; test 13: nested #DE allowed
-    55 00000015 FE06[D100]                  inc byte [test_number]
+    55 00000015 FE06[F500]                  inc byte [test_number]
     56 00000019 F4                          hlt
-    57 0000001A EBF9                        jmp test_loop
-    58                                  
-    59                                  intr_test4:
-    60                                  nmi_test8:
-    61 0000001C E8AA00                      call write_test_number
-    62 0000001F F4                          hlt ; wait for nested INTR
-    63                                      ; not reached due to RESET
-    64                                  
-    65                                  intr_test6:
-    66 00000020 E8A600                      call write_test_number
-    67 00000023 FE06[D100]                  inc byte [test_number]
-    68 00000027 FB                          sti
-    69 00000028 F4                          hlt ; wait for nested INTR
-    70 00000029 CF                          iret
+    57 0000001A 803E[F500]0D                cmp byte [test_number], 13
+    58 0000001F 75F4                        jne test_loop
+    59                                  
+    60                                      ; test 14: double fault
+    61 00000021 0F011E[3A00]                lidt [double_fault_idtr]
+    62 00000026 F4                          hlt ; wait for INT 13 (any id > 8 will do)
+    63                                  
+    64                                      ; test 15: triple fault
+    65 00000027 FE06[F500]                  inc byte [test_number]
+    66 0000002B E8BF00                      call write_test_number
+    67 0000002E 0F011E[4000]                lidt [triple_fault_idtr]
+    68 00000033 66B8DEC0ADDE                mov eax, 0xdeadc0de
+    69 00000039 F4                          hlt ; wait for INT 13 (any id > 7 will do)
+    70                                      ; not reached
     71                                  
-    72                                  div0_test9:
-    73 0000002A E89C00                      call write_test_number
-    74 0000002D 666783042402                add dword [esp], 2 ; adjust EIP
-    75 00000033 F4                          hlt ; wait for nested interrupts
-    76 00000034 CF                          iret
-    77                                  
-    78                                  intr_test10:
-    79                                  nmi_test12:
-    80 00000035 E89100                      call write_test_number
-    81 00000038 B80100                      mov ax, 1
-    82 0000003B 31DB                        xor bx, bx
-    83 0000003D F7F3                        div bx ; cause #DE
-    84 0000003F CF                          iret
-    85                                  
-    86                                  setup_ivt:
-    87 00000040 31C0                        xor ax, ax
-    88 00000042 8EC0                        mov es, ax
-    89                                  
-    90                                      ; vector 0: divide error (#DE)
-    91 00000044 26C7060000[7500]            mov word [es:0x00], div0_dispatcher
-    92 0000004B 268C0E0200                  mov word [es:0x02], cs
-    93                                  
-    94                                      ; vector 2: hardware NMI
-    95 00000050 26C7060800[8A00]            mov word [es:0x08], nmi_dispatcher
-    96 00000057 268C0E0A00                  mov word [es:0x0A], cs
+    72                                  double_fault_idtr:
+    73 0000003A 2400                        dw 0x0024
+    74 0000003C 00000000                    dd 0x00000000
+    75                                  triple_fault_idtr:
+    76 00000040 2000                        dw 0x0020
+    77 00000042 00000000                    dd 0x00000000
+    78                                  
+    79                                  intr_test4:
+    80                                  nmi_test8:
+    81 00000046 E8A400                      call write_test_number
+    82 00000049 F4                          hlt ; wait for nested INTR
+    83                                      ; not reached due to RESET
+    84                                  
+    85                                  intr_test6:
+    86 0000004A E8A000                      call write_test_number
+    87 0000004D FE06[F500]                  inc byte [test_number]
+    88 00000051 FB                          sti
+    89 00000052 F4                          hlt ; wait for nested INTR
+    90 00000053 CF                          iret
+    91                                  
+    92                                  div0_test9:
+    93 00000054 E89600                      call write_test_number
+    94 00000057 666783042402                add dword [esp], 2 ; adjust EIP
+    95 0000005D F4                          hlt ; wait for nested interrupts
+    96 0000005E CF                          iret
     97                                  
-    98                                      ; vector 8: double fault (#DF)
-    99 0000005C 26C7062000[9C00]            mov word [es:0x20], double_fault_dispatcher
-   100 00000063 268C0E2200                  mov word [es:0x22], cs
-   101                                  
-   102                                      ; vector 32: hardware INTR
-   103 00000068 26C7068000[AA00]            mov word [es:0x80], intr_dispatcher
-   104 0000006F 268C0E8200                  mov word [es:0x82], cs
+    98                                  intr_test10:
+    99                                  nmi_test12:
+   100 0000005F E88B00                      call write_test_number
+   101 00000062 B80100                      mov ax, 1
+   102 00000065 31DB                        xor bx, bx
+   103 00000067 F7F3                        div bx ; cause #DE
+   104 00000069 CF                          iret
    105                                  
-   106 00000074 C3                          ret
-   107                                  
-   108                                  ; #DE ISR (vector 0)
-   109                                  div0_dispatcher:
-   110 00000075 FE06[D100]                  inc byte [test_number]
-   111 00000079 803E[D100]09                cmp byte [test_number], 9
-   112 0000007E 74AA                        je div0_test9
-   113                                      ; fallthrough
-   114 00000080 E84600                      call write_test_number
-   115 00000083 666783042402                add dword [esp], 2 ; adjust EIP
-   116 00000089 CF                          iret ; tests 1, 5, 11, 13
+   106                                  setup_ivt:
+   107 0000006A 31C0                        xor ax, ax
+   108 0000006C 8EC0                        mov es, ax
+   109                                  
+   110                                      ; vector 0: divide error (#DE)
+   111 0000006E 26C7060000[9F00]            mov word [es:0x00], div0_dispatcher
+   112 00000075 268C0E0200                  mov word [es:0x02], cs
+   113                                  
+   114                                      ; vector 2: hardware NMI
+   115 0000007A 26C7060800[B400]            mov word [es:0x08], nmi_dispatcher
+   116 00000081 268C0E0A00                  mov word [es:0x0A], cs
    117                                  
-   118                                  ; NMI ISR (vector 2)
-   119                                  nmi_dispatcher:
-   120 0000008A 803E[D100]08                cmp byte [test_number], 8
-   121 0000008F 748B                        je nmi_test8
-   122 00000091 803E[D100]0C                cmp byte [test_number], 12
-   123 00000096 749D                        je nmi_test12
-   124                                      ; fallthrough
-   125 00000098 E82E00                      call write_test_number
-   126 0000009B CF                          iret ; test 3, 9
+   118                                      ; vector 8: double fault (#DF)
+   119 00000086 26C7062000[C600]            mov word [es:0x20], double_fault_handler
+   120 0000008D 268C0E2200                  mov word [es:0x22], cs
+   121                                  
+   122                                      ; vector 32: hardware INTR
+   123 00000092 26C7068000[CE00]            mov word [es:0x80], intr_dispatcher
+   124 00000099 268C0E8200                  mov word [es:0x82], cs
+   125                                  
+   126 0000009E C3                          ret
    127                                  
-   128                                  ; #DF ISR (vector 8)
-   129                                  double_fault_dispatcher:
-   130 0000009C FE06[D100]                  inc byte [test_number]
-   131 000000A0 E82600                      call write_test_number
-   132 000000A3 B80100                      mov ax, 1
-   133 000000A6 31DB                        xor bx, bx
-   134 000000A8 F7F3                        div bx ; cause triple fault
-   135                                      ; not reached
-   136                                  
-   137                                  ; INTR ISR (vector 32)
-   138                                  intr_dispatcher:
-   139 000000AA 803E[D100]04                cmp byte [test_number], 4
-   140 000000AF 0F8469FF                    je intr_test4
-   141 000000B3 803E[D100]06                cmp byte [test_number], 6
-   142 000000B8 0F8464FF                    je intr_test6
-   143 000000BC 803E[D100]0A                cmp byte [test_number], 10
-   144 000000C1 0F8470FF                    je intr_test10
-   145                                      ; fallthrough
-   146 000000C5 E80100                      call write_test_number
-   147 000000C8 CF                          iret ; test 2, 7, 9
-   148                                  
-   149                                  write_test_number:
-   150 000000C9 50                          push ax
-   151 000000CA A0[D100]                    mov al, [test_number]
-   152 000000CD E62A                        out DEBUG_PORT, al
-   153 000000CF 58                          pop ax
-   154 000000D0 C3                          ret
-   155                                  
-   156 000000D1 00                      test_number db 0
-   157                                  
-   158 000000D2 90<rep FF1Eh>           times 0xfff0-($-$$) nop
-   159                                  
-   160                                  bootstrap:
-   161 0000FFF0 EA[0000]00F0                jmp C_SEG_REAL:start ; implicitly loads CS with C_SEG_REAL
-   162                                  
-   163 0000FFF5 90<rep Bh>              times 0x10000-($-$$) nop
+   128                                  ; #DE ISR (vector 0)
+   129                                  div0_dispatcher:
+   130 0000009F FE06[F500]                  inc byte [test_number]
+   131 000000A3 803E[F500]09                cmp byte [test_number], 9
+   132 000000A8 74AA                        je div0_test9
+   133                                      ; fallthrough
+   134 000000AA E84000                      call write_test_number
+   135 000000AD 666783042402                add dword [esp], 2 ; adjust EIP
+   136 000000B3 CF                          iret ; tests 1, 5, 11, 13
+   137                                  
+   138                                  ; NMI ISR (vector 2)
+   139                                  nmi_dispatcher:
+   140 000000B4 803E[F500]08                cmp byte [test_number], 8
+   141 000000B9 748B                        je nmi_test8
+   142 000000BB 803E[F500]0C                cmp byte [test_number], 12
+   143 000000C0 749D                        je nmi_test12
+   144                                      ; fallthrough
+   145 000000C2 E82800                      call write_test_number
+   146 000000C5 CF                          iret ; test 3, 9
+   147                                  
+   148                                  ; #DF ISR (vector 8)
+   149                                  double_fault_handler:
+   150 000000C6 FE06[F500]                  inc byte [test_number]
+   151 000000CA E82000                      call write_test_number
+   152 000000CD CF                          iret
+   153                                  
+   154                                  ; INTR ISR (vector 32)
+   155                                  intr_dispatcher:
+   156 000000CE 803E[F500]04                cmp byte [test_number], 4
+   157 000000D3 0F846FFF                    je intr_test4
+   158 000000D7 803E[F500]06                cmp byte [test_number], 6
+   159 000000DC 0F846AFF                    je intr_test6
+   160 000000E0 803E[F500]0A                cmp byte [test_number], 10
+   161 000000E5 0F8476FF                    je intr_test10
+   162                                      ; fallthrough
+   163 000000E9 E80100                      call write_test_number
+   164 000000EC CF                          iret ; test 2, 7, 9
+   165                                  
+   166                                  write_test_number:
+   167 000000ED 50                          push ax
+   168 000000EE A0[F500]                    mov al, [test_number]
+   169 000000F1 E62A                        out DEBUG_PORT, al
+   170 000000F3 58                          pop ax
+   171 000000F4 C3                          ret
+   172                                  
+   173 000000F5 00                      test_number db 0
+   174                                  
+   175 000000F6 90<rep FEFAh>           times 0xfff0-($-$$) nop
+   176                                  
+   177                                  bootstrap:
+   178 0000FFF0 EA[0000]00F0                jmp C_SEG_REAL:start ; implicitly loads CS with C_SEG_REAL
+   179                                  
+   180 0000FFF5 90<rep Bh>              times 0x10000-($-$$) nop

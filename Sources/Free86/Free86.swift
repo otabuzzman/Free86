@@ -360,16 +360,19 @@ public class Free86 {
     ]
 
     typealias DoubleFaultDecoder = Array<DoubleFaultProgram?>
-    typealias DoubleFaultProgram = () throws -> ()
+    typealias DoubleFaultProgram = () throws -> Result<Resume, Never>
 
     lazy var doubleFault: DoubleFaultProgram = { [self] in
-        ifr.fex = Int(Exception.DF.rawValue)
         throw Interrupt(.DF)
     }
     lazy var tripleFault: DoubleFaultProgram = { [self] in
-        halted = true
+        halted = true  // shutdown mode
+        return .success(.endOnInterrupt)
     }
-    lazy var doubleFaultDecoder: DoubleFaultDecoder = [  // rows/ cols : first / second exception
+    /// double fault conditions matrix (Vol. 3A, p. 3-78).
+    /// row index is 1st, column index 2nd exception id.
+    /// double fault causing exception ids are below 16.
+    lazy var doubleFaultDecoder: DoubleFaultDecoder = [
         //         0x00         0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09         0x0a         0x0b         0x0c         0x0d         0x0e         0x0f
         /* 0x00 */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
         /* 0x01 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
@@ -379,7 +382,7 @@ public class Free86 {
         /* 0x05 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
         /* 0x06 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
         /* 0x07 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, nil,         nil,         nil,         nil,         nil,         nil,         nil,
-        /* 0x08 */ tripleFault, nil, nil, nil, nil, nil, nil, nil, nil, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, nil,
+        /* 0x08 */ nil,         nil, nil, nil, nil, nil, nil, nil, nil, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, tripleFault, nil,
         /* 0x09 */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
         /* 0x0a */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,
         /* 0x0b */ doubleFault, nil, nil, nil, nil, nil, nil, nil, nil, doubleFault, doubleFault, doubleFault, doubleFault, doubleFault, nil,         nil,

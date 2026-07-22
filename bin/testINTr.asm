@@ -54,7 +54,27 @@ test_loop:
     ; test 13: nested #DE allowed
     inc byte [test_number]
     hlt
-    jmp test_loop
+    cmp byte [test_number], 13
+    jne test_loop
+
+    ; test 14: double fault
+    lidt [double_fault_idtr]
+    hlt ; wait for INT 13 (any id > 8 will do)
+
+    ; test 15: triple fault
+    inc byte [test_number]
+    call write_test_number
+    lidt [triple_fault_idtr]
+    mov eax, 0xdeadc0de
+    hlt ; wait for INT 13 (any id > 7 will do)
+    ; not reached
+
+double_fault_idtr:
+    dw 0x0024
+    dd 0x00000000
+triple_fault_idtr:
+    dw 0x0020
+    dd 0x00000000
 
 intr_test4:
 nmi_test8:
@@ -96,7 +116,7 @@ setup_ivt:
     mov word [es:0x0A], cs
 
     ; vector 8: double fault (#DF)
-    mov word [es:0x20], double_fault_dispatcher
+    mov word [es:0x20], double_fault_handler
     mov word [es:0x22], cs
 
     ; vector 32: hardware INTR
@@ -126,13 +146,10 @@ nmi_dispatcher:
     iret ; test 3, 9
 
 ; #DF ISR (vector 8)
-double_fault_dispatcher:
+double_fault_handler:
     inc byte [test_number]
     call write_test_number
-    mov ax, 1
-    xor bx, bx
-    div bx ; cause triple fault
-    ; not reached
+    iret
 
 ; INTR ISR (vector 32)
 intr_dispatcher:

@@ -1,4 +1,4 @@
-enum Exception: Byte {
+public enum Exception: Byte {
     case DE
     case DB
     case NonMaskableInterrupt  // PinIO

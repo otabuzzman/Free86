@@ -498,8 +498,11 @@ extension Free86 {
     func raiseInterrupt(_ id: Byte, _ errorCode: DWord, _ isSW: Bool, _ home: LinearAddress) throws {
         if 16 > id {  // probably DF condition
             let sex = Int(id)
-            if ifr.isFlagRaised(.FC) {
-                try doubleFaultDecoder[ifr.fex * 16 + sex]?()
+            if ifr.isFlagRaised(.FC) {  // DF condition
+                let shutdown = try doubleFaultDecoder[ifr.fex * 16 + sex]?()
+                if shutdown == .success(.endOnInterrupt) {
+                    return  // tripple fault
+                }
             }
             ifr.fex = sex
             ifr.setFlag(.FC)
