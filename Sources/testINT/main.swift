@@ -122,12 +122,12 @@ await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.regs[.ESP] == 0x7c00)
 
 /// test 14: double fault
-try await cpu.INTR.trigger(13)
+try await cpu.INTR.trigger(.GP)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.regs[.ESP] == 0x7c00)
 
 /// test 15: triple fault
-try await cpu.INTR.trigger(13)
+try await cpu.INTR.trigger(.GP)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
 assert(cpu.regs[.EAX] == 0xdeadc0de)
 
@@ -164,6 +164,12 @@ class DebugPort<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     func rd() -> T { 0xff }
     func wr(_ iodata: T) {
         print(String(format: "%d", iodata as! CVarArg))
+    }
+}
+
+extension PinIO where Signal: UnsignedInteger {
+    func trigger(_ value: Exception) throws {
+        try self.trigger(Signal(value.rawValue))
     }
 }
 
