@@ -55,29 +55,27 @@ extension Free86 {
             segmentTranslation()
             selector = try ld16ReadonlyCpl3()
         }
-        u = try ldDescriptorFields(selector, isLsl)
         osmSrc = compileSflags()
-        if u == 0x80000000 {  // notok
-            osmSrc.setFlag(.ZF, .zero)
-        } else {
+        if let u = try ldDescriptorFields(selector, isLsl) {
             osmSrc.setFlag(.ZF)
             if (o32) {
                 regs[modRM.reg] = u
             } else {
                 regs[modRM.reg].lowerHalf = u
             }
+        } else {
+            osmSrc.setFlag(.ZF, .zero)
         }
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
     }
-    func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) throws -> DWord {
-        let notok: DWord = 0x80000000
+    func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) throws -> DWord? {
         if selector.isNull {
-            return notok
+            return nil
         }
         let xsd = try ldXdtEntry(selector)
         if xsd.qword == 0 {
-            return notok
+            return nil
         }
         let type = SegmentDescriptorType(rawValue: xsd.type)
         if xsd.isSystemSegment {
@@ -98,14 +96,14 @@ extension Free86 {
                 fallthrough
             case .CallGate:
                 if limit {
-                    return notok
+                    return nil
                 }
                 break
             default:
-                return notok
+                return nil
             }
             if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
-                return notok
+                return nil
             }
         } else {
             switch type {
@@ -117,7 +115,7 @@ extension Free86 {
                 fallthrough
             case .DataRWAccessed:
                 if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
-                    return notok
+                    return nil
                 }
                 fallthrough
             default:
