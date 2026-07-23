@@ -59,20 +59,20 @@ test_loop:
 
     ; test 14: double fault
     lidt [double_fault_idtr]
-    hlt ; wait for INT 13 (any id > 8 will do)
+    hlt ; wait for INT 13 (actually any id > 8 will do)
 
     ; test 15: triple fault
     inc byte [test_number]
     call write_test_number
     lidt [triple_fault_idtr]
     mov eax, 0xdeadc0de
-    hlt ; wait for INT 13 (any id > 7 will do)
+    hlt ; wait for INT 13 (actually any id > 7 will do)
     ; not reached
 
-double_fault_idtr: ; any id > 8 causes GP yielding DF
+double_fault_idtr: ; any id > 8 causes #GP yielding #DF
     dw 0x0024
     dd 0x00000000
-triple_fault_idtr: ; any id > 7 causes GP yielding DF failing causing triple fault
+triple_fault_idtr: ; any id > 7 causes #GP yielding #DF yielding triple fault
     dw 0x0020
     dd 0x00000000
 
@@ -84,8 +84,8 @@ nmi_test8:
 
 intr_test6:
     call write_test_number
-    inc byte [test_number]
     sti
+    inc byte [test_number] ; test 7 not handled in test_loop
     hlt ; wait for nested INTR
     iret
 
@@ -137,6 +137,7 @@ div0_dispatcher:
 
 ; NMI ISR (vector 2)
 nmi_dispatcher:
+    ; test_number incremented in test_loop
     cmp byte [test_number], 8
     je nmi_test8
     cmp byte [test_number], 12
@@ -153,6 +154,7 @@ double_fault_handler:
 
 ; INTR ISR (vector 32)
 intr_dispatcher:
+    ; test_number incremented in test_loop
     cmp byte [test_number], 4
     je intr_test4
     cmp byte [test_number], 6
