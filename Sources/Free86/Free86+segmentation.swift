@@ -171,14 +171,14 @@ extension Free86 {
         lax = segs[sreg].shadow.base &+ lax
     }
     func ldMemoryOffset(_ writable: Bool) throws {
-        var la: QWord
+        var la: DWord
         var notok: Bool
-        var stride: QWord
+        var stride: DWord
         if !ipr.isFlagRaised(.addressSizeOverride) {
-            la = QWord(fetch())
+            la = DWord(fetch())
             stride = 4  // 32 bit mode
         } else {
-            la = QWord(fetch16())
+            la = DWord(fetch16())
             stride = 2  // 16 bit mode
         }
         if opcode.isEven {
@@ -194,14 +194,11 @@ extension Free86 {
         if notok {
             throw Interrupt(.GP, errorCode: 0)
         }
-        la = QWord(segs[sreg].shadow.base) &+ la
         /// limit checking
-        let b = QWord(segs[sreg].shadow.base)
-        let l = QWord(segs[sreg].shadow.limit)
         if segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
-            notok = la < b &+ l &+ 1
+            notok = la < segs[sreg].shadow.limit &+ 1
         } else {
-            notok = la > b &+ l &+ 1 &- stride
+            notok = la > segs[sreg].shadow.limit &+ 1 &- stride
         }
         if notok {
             if sreg.isSegmentRegister(.SS) {
@@ -210,7 +207,7 @@ extension Free86 {
                 throw Interrupt(.GP, errorCode: 0)
             }
         }
-        lax = DWord(truncatingIfNeeded: la)
+        lax = segs[sreg].shadow.base &+ la
     }
     func setSegmentRegister(_ sreg: SegmentRegister.Name, _ selector: SegmentSelector) throws {
         if !cr0.isProtectedMode {

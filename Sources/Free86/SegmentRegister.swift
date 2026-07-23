@@ -9,7 +9,7 @@ public struct SegmentRegister {
         case LDT  // holds 16-bit selector and cache for LDT
         case TR   // holds 16-bit selector and cache for TSS
     }
-    public private(set) var selector: SegmentSelector = 0
+    public private(set) var selector = SegmentSelector(0)
     public private(set) var shadow = SegmentDescriptor(0)  // aka descriptor cache
     init(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor) {
         self.selector = selector

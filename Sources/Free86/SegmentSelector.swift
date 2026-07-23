@@ -36,9 +36,3 @@ extension SegmentSelector {
         indexTI == 0
     }
 }
-
-extension SegmentSelector {
-    init(_ dword: DWord) {
-        self = Self(truncatingIfNeeded: dword)
-    }
-}
