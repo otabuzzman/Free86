@@ -171,14 +171,14 @@ extension Free86 {
         lax = segs[sreg].shadow.base &+ lax
     }
     func ldMemoryOffset(_ writable: Bool) throws {
-        var la: DWord
-        var notok: Bool
+        var offset: DWord
         var stride: DWord
+        var notok: Bool
         if !ipr.isFlagRaised(.addressSizeOverride) {
-            la = DWord(fetch())
+            offset = DWord(fetch())
             stride = 4  // 32 bit mode
         } else {
-            la = DWord(fetch16())
+            offset = DWord(fetch16())
             stride = 2  // 16 bit mode
         }
         if opcode.isEven {
@@ -186,7 +186,7 @@ extension Free86 {
         }
         let sreg = ipr.segmentRegister
         /// type checking
-        if sreg.isSegmentRegister(.CS) {  // code segment, WR requested or CS not readable
+        if sreg == .CS {  // code segment, WR requested or CS not readable
             notok = writable || !segs[sreg].shadow.isFlagRaised(.R)
         } else {  // data segment, WR requested and DS not writable
             notok = writable && !segs[sreg].shadow.isFlagRaised(.W)
@@ -196,18 +196,18 @@ extension Free86 {
         }
         /// limit checking
         if segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
-            notok = la < segs[sreg].shadow.limit &+ 1
+            notok = offset < segs[sreg].shadow.limit &+ 1
         } else {
-            notok = la > segs[sreg].shadow.limit &+ 1 &- stride
+            notok = offset > segs[sreg].shadow.limit &+ 1 &- stride
         }
         if notok {
-            if sreg.isSegmentRegister(.SS) {
+            if sreg == .SS {
                 throw Interrupt(.SS, errorCode: 0)
             } else {
                 throw Interrupt(.GP, errorCode: 0)
             }
         }
-        lax = segs[sreg].shadow.base &+ la
+        lax = segs[sreg].shadow.base &+ offset
     }
     func setSegmentRegister(_ sreg: SegmentRegister.Name, _ selector: SegmentSelector) throws {
         if !cr0.isProtectedMode {
