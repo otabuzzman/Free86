@@ -53,7 +53,7 @@ test_loop:
     ; test 12: HW interrupt on NMI
     ; test 13: nested #DE allowed
     inc byte [test_number]
-    hlt
+    hlt ; wait for interrupt/ exception to run test
     cmp byte [test_number], 13
     jne test_loop
 
@@ -69,10 +69,10 @@ test_loop:
     hlt ; wait for INT 13 (any id > 7 will do)
     ; not reached
 
-double_fault_idtr:
+double_fault_idtr: ; any id > 8 causes GP yielding DF
     dw 0x0024
     dd 0x00000000
-triple_fault_idtr:
+triple_fault_idtr: ; any id > 7 causes GP yielding DF failing causing triple fault
     dw 0x0020
     dd 0x00000000
 
