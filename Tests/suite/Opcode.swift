@@ -26,7 +26,7 @@ func opcodeEncodedFieldsAccess() {
     #expect(opcode.encoded(.condition) == 5)
     #expect(opcode.encoded(.generalRegister) == 5)
     #expect(opcode.encoded(.segmentRegister) == 5)
-    #expect(opcode.encoded(.standardSegmentRegister) == 4)
+    #expect(opcode.encoded(.standardSegmentRegister) == 0)
     #expect(opcode.encoded(.extendedSegmentRegister) == 4)
 
     opcode = 0x5A  // 0b0101_1010

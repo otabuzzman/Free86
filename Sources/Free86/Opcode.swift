@@ -35,7 +35,7 @@ extension Opcode {
         case .segmentRegister:
             return Int(self & 7)
         case .standardSegmentRegister:
-            return Int(self >> 3 & 7)
+            return Int(self >> 3 & 3)
         case .extendedSegmentRegister:
             return Int(self >> 3 & 7)
         case .coProcessorOpcode:

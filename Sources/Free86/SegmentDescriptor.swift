@@ -8,6 +8,9 @@ public struct SegmentDescriptor {
         upper = DWord(qword >> 32)
         lower = DWord(truncatingIfNeeded: qword)
     }
+    func translate(_ offset: DWord, _ writable: Bool, _ user: Bool) throws -> LinearAddress {
+        0
+    }
 }
 
 extension SegmentDescriptor {

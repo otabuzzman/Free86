@@ -8,7 +8,7 @@ extension Free86 {
         if ipr == iprDefault {
             try instruction.length()
         }
-        ipr.segmentRegister = opcode.encoded(.standardSegmentRegister) & 3
+        ipr.segmentRegister = opcode.encoded(.standardSegmentRegister)
         opcode = DWord(fetch8())
         opcode.override = ipr.isFlagRaised(.operandSizeOverride)
         return .success(.goOnFetching)
