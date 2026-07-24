@@ -1,5 +1,5 @@
 extension Free86 {
-    func segmentTranslation() {
+    func applyAddressingForm() {
         var sreg: SegmentRegister.Name, exp: Int = 0
         if x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
             switch modRM.modRM {

@@ -119,7 +119,7 @@ extension Free86 {
             rM = modRM.rM
             setEncodedByte(in: rM, to: r)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             try st8WritableCpl3(byte: r)
         }
         return .success(.endFetchLoop)
@@ -131,7 +131,7 @@ extension Free86 {
         if modRM.mod == 3 {
             regs[modRM.rM] = r
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             try stWritableCpl3(dword: r)
         }
         return .success(.endFetchLoop)
@@ -143,7 +143,7 @@ extension Free86 {
             rM = modRM.rM
             rm = getEncodedByte(from: rM)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8ReadonlyCpl3())
         }
         reg = modRM.reg
@@ -156,7 +156,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
         }
         regs[modRM.reg] = rm
@@ -195,7 +195,7 @@ extension Free86 {
             imm = DWord(fetch8())
             setEncodedByte(in: modRM.rM, to: imm)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             imm = DWord(fetch8())
             try st8WritableCpl3(byte: imm)
         }
@@ -208,7 +208,7 @@ extension Free86 {
             imm = fetch()
             regs[modRM.rM] = imm
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             imm = fetch()
             try stWritableCpl3(dword: imm)
         }
@@ -224,7 +224,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM].lowerHalf
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16ReadonlyCpl3())
         }
         let sreg = SegmentRegister.Name(rawValue: reg)!
@@ -246,7 +246,7 @@ extension Free86 {
                 regs[modRM.rM].lowerHalf = u
             }
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             try st16WritableCpl3(word: u)
         }
         return .success(.endFetchLoop)
@@ -261,7 +261,7 @@ extension Free86 {
             rm = getEncodedByte(from: rM)
             setEncodedByte(in: rM, to: getEncodedByte(from: reg))
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8WritableCpl3())
             try st8WritableCpl3(byte: getEncodedByte(from: reg))
         }
@@ -278,7 +278,7 @@ extension Free86 {
             rm = regs[rM]
             regs[rM] = regs[reg]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldWritableCpl3()
             try stWritableCpl3(dword: regs[reg])
         }
@@ -338,7 +338,7 @@ extension Free86 {
             rM = modRM.rM
             setEncodedByte(in: rM, to: calculate8(getEncodedByte(from: rM), r))
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             if operation != 7 {
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(rm, r)
@@ -363,7 +363,7 @@ extension Free86 {
             osmDst = regs[rM]
             osm = 2
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldWritableCpl3()
             osmSrc = r
             rm = rm &+ r
@@ -388,7 +388,7 @@ extension Free86 {
             rM = modRM.rM
             regs[rM] = calculate(regs[rM], r)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldWritableCpl3()
             u = calculate(rm, r)
             try stWritableCpl3(dword: u)
@@ -405,7 +405,7 @@ extension Free86 {
             osmDst = regs[rM] &- r
             osm = 8
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
             osmSrc = r
             osmDst = rm &- r
@@ -429,7 +429,7 @@ extension Free86 {
             rM = modRM.rM
             rm = getEncodedByte(from: rM)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8ReadonlyCpl3())
         }
         setEncodedByte(in: reg, to: calculate8(getEncodedByte(from: reg), rm))
@@ -442,7 +442,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
         }
         osmSrc = rm
@@ -464,7 +464,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
         }
         regs[reg] = calculate(regs[reg], rm)
@@ -477,7 +477,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
         }
         osmSrc = rm
@@ -546,7 +546,7 @@ extension Free86 {
             imm = DWord(fetch8())
             setEncodedByte(in: rM, to: calculate8(getEncodedByte(from: rM), imm))
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             imm = DWord(fetch8())
             if operation != 7 {
                 rm = DWord(try ld8WritableCpl3())
@@ -569,7 +569,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             imm = fetch()
@@ -583,7 +583,7 @@ extension Free86 {
                 imm = fetch()
                 regs[rM] = calculate(regs[rM], imm)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 imm = fetch()
                 rm = try ldWritableCpl3()
                 u = calculate(rm, imm)
@@ -601,7 +601,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             u = DWord(fetch8()).signExtendedByte
@@ -615,7 +615,7 @@ extension Free86 {
                 u = DWord(fetch8()).signExtendedByte
                 regs[rM] = calculate(regs[rM], u)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 u = DWord(fetch8()).signExtendedByte
                 rm = try ldWritableCpl3()
                 v = calculate(rm, u)
@@ -669,7 +669,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
         }
         imm = fetch()
@@ -684,7 +684,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
         }
         v = DWord(fetch8()).signExtendedByte
@@ -699,7 +699,7 @@ extension Free86 {
             rM = modRM.rM
             rm = getEncodedByte(from: rM)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8ReadonlyCpl3())
         }
         reg = modRM.reg
@@ -714,7 +714,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldReadonlyCpl3()
         }
         r = regs[modRM.reg]
@@ -747,7 +747,7 @@ extension Free86 {
                 rM = modRM.rM
                 rm = getEncodedByte(from: rM)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
             imm = DWord(fetch8())
@@ -760,7 +760,7 @@ extension Free86 {
                 rM = modRM.rM
                 setEncodedByte(in: rM, to: ~(getEncodedByte(from: rM)))
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
                 try st8WritableCpl3(byte: ~rm)
             }
@@ -772,7 +772,7 @@ extension Free86 {
                 rM = modRM.rM
                 setEncodedByte(in: rM, to: calculate8(0, getEncodedByte(from: rM)))
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(0, rm)
                 try st8WritableCpl3(byte: u)
@@ -783,7 +783,7 @@ extension Free86 {
                 rM = modRM.rM
                 rm = getEncodedByte(from: rM)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
             aux8Mul(regs[.EAX], rm)
@@ -794,7 +794,7 @@ extension Free86 {
                 rM = modRM.rM
                 rm = getEncodedByte(from: rM)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
             aux8Imul(regs[.EAX], rm)
@@ -805,7 +805,7 @@ extension Free86 {
                 rM = modRM.rM
                 rm = getEncodedByte(from: rM)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
             try aux8Div(rm)
@@ -815,7 +815,7 @@ extension Free86 {
                 rM = modRM.rM
                 rm = getEncodedByte(from: rM)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8ReadonlyCpl3())
             }
             try aux8Idiv(rm)
@@ -835,7 +835,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             imm = fetch()
@@ -848,7 +848,7 @@ extension Free86 {
                 rM = modRM.rM
                 regs[rM] = ~regs[rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldWritableCpl3()
                 try stWritableCpl3(dword: ~rm)
             }
@@ -860,7 +860,7 @@ extension Free86 {
                 rM = modRM.rM
                 regs[rM] = calculate(0, regs[rM])
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldWritableCpl3()
                 u = calculate(0, rm)
                 try stWritableCpl3(dword: u)
@@ -870,7 +870,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             auxMul(regs[.EAX], rm)
@@ -881,7 +881,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             auxImul(regs[.EAX], rm)
@@ -892,7 +892,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             try auxDiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
@@ -903,7 +903,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             try auxIdiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
@@ -924,7 +924,7 @@ extension Free86 {
             rM = modRM.rM
             setEncodedByte(in: rM, to: shift8(getEncodedByte(from: rM), imm))
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             imm = DWord(fetch8())
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, imm)
@@ -941,7 +941,7 @@ extension Free86 {
             rM = modRM.rM
             regs[rM] = shift(regs[rM], imm)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             imm = DWord(fetch8())
             rm = try ldWritableCpl3()
             u = shift(rm, imm)
@@ -957,7 +957,7 @@ extension Free86 {
             rM = modRM.rM
             setEncodedByte(in: rM, to: shift8(getEncodedByte(from: rM), 1))
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, 1)
             try st8WritableCpl3(byte: u)
@@ -972,7 +972,7 @@ extension Free86 {
             rM = modRM.rM
             regs[rM] = shift(regs[rM], 1)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldWritableCpl3()
             u = shift(rm, 1)
             try stWritableCpl3(dword: u)
@@ -987,7 +987,7 @@ extension Free86 {
             rM = modRM.rM
             setEncodedByte(in: rM, to: shift8(getEncodedByte(from: rM), regs[.ECX] & 0xff))
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, regs[.ECX] & 0xff)
             try st8WritableCpl3(byte: u)
@@ -1002,7 +1002,7 @@ extension Free86 {
             rM = modRM.rM
             regs[rM] = shift(regs[rM], regs[.ECX] & 0xff)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = try ldWritableCpl3()
             u = shift(rm, regs[.ECX] & 0xff)
             try stWritableCpl3(dword: u)
@@ -1079,7 +1079,7 @@ extension Free86 {
             u = regs[.ESP]
             m = try pop()
             v = regs[.ESP]
-            segmentTranslation()
+            applyAddressingForm()
             regs[.ESP] = u
             try stWritableCpl3(dword: m)
             regs[.ESP] = v
@@ -1195,7 +1195,7 @@ extension Free86 {
             throw Interrupt(.UD)
         }
         ipr.segmentRegister = SegmentRegister.Name.LDT.rawValue
-        segmentTranslation()
+        applyAddressingForm()
         regs[modRM.reg] = lax
         return .success(.endFetchLoop)
     }
@@ -1210,7 +1210,7 @@ extension Free86 {
                 rM = modRM.rM
                 setEncodedByte(in: rM, to: aux8Inc(getEncodedByte(from: rM)))
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
                 u = aux8Inc(rm)
                 try st8WritableCpl3(byte: u)
@@ -1222,7 +1222,7 @@ extension Free86 {
                 rM = modRM.rM
                 setEncodedByte(in: rM, to: aux8Dec(getEncodedByte(from: rM)))
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
                 u = aux8Dec(rm)
                 try st8WritableCpl3(byte: u)
@@ -1251,7 +1251,7 @@ extension Free86 {
                 osmDst = regs[rM]
                 osm = 27
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldWritableCpl3()
                 if osm < 25 {
                     osmPreserved = osm
@@ -1275,7 +1275,7 @@ extension Free86 {
                 osmDst = regs[rM]
                 osm = 30
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldWritableCpl3()
                 if osm < 25 {
                     osmPreserved = osm
@@ -1291,7 +1291,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             u = eip &+ far &- farStart
@@ -1311,7 +1311,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 throw Interrupt(.UD)
             }
-            segmentTranslation()
+            applyAddressingForm()
             m = try ldReadonlyCpl3()
             lax = lax &+ 4
             m16 = try ld16ReadonlyCpl3()
@@ -1325,7 +1325,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             eip = rm
@@ -1335,7 +1335,7 @@ extension Free86 {
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 rm = try ldReadonlyCpl3()
             }
             if x8664LongMode {
@@ -1837,7 +1837,7 @@ extension Free86 {
         regs[.EAX].lowerHalf = 0xffff
         if modRM.mod == 3 {
         } else {
-            segmentTranslation()
+            applyAddressingForm()
         }
         return .success(.endFetchLoop)
     }

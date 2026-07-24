@@ -96,9 +96,9 @@ let package = Package(
                 "Instruction.swift",  // no tests
                 "Opcode.swift",
                 "ModRM+SIB.swift",
+                "Free86+applyAddressingForm.swift",  // no tests
                 "InstructionPrefixRegister.swift",
                 "LogicalAddress+Pointers.swift",  // no tests
-                "Free86+segmentation.swift",  // no tests
                 "LinearAddress.swift",
                 "MemoryIO+PhysicalAddress.swift",
                 "DirectMemory.swift",  // protocol, no explicit tests

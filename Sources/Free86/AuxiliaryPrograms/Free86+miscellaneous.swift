@@ -52,7 +52,7 @@ extension Free86 {
         if modRM.mod == 3 {
             selector = SegmentSelector(regs[modRM.rM])
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             selector = try ld16ReadonlyCpl3()
         }
         osmSrc = compileSflags()
@@ -180,7 +180,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM].lowerHalf
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
         }
         r = regs[modRM.reg]
@@ -222,7 +222,7 @@ extension Free86 {
         if modRM.mod == 3 {
             throw Interrupt(.UD)
         }
-        segmentTranslation()
+        applyAddressingForm()
         u = DWord(try ld16ReadonlyCpl3()).signExtendedWord
         lax = lax &+ 2
         v = DWord(try ld16ReadonlyCpl3()).signExtendedWord
@@ -236,7 +236,7 @@ extension Free86 {
         if modRM.mod == 3 {
             throw Interrupt(.UD)
         }
-        segmentTranslation()
+        applyAddressingForm()
         u = try ldReadonlyCpl3()
         lax = lax &+ 4
         v = try ldReadonlyCpl3()
@@ -355,7 +355,7 @@ extension Free86 {
     }
     func ldFarPointer16(_ sreg: SegmentRegister.Name) throws {
         modRM = fetch8()
-        segmentTranslation()
+        applyAddressingForm()
         imm = DWord(try ld16ReadonlyCpl3())
         lax = lax &+ 2
         imm16 = try ld16ReadonlyCpl3()
@@ -364,7 +364,7 @@ extension Free86 {
     }
     func ldFarPointer(_ sreg: SegmentRegister.Name) throws {
         modRM = fetch8()
-        segmentTranslation()
+        applyAddressingForm()
         imm = try ldReadonlyCpl3()
         lax = lax &+ 4
         imm16 = try ld16ReadonlyCpl3()

@@ -45,7 +45,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16ReadonlyCpl3())
         }
         if canJmp(condition: opcode.encoded(.condition)) {
@@ -61,7 +61,7 @@ extension Free86 {
             rM = modRM.rM
             rm = (getEncodedByte(from: rM)) & 0xff
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8ReadonlyCpl3())
         }
         regs[reg].lowerHalf = rm
@@ -75,7 +75,7 @@ extension Free86 {
             rM = modRM.rM
             rm = getEncodedByte(from: rM)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld8ReadonlyCpl3())
         }
         regs[reg].lowerHalf = rm.signExtendedByte
@@ -88,7 +88,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16ReadonlyCpl3())
         }
         aux16Imul(regs[reg], rm)
@@ -108,7 +108,7 @@ extension Free86 {
             regs[reg].lowerHalf = r
             regs[rM].lowerHalf = u
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
             u = calculate16(rm, regs[reg])
             try st16WritableCpl3(word: u)
@@ -150,7 +150,7 @@ extension Free86 {
             rM = modRM.rM
             regs[rM].lowerHalf = aux16ShrdShld(regs[rM], r, imm)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             imm = DWord(fetch8())
             rm = DWord(try ld16WritableCpl3())
             u = aux16ShrdShld(rm, r, imm)
@@ -168,7 +168,7 @@ extension Free86 {
             rM = modRM.rM
             regs[rM].lowerHalf = aux16ShrdShld(regs[rM], r, regs[.ECX])
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
             u = aux16ShrdShld(rm, r, regs[.ECX])
             try st16WritableCpl3(word: u)
@@ -186,7 +186,7 @@ extension Free86 {
                 rm = regs[modRM.rM]
                 imm = DWord(fetch8())
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 imm = DWord(fetch8())
                 rm = DWord(try ld16ReadonlyCpl3())
             }
@@ -204,7 +204,7 @@ extension Free86 {
                 imm = DWord(fetch8())
                 regs[rM] = aux16BtsBtrBtc(regs[rM], imm)
             } else {
-                segmentTranslation()
+                applyAddressingForm()
                 imm = DWord(fetch8())
                 rm = DWord(try ld16WritableCpl3())
                 u = aux16BtsBtrBtc(rm, imm)
@@ -224,7 +224,7 @@ extension Free86 {
             // LOCK prefix not allowed
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             lax = lax &+ ((r.lowerHalf >> 4) << 1)
             rm = DWord(try ld16ReadonlyCpl3())
         }
@@ -243,7 +243,7 @@ extension Free86 {
             rM = modRM.rM
             regs[rM].lowerHalf = aux16BtsBtrBtc(regs[rM], r)
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             lax = lax &+ ((r.lowerHalf >> 4) << 1)
             rm = DWord(try ld16WritableCpl3())
             u = aux16BtsBtrBtc(rm, r)
@@ -259,7 +259,7 @@ extension Free86 {
         if modRM.mod == 3 {
             rm = regs[modRM.rM]
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16ReadonlyCpl3())
         }
         r = regs[reg]
@@ -287,7 +287,7 @@ extension Free86 {
                 regs[.EAX].lowerHalf = r
             }
         } else {
-            segmentTranslation()
+            applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
             u = calculate16(regs[.EAX], rm)
             if u == 0 {
