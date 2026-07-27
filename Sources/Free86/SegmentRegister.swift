@@ -6,7 +6,7 @@ public struct SegmentRegister {
         case DS
         case FS
         case GS
-        case NULL
+        case NULL  // pseudo segment register with 0 selector/ descriptor
     }
     public private(set) var selector = SegmentSelector(0)
     public private(set) var shadow = SegmentDescriptor(0)  // aka descriptor cache

@@ -58,7 +58,7 @@ class Free86 {
 
     uint32_t eip;
 
-    // ES, CS, SS, DS, FS, GS, NULL
+    // ES, CS, SS, DS, FS, GS, NULL (pseudo segment register with 0 selector/ descriptor to prevent segment translation in LEA)
     SegmentRegister segs[7];
 
     SegmentRegister gdt; // GDT register
