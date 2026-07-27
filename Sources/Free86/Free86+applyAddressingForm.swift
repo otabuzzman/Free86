@@ -195,7 +195,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         /// limit checking
-        if segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
+        if segs[sreg].shadow.isDataSegment && segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
             notok = offset < segs[sreg].shadow.limit &+ 1
         } else {
             notok = offset > segs[sreg].shadow.limit &+ 1 &- stride

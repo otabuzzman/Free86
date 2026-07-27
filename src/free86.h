@@ -58,7 +58,7 @@ class Free86 {
 
     uint32_t eip;
 
-    // ES, CS, SS, DS, FS, GS, LDT, TR
+    // ES, CS, SS, DS, FS, GS, NULL
     SegmentRegister segs[7];
 
     SegmentRegister gdt; // GDT register

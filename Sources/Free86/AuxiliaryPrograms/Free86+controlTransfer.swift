@@ -9,9 +9,9 @@ extension Free86 {
     func auxJmpfRealOrV86Mode(_ selector: SegmentSelector, _ offset: LinearAddress) {
         eip = offset
         (far, farStart) = (0, 0)
-        var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(selector) << 4
-        segs[.CS] = SegmentRegister(selector, shadow)
+        var descriptor = segs[.CS].shadow
+        descriptor.base = LinearAddress(selector) << 4
+        segs[.CS] = SegmentRegister(selector, descriptor)
     }
     func auxJmpfProtectedMode(_ selector: SegmentSelector, _ offset: LinearAddress) throws {
         if selector.isNull {
@@ -74,9 +74,9 @@ extension Free86 {
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = offset
         (far, farStart) = (0, 0)
-        var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(selector) << 4
-        segs[.CS] = SegmentRegister(selector, shadow)
+        var descriptor = segs[.CS].shadow
+        descriptor.base = LinearAddress(selector) << 4
+        segs[.CS] = SegmentRegister(selector, descriptor)
     }
     func auxCallfProtectedMode(_ o32: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
         var esp: DWord
@@ -290,9 +290,9 @@ extension Free86 {
             }
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | ((esp &+ releaseStackItems) & ssMask)
-        var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(cs) << 4
-        segs[.CS] = SegmentRegister(cs, shadow)
+        var descriptor = segs[.CS].shadow
+        descriptor.base = LinearAddress(cs) << 4
+        segs[.CS] = SegmentRegister(cs, descriptor)
         eip = homeEip
         (far, farStart) = (0, 0)
         if isIret {
@@ -537,9 +537,9 @@ extension Free86 {
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = DWord(offset)
         (far, farStart) = (0, 0)
-        var shadow = segs[.CS].shadow
-        shadow.base = LinearAddress(selector) << 4
-        segs[.CS] = SegmentRegister(selector, shadow)
+        var descriptor = segs[.CS].shadow
+        descriptor.base = LinearAddress(selector) << 4
+        segs[.CS] = SegmentRegister(selector, descriptor)
         eflags.setFlag(.TF, .zero)
         eflags.setFlag(.IF, .zero)
         eflags.setFlag(.RF, .zero)

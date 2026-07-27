@@ -540,7 +540,7 @@ extension Free86 {
         if modRM.mod == 3 {
             throw Interrupt(.UD)
         }
-        ipr.segmentRegister = SegmentRegister.Name.LDT.rawValue
+        ipr.segmentRegister = SegmentRegister.Name.NULL.rawValue
         applyAddressingForm()
         regs[modRM.reg].lowerHalf = lax
         return .success(.endFetchLoop)
