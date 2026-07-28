@@ -1,5 +1,5 @@
 extension Free86 {
-    func applyAddressingForm() {
+    func applyAddressingForm(computeEffectiveAddress: Bool = false) {
         var sreg: SegmentRegister.Name, exp: Int = 0
         if x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
             switch modRM.modRM {
@@ -102,6 +102,9 @@ extension Free86 {
                     break
                 }
             }
+            if computeEffectiveAddress {
+                return
+            }
             if ipr.segmentOverride {
                 sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap
             }
@@ -158,6 +161,9 @@ extension Free86 {
                 lax = fetch()
                 lax = regs[modRM.rM] &+ lax
                 break
+        }
+        if computeEffectiveAddress {
+            return
         }
         if ipr.segmentOverride {
             sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap

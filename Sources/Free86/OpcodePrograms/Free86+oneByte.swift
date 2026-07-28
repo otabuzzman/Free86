@@ -1194,8 +1194,7 @@ extension Free86 {
         if modRM.mod == 3 {
             throw Interrupt(.UD)
         }
-        ipr.segmentRegister = SegmentRegister.Name.NULL.rawValue
-        applyAddressingForm()
+        applyAddressingForm(computeEffectiveAddress: true)
         regs[modRM.reg] = lax
         return .success(.endFetchLoop)
     }

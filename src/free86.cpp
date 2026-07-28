@@ -34,7 +34,7 @@ void Free86::reset() {
     }
     eflags = 0x2;
     eip = 0xfff0;
-    for (int i = 0 ; i < 7 ; i++) {
+    for (int i = 0 ; i < 6 ; i++) {
         segs[i] = {0, {0, 0, 0}};
     }
     segs[1] = {0, {0xffff0000, 0, 0}};
@@ -907,7 +907,7 @@ void Free86::page_translation(uint32_t address, bool writable, bool user) {
     cr2 = address;
     abort(14, error_code | writable << 1 | user << 2);
 }
-void Free86::segment_translation() {
+void Free86::segment_translation(bool compute_effective_address) {
     int sreg, sreg_default; // no DS override prefix
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
@@ -1034,6 +1034,9 @@ void Free86::segment_translation() {
                 break;
             }
         }
+        if (compute_effective_address) {
+            return;
+        }
         sreg = ipr & 0x000f;
         if (sreg == 0) {
             sreg = sreg_default;
@@ -1114,6 +1117,9 @@ void Free86::segment_translation() {
             rM = modRM & 7;
             lax = regs[rM] + lax;
             break;
+    }
+    if (compute_effective_address) {
+            return;
     }
     sreg = ipr & 0x000f;
     if (sreg == 0) {

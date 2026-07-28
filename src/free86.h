@@ -58,8 +58,8 @@ class Free86 {
 
     uint32_t eip;
 
-    // ES, CS, SS, DS, FS, GS, NULL (pseudo segment register with 0 selector/ descriptor to prevent segment translation in LEA)
-    SegmentRegister segs[7];
+    // ES, CS, SS, DS, FS, GS
+    SegmentRegister segs[6];
 
     SegmentRegister gdt; // GDT register
     SegmentRegister ldt; // LDT register
@@ -414,7 +414,7 @@ class Free86 {
     void page_translation(bool writable, bool user);
     void page_translation(uint32_t address, bool writable, bool user);
 
-    void segment_translation();
+    void segment_translation(bool compute_effective_address = false);
     void ld_memory_offset(bool writable);
 
     void set_segment_register(uint32_t sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags);

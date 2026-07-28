@@ -37,8 +37,8 @@ public class Free86 {
     public internal(set) var eip = LinearAddress(0)
     var eipLinear = LinearAddress(0)
 
-    /// ES, CS, SS, DS, FS, GS, NULL (pseudo segment register with 0 selector/ descriptor to prevent segment translation in LEA)
-    public internal(set) var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 7)
+    /// ES, CS, SS, DS, FS, GS
+    public internal(set) var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 6)
     var gdt = SegmentRegister(0, .init(0))  // GDT register
     var ldt = SegmentRegister(0, .init(0))  // LDT register
     var tr = SegmentRegister(0, .init(0))  // task register

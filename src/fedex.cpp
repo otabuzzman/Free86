@@ -1094,8 +1094,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                 if ((modRM >> 6) == 3) {
                     abort(6);
                 }
-                ipr = (ipr & ~0x000fu) | (6 + 1);
-                segment_translation();
+                segment_translation(true);
                 regs[(modRM >> 3) & 7] = lax;
                 goto FETCH_LOOP;
             case 0xfe: // G4 (INC, DEC, -, -, -, -, -, -)
@@ -2971,8 +2970,7 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     if ((modRM >> 6) == 3) {
                         abort(6);
                     }
-                    ipr = (ipr & ~0x000fu) | (6 + 1);
-                    segment_translation();
+                    segment_translation(true);
                     set_lower_word((modRM >> 3) & 7, lax);
                     goto FETCH_LOOP;
                 case 0x1ff: // G5 (INC, DEC, CALL, CALL, JMP, JMP, PUSH, -)
