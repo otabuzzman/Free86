@@ -1,6 +1,9 @@
 extension Free86 {
     func applyAddressingForm(computeEffectiveAddress: Bool = false) {
-        var sreg: SegmentRegister.Name, exp: Int = 0
+        var sreg: SegmentRegister.Name
+        var offset: DWord  // effective address
+        var exp: Int = 0  // ESP or EBP register
+        /// no segmentation, effective address == linear address
         if x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
             switch modRM.modRM {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
@@ -51,130 +54,127 @@ extension Free86 {
         }
         if ipr.isFlagRaised(.addressSizeOverride) {
             if modRM.mod == 0 && modRM.rM == 6 {
-                lax = DWord(fetch16())
+                offset = DWord(fetch16())
                 sreg = .DS
             } else {
                 switch modRM.mod {
                 case 0:
-                    lax = 0
+                    offset = 0
                     break
                 case 1:
-                    lax = DWord(fetch8()).signExtendedByte
+                    offset = DWord(fetch8()).signExtendedByte
                     break
                 default:
-                    lax = DWord(fetch16())
+                    offset = DWord(fetch16())
                     break
                 }
                 switch modRM.rM {
                 case 0:
-                    lax = (lax &+ regs[.EBX] &+ regs[.ESI]) & 0xffff
+                    offset = (offset &+ regs[.EBX] &+ regs[.ESI]) & 0xffff
                     sreg = .DS
                     break
                 case 1:
-                    lax = (lax &+ regs[.EBX] &+ regs[.EDI]) & 0xffff
+                    offset = (offset &+ regs[.EBX] &+ regs[.EDI]) & 0xffff
                     sreg = .DS
                     break
                 case 2:
-                    lax = (lax &+ regs[.EBP] &+ regs[.ESI]) & 0xffff
+                    offset = (offset &+ regs[.EBP] &+ regs[.ESI]) & 0xffff
                     sreg = .SS
                     break
                 case 3:
-                    lax = (lax &+ regs[.EBP] &+ regs[.EDI]) & 0xffff
+                    offset = (offset &+ regs[.EBP] &+ regs[.EDI]) & 0xffff
                     sreg = .SS
                     break
                 case 4:
-                    lax = (lax &+ regs[.ESI]) & 0xffff
+                    offset = (offset &+ regs[.ESI]) & 0xffff
                     sreg = .DS
                     break
                 case 5:
-                    lax = (lax &+ regs[.EDI]) & 0xffff
+                    offset = (offset &+ regs[.EDI]) & 0xffff
                     sreg = .DS
                     break
                 case 6:
-                    lax = (lax &+ regs[.EBP]) & 0xffff
+                    offset = (offset &+ regs[.EBP]) & 0xffff
                     sreg = .SS
                     break
                 case 7:
                     fallthrough
                 default:
-                    lax = (lax &+ regs[.EBX]) & 0xffff
+                    offset = (offset &+ regs[.EBX]) & 0xffff
                     sreg = .DS
                     break
                 }
             }
-            if computeEffectiveAddress {
-                return
-            }
             if ipr.segmentOverride {
                 sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap
             }
-            lax = segs[sreg].shadow.base &+ lax
-            return
-        }
-        switch modRM.modRM {
+        } else {
+            switch modRM.modRM {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
                 exp = modRM.rM
-                lax = regs[modRM.rM]
+                offset = regs[modRM.rM]
                 break
             case 0x04:
                 sib = fetch8()
                 exp = sib.base
                 if sib.base.isGeneralRegister(.EBP) {
-                    lax = fetch()
+                    offset = fetch()
                     exp = 0
                 } else {
-                    lax = regs[sib.base]
+                    offset = regs[sib.base]
                 }
                 if !sib.index.isGeneralRegister(.ESP) {
-                    lax = lax &+ (regs[sib.index] << sib.scale)
+                    offset = offset &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x05:
-                lax = fetch()
+                offset = fetch()
                 break
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
                 u = DWord(fetch8()).signExtendedByte
                 exp = modRM.rM
-                lax = regs[modRM.rM] &+ u
+                offset = regs[modRM.rM] &+ u
                 break
             case 0x0c:
                 sib = fetch8()
                 u = DWord(fetch8()).signExtendedByte
                 exp = sib.base
-                lax = regs[sib.base] &+ u
+                offset = regs[sib.base] &+ u
                 if !sib.index.isGeneralRegister(.ESP) {
-                    lax = lax &+ (regs[sib.index] << sib.scale)
+                    offset = offset &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x14:
                 sib = fetch8()
-                lax = fetch()
+                offset = fetch()
                 exp = sib.base
-                lax = regs[sib.base] &+ lax
+                offset = regs[sib.base] &+ offset
                 if !sib.index.isGeneralRegister(.ESP) {
-                    lax = lax &+ (regs[sib.index] << sib.scale)
+                    offset = offset &+ (regs[sib.index] << sib.scale)
                 }
                 break
             case 0x10, 0x11, 0x12, 0x13, 0x15, 0x16, 0x17:
                 fallthrough
             default:
-                lax = fetch()
-                lax = regs[modRM.rM] &+ lax
+                offset = fetch()
+                offset = regs[modRM.rM] &+ offset
                 break
-        }
-        if computeEffectiveAddress {
-            return
-        }
-        if ipr.segmentOverride {
-            sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap
-        } else {
-            if exp.isGeneralRegister(.ESP) || exp.isGeneralRegister(.EBP) {
-                sreg = .SS
+            }
+            if ipr.segmentOverride {
+                sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap
             } else {
-                sreg = .DS
+                if exp.isGeneralRegister(.ESP) || exp.isGeneralRegister(.EBP) {
+                    sreg = .SS
+                } else {
+                    sreg = .DS
+                }
             }
         }
-        lax = segs[sreg].shadow.base &+ lax
+        if computeEffectiveAddress {
+            lax = offset
+        } else {
+            lax = segs[sreg].shadow.base &+ offset
+        }
     }
     func ldMemoryOffset(_ writable: Bool) throws {
         var offset: DWord

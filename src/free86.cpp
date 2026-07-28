@@ -909,6 +909,8 @@ void Free86::page_translation(uint32_t address, bool writable, bool user) {
 }
 void Free86::segment_translation(bool compute_effective_address) {
     int sreg, sreg_default; // no DS override prefix
+    uint32_t offset; // effective address
+    // no segmentation, effective address == linear address
     if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
         switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
         case 0x00:
@@ -984,58 +986,55 @@ void Free86::segment_translation(bool compute_effective_address) {
     }
     if (ipr & 0x0080) {
         if ((modRM & 0xc7) == 0x06) {
-            lax = fetch16();
+            offset = fetch16();
             sreg_default = 3;
         } else {
             switch (modRM >> 6) {
             case 0:
-                lax = 0;
+                offset = 0;
                 break;
             case 1:
-                lax = sign_extend_byte(fetch8());
+                offset = sign_extend_byte(fetch8());
                 break;
             default:
-                lax = fetch16();
+                offset = fetch16();
                 break;
             }
             switch (modRM & 7) {
             case 0:
-                lax = (lax + regs[3] + regs[6]) & 0xffff;
+                offset = (offset + regs[3] + regs[6]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 1:
-                lax = (lax + regs[3] + regs[7]) & 0xffff;
+                offset = (offset + regs[3] + regs[7]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 2:
-                lax = (lax + regs[5] + regs[6]) & 0xffff;
+                offset = (offset + regs[5] + regs[6]) & 0xffff;
                 sreg_default = 2;
                 break;
             case 3:
-                lax = (lax + regs[5] + regs[7]) & 0xffff;
+                offset = (offset + regs[5] + regs[7]) & 0xffff;
                 sreg_default = 2;
                 break;
             case 4:
-                lax = (lax + regs[6]) & 0xffff;
+                offset = (offset + regs[6]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 5:
-                lax = (lax + regs[7]) & 0xffff;
+                offset = (offset + regs[7]) & 0xffff;
                 sreg_default = 3;
                 break;
             case 6:
-                lax = (lax + regs[5]) & 0xffff;
+                offset = (offset + regs[5]) & 0xffff;
                 sreg_default = 2;
                 break;
             case 7:
             default:
-                lax = (lax + regs[3]) & 0xffff;
+                offset = (offset + regs[3]) & 0xffff;
                 sreg_default = 3;
                 break;
             }
-        }
-        if (compute_effective_address) {
-            return;
         }
         sreg = ipr & 0x000f;
         if (sreg == 0) {
@@ -1043,96 +1042,95 @@ void Free86::segment_translation(bool compute_effective_address) {
         } else {
             sreg--;
         }
-        lax = segs[sreg].shadow.base + lax;
-        return;
-    }
-    switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-        case 0x06:
-        case 0x07:
-            base = modRM & 7;
-            lax = regs[base];
-            break;
-        case 0x04:
-            sib = fetch8();
-            base = sib & 7;
-            if (base == 5) {
-                lax = fetch();
+    } else {
+        switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
+            case 0x00:
+            case 0x01:
+            case 0x02:
+            case 0x03:
+            case 0x06:
+            case 0x07:
+                base = modRM & 7;
+                offset = regs[base];
+                break;
+            case 0x04:
+                sib = fetch8();
+                base = sib & 7;
+                if (base == 5) {
+                    offset = fetch();
+                    base = 0;
+                } else {
+                    offset = regs[base];
+                }
+                index = (sib >> 3) & 7;
+                if (index != 4) {
+                    offset = offset + (regs[index] << (sib >> 6));
+                }
+                break;
+            case 0x05:
+                offset = fetch();
                 base = 0;
+                break;
+            case 0x08:
+            case 0x09:
+            case 0x0a:
+            case 0x0b:
+            case 0x0d:
+            case 0x0e:
+            case 0x0f:
+                u = sign_extend_byte(fetch8());
+                base = modRM & 7;
+                offset = regs[base] + u;
+                break;
+            case 0x0c:
+                sib = fetch8();
+                u = sign_extend_byte(fetch8());
+                base = sib & 7;
+                offset = regs[base] + u;
+                index = (sib >> 3) & 7;
+                if (index != 4) {
+                    offset = offset + (regs[index] << (sib >> 6));
+                }
+                break;
+            case 0x14:
+                sib = fetch8();
+                offset = fetch();
+                base = sib & 7;
+                offset = regs[base] + offset;
+                index = (sib >> 3) & 7;
+                if (index != 4) {
+                    offset = offset + (regs[index] << (sib >> 6));
+                }
+                break;
+            case 0x10:
+            case 0x11:
+            case 0x12:
+            case 0x13:
+            case 0x15:
+            case 0x16:
+            case 0x17:
+            default:
+                offset = fetch();
+                rM = modRM & 7;
+                offset = regs[rM] + offset;
+                break;
+        }
+        sreg = ipr & 0x000f;
+        if (sreg == 0) {
+            if (base == 4 || base == 5) {
+                sreg = 2;
             } else {
-                lax = regs[base];
+                sreg = 3;
             }
-            index = (sib >> 3) & 7;
-            if (index != 4) {
-                lax = lax + (regs[index] << (sib >> 6));
-            }
-            break;
-        case 0x05:
-            lax = fetch();
-            base = 0;
-            break;
-        case 0x08:
-        case 0x09:
-        case 0x0a:
-        case 0x0b:
-        case 0x0d:
-        case 0x0e:
-        case 0x0f:
-            u = sign_extend_byte(fetch8());
-            base = modRM & 7;
-            lax = regs[base] + u;
-            break;
-        case 0x0c:
-            sib = fetch8();
-            u = sign_extend_byte(fetch8());
-            base = sib & 7;
-            lax = regs[base] + u;
-            index = (sib >> 3) & 7;
-            if (index != 4) {
-                lax = lax + (regs[index] << (sib >> 6));
-            }
-            break;
-        case 0x14:
-            sib = fetch8();
-            lax = fetch();
-            base = sib & 7;
-            lax = regs[base] + lax;
-            index = (sib >> 3) & 7;
-            if (index != 4) {
-                lax = lax + (regs[index] << (sib >> 6));
-            }
-            break;
-        case 0x10:
-        case 0x11:
-        case 0x12:
-        case 0x13:
-        case 0x15:
-        case 0x16:
-        case 0x17:
-        default:
-            lax = fetch();
-            rM = modRM & 7;
-            lax = regs[rM] + lax;
-            break;
+        } else {
+            sreg--;
+        }
     }
     if (compute_effective_address) {
-            return;
-    }
-    sreg = ipr & 0x000f;
-    if (sreg == 0) {
-        if (base == 4 || base == 5) {
-            sreg = 2;
-        } else {
-            sreg = 3;
-        }
+        lax = offset;
     } else {
-        sreg--;
+        lax = segs[sreg].shadow.base + offset;
     }
-    lax = segs[sreg].shadow.base + lax;
-    return;
 }
 void Free86::ld_memory_offset(bool writable) {
     uint64_t la;
