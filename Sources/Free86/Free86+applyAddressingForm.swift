@@ -142,7 +142,7 @@ extension Free86 {
         }
         let sreg = ipr.segmentRegister
         /// type checking
-        if !isSegmentAccessible(sreg, writable) {
+        if cr0.isProtectedMode && !isSegmentAccessible(sreg, writable) {
             throw Interrupt(.GP, errorCode: 0)
         }
         /// limit checking
