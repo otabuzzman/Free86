@@ -141,6 +141,7 @@ extension Free86 {
             stride = 1  // 8 bit mode, opcodes A0, A2
         }
         let sreg = ipr.segmentRegister
+        /// type checking
         if !isSegmentAccessible(sreg, writable) {
             throw Interrupt(.GP, errorCode: 0)
         }

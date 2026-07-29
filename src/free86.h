@@ -484,6 +484,7 @@ class Free86 {
     uint32_t ld_descriptor_fields(uint32_t selector, bool limit);
     void aux_VERR_VERW(uint32_t selector, bool is_verw);
     bool is_segment_accessible(uint32_t selector, bool writable);
+    bool is_segment_accessible(uint32_t selector, SegmentDescriptor descriptor, bool writable);
     void aux_ARPL();
     void aux_CPUID();
     void aux_AAM(uint32_t radix);

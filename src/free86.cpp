@@ -1059,14 +1059,14 @@ void Free86::segment_translation(bool compute_effective_address) {
     }
 }
 void Free86::ld_memory_offset(bool writable) {
-    uint64_t la;
+    uint32_t offset;
     uint32_t sreg, stride;
     bool notok;
     if (!(ipr & 0x0080)) {
-        la = fetch() & 0xffffffff;
+        offset = fetch() & 0xffffffff;
         stride = 4; // 32 bit mode
     } else {
-        la = fetch16();
+        offset = fetch16();
         stride = 2; // 16 bit mode
     }
     if (!(opcode & 0x01)) {
@@ -1079,20 +1079,14 @@ void Free86::ld_memory_offset(bool writable) {
         sreg--;
     }
     // type checking
-    if (sreg == 1) { // code segment, WR requested or CS not readable
-        notok = writable || !(segs[sreg].shadow.flags & (1 << 9));
-    } else { // data segment, WR requested and DS not writable
-        notok = writable && !(segs[sreg].shadow.flags & (1 << 9));
-    }
-    if (notok) {
+    if (!is_segment_accessible(segs[sreg].selector, segs[sreg].shadow, writable)) {
         abort(13, 0);
     }
-    la = segs[sreg].shadow.base + la;
     // limit checking
     if (segs[sreg].shadow.flags & (1 << 10)) { // expand-down segment
-        notok = la < static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1;
+        notok = offset < segs[sreg].shadow.limit + 1;
     } else {
-        notok = la > static_cast<uint64_t>(segs[sreg].shadow.base) + segs[sreg].shadow.limit + 1 - stride;
+        notok = offset > segs[sreg].shadow.limit + 1 - stride;
     }
     if (notok) {
         if (sreg == 2) {
@@ -1101,7 +1095,7 @@ void Free86::ld_memory_offset(bool writable) {
             abort(13, 0); // #GP(0)
         }
     }
-    lax = static_cast<uint32_t>(la & 0xffffffff);
+    lax = segs[sreg].shadow.base + offset;
 }
 void Free86::set_segment_register(uint32_t sreg, uint32_t selector, uint32_t base, uint32_t limit, uint32_t flags) {
     segs[sreg] = {selector, {base, limit, flags}};
@@ -2959,34 +2953,36 @@ void Free86::aux_VERR_VERW(uint32_t selector, bool writable) { // !writable == r
     osm = 24;
 }
 bool Free86::is_segment_accessible(uint32_t selector, bool writable) {
+    return is_segment_accessible(selector, ld_xdt_entry(selector), writable);
+}
+bool Free86::is_segment_accessible(uint32_t selector, SegmentDescriptor descriptor, bool writable) {
     SegmentDescriptor xsd{0};
     if ((selector & 0xfffc) == 0) {
         return false;
     }
-    xsd = ld_xdt_entry(selector);
-    if (xsd.qword() == 0) {
+    if (descriptor.qword() == 0) {
         return false;
     }
-    if (!(xsd.flags & (1 << 12))) {
+    if (!(descriptor.flags & (1 << 12))) {
         return false;
     }
     rpl = selector & 3;
-    dpl = (xsd.flags >> 13) & 3;
-    if (xsd.flags & (1 << 11)) { // code == 1, data == 0
+    dpl = (descriptor.flags >> 13) & 3;
+    if (descriptor.flags & (1 << 11)) { // code == 1, data == 0
         if (writable) {
             return false;
         } else {
-            if (!(xsd.flags & (1 << 10))) {
+            if (!(descriptor.flags & (1 << 10))) {
                 if (dpl < cpl || dpl < rpl) {
                     return false;
                 }
             }
-            if (!(xsd.flags & (1 << 9))) {
+            if (!(descriptor.flags & (1 << 9))) {
                 return true;
             }
         }
     } else {
-        if (writable && !(xsd.flags & (1 << 9))) {
+        if (writable && !(descriptor.flags & (1 << 9))) {
             return false;
         }
         if (dpl < cpl || dpl < rpl) {
