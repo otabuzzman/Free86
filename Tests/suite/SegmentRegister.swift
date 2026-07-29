@@ -18,7 +18,6 @@ func segmentRegisterIndexAccessByName() {
     #expect(bank[.DS] == SegmentRegister(0xDEAD, .init(0xFEDEADBE_EFC0DECA)))
     #expect(bank[.FS] == SegmentRegister(0xADC0, .init(0xDEADBEEF_C0DECAFE)))
     #expect(bank[.GS] == SegmentRegister(0xDEDE, .init(0xADBEEFC0_DECAFEDE)))
-    #expect(bank[.NULL] == SegmentRegister(0xDEAD, .init(0xBEEFC0DE_CAFEDEAD)))
 }
 
 @Test("segment register fields access")

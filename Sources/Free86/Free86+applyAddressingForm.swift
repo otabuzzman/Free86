@@ -141,13 +141,7 @@ extension Free86 {
             stride = 1  // 8 bit mode, opcodes A0, A2
         }
         let sreg = ipr.segmentRegister
-        /// type checking
-        if sreg == .CS {  // code segment, WR requested or CS not readable
-            notok = writable || !segs[sreg].shadow.isFlagRaised(.R)
-        } else {  // data segment, WR requested and DS not writable
-            notok = writable && !segs[sreg].shadow.isFlagRaised(.W)
-        }
-        if notok {
+        if !isSegmentAccessible(sreg, writable) {
             throw Interrupt(.GP, errorCode: 0)
         }
         /// limit checking

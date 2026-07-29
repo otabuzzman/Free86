@@ -138,35 +138,40 @@ extension Free86 {
         osmDst = ((osmSrc >> 6) & 1) ^ 1
         osm = 24
     }
+    func isSegmentAccessible(_ sreg: Int, _ writable: Bool) -> Bool {
+        return isSegmentAccessible(segs[sreg].selector, segs[sreg].shadow, writable)
+    }
     func isSegmentAccessible(_ selector: SegmentSelector, _ writable: Bool) throws -> Bool {
+        return isSegmentAccessible(selector, try ldXdtEntry(selector), writable)
+    }
+    func isSegmentAccessible(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor, _ writable: Bool) -> Bool {
         if selector.isNull {
             return false
         }
-        let xsd = try ldXdtEntry(selector)
-        if xsd.qword == 0 {
+        if descriptor.qword == 0 {
             return false
         }
-        if xsd.isSystemSegment {
+        if descriptor.isSystemSegment {
             return false
         }
-        if xsd.isCodeSegment {
+        if descriptor.isCodeSegment {
             if writable {
                 return false
             } else {
-                if !xsd.isFlagRaised(.C) {
-                    if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
+                if !descriptor.isFlagRaised(.C) {
+                    if (descriptor.dpl < cpl) || (descriptor.dpl < selector.rpl) {
                         return false
                     }
                 }
-                if !xsd.isFlagRaised(.R) {
+                if !descriptor.isFlagRaised(.R) {
                     return true
                 }
             }
         } else {
-            if writable && !xsd.isFlagRaised(.W) {
+            if writable && !descriptor.isFlagRaised(.W) {
                 return false
             }
-            if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
+            if (descriptor.dpl < cpl) || (descriptor.dpl < selector.rpl) {
                 return false
             }
         }
