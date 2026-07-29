@@ -2,56 +2,7 @@ extension Free86 {
     func applyAddressingForm(computeEffectiveAddress: Bool = false) {
         var sreg: SegmentRegister.Name
         var offset: DWord  // effective address
-        var exp: Int = 0  // ESP or EBP register
-        /// no segmentation, effective address == linear address
-        if x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
-            switch modRM.modRM {
-            case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
-                lax = regs[modRM.rM]
-                break
-            case 0x04:
-                sib = fetch8()
-                if sib.base.isGeneralRegister(.EBP) {
-                    lax = fetch()
-                } else {
-                    lax = regs[sib.base]
-                }
-                if !sib.index.isGeneralRegister(.ESP) {
-                    lax = lax &+ (regs[sib.index] << sib.scale)
-                }
-                break
-            case 0x05:
-                lax = fetch()
-                break
-            case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
-                u = DWord(fetch8()).signExtendedByte
-                lax = regs[modRM.rM] &+ u
-                break
-            case 0x0c:
-                sib = fetch8()
-                u = DWord(fetch8()).signExtendedByte
-                lax = regs[sib.base] &+ u
-                if !sib.index.isGeneralRegister(.ESP) {
-                    lax = lax &+ (regs[sib.index] << sib.scale)
-                }
-                break
-            case 0x14:
-                sib = fetch8()
-                lax = fetch()
-                lax = regs[sib.base] &+ lax
-                if !sib.index.isGeneralRegister(.ESP) {
-                    lax = lax &+ (regs[sib.index] << sib.scale)
-                }
-                break
-            case 0x10, 0x11, 0x12, 0x13, 0x15, 0x16, 0x17:
-                fallthrough
-            default:
-                lax = fetch()
-                lax = regs[modRM.rM] &+ lax
-                break
-            }
-            return
-        }
+        var exp: Int?  // ESP or EBP register
         if ipr.isFlagRaised(.addressSizeOverride) {
             if modRM.mod == 0 && modRM.rM == 6 {
                 offset = DWord(fetch16())
@@ -116,11 +67,10 @@ extension Free86 {
                 break
             case 0x04:
                 sib = fetch8()
-                exp = sib.base
                 if sib.base.isGeneralRegister(.EBP) {
                     offset = fetch()
-                    exp = 0
                 } else {
+                    exp = sib.base
                     offset = regs[sib.base]
                 }
                 if !sib.index.isGeneralRegister(.ESP) {
@@ -163,14 +113,14 @@ extension Free86 {
             if ipr.segmentOverride {
                 sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap
             } else {
-                if exp.isGeneralRegister(.ESP) || exp.isGeneralRegister(.EBP) {
+                if let exp = exp, exp.isGeneralRegister(.ESP) || exp.isGeneralRegister(.EBP) {
                     sreg = .SS
                 } else {
                     sreg = .DS
                 }
             }
         }
-        if computeEffectiveAddress {
+        if computeEffectiveAddress || x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
             lax = offset
         } else {
             lax = segs[sreg].shadow.base &+ offset

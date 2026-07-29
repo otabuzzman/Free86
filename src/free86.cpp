@@ -910,80 +910,6 @@ void Free86::page_translation(uint32_t address, bool writable, bool user) {
 void Free86::segment_translation(bool compute_effective_address) {
     int sreg, sreg_default; // no DS override prefix
     uint32_t offset; // effective address
-    // no segmentation, effective address == linear address
-    if (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0) {
-        switch ((modRM & 7) | ((modRM >> 3) & 0x18)) {
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-        case 0x06:
-        case 0x07:
-            rM = modRM & 7;
-            lax = regs[rM];
-            break;
-        case 0x04:
-            sib = fetch8();
-            base = sib & 7;
-            if (base == 5) {
-                lax = fetch();
-            } else {
-                lax = regs[base];
-            }
-            index = (sib >> 3) & 7;
-            if (index != 4) {
-                lax = lax + (regs[index] << (sib >> 6));
-            }
-            break;
-        case 0x05:
-            lax = fetch();
-            break;
-        case 0x08:
-        case 0x09:
-        case 0x0a:
-        case 0x0b:
-        case 0x0d:
-        case 0x0e:
-        case 0x0f:
-            u = sign_extend_byte(fetch8());
-            rM = modRM & 7;
-            lax = regs[rM] + u;
-            break;
-        case 0x0c:
-            sib = fetch8();
-            u = sign_extend_byte(fetch8());
-            base = sib & 7;
-            lax = regs[base] + u;
-            index = (sib >> 3) & 7;
-            if (index != 4) {
-                lax = lax + (regs[index] << (sib >> 6));
-            }
-            break;
-        case 0x14:
-            sib = fetch8();
-            lax = fetch();
-            base = sib & 7;
-            lax = regs[base] + lax;
-            index = (sib >> 3) & 7;
-            if (index != 4) {
-                lax = lax + (regs[index] << (sib >> 6));
-            }
-            break;
-        case 0x10:
-        case 0x11:
-        case 0x12:
-        case 0x13:
-        case 0x15:
-        case 0x16:
-        case 0x17:
-        default:
-            lax = fetch();
-            rM = modRM & 7;
-            lax = regs[rM] + lax;
-            break;
-        }
-        return;
-    }
     if (ipr & 0x0080) {
         if ((modRM & 0xc7) == 0x06) {
             offset = fetch16();
@@ -1126,7 +1052,7 @@ void Free86::segment_translation(bool compute_effective_address) {
             sreg--;
         }
     }
-    if (compute_effective_address) {
+    if (compute_effective_address || (x86_64_long_mode && (ipr & (0x000f | 0x0080)) == 0)) {
         lax = offset;
     } else {
         lax = segs[sreg].shadow.base + offset;
