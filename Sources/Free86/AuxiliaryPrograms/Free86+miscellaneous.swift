@@ -98,7 +98,7 @@ extension Free86 {
                 .CodeExOnlyConformingAccessed,
                 .CodeExReadConforming,
                 .CodeExReadConformingAccessed:
-                return descriptor.flags
+                return limit ? descriptor.limit : descriptor.flags
             default:
                 break
             }
