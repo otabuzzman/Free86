@@ -73,27 +73,17 @@ extension Free86 {
         if selector.isNull {
             return nil
         }
-        let xsd = try ldXdtEntry(selector)
-        if xsd.qword == 0 {
+        let descriptor = try ldXdtEntry(selector)
+        if descriptor.qword == 0 {
             return nil
         }
-        let type = SegmentDescriptorType(rawValue: xsd.type)
-        if xsd.isSystemSegment {
+        let type = SegmentDescriptorType(rawValue: descriptor.type)
+        if descriptor.isSystemSegment {
             switch type {
-            case .TSS16Available:
-                fallthrough
-            case .LDT:
-                fallthrough
-            case .TSS16Busy:
-                fallthrough
-            case .TSSAvailable:
-                fallthrough
-            case .TSSBusy:
+            case .LDT,
+                .TSSAvailable,
+                .TSSBusy:
                 break
-            case .CallGate16:
-                fallthrough
-            case .TaskGate:
-                fallthrough
             case .CallGate:
                 if limit {
                     return nil
@@ -102,30 +92,21 @@ extension Free86 {
             default:
                 return nil
             }
-            if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
-                return nil
-            }
         } else {
             switch type {
-            case .DataRO:
-                fallthrough
-            case .DataROAccessed:
-                fallthrough
-            case .DataRW:
-                fallthrough
-            case .DataRWAccessed:
-                if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
-                    return nil
-                }
-                fallthrough
+            case .CodeExOnlyConforming,
+                .CodeExOnlyConformingAccessed,
+                .CodeExReadConforming,
+                .CodeExReadConformingAccessed:
+                return descriptor.flags
             default:
                 break
             }
         }
-        if limit {
-            return xsd.limit
+        if (descriptor.dpl < cpl) || (descriptor.dpl < selector.rpl) {
+            return nil
         } else {
-            return xsd.flags
+            return limit ? descriptor.limit : descriptor.flags
         }
     }
     func auxVerrVerw(_ selector: SegmentSelector, _ writable: Bool) throws {
@@ -145,6 +126,9 @@ extension Free86 {
         return isSegmentAccessible(selector, try ldXdtEntry(selector), writable)
     }
     func isSegmentAccessible(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor, _ writable: Bool) -> Bool {
+        if !cr0.isProtectedMode {
+            return true
+        }
         if selector.isNull {
             return false
         }
