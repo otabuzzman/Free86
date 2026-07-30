@@ -126,7 +126,7 @@ extension Free86 {
         return isSegmentAccessible(selector, try ldXdtEntry(selector), writable)
     }
     func isSegmentAccessible(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor, _ writable: Bool) -> Bool {
-        if !cr0.isProtectedMode {
+        if cr0.isRealOrV86Mode {
             return true
         }
         if selector.isNull {
