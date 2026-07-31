@@ -1,6 +1,6 @@
 # Free86
 
-An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ or Swift compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok. However, there are also some additional 80486 functions required by Linos, including the XADD, CPUID, and RDTSC instructions. Therefore, the name was chosen which sounds like a _three_ when pronounced, but also reflects the freedom of implementation.
+An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ or Swift compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok.
 
 **Missing features**
 - Full segment limit and rights checks
@@ -81,6 +81,6 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   Results comparison should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF bit.
 
 **Acknowledgements**
-- Parent repository [CPU-386-cpp](https://github.com/kxkx5150/CPU-80386-cpp) of this fork
-- CPU-386-cpp might derive from [jslinux-deobfuscated](https://github.com/levskaya/jslinux-deobfuscated)
+- Repository based on [CPU-386-cpp](https://github.com/kxkx5150/CPU-80386-cpp)
+- CPU-386-cpp probably derived from [jslinux-deobfuscated](https://github.com/levskaya/jslinux-deobfuscated)
 - jslinux-deobfuscated makes [JSLinux](https://bellard.org/jslinux/tech.html) from Fabrice Bellard readable
