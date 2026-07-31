@@ -29,10 +29,10 @@ extension SegmentSelector {
 }
 
 extension SegmentSelector {
-    var indexTI: Self {
+    var indexAndTI: Self {
         self & ~0b0011
     }
     var isNull: Bool {
-        indexTI == 0
+        indexAndTI == 0
     }
 }

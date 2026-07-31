@@ -167,6 +167,9 @@ extension SegmentDescriptor {
     func isType(_ type: SegmentDescriptorType) -> Bool {
         type.rawValue == self.type
     }
+    var isNull: Bool {
+        qword == 0 || type == 0
+    }
 }
 
 extension SegmentDescriptor: Equatable {

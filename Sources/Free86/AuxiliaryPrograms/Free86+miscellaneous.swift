@@ -4,18 +4,18 @@ extension Free86 {
             ldt = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
             if selector.isLDT {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             if (selector.index + 7) > gdt.shadow.limit {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             lax = gdt.shadow.base + DWord(selector.index)
             let xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if !xsd.isSystemSegment || !xsd.isType(.LDT) {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.NP, errorCode: DWord(selector.indexAndTI))
             }
             ldt = SegmentRegister(selector, xsd)
         }
@@ -25,18 +25,18 @@ extension Free86 {
             tr = SegmentRegister(selector, SegmentDescriptor(0))
         } else {
             if !selector.isGDT {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             if (selector.index + 7) > gdt.shadow.limit {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             lax = gdt.shadow.base + DWord(selector.index)
             var xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if !xsd.isType(.TSSAvailable) && !xsd.isType(.TSS16Available) {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             if !xsd.isFlagRaised(.P) {
-                throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.NP, errorCode: DWord(selector.indexAndTI))
             }
             tr = SegmentRegister(selector, xsd)
             xsd.upper.setBit(9)  /// bit 9 distinguishes available (0)/ busy (1) TSS
@@ -45,7 +45,7 @@ extension Free86 {
     }
     func auxLarLsl(_ o32: Bool, _ isLsl: Bool) throws {
         let selector: SegmentSelector
-        if !cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+        if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
             throw Interrupt(.UD)
         }
         modRM = fetch8()
@@ -74,7 +74,7 @@ extension Free86 {
             return nil
         }
         let descriptor = try ldXdtEntry(selector)
-        if descriptor.qword == 0 {
+        if descriptor.isNull {
             return nil
         }
         let type = SegmentDescriptorType(rawValue: descriptor.type)
@@ -132,7 +132,7 @@ extension Free86 {
         if selector.isNull {
             return false
         }
-        if descriptor.qword == 0 {
+        if descriptor.isNull {
             return false
         }
         if descriptor.isSystemSegment {
@@ -162,7 +162,7 @@ extension Free86 {
         return true
     }
     func auxArpl() throws {
-        if !cr0.isProtectedMode || eflags.isFlagRaised(.VM) {
+        if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
             throw Interrupt(.UD)
         }
         modRM = fetch8()

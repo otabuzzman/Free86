@@ -161,7 +161,7 @@ extension Free86 {
         lax = segs[sreg].shadow.base &+ offset
     }
     func setSegmentRegister(_ sreg: SegmentRegister.Name, _ selector: SegmentSelector) throws {
-        if !cr0.isProtectedMode {
+        if cr0.isRealOrV86Mode {
             setSegmentRegisterRealOrV86Mode(sreg, selector)
         } else {
             try setSegmentRegisterProtectedMode(sreg, selector)
@@ -192,35 +192,35 @@ extension Free86 {
                 xdt = gdt
             }
             if (selector.index + 7) > xdt.shadow.limit {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             lax = xdt.shadow.base + DWord(selector.index)
             var xsd = SegmentDescriptor(try ld64ReadonlyCplX())
             if xsd.isSystemSegment {
-                throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             if sreg == .SS {
                 if xsd.isCodeSegment || !xsd.isFlagRaised(.W) {
-                    throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                    throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
                 if (selector.rpl != cpl) || (xsd.dpl != cpl) {
-                    throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                    throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
             } else {
                 if xsd.isCodeSegment && !xsd.isFlagRaised(.R) {
-                    throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                    throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
                 if xsd.isDataSegment || !xsd.isFlagRaised(.C) {
                     if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
-                        throw Interrupt(.GP, errorCode: DWord(selector.indexTI))
+                        throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                     }
                 }
             }
             if !xsd.isFlagRaised(.P) {
                 if sreg == .SS {
-                    throw Interrupt(.SS, errorCode: DWord(selector.indexTI))
+                    throw Interrupt(.SS, errorCode: DWord(selector.indexAndTI))
                 } else {
-                    throw Interrupt(.NP, errorCode: DWord(selector.indexTI))
+                    throw Interrupt(.NP, errorCode: DWord(selector.indexAndTI))
                 }
             }
             if !xsd.isFlagRaised(.A) {
