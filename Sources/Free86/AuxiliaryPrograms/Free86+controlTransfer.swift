@@ -21,7 +21,7 @@ extension Free86 {
         if xsd.isNull {
             throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
         }
-        assert(!xsd.isSystemSegment, "fatal error: unexpected system segment descriptor")
+        assert(!xsd.isSystemSegment, "fatal error: JMP via system segment not implemented")
         if !xsd.isCodeSegment {
             throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
         }
@@ -138,7 +138,7 @@ extension Free86 {
             case .TaskGate:
                 fallthrough
             case .TSSAvailable:
-                assert(false, "fatal error: unsupported system segment descriptor")
+                assert(false, "fatal error: CALL via task gate/ segment not implemented")
                 break
             case .CallGate16:
                 fallthrough
@@ -582,7 +582,7 @@ extension Free86 {
         case .InterruptGate16:
             fallthrough
         case .TrapGate16:
-            assert(false, "fatal error: unsupported system segment descriptor")
+            assert(false, "fatal error: interrupts via gates not implemented")
             break
         case .InterruptGate:
             fallthrough
@@ -790,18 +790,13 @@ extension Free86 {
     }
     func auxIret(_ o32: Bool) throws {
         if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
-            if eflags.isFlagRaised(.VM) {
-                if eflags.iopl != 3 {
-                    throw Interrupt(.GP, errorCode: 0)
-                }
+            if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
+                throw Interrupt(.GP, errorCode: 0)
             }
             try returnRealOrV86Mode(o32, true, 0)
         } else {
-            if eflags.isFlagRaised(.NT) {
-                assert(false, "fatal error: NT flag set")
-            } else {
-                try returnProtectedMode(o32, true, 0)
-            }
+            assert(!eflags.isFlagRaised(.NT), "fatal error: nested tasks not implemented")
+            try returnProtectedMode(o32, true, 0)
         }
     }
 }
