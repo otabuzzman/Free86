@@ -1315,7 +1315,7 @@ extension Free86 {
             lax = lax &+ 4
             m16 = try ld16ReadonlyCpl3()
             if operation == 3 {
-                try auxCallf(true, m16, m, eip &+ far &- farStart)
+                try auxCallf(false, m16, m, eip &+ far &- farStart)
             } else {
                 try auxJmpf(m16, m)
             }
@@ -1613,30 +1613,30 @@ extension Free86 {
     }
     /// 0x9a  CALLF
     func Ox9a() throws -> Result<Resume, Never> {
-        let o32 = !ipr.isFlagRaised(.operandSizeOverride)
-        if o32 {
-            imm = fetch()
-        } else {
+        let operandSizeOverride = ipr.isFlagRaised(.operandSizeOverride)
+        if operandSizeOverride {
             imm = DWord(fetch16())
+        } else {
+            imm = fetch()
         }
         imm16 = fetch16()
-        try auxCallf(o32, imm16, imm, eip &+ far &- farStart)
+        try auxCallf(operandSizeOverride, imm16, imm, eip &+ far &- farStart)
         return .success(.endOnInterrupt)
     }
     /// 0xca  RET
     func Oxca() throws -> Result<Resume, Never> {
         u = DWord(fetch16()).signExtendedWord
-        try auxRetf(!ipr.isFlagRaised(.operandSizeOverride), u)
+        try auxRetf(ipr.isFlagRaised(.operandSizeOverride), u)
         return .success(.endOnInterrupt)
     }
     /// 0xcb  RET
     func Oxcb() throws -> Result<Resume, Never> {
-        try auxRetf(!ipr.isFlagRaised(.operandSizeOverride), 0)
+        try auxRetf(ipr.isFlagRaised(.operandSizeOverride), 0)
         return .success(.endOnInterrupt)
     }
     /// 0xcf  IRET
     func Oxcf() throws -> Result<Resume, Never> {
-        try auxIret(!ipr.isFlagRaised(.operandSizeOverride))
+        try auxIret(ipr.isFlagRaised(.operandSizeOverride))
         if ifr.isFlagRaised(.NMI) {
             ifr.setFlag(.NMI, .zero)  // NMI IRET problem (https://lwn.net/Articles/484932/)
         }

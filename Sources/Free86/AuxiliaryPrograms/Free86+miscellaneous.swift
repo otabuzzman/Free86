@@ -43,7 +43,7 @@ extension Free86 {
             try st64WritableCplX(qword: xsd.qword)
         }
     }
-    func auxLarLsl(_ o32: Bool, _ isLsl: Bool) throws {
+    func auxLarLsl(_ operandSizeOverride: Bool, _ isLsl: Bool) throws {
         let selector: SegmentSelector
         if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
             throw Interrupt(.UD)
@@ -58,7 +58,7 @@ extension Free86 {
         osmSrc = compileSflags()
         if let u = try ldDescriptorFields(selector, isLsl) {
             osmSrc.setFlag(.ZF)
-            if (o32) {
+            if operandSizeOverride {
                 regs[modRM.reg] = u
             } else {
                 regs[modRM.reg].lowerHalf = u

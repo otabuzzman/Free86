@@ -21,7 +21,7 @@ extension Free86 {
         if xsd.isNull {
             throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
         }
-        assert(!xsd.isSystemSegment, "fatal error: JMP via system segment not implemented")
+        assert(!xsd.isSystemSegment, "fatal error: task management not implemented")
         if !xsd.isCodeSegment {
             throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
         }
@@ -47,29 +47,29 @@ extension Free86 {
         eip = offset
         (far, farStart) = (0, 0)
     }
-    func auxCallf(_ o32: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
+    func auxCallf(_ operandSizeOverride: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
         if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
-            try auxCallfRealOrV86Mode(o32, selector, offset, home)
+            try auxCallfRealOrV86Mode(operandSizeOverride, selector, offset, home)
         } else {
-            try auxCallfProtectedMode(o32, selector, offset, home)
+            try auxCallfProtectedMode(operandSizeOverride, selector, offset, home)
         }
     }
-    func auxCallfRealOrV86Mode(_ o32: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
+    func auxCallfRealOrV86Mode(_ operandSizeOverride: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
         var esp = regs[.ESP]
-        if o32 {
-            esp = esp &- 4
-            lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: segs[.CS].selector)
-            esp = esp &- 4
-            lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: home)
-        } else {
+        if operandSizeOverride {
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCpl3(word: segs[.CS].selector)
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCpl3(word: home)
+        } else {
+            esp = esp &- 4
+            lax = ssBase &+ (esp & ssMask)
+            try stWritableCpl3(dword: segs[.CS].selector)
+            esp = esp &- 4
+            lax = ssBase &+ (esp & ssMask)
+            try stWritableCpl3(dword: home)
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = offset
@@ -78,7 +78,7 @@ extension Free86 {
         descriptor.base = LinearAddress(selector) << 4
         segs[.CS] = SegmentRegister(selector, descriptor)
     }
-    func auxCallfProtectedMode(_ o32: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
+    func auxCallfProtectedMode(_ operandSizeOverride: Bool, _ selector: SegmentSelector, _ offset: LinearAddress, _ home: LinearAddress) throws {
         var esp: DWord
         if selector.isNull {
             throw Interrupt(.GP, errorCode: 0)
@@ -108,20 +108,20 @@ extension Free86 {
                 throw Interrupt(.NP, errorCode: DWord(selector.indexAndTI))
             }
             esp = espStart
-            if o32 {
-                esp = esp &- 4
-                lax = ssBase &+ (esp & ssMask)
-                try stWritableCplX(dword: segs[.CS].selector)
-                esp = esp &- 4
-                lax = ssBase &+ (esp & ssMask)
-                try stWritableCplX(dword: home)
-            } else {
+            if operandSizeOverride {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
                 try st16WritableCplX(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
                 try st16WritableCplX(word: home)
+            } else {
+                esp = esp &- 4
+                lax = ssBase &+ (esp & ssMask)
+                try stWritableCplX(dword: segs[.CS].selector)
+                esp = esp &- 4
+                lax = ssBase &+ (esp & ssMask)
+                try stWritableCplX(dword: home)
             }
             if offset > xsd.limit {
                 throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
@@ -138,7 +138,7 @@ extension Free86 {
             case .TaskGate:
                 fallthrough
             case .TSSAvailable:
-                assert(false, "fatal error: CALL via task gate/ segment not implemented")
+                assert(false, "fatal error: task management not implemented")
                 break
             case .CallGate16:
                 fallthrough
@@ -251,32 +251,20 @@ extension Free86 {
             (far, farStart) = (0, 0)
         }
     }
-    func auxRetf(_ o32: Bool, _ releaseStackItems: DWord) throws {
+    func auxRetf(_ operandSizeOverride: Bool, _ releaseStackItems: DWord) throws {
         if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
-            try returnRealOrV86Mode(o32, false, releaseStackItems)
+            try returnRealOrV86Mode(operandSizeOverride, false, releaseStackItems)
         } else {
-            try returnProtectedMode(o32, false, releaseStackItems)
+            try returnProtectedMode(operandSizeOverride, false, releaseStackItems)
         }
     }
-    func returnRealOrV86Mode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
+    func returnRealOrV86Mode(_ operandSizeOverride: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
         let cs: SegmentSelector
         let homeEip: DWord
         var homeEflags: Eflags = 0
         var esp = regs[.ESP]
         let ssMask: DWord = 0xffff
-        if o32 {
-            lax = ssBase &+ (esp & ssMask)
-            homeEip = try ldReadonlyCplX()
-            esp = esp &+ 4
-            lax = ssBase &+ (esp & ssMask)
-            cs = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
-            esp = esp &+ 4
-            if isIret {
-                lax = ssBase &+ (esp & ssMask)
-                homeEflags = try ldReadonlyCplX()
-                esp = esp &+ 4
-            }
-        } else {
+        if operandSizeOverride {
             lax = ssBase &+ (esp & ssMask)
             homeEip = DWord(try ld16ReadonlyCplX())
             esp = esp &+ 2
@@ -287,6 +275,18 @@ extension Free86 {
                 lax = ssBase &+ (esp & ssMask)
                 homeEflags = Eflags(try ld16ReadonlyCplX())
                 esp = esp &+ 2
+            }
+        } else {
+            lax = ssBase &+ (esp & ssMask)
+            homeEip = try ldReadonlyCplX()
+            esp = esp &+ 4
+            lax = ssBase &+ (esp & ssMask)
+            cs = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+            esp = esp &+ 4
+            if isIret {
+                lax = ssBase &+ (esp & ssMask)
+                homeEflags = try ldReadonlyCplX()
+                esp = esp &+ 4
             }
         }
         regs[.ESP] = (regs[.ESP] & ~ssMask) | ((esp &+ releaseStackItems) & ssMask)
@@ -307,20 +307,32 @@ extension Free86 {
             if eflags.isFlagRaised(.VM) {
                 mask.iopl = 0
             }
-            if !o32 {
+            if operandSizeOverride {
                 mask &= 0xffff
             }
             updateEflags(homeEflags, mask)
         }
     }
-    func returnProtectedMode(_ o32: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
+    func returnProtectedMode(_ operandSizeOverride: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
         let homeEsp: DWord, homeEip: DWord
         var homeEflags: Eflags = 0
         let es: SegmentSelector, cs: SegmentSelector, ss: SegmentSelector
         let ds: SegmentSelector, fs: SegmentSelector, gs: SegmentSelector
         let cpl = self.cpl
         var esp = regs[.ESP]
-        if o32 {
+        if operandSizeOverride {
+            lax = ssBase &+ (esp & ssMask)
+            homeEip = DWord(try ld16ReadonlyCplX())
+            esp = esp &+ 2
+            lax = ssBase &+ (esp & ssMask)
+            cs = SegmentSelector(try ld16ReadonlyCplX())
+            esp = esp &+ 2
+            if isIret {
+                lax = ssBase &+ (esp & ssMask)
+                homeEflags = Eflags(try ld16ReadonlyCplX())
+                esp = esp &+ 2
+            }
+        } else {
             lax = ssBase &+ (esp & ssMask)
             homeEip = try ldReadonlyCplX()
             esp = esp &+ 4
@@ -375,18 +387,6 @@ extension Free86 {
                     return
                 }
             }
-        } else {
-            lax = ssBase &+ (esp & ssMask)
-            homeEip = DWord(try ld16ReadonlyCplX())
-            esp = esp &+ 2
-            lax = ssBase &+ (esp & ssMask)
-            cs = SegmentSelector(try ld16ReadonlyCplX())
-            esp = esp &+ 2
-            if isIret {
-                lax = ssBase &+ (esp & ssMask)
-                homeEflags = Eflags(try ld16ReadonlyCplX())
-                esp = esp &+ 2
-            }
         }
         if cs.index == 0 {
             throw Interrupt(.GP, errorCode: 0)
@@ -417,20 +417,20 @@ extension Free86 {
         if cs.rpl == cpl {
             segs[.CS] = SegmentRegister(cs, csd)
         } else {
-            if o32 {
-                lax = ssBase &+ (esp & ssMask)
-                homeEsp = try ldReadonlyCplX()
-                esp = esp &+ 4
-                lax = ssBase &+ (esp & ssMask)
-                ss = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
-                esp = esp &+ 4
-            } else {
+            if operandSizeOverride {
                 lax = ssBase &+ (esp & ssMask)
                 homeEsp = DWord(try ld16ReadonlyCplX())
                 esp = esp &+ 2
                 lax = ssBase &+ (esp & ssMask)
                 ss = SegmentSelector(truncatingIfNeeded: try ld16ReadonlyCplX())
                 esp = esp &+ 2
+            } else {
+                lax = ssBase &+ (esp & ssMask)
+                homeEsp = try ldReadonlyCplX()
+                esp = esp &+ 4
+                lax = ssBase &+ (esp & ssMask)
+                ss = SegmentSelector(truncatingIfNeeded: try ldReadonlyCplX())
+                esp = esp &+ 4
             }
             if ss.index == 0 {
                 throw Interrupt(.GP, errorCode: 0)
@@ -478,7 +478,7 @@ extension Free86 {
             if cpl <= eflags.iopl {
                 mask.setFlag(.IF)
             }
-            if !o32 {
+            if operandSizeOverride {
                 mask &= 0xffff
             }
             updateEflags(homeEflags, mask)
@@ -582,7 +582,7 @@ extension Free86 {
         case .InterruptGate16:
             fallthrough
         case .TrapGate16:
-            assert(false, "fatal error: interrupts via gates not implemented")
+            assert(false, "fatal error: task management not implemented")
             break
         case .InterruptGate:
             fallthrough
@@ -788,15 +788,15 @@ extension Free86 {
         res |= QWord(try ld16ReadonlyCplX()) << 32  // privileged SS
         return res
     }
-    func auxIret(_ o32: Bool) throws {
+    func auxIret(_ operandSizeOverride: Bool) throws {
         if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
             if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
                 throw Interrupt(.GP, errorCode: 0)
             }
-            try returnRealOrV86Mode(o32, true, 0)
+            try returnRealOrV86Mode(operandSizeOverride, true, 0)
         } else {
-            assert(!eflags.isFlagRaised(.NT), "fatal error: nested tasks not implemented")
-            try returnProtectedMode(o32, true, 0)
+            assert(!eflags.isFlagRaised(.NT), "fatal error: task management not implemented")
+            try returnProtectedMode(operandSizeOverride, true, 0)
         }
     }
 }
