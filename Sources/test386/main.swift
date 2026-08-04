@@ -25,7 +25,7 @@ let historySize = 32
 var history = [String](repeating: "", count: historySize)
 
 let argv = CommandLine.arguments
-if argv.count == 2  {
+if argv.count == 2 {
     historySkip = Int(argv[1]) ?? 0
 }
 

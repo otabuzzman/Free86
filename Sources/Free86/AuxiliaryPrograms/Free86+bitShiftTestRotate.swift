@@ -3,7 +3,7 @@ extension Free86 {
         var res = dst
         let c = Int(count & 0x1f)
         if c != 0 {
-            if operation == 0 { // SHLD
+            if operation == 0 {  // SHLD
                 let s = src & 0xffff
                 u = s | (res << 16)
                 osmSrc = u.signedShiftRight(count: 32 - c)
@@ -14,7 +14,7 @@ extension Free86 {
                 osmDst = u.signedShiftRight(count: 16)
                 res = osmDst
                 osm = 19
-            } else { // SHRD
+            } else {  // SHRD
                 u = (res & 0xffff) | (src << 16)
                 osmSrc = u.signedShiftRight(count: c - 1)
                 u = u >> c
@@ -68,13 +68,13 @@ extension Free86 {
         osmSrc = base >> o
         u = 1 << o
         switch operation {
-        case 1: // BTS
+        case 1:  // BTS
             res = base | u
             break
-        case 2: // BTR
+        case 2:  // BTR
             res = base & ~u
             break
-        case 3: // BTC
+        case 3:  // BTC
             fallthrough
         default:
             res = base ^ u
@@ -89,13 +89,13 @@ extension Free86 {
         osmSrc = base >> o
         u = 1 << o
         switch operation {
-        case 1: // BTS
+        case 1:  // BTS
             res = base | u
             break
-        case 2: // BTR
+        case 2:  // BTR
             res = base & ~u
             break
-        case 3: // BTC
+        case 3:  // BTC
             fallthrough
         default:
             res = base ^ u
@@ -275,7 +275,7 @@ extension Free86 {
         let s = src & 0xffff
         var res = s, f: Eflags
         switch operation & 7 {
-         case 0:
+        case 0:
             if (count & 0x1f) != 0 {
                 c = count & 0xf
                 res = (res << c) | (res >> (16 - c))

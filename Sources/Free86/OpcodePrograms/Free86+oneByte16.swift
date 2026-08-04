@@ -885,16 +885,16 @@ extension Free86 {
         opcode.override = true
         if ipr.isFlagRaised(.lockSignal) {
             switch opcode {
-                case 0x1a3,  // BT
-                    0x1ab,  // BTS
-                    0x1b1,  // CMPXCHG
-                    0x1b3,  // BTR
-                    0x1ba,  // G8 (-, -, -, -, BT, BTS, BTR, BTC)
-                    0x1bb,  // BTC
-                    0x1c1:  // XADD
-                    break
-                default:
-                    throw Interrupt(.UD)
+            case 0x1a3,  // BT
+                0x1ab,  // BTS
+                0x1b1,  // CMPXCHG
+                0x1b3,  // BTR
+                0x1ba,  // G8 (-, -, -, -, BT, BTS, BTR, BTC)
+                0x1bb,  // BTC
+                0x1c1:  // XADD
+                break
+            default:
+                throw Interrupt(.UD)
             }
         }
         return try twoByteDecoder[opcode]()

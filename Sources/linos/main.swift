@@ -291,7 +291,7 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         let channel = circuit.pit_channels[slot]
         switch channel.rw_state {
         case 0, 1, 2, 3:
-            let ma = channel.pit_get_count();
+            let ma = channel.pit_get_count()
             if (channel.rw_state & 1) != 0 {
                 res = (ma >> 8) & 0xff
             } else {

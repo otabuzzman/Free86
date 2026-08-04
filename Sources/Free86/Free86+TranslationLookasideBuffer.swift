@@ -2,14 +2,14 @@ extension Free86: TranslationLookasideBuffer {
     public func tlbLookup(linear: LinearAddress, writable: Bool) throws -> DWord {
         var hash: Int
         let pxi = linear.pageTablesIndices  // PDE and PTE indices
-        if (writable) {
+        if writable {
             hash = tlbWritable[pxi]
         } else {
             hash = tlbReadonly[pxi]
         }
-        if (hash == -1) {
+        if hash == -1 {
             try translate(linear, writable: writable, user: cpl == 3)
-            if (writable) {
+            if writable {
                 hash = tlbWritable[pxi]
             } else {
                 hash = tlbReadonly[pxi]
@@ -20,8 +20,8 @@ extension Free86: TranslationLookasideBuffer {
     func tlbUpdate(linear: LinearAddress, with address: DWord, writable: Bool, user: Bool) {
         let hash = Int(linear ^ address)    // XOR hash function (by design, no necessity)
         let pxi = linear.pageTablesIndices  // PD and PT indices (top 20 bits of linear address)
-        if (tlbReadonlyCplX[pxi] == -1) {
-            if (tlbPagesCount >= 2048) {  // flush TLB if full
+        if tlbReadonlyCplX[pxi] == -1 {
+            if tlbPagesCount >= 2048 {  // flush TLB if full
                 /// if present, keep PTE immediately preceding this PTE to improve performance
                 tlbFlush(preservePageIfPresent: pxi &- 1)
             }
@@ -31,14 +31,14 @@ extension Free86: TranslationLookasideBuffer {
         }
         /// update mapping tables
         tlbReadonlyCplX[pxi] = hash
-        if (writable) {
+        if writable {
             tlbWritableCplX[pxi] = hash
         } else {
             tlbWritableCplX[pxi] = -1
         }
-        if (user) {
+        if user {
             tlbReadonlyCpl3[pxi] = hash
-            if (writable) {
+            if writable {
                 tlbWritableCpl3[pxi] = hash
             } else {
                 tlbWritableCpl3[pxi] = -1

@@ -6,21 +6,21 @@ import PackageDescription
 let package = Package(
     name: "Free86",
     platforms: [
-      .macOS(.v15),
+        .macOS(.v15),
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .executable(
             name: "linos",
-            targets: ["linos"]
+            targets: ["linos"],
         ),
         .executable(
             name: "test386",
-            targets: ["test386"]
+            targets: ["test386"],
         ),
         .executable(
             name: "testINT",
-            targets: ["testINT"]
+            targets: ["testINT"],
         ),
         .library(
             name: "Free86",

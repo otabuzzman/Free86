@@ -486,11 +486,11 @@ extension Free86 {
     }
     func resetSegmentRegister(_ sreg: SegmentRegister.Name, _ level: DWord) {
         if (sreg == .FS || sreg == .GS) && segs[sreg].selector.isNull {
-            return // null selector in FS, GS
+            return  // null selector in FS, GS
         }
         let xsd = segs[sreg].shadow
         if xsd.isDataSegment && !xsd.isFlagRaised(.E) {
-           if xsd.dpl < level {
+            if xsd.dpl < level {
                 segs[sreg] = SegmentRegister(0, SegmentDescriptor(0))
             }
         }
@@ -518,7 +518,7 @@ extension Free86 {
     }
     func raiseInterruptRealOrV86Mode(_ id: DWord, _ isSW: Bool, _ home: LinearAddress) throws {
         if (id * 4 + 3) > idt.shadow.limit {
-           throw Interrupt(.GP, errorCode: id * 4 + 2)
+            throw Interrupt(.GP, errorCode: id * 4 + 2)
         }
         lax = idt.shadow.base &+ DWord((id << 2))
         let offset = try ld16ReadonlyCplX()
@@ -591,7 +591,7 @@ extension Free86 {
         default:
             throw Interrupt(.GP, errorCode: id * 8 + 2)
         }
-        if (isSW && isd.dpl < cpl) {
+        if isSW && isd.dpl < cpl {
             throw Interrupt(.GP, errorCode: id * 8 + 2)
         }
         if !isd.isFlagRaised(.P) {

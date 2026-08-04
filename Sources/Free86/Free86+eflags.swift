@@ -101,7 +101,7 @@ extension Free86 {
             f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
             break
         case 12, 13, 14:
-            f = false 
+            f = false
             break
         case 15, 16, 17, 18, 19, 20, 21, 22, 23:
             f = false

@@ -1,6 +1,6 @@
 extension Free86 {
     func auxInsb() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -28,7 +28,7 @@ extension Free86 {
         }
     }
     func auxOutsb() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -128,7 +128,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }
@@ -188,7 +188,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }
@@ -207,7 +207,7 @@ extension Free86 {
         }
     }
     func auxInsw() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -235,7 +235,7 @@ extension Free86 {
         }
     }
     func auxOutsw() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -335,7 +335,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }
@@ -395,7 +395,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }
@@ -414,7 +414,7 @@ extension Free86 {
         }
     }
     func aux16Ins() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -442,7 +442,7 @@ extension Free86 {
         }
     }
     func aux16Outs() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -542,7 +542,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }
@@ -602,7 +602,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }
@@ -621,7 +621,7 @@ extension Free86 {
         }
     }
     func auxInsd() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -649,7 +649,7 @@ extension Free86 {
         }
     }
     func auxOutsd() throws {
-        if (cpl > eflags.iopl) {
+        if cpl > eflags.iopl {
             throw Interrupt(.GP, errorCode: 0)
         }
         let mask = ipr.addressSizeMask
@@ -749,7 +749,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }
@@ -809,7 +809,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-             if ipr.isFlagRaised(.repzStringOperation) {
+            if ipr.isFlagRaised(.repzStringOperation) {
                 if !(osmDst == 0) {
                     return
                 }

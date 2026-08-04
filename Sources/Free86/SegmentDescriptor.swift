@@ -27,7 +27,7 @@ enum SegmentDescriptorFlag: Int {
     case S = 12  // 0 = system segment
 }
 enum SegmentDescriptorTypeFlag: Int {
-    case A = 8 // 1 = code/ data segment available
+    case A = 8  // 1 = code/ data segment available
 }
 enum SegmentDescriptorCodeTypeFlag: Int {
     case R = 9  // 1 = readable

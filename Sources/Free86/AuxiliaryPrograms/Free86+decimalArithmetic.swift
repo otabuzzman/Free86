@@ -68,7 +68,7 @@ extension Free86 {
             al = (al &+ 6) & 0xff
             flags.setFlag(.AF)
         }
-        if ((al > 0x9f) || f0) {
+        if (al > 0x9f) || f0 {
             al = (al &+ 0x60) & 0xff
             flags.setFlag(.CF)
         }

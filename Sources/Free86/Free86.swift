@@ -124,7 +124,7 @@ public class Free86 {
     /// choice rather than a necessity. Another array records up to 2024
     /// mappings stored in the tables, effectively representing the logical
     /// size of the TLB.
-    var tlbPages: Array<DWord>
+    var tlbPages: [DWord]
     var tlbPagesCount: Int
     /// mapping tables
     var tlbReadonlyCplX: UnsafeMutablePointer<Int>  // supervisor, any CPL
@@ -269,7 +269,7 @@ public class Free86 {
     var imm: DWord = 0, imm16: Word = 0, moffs: DWord = 0  // immediate/ offset operands
     var u: DWord = 0, v: DWord = 0, w: DWord = 0  // intermediate results
 
-    typealias OpcodeDecoder = Array<OpcodeProgram>
+    typealias OpcodeDecoder = [OpcodeProgram]
     typealias OpcodeProgram = () throws -> Result<Resume, Never>
 
     enum Resume {
@@ -359,7 +359,7 @@ public class Free86 {
         /* 0x1f0 */ invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid,  invalid
     ]
 
-    typealias DoubleFaultDecoder = Array<DoubleFaultProgram?>
+    typealias DoubleFaultDecoder = [DoubleFaultProgram?]
     typealias DoubleFaultProgram = () throws -> Result<Resume, Never>
 
     lazy var doubleFault: DoubleFaultProgram = { [self] in

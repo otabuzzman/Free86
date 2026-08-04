@@ -52,7 +52,7 @@ extension Free86 {
         ipr.setFlag(.repzStringOperation)
         opcode = DWord(fetch8())
         opcode.override = ipr.isFlagRaised(.operandSizeOverride)
-       return .success(.goOnFetching)
+        return .success(.goOnFetching)
     }
     /// 0x66  operand-size override prefix
     func Ox66() throws -> Result<Resume, Never> {
@@ -1959,18 +1959,18 @@ extension Free86 {
         opcode = DWord(fetch8())
         if ipr.isFlagRaised(.lockSignal) {
             switch opcode {
-                case 0xa3,  // BT
-                    0xab,  // BTS
-                    0xb0,  // CMPXCHG
-                    0xb1,  // CMPXCHG
-                    0xb3,  // BTR
-                    0xba,  // G8 (-, -, -, -, BT, BTS, BTR, BTC)
-                    0xbb,  // BTC
-                    0xc0,  // XADD
-                    0xc1:  // XADD
-                    break
-                default:
-                    throw Interrupt(.UD)
+            case 0xa3,  // BT
+                0xab,  // BTS
+                0xb0,  // CMPXCHG
+                0xb1,  // CMPXCHG
+                0xb3,  // BTR
+                0xba,  // G8 (-, -, -, -, BT, BTS, BTR, BTC)
+                0xbb,  // BTC
+                0xc0,  // XADD
+                0xc1:  // XADD
+                break
+            default:
+                throw Interrupt(.UD)
             }
         }
         return try twoByteDecoder[opcode]()

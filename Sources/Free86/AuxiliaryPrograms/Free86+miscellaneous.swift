@@ -39,7 +39,7 @@ extension Free86 {
                 throw Interrupt(.NP, errorCode: DWord(selector.indexAndTI))
             }
             tr = SegmentRegister(selector, xsd)
-            xsd.upper.setBit(9)  /// bit 9 distinguishes available (0)/ busy (1) TSS
+            xsd.upper.setBit(9)  // bit 9 distinguishes available (0)/ busy (1) TSS
             try st64WritableCplX(qword: xsd.qword)
         }
     }
