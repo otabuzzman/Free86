@@ -35,13 +35,10 @@ class Instruction {
                 if modRM.rM == 6 {
                     length += 2
                 }
-                break
             case 1:
                 length += 1
-                break
             default:
                 length += 2
-                break
             }
         } else {
             switch modRM.modRM {
@@ -54,19 +51,14 @@ class Instruction {
                 if sib.base == 5 {
                     length += 4
                 }
-                break
             case 0x05, 0x10, 0x11, 0x12, 0x13, 0x15, 0x16, 0x17:
                 length += 4
-                break
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
                 length += 1
-                break
             case 0x0c:
                 length += 2
-                break
             case 0x14:
                 length += 5
-                break
             default:
                 break  // exhaustive
             }

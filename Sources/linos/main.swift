@@ -192,7 +192,6 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             case 0x00,
                  0x80:  // rotate in automatic EOI mode (clear)
                 i8259.rotate_on_autoeoi = Int(iodata) >> 7
-                break
             case 0x20,  // non-specific EOI command
                  0xa0:  // rotate on non-specific EOI command
                 priority = i8259.get_priority(i8259.isr)
@@ -202,7 +201,6 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                 if iodata == 0xa0 {
                     i8259.priority_add = (i8259.priority_add + 1) & 7
                 }
-                break
             case 0x60,  // specific EOI command, IR priority level 0
                  0x61,  // level 1
                  0x62,  // level 2
@@ -213,7 +211,6 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                  0x67:  // level 7
                 priority = Int(iodata) & 7
                 i8259.isr &= ~(1 << priority)
-                break;
             case 0xc0,  // set priority command, IR priority level 0
                  0xc1,  // level 1
                  0xc2,  // level 2
@@ -223,7 +220,6 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                  0xc6,  // level 6
                  0xc7:  // level 7
                 i8259.priority_add = (Int(iodata) + 1) & 7
-                break
             case 0xe0,  // rotate on specific EOI command, IR level 0
                  0xe1,  // level 1
                  0xe2,  // level 2
@@ -235,7 +231,6 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                 priority = Int(iodata & 7)
                 i8259.isr &= ~(1 << priority)
                 i8259.priority_add = (priority + 1) & 7
-                break
             default:
                 break
             }
@@ -258,22 +253,18 @@ class PortA1<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         case 0:  // OCW1, set IMR
             i8259.imr = Int(iodata)
             i8259.update_irq()
-            break
         case 1:  // ICW2, set page starting address of service routines
             i8259.irq_base = Int(iodata) & 0xf8
             i8259.icwn = 2
-            break
         case 2:  // ICW3, load slave register if ICW1.SNGL == 0
             if i8259.icw4 != 0 {
                 i8259.icwn = 3
             } else {
                 i8259.icwn = 0
             }
-            break
         case 3:  // ICW4, program SFNM, BUF, M/S, AEOI and uPM if set
             i8259.auto_eoi = (Int(iodata) >> 1) & 1
             i8259.icwn = 0
-            break
         default:
             break
         }
@@ -300,7 +291,6 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
             if (channel.rw_state & 2) != 0 {
                 channel.rw_state ^= 1
             }
-            break
         case 4, 5:
             if (channel.rw_state & 1) != 0 {
                 res = channel.latched_count >> 8
@@ -308,7 +298,6 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                 res = channel.latched_count & 0xff
             }
             channel.rw_state ^= 1
-            break
         default:
             break
         }
@@ -319,10 +308,8 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         switch channel.rw_state {
         case 0:
             channel.pit_load_count(Int(iodata))
-            break
         case 1:
             channel.pit_load_count(Int(iodata) << 8)
-            break
         case 2, 3:
             if (channel.rw_state & 1) != 0 {
                 channel.pit_load_count((channel.latched_count & 0xff) | (Int(iodata) << 8))
@@ -330,7 +317,6 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                 channel.latched_count = Int(iodata)
             }
             channel.rw_state ^= 1
-            break
         default:
             break
         }
@@ -353,12 +339,10 @@ class Port43<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         case 0:
             circuit.pit_channels[slot].latched_count = circuit.pit_channels[slot].pit_get_count()
             circuit.pit_channels[slot].rw_state = 4
-            break
         default:
             circuit.pit_channels[slot].mode = (Int(iodata) >> 1) & 7
             circuit.pit_channels[slot].bcd = Int(iodata) & 1
             circuit.pit_channels[slot].rw_state = Int(ih) - 1
-            break
         }
     }
 }

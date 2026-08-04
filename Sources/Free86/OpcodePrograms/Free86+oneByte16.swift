@@ -309,7 +309,6 @@ extension Free86 {
             imm = DWord(fetch16())
             osmDst = (rm & imm).signExtendedWord
             osm = 13
-            break
         case 2:  // NOT
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
@@ -320,7 +319,6 @@ extension Free86 {
                 rm = DWord(try ld16WritableCpl3())
                 try st16WritableCpl3(word: ~rm)
             }
-            break
         case 3:  // NEG
             operation = 5
             if modRM.mod == 3 {
@@ -333,7 +331,6 @@ extension Free86 {
                 u = calculate16(0, rm)
                 try st16WritableCpl3(word: u)
             }
-            break
         case 4:  // MUL AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -344,7 +341,6 @@ extension Free86 {
             aux16Mul(regs[.EAX], rm)
             regs[.EAX].lowerHalf = u
             regs[.EDX].lowerHalf = u >> 16
-            break
         case 5:  // IMUL AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -355,7 +351,6 @@ extension Free86 {
             aux16Imul(regs[.EAX], rm)
             regs[.EAX].lowerHalf = u
             regs[.EDX].lowerHalf = u >> 16
-            break
         case 6:  // DIV AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -364,7 +359,6 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             try aux16Div(rm)
-            break
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -373,7 +367,6 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             try aux16Idiv(rm)
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -561,7 +554,6 @@ extension Free86 {
                 u = aux16Inc(rm)
                 try st16WritableCpl3(word: u)
             }
-            break
         case 1:  // DEC
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
@@ -573,7 +565,6 @@ extension Free86 {
                 u = aux16Dec(rm)
                 try st16WritableCpl3(word: u)
             }
-            break
         case 2:  // CALL
             if modRM.mod == 3 {
                 rm = regs[modRM.rM].lowerHalf
@@ -584,7 +575,6 @@ extension Free86 {
             try push16((eip &+ far &- farStart))
             eip = rm
             (far, farStart) = (0, 0)
-            break
         case 3:  // CALL
             fallthrough
         case 5:  // JMP
@@ -600,7 +590,6 @@ extension Free86 {
             } else {
                 try auxJmpf(m16, m)
             }
-            break
         case 6:  // PUSH
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -609,7 +598,6 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             try push16(rm)
-            break
         case 4:  // JMP
             if modRM.mod == 3 {
                 rm = regs[modRM.rM].lowerHalf
@@ -619,7 +607,6 @@ extension Free86 {
             }
             eip = rm
             (far, farStart) = (0, 0)
-            break
         default:
             throw Interrupt(.UD)
         }

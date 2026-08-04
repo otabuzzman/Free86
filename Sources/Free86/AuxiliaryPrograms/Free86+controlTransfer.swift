@@ -139,7 +139,6 @@ extension Free86 {
                 fallthrough
             case .TSSAvailable:
                 assert(false, "fatal error: task management not implemented")
-                break
             case .CallGate16:
                 fallthrough
             case .CallGate:
@@ -565,7 +564,6 @@ extension Free86 {
                 fallthrough
             case .AC:  // alignment check (80486)
                 pushErrorCode = true
-                break
             default:
                 break  // exhaustive
             }
@@ -583,7 +581,6 @@ extension Free86 {
             fallthrough
         case .TrapGate16:
             assert(false, "fatal error: task management not implemented")
-            break
         case .InterruptGate:
             fallthrough
         case .TrapGate:

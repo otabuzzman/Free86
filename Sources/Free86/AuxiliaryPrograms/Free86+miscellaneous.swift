@@ -88,7 +88,6 @@ extension Free86 {
                 if limit {
                     return nil
                 }
-                break
             default:
                 return nil
             }
@@ -195,7 +194,6 @@ extension Free86 {
             regs[.EBX] = 0x756e6547  // "uneG"
             regs[.EDX] = 0x49656e69  // "Ieni"
             regs[.ECX] = 0x6c65746e  // "letn"
-            break
         case 1:   // processor info and feature flags
             fallthrough
         default:  // https://datasheets.chipdb.org/Intel/x86/CPUID/24161821.pdf
@@ -203,7 +201,6 @@ extension Free86 {
             regs[.EBX] = 8 << 8                   //   00     0101    0100       0011
             regs[.ECX] = 0
             regs[.EDX] = 1 << 4
-            break
         }
     }
     func aux16Bound() throws {

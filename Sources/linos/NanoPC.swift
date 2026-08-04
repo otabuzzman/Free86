@@ -177,10 +177,8 @@ class PITChannel {
         switch mode {
         case 0, 1, 4, 5:
             dh = (count - d) & 0xffff
-            break
         default:
             dh = count - (d % count)
-            break
         }
         return dh
     }
@@ -190,24 +188,19 @@ class PITChannel {
         switch mode {
         case 0:  // interrupt on terminal count
             eh = d >= count
-            break
         case 1:  // one shot
             eh = d < count
-            break
         case 2:  // frequency divider
             if (d % count) == 0 && d != 0 {
                 eh = true
             } else {
                 eh = false
             }
-            break
         case 3:  // square wave
             eh = (d % count) < (count >> 1)
-            break
         case 4,  // SW strobe
              5:  // HW strobe
             eh = d == count
-            break
         default:
             break
         }

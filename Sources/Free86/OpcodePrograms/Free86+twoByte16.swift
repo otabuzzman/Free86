@@ -191,7 +191,6 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             aux16Bt(rm, imm)
-            break
         case 5:
             fallthrough
         case 6:
@@ -210,7 +209,6 @@ extension Free86 {
                 u = aux16BtsBtrBtc(rm, imm)
                 try st16WritableCpl3(word: u)
             }
-            break
         default:
             throw Interrupt(.UD)
         }

@@ -242,47 +242,39 @@ extension Free86 {
             res = (res &+ src).signExtendedByte
             osmDst = res
             osm = 0
-            break
         case 1:
             res = (res | src).signExtendedByte
             osmDst = res
             osm = 12
-            break
         case 2:
             cf = isCF() ? 1 : 0
             osmSrc = src
             res = (res &+ src &+ cf).signExtendedByte
             osmDst = res
             osm = cf != 0 ? 3 : 0
-            break
         case 3:
             cf = isCF() ? 1 : 0
             osmSrc = src
             res = (res &- src &- cf).signExtendedByte
             osmDst = res
             osm = cf != 0 ? 9 : 6
-            break
         case 4:
             res = (res & src).signExtendedByte
             osmDst = res
             osm = 12
-            break
         case 5:
             osmSrc = src
             res = (res &- src).signExtendedByte
             osmDst = res
             osm = 6
-            break
         case 6:
             res = (res ^ src).signExtendedByte
             osmDst = res
             osm = 12
-            break
         case 7:
             osmSrc = src
             osmDst = (dst &- src).signExtendedByte
             osm = 6
-            break
         default:
             break  // exhaustive
         }
@@ -298,47 +290,39 @@ extension Free86 {
             res = (res &+ src).signExtendedWord
             osmDst = res
             osm = 1
-            break
         case 1:
             res = (res | src).signExtendedWord
             osmDst = res
             osm = 13
-            break
         case 2:
             cf = isCF() ? 1 : 0
             osmSrc = src
             res = (res &+ src &+ cf).signExtendedWord
             osmDst = res
             osm = cf != 0 ? 4 : 1
-            break
         case 3:
             cf = isCF() ? 1 : 0
             osmSrc = src
             res = (res &- src &- cf).signExtendedWord
             osmDst = res
             osm = cf != 0 ? 10 : 7
-            break
         case 4:
             res = (res & src).signExtendedWord
             osmDst = res
             osm = 13
-            break
         case 5:
             osmSrc = src
             res = (res &- src).signExtendedWord
             osmDst = res
             osm = 7
-            break
         case 6:
             res = (res ^ src).signExtendedWord
             osmDst = res
             osm = 13
-            break
         case 7:
             osmSrc = src
             osmDst = (res &- src).signExtendedWord
             osm = 7
-            break
         default:
             break  // exhaustive
         }
@@ -354,47 +338,39 @@ extension Free86 {
             res = res &+ src
             osmDst = res
             osm = 2
-            break
         case 1:
             res = res | src
             osmDst = res
             osm = 14
-            break
         case 2:
             cf = isCF() ? 1 : 0
             osmSrc = src
             res = res &+ src &+ cf
             osmDst = res
             osm = cf != 0 ? 5 : 2
-            break
         case 3:
             cf = isCF() ? 1 : 0
             osmSrc = src
             res = res &- src &- cf
             osmDst = res
             osm = cf != 0 ? 11 : 8
-            break
         case 4:
             res = res & src
             osmDst = res
             osm = 14
-            break
         case 5:
             osmSrc = src
             res = res &- src
             osmDst = res
             osm = 8
-            break
         case 6:
             res = res ^ src
             osmDst = res
             osm = 14
-            break
         case 7:
             osmSrc = src
             osmDst = res &- src
             osm = 8
-            break
         default:
             break  // exhaustive
         }

@@ -11,49 +11,38 @@ extension Free86 {
                 switch modRM.mod {
                 case 0:
                     offset = 0
-                    break
                 case 1:
                     offset = DWord(fetch8()).signExtendedByte
-                    break
                 default:
                     offset = DWord(fetch16())
-                    break
                 }
                 switch modRM.rM {
                 case 0:
                     offset = (offset &+ regs[.EBX] &+ regs[.ESI]) & 0xffff
                     sreg = .DS
-                    break
                 case 1:
                     offset = (offset &+ regs[.EBX] &+ regs[.EDI]) & 0xffff
                     sreg = .DS
-                    break
                 case 2:
                     offset = (offset &+ regs[.EBP] &+ regs[.ESI]) & 0xffff
                     sreg = .SS
-                    break
                 case 3:
                     offset = (offset &+ regs[.EBP] &+ regs[.EDI]) & 0xffff
                     sreg = .SS
-                    break
                 case 4:
                     offset = (offset &+ regs[.ESI]) & 0xffff
                     sreg = .DS
-                    break
                 case 5:
                     offset = (offset &+ regs[.EDI]) & 0xffff
                     sreg = .DS
-                    break
                 case 6:
                     offset = (offset &+ regs[.EBP]) & 0xffff
                     sreg = .SS
-                    break
                 case 7:
                     fallthrough
                 default:
                     offset = (offset &+ regs[.EBX]) & 0xffff
                     sreg = .DS
-                    break
                 }
             }
             if ipr.segmentOverride {
@@ -64,7 +53,6 @@ extension Free86 {
             case 0x00, 0x01, 0x02, 0x03, 0x06, 0x07:
                 exp = modRM.rM
                 offset = regs[modRM.rM]
-                break
             case 0x04:
                 sib = fetch8()
                 if sib.base.isGeneralRegister(.EBP) {
@@ -76,15 +64,12 @@ extension Free86 {
                 if !sib.index.isGeneralRegister(.ESP) {
                     offset = offset &+ (regs[sib.index] << sib.scale)
                 }
-                break
             case 0x05:
                 offset = fetch()
-                break
             case 0x08, 0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f:
                 u = DWord(fetch8()).signExtendedByte
                 exp = modRM.rM
                 offset = regs[modRM.rM] &+ u
-                break
             case 0x0c:
                 sib = fetch8()
                 u = DWord(fetch8()).signExtendedByte
@@ -93,7 +78,6 @@ extension Free86 {
                 if !sib.index.isGeneralRegister(.ESP) {
                     offset = offset &+ (regs[sib.index] << sib.scale)
                 }
-                break
             case 0x14:
                 sib = fetch8()
                 offset = fetch()
@@ -102,13 +86,11 @@ extension Free86 {
                 if !sib.index.isGeneralRegister(.ESP) {
                     offset = offset &+ (regs[sib.index] << sib.scale)
                 }
-                break
             case 0x10, 0x11, 0x12, 0x13, 0x15, 0x16, 0x17:
                 fallthrough
             default:
                 offset = fetch()
                 offset = regs[modRM.rM] &+ offset
-                break
             }
             if ipr.segmentOverride {
                 sreg = SegmentRegister.Name(rawValue: ipr.segmentRegister)!  // save to force-unwrap

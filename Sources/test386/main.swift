@@ -55,7 +55,6 @@ while true {
                 let header = String(format: "[EIP..EIP+%02X]: ", n - 1)
                 print("interrupt id \(interrupt.id)")
                 print(cpu.compactState() + "\n" + header + eip15)
-                break
             default:
                 break
             }

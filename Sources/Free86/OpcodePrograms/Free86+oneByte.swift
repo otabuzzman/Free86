@@ -753,7 +753,6 @@ extension Free86 {
             imm = DWord(fetch8())
             osmDst = (rm & imm).signExtendedByte
             osm = 12
-            break
         case 2:  // NOT
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
@@ -764,7 +763,6 @@ extension Free86 {
                 rm = DWord(try ld8WritableCpl3())
                 try st8WritableCpl3(byte: ~rm)
             }
-            break
         case 3:  // NEG
             operation = 5
             if modRM.mod == 3 {
@@ -777,7 +775,6 @@ extension Free86 {
                 u = calculate8(0, rm)
                 try st8WritableCpl3(byte: u)
             }
-            break
         case 4:  // MUL AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
@@ -788,7 +785,6 @@ extension Free86 {
             }
             aux8Mul(regs[.EAX], rm)
             regs[.EAX].lowerHalf = u
-            break
         case 5:  // IMUL AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
@@ -799,7 +795,6 @@ extension Free86 {
             }
             aux8Imul(regs[.EAX], rm)
             regs[.EAX].lowerHalf = u
-            break
         case 6:  // DIV AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
@@ -809,7 +804,6 @@ extension Free86 {
                 rm = DWord(try ld8ReadonlyCpl3())
             }
             try aux8Div(rm)
-            break
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
                 rM = modRM.rM
@@ -819,7 +813,6 @@ extension Free86 {
                 rm = DWord(try ld8ReadonlyCpl3())
             }
             try aux8Idiv(rm)
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -841,7 +834,6 @@ extension Free86 {
             imm = fetch()
             osmDst = rm & imm
             osm = 14
-            break
         case 2:  // NOT
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
@@ -852,7 +844,6 @@ extension Free86 {
                 rm = try ldWritableCpl3()
                 try stWritableCpl3(dword: ~rm)
             }
-            break
         case 3:  // NEG
             operation = 5
             if modRM.mod == 3 {
@@ -865,7 +856,6 @@ extension Free86 {
                 u = calculate(0, rm)
                 try stWritableCpl3(dword: u)
             }
-            break
         case 4:  // MUL AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -876,7 +866,6 @@ extension Free86 {
             auxMul(regs[.EAX], rm)
             regs[.EAX] = u
             regs[.EDX] = v
-            break
         case 5:  // IMUL AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -887,7 +876,6 @@ extension Free86 {
             auxImul(regs[.EAX], rm)
             regs[.EAX] = u
             regs[.EDX] = v
-            break
         case 6:  // DIV AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -898,7 +886,6 @@ extension Free86 {
             try auxDiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
             regs[.EAX] = u
             regs[.EDX] = v
-            break
         case 7:  // IDIV AL/X
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -909,7 +896,6 @@ extension Free86 {
             try auxIdiv(QWord(regs[.EAX]) | QWord(regs[.EDX]) << 32, rm)
             regs[.EAX] = u
             regs[.EDX] = v
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -1214,7 +1200,6 @@ extension Free86 {
                 u = aux8Inc(rm)
                 try st8WritableCpl3(byte: u)
             }
-            break
         case 1:  // DEC
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
@@ -1226,7 +1211,6 @@ extension Free86 {
                 u = aux8Dec(rm)
                 try st8WritableCpl3(byte: u)
             }
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -1261,7 +1245,6 @@ extension Free86 {
                 osm = 27
                 try stWritableCpl3(dword: rm)
             }
-            break
         case 1:  // DEC
             if modRM.mod == 3 {
                 // LOCK prefix not allowed
@@ -1285,7 +1268,6 @@ extension Free86 {
                 osm = 30
                 try stWritableCpl3(dword: rm)
             }
-            break
         case 2:  // CALL
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -1303,7 +1285,6 @@ extension Free86 {
             }
             eip = rm
             (far, farStart) = (0, 0)
-            break
         case 3:  // CALLF
             fallthrough
         case 5:  // JMPF
@@ -1319,7 +1300,6 @@ extension Free86 {
             } else {
                 try auxJmpf(m16, m)
             }
-            break
         case 4:  // JMP
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -1329,7 +1309,6 @@ extension Free86 {
             }
             eip = rm
             (far, farStart) = (0, 0)
-            break
         case 6:  // PUSH
             if modRM.mod == 3 {
                 rm = regs[modRM.rM]
@@ -1344,7 +1323,6 @@ extension Free86 {
             } else {
                 try push(rm)
             }
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -1544,13 +1522,10 @@ extension Free86 {
         switch opcode & 3 {
         case 0:
             b = osmDst != 0
-            break
         case 1:
             b = osmDst == 0
-            break
         default:
             b = true
-            break
         }
         if (u != 0) && b {
             if ipr.isFlagRaised(.operandSizeOverride) {

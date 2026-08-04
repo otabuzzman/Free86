@@ -155,7 +155,6 @@ extension Free86 {
                 applyAddressingForm()
                 try st16WritableCpl3(word: u)
             }
-            break
         case 2:  // LDTR
             fallthrough
         case 3:  // LTR
@@ -173,7 +172,6 @@ extension Free86 {
             } else {
                 try auxLtr(SegmentSelector(rm))
             }
-            break
         case 4:  // VERR
             fallthrough
         case 5:  // VERW
@@ -184,7 +182,6 @@ extension Free86 {
                 rm = DWord(try ld16ReadonlyCpl3())
             }
             try auxVerrVerw(SegmentSelector(rm), (operation & 1) != 0)
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -219,7 +216,6 @@ extension Free86 {
                 xdt.limit = DWord(m16)
                 idt = .init(idt.selector, xdt)
             }
-            break
         case 7:  // INVLPG (80486)
             if cpl != 0 {
                 throw Interrupt(.GP, errorCode: 0)
@@ -229,7 +225,6 @@ extension Free86 {
             }
             applyAddressingForm()
             tlbFlush(pageContainingAddress: lax)
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -253,16 +248,12 @@ extension Free86 {
         switch modRM.reg {
         case 0:
             u = cr0
-            break
         case 2:
             u = cr2
-            break
         case 3:
             u = cr3
-            break
         case 4:
             u = cr4
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -282,16 +273,12 @@ extension Free86 {
         switch modRM.reg {
         case 0:
             cr0 = rm
-            break
         case 2:
             cr2 = rm
-            break
         case 3:
             cr3 = rm
-            break
         case 4:
             cr4 = rm
-            break
         default:
             throw Interrupt(.UD)
         }
@@ -414,7 +401,6 @@ extension Free86 {
                 rm = try ldReadonlyCpl3()
             }
             auxBt(rm, imm)
-            break
         case 5:  // BTS
             fallthrough
         case 6:  // BTR
@@ -433,7 +419,6 @@ extension Free86 {
                 u = auxBtsBtrBtc(rm, imm)
                 try stWritableCpl3(dword: u)
             }
-            break
         default:
             throw Interrupt(.UD)
         }

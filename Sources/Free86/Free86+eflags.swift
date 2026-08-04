@@ -13,64 +13,44 @@ extension Free86 {
         switch osm % 25 {
         case 0:
             f = (osmDst & 0xff) < (osmSrc & 0xff)
-            break
         case 1:
             f = (osmDst & 0xffff) < (osmSrc & 0xffff)
-            break
         case 2:
             f = osmDst < osmSrc
-            break
         case 3:
             f = (osmDst & 0xff) <= (osmSrc & 0xff)
-            break
         case 4:
             f = (osmDst & 0xffff) <= (osmSrc & 0xffff)
-            break
         case 5:
             f = osmDst <= osmSrc
-            break
         case 6:
             f = ((osmDst &+ osmSrc) & 0xff) < (osmSrc & 0xff)
-            break
         case 7:
             f = ((osmDst &+ osmSrc) & 0xffff) < (osmSrc & 0xffff)
-            break
         case 8:
             f = (osmDst &+ osmSrc) < osmSrc
-            break
         case 9:
             f = ((osmDst &+ osmSrc &+ 1) & 0xff) <= (osmSrc & 0xff)
-            break
         case 10:
             f = ((osmDst &+ osmSrc &+ 1) & 0xffff) <= (osmSrc & 0xffff)
-            break
         case 11:
             f = ((osmDst &+ osmSrc &+ 1) <= osmSrc)
-            break
         case 12, 13, 14:
             f = false
-            break
         case 15:
             f = ((osmSrc >> 7) & 1) != 0
-            break
         case 16:
             f = ((osmSrc >> 15) & 1) != 0
-            break
         case 17:
             f = ((osmSrc >> 31) & 1) != 0
-            break
         case 18, 19, 20:
             f = (osmSrc & 1) != 0
-            break
         case 21, 22, 23:
             f = osmSrc != 0
-            break
         case 24:
             f = (osmSrc & 1) != 0
-            break
         default:
             f = false
-            break
         }
         return f
     }
@@ -87,37 +67,27 @@ extension Free86 {
         case 0, 1, 2:
             u = osmDst &- osmSrc
             f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
-            break
         case 3, 4, 5:
             u = osmDst &- osmSrc &- 1
             f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
-            break
         case 6, 7, 8:
             u = osmDst &+ osmSrc
             f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
-            break
         case 9, 10, 11:
             u = osmDst &+ osmSrc &+ 1
             f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
-            break
         case 12, 13, 14:
             f = false
-            break
         case 15, 16, 17, 18, 19, 20, 21, 22, 23:
             f = false
-            break
         case 24:
             f = (osmSrc & 0x10) != 0
-            break
         case 25, 26, 27:
             f = ((osmDst ^ (osmDst &- 1)) & 0x10) != 0
-            break
         case 28, 29, 30:
             f = ((osmDst ^ (osmDst &+ 1)) & 0x10) != 0
-            break
         default:
             f = false
-            break
         }
         return f
     }
@@ -127,90 +97,65 @@ extension Free86 {
         case 0:
             u = osmDst &- osmSrc
             f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 7) & 1) != 0
-            break
         case 1:
             u = osmDst &- osmSrc
             f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 15) & 1) != 0
-            break
         case 2:
             u = osmDst &- osmSrc
             f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 31) & 1) != 0
-            break
         case 3:
             u = osmDst &- osmSrc &- 1
             f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 7) & 1) != 0
-            break
         case 4:
             u = osmDst &- osmSrc &- 1
             f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 15) & 1) != 0
-            break
         case 5:
             u = osmDst &- osmSrc &- 1
             f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 31) & 1) != 0
-            break
         case 6:
             u = osmDst &+ osmSrc
             f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 7) & 1) != 0
-            break
         case 7:
             u = osmDst &+ osmSrc
             f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 15) & 1) != 0
-            break
         case 8:
             u = osmDst &+ osmSrc
             f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 31) & 1) != 0
-            break
         case 9:
             u = osmDst &+ osmSrc &+ 1
             f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 7) & 1) != 0
-            break
         case 10:
             u = osmDst &+ osmSrc &+ 1
             f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 15) & 1) != 0
-            break
         case 11:
             u = osmDst &+ osmSrc &+ 1
             f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 31) & 1) != 0
-            break
         case 12, 13, 14:
             f = false
-            break
         case 15, 18:
             f = (((osmSrc ^ osmDst) >> 7) & 1) != 0
-            break
         case 16, 19:
             f = (((osmSrc ^ osmDst) >> 15) & 1) != 0
-            break
         case 17, 20:
             f = (((osmSrc ^ osmDst) >> 31) & 1) != 0
-            break
         case 21, 22, 23:
             f = osmSrc != 0
-            break
         case 24:
             f = ((osmSrc >> 11) & 1) != 0
-            break
         case 25:
             f = (osmDst & 0xff) == 0x80
-            break
         case 26:
             f = (osmDst & 0xffff) == 0x8000
-            break
         case 27:
             f = osmDst == 0x80000000
-            break
         case 28:
             f = (osmDst & 0xff) == 0x7f
-            break
         case 29:
             f = (osmDst & 0xffff) == 0x7fff
-            break
         case 30:
             f = osmDst == 0x7fffffff
-            break
         default:
             f = false
-            break
         }
         return f
     }
@@ -219,19 +164,14 @@ extension Free86 {
         switch osm {
         case 6:
             f = ((osmDst &+ osmSrc) & 0xff) <= (osmSrc & 0xff)
-            break
         case 7:
             f = ((osmDst &+ osmSrc) & 0xffff) <= (osmSrc & 0xffff)
-            break
         case 8:
             f = (osmDst &+ osmSrc) <= osmSrc
-            break
         case 24:
             f = (osmSrc & (0x0040 | 0x0001)) != 0
-            break
         default:
             f = isCF() || (osmDst == 0)
-            break
         }
         return f
     }
@@ -242,23 +182,17 @@ extension Free86 {
         switch osm {
         case 6:
             f = ((osmDst + osmSrc) << 24) <= (osmSrc << 24)
-            break
         case 7:
             f = ((osmDst + osmSrc) << 16) <= (osmSrc << 16)
-            break
         case 8:
             f = (osmDst + osmSrc) <= osmSrc
-            break
         case 12, 13, 14, 25, 26, 27, 28, 29, 30:
             f = osmDst <= 0
-            break
         case 24:
             f = ((((osmSrc >> 7) ^ (osmSrc >> 11)) | (osmSrc >> 6)) & 1) != 0
-            break
         default:
             /// f = (((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 : 0)) | (osmDst == 0 ? 1 : 0)) != 0
             f = (osmDst > 0) == isOF() || osmDst == 0  // simplified
-            break
         }
         return f
     }
@@ -269,23 +203,17 @@ extension Free86 {
         switch osm {
         case 6:
             f = ((osmDst + osmSrc) << 24) < (osmSrc << 24)
-            break
         case 7:
             f = ((osmDst + osmSrc) << 16) < (osmSrc << 16)
-            break
         case 8:
             f = (osmDst + osmSrc) < osmSrc
-            break
         case 12, 13, 14, 25, 26, 27, 28, 29, 30:
             f = osmDst < 0
-            break
         case 24:
             f = (((osmSrc >> 7) ^ (osmSrc >> 11)) & 1) != 0
-            break
         default:
             /// f = ((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 :0)) != 0
             f = (osmDst > 0) == isOF()  // simplified
-            break
         }
         return f
     }
@@ -294,31 +222,22 @@ extension Free86 {
         switch (condition >> 1) & 7 {
         case 0:
             f = isOF()
-            break
         case 1:
             f = isCF()
-            break
         case 2:
             f = osmDst == 0
-            break
         case 3:
             f = isBE()
-            break
         case 4:
             f = (osm == 24 ? ((osmSrc >> 7) & 1) : (osmDst & 0x80000000)) != 0
-            break
         case 5:
             f = isPF()
-            break
         case 6:
             f = isLT()
-            break
         case 7:
             f = isLE()
-            break
         default:
             f = false
-            break
         }
         return ((f ? 1 : 0) ^ (condition & 1)) != 0
     }

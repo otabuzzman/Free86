@@ -70,15 +70,12 @@ extension Free86 {
         switch operation {
         case 1:  // BTS
             res = base | u
-            break
         case 2:  // BTR
             res = base & ~u
-            break
         case 3:  // BTC
             fallthrough
         default:
             res = base ^ u
-            break
         }
         osm = 19
         return res
@@ -91,15 +88,12 @@ extension Free86 {
         switch operation {
         case 1:  // BTS
             res = base | u
-            break
         case 2:  // BTR
             res = base & ~u
-            break
         case 3:  // BTC
             fallthrough
         default:
             res = base ^ u
-            break
         }
         osm = 20
         return res
@@ -186,7 +180,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 1:
             if (count & 0x1f) != 0 {
                 c = count & 0x7
@@ -200,7 +193,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 2:
             c = Free86.shift8LUT[count & 0x1f]
             if c != 0 {
@@ -218,7 +210,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 3:
             c = Free86.shift8LUT[count & 0x1f]
             if c != 0 {
@@ -236,7 +227,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 4, 6:
             c = count & 0x1f
             if c != 0 {
@@ -245,7 +235,6 @@ extension Free86 {
                 res = osmDst
                 osm = 15
             }
-            break
         case 5:
             c = count & 0x1f
             if c != 0 {
@@ -254,7 +243,6 @@ extension Free86 {
                 res = osmDst
                 osm = 18
             }
-            break
         case 7:
             c = count & 0x1f
             if c != 0 {
@@ -264,7 +252,6 @@ extension Free86 {
                 res = osmDst
                 osm = 18
             }
-            break
         default:
             break  // exhaustive
         }
@@ -288,7 +275,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 1:
             if (count & 0x1f) != 0 {
                 c = count & 0xf
@@ -302,7 +288,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 2:
             c = Free86.shift16LUT[count & 0x1f]
             if c != 0 {
@@ -320,7 +305,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 3:
             c = Free86.shift16LUT[count & 0x1f]
             if c != 0 {
@@ -338,7 +322,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 4, 6:
             c = count & 0x1f
             if c != 0 {
@@ -347,7 +330,6 @@ extension Free86 {
                 res = osmDst
                 osm = 16
             }
-            break
         case 5:
             c = count & 0x1f
             if c != 0 {
@@ -356,7 +338,6 @@ extension Free86 {
                 res = osmDst
                 osm = 19
             }
-            break
         case 7:
             c = count & 0x1f
             if c != 0 {
@@ -366,7 +347,6 @@ extension Free86 {
                 res = osmDst
                 osm = 19
             }
-            break
         default:
             break  // exhaustive
         }
@@ -390,7 +370,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 1:
             c = count & 0x1f
             if c != 0 {
@@ -404,7 +383,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 2:
             c = count & 0x1f
             if c != 0 {
@@ -422,7 +400,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 3:
             c = count & 0x1f
             if c != 0 {
@@ -440,7 +417,6 @@ extension Free86 {
                 osmDst = ((osmSrc >> 6) & 1) ^ 1
                 osm = 24
             }
-            break
         case 4, 6:
             c = count & 0x1f
             if c != 0 {
@@ -449,7 +425,6 @@ extension Free86 {
                 res = osmDst
                 osm = 17
             }
-            break
         case 5:
             c = count & 0x1f
             if c != 0 {
@@ -458,7 +433,6 @@ extension Free86 {
                 res = osmDst
                 osm = 20
             }
-            break
         case 7:
             c = count & 0x1f
             if c != 0 {
@@ -467,7 +441,6 @@ extension Free86 {
                 res = osmDst
                 osm = 20
             }
-            break
         default:
             break  // exhaustive
         }
