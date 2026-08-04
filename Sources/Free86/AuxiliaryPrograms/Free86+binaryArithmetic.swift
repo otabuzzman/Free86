@@ -63,7 +63,7 @@ extension Free86 {
             throw Interrupt(.DE)
         }
         if uh <= 0x200000 {
-            let a: QWord = QWord(uh) &* 4294967296 &+ QWord(lh)
+            let a = QWord(uh) &* 4294967296 &+ QWord(lh)
             v = DWord(truncatingIfNeeded: a % QWord(divisor))
             u = DWord(truncatingIfNeeded: a / QWord(divisor))
         } else {

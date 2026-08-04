@@ -122,7 +122,7 @@ extension Free86 {
     }
     func auxBsf(_ dst: DWord, _ src: DWord) -> DWord {
         var res = dst
-        var s: QWord = QWord(src)
+        var s = QWord(src)
         if s != 0 {
             res = 0
             while (s & 1) == 0 {

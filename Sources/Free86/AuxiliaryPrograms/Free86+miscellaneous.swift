@@ -32,7 +32,7 @@ extension Free86 {
             }
             lax = gdt.shadow.base + DWord(selector.index)
             var xsd = SegmentDescriptor(try ld64ReadonlyCplX())
-            if !xsd.isType(.TSSAvailable) && !xsd.isType(.TSS16Available) {
+            if !xsd.isType(.TSSAvailable), !xsd.isType(.TSS16Available) {
                 throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             if !xsd.isFlagRaised(.P) {

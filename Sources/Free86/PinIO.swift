@@ -19,7 +19,7 @@ public actor PinIO<Signal> {
     }
 
     public func trigger(_ signal: Signal) throws {
-        if pending && !options.contains(.allowMultipleTriggers) {
+        if pending, !options.contains(.allowMultipleTriggers) {
             throw Event.probeIsPending
         }
         self.signal = signal

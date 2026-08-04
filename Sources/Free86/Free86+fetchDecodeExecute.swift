@@ -13,13 +13,13 @@ extension Free86 {
             if let interrupt = self.interrupt {
                 try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
             }
-            if await NMI.pending && !ifr.isFlagRaised(.NMI) {
+            if await NMI.pending, !ifr.isFlagRaised(.NMI) {
                 halted = false
                 ifr.setFlag(.NMI)
                 _ = try await NMI.probe()
                 try raiseInterrupt(2, 0, false, 0)
             }
-            if await INTR.pending && !ifr.isFlagRaised(.NMI) && eflags.isFlagRaised(.IF) {
+            if await INTR.pending, !ifr.isFlagRaised(.NMI), eflags.isFlagRaised(.IF) {
                 halted = false
                 let id = try await INTR.probe()
                 try raiseInterrupt(id, 0, false, 0)
@@ -92,7 +92,7 @@ extension Free86 {
                         case .endCyclesLoop:
                             break cyclesLoop
                         case .endOnInterrupt:
-                            if await INTR.pending && eflags.isFlagRaised(.IF) {
+                            if await INTR.pending, eflags.isFlagRaised(.IF) {
                                 break cyclesLoop
                             } else {
                                 break fetchLoop
