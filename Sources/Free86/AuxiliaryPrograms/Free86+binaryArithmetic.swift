@@ -43,11 +43,11 @@ extension Free86 {
         }
         let q = a / d
         let s = a % d
-        regs[.EAX].lowerHalf = (q & 0xff) | (s << 8)
+        regs[.EAX].lowerHalf = (q & 0xff) | s << 8
    }
     func aux16Div(_ divisor: DWord) throws {
         let d = divisor & 0xffff
-        let a = (regs[.EDX] << 16) | (regs[.EAX] & 0xffff)
+        let a = regs[.EDX] << 16 | (regs[.EAX] & 0xffff)
         if a >> 16 >= d {
             throw Interrupt(.DE)
         }
@@ -69,10 +69,10 @@ extension Free86 {
         } else {
             for _ in 0..<32 {
                 let s = uh >> 31 != 0
-                uh = (uh << 1) | (lh >> 31)
-                if s || (uh >= divisor) {
+                uh = uh << 1 | lh >> 31
+                if s || uh >= divisor {
                     uh = uh &- divisor
-                    lh = (lh << 1) | 1
+                    lh = lh << 1 | 1
                 } else {
                     lh = lh << 1
                 }
@@ -113,7 +113,7 @@ extension Free86 {
         var rs: DWord
         var uh = DWord(truncatingIfNeeded: dividend >> 32)
         var lh = DWord(truncatingIfNeeded: dividend & 0xffffffff)
-        if (uh & 0x80000000) != 0 {
+        if uh & 0x80000000 != 0 {
             ds = 1
             uh = ~uh
             lh = ~lh &+ 1
@@ -123,7 +123,7 @@ extension Free86 {
         } else {
             ds = 0
         }
-        if (divisor & 0x80000000) != 0 {
+        if divisor & 0x80000000 != 0 {
             d = ~divisor &+ 1
             rs = 1
         } else {
@@ -184,11 +184,11 @@ extension Free86 {
         var md = multiplicand
         var mr = multiplier
         var s: DWord = 0
-        if (md & 0x80000000) != 0 {
+        if md & 0x80000000 != 0 {
             md = ~md &+ 1
             s = 1
         }
-        if (mr & 0x80000000) != 0 {
+        if mr & 0x80000000 != 0 {
             mr = ~mr &+ 1
             s ^= 1
         }
@@ -217,14 +217,14 @@ extension Free86 {
             v = du &* ru
             w = dl &* ru
             x = x &+ QWord((w & 0xffff) << 16)
-            v = v &+ (w >> 16)
+            v = v &+ w >> 16
             if x >= 4294967296 {
                 x -= 4294967296
                 v = v &+ 1
             }
             w = du &* rl
             x = x &+ QWord((w & 0xffff) << 16)
-            v = v &+ (w >> 16)
+            v = v &+ w >> 16
             if x >= 4294967296 {
                 x -= 4294967296
                 v = v &+ 1

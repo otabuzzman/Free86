@@ -12,43 +12,43 @@ extension Free86 {
         }
         switch osm % 25 {
         case 0:
-            f = (osmDst & 0xff) < (osmSrc & 0xff)
+            f = osmDst & 0xff < osmSrc & 0xff
         case 1:
-            f = (osmDst & 0xffff) < (osmSrc & 0xffff)
+            f = osmDst & 0xffff < osmSrc & 0xffff
         case 2:
             f = osmDst < osmSrc
         case 3:
-            f = (osmDst & 0xff) <= (osmSrc & 0xff)
+            f = osmDst & 0xff <= osmSrc & 0xff
         case 4:
-            f = (osmDst & 0xffff) <= (osmSrc & 0xffff)
+            f = osmDst & 0xffff <= osmSrc & 0xffff
         case 5:
             f = osmDst <= osmSrc
         case 6:
-            f = ((osmDst &+ osmSrc) & 0xff) < (osmSrc & 0xff)
+            f = (osmDst &+ osmSrc) & 0xff < osmSrc & 0xff
         case 7:
-            f = ((osmDst &+ osmSrc) & 0xffff) < (osmSrc & 0xffff)
+            f = (osmDst &+ osmSrc) & 0xffff < osmSrc & 0xffff
         case 8:
             f = (osmDst &+ osmSrc) < osmSrc
         case 9:
-            f = ((osmDst &+ osmSrc &+ 1) & 0xff) <= (osmSrc & 0xff)
+            f = (osmDst &+ osmSrc &+ 1) & 0xff <= osmSrc & 0xff
         case 10:
-            f = ((osmDst &+ osmSrc &+ 1) & 0xffff) <= (osmSrc & 0xffff)
+            f = (osmDst &+ osmSrc &+ 1) & 0xffff <= osmSrc & 0xffff
         case 11:
-            f = ((osmDst &+ osmSrc &+ 1) <= osmSrc)
+            f = (osmDst &+ osmSrc &+ 1) <= osmSrc
         case 12, 13, 14:
             f = false
         case 15:
-            f = ((osmSrc >> 7) & 1) != 0
+            f = osmSrc >> 7 & 1 != 0
         case 16:
-            f = ((osmSrc >> 15) & 1) != 0
+            f = osmSrc >> 15 & 1 != 0
         case 17:
-            f = ((osmSrc >> 31) & 1) != 0
+            f = osmSrc >> 31 & 1 != 0
         case 18, 19, 20:
-            f = (osmSrc & 1) != 0
+            f = osmSrc & 1 != 0
         case 21, 22, 23:
             f = osmSrc != 0
         case 24:
-            f = (osmSrc & 1) != 0
+            f = osmSrc & 1 != 0
         default:
             f = false
         }
@@ -56,7 +56,7 @@ extension Free86 {
     }
     func isPF() -> Bool {  // parity (bit 2)
         if osm == 24 {
-            return ((osmSrc >> 2) & 1) != 0
+            return osmSrc >> 2 & 1 != 0
         } else {
             return Free86.parityLUT[osmDst & 0xff] != 0
         }
@@ -66,26 +66,26 @@ extension Free86 {
         switch osm % 0x1f {
         case 0, 1, 2:
             u = osmDst &- osmSrc
-            f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
+            f = (osmDst ^ u ^ osmSrc) & 0x10 != 0
         case 3, 4, 5:
             u = osmDst &- osmSrc &- 1
-            f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
+            f = (osmDst ^ u ^ osmSrc) & 0x10 != 0
         case 6, 7, 8:
             u = osmDst &+ osmSrc
-            f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
+            f = (osmDst ^ u ^ osmSrc) & 0x10 != 0
         case 9, 10, 11:
             u = osmDst &+ osmSrc &+ 1
-            f = ((osmDst ^ u ^ osmSrc) & 0x10) != 0
+            f = (osmDst ^ u ^ osmSrc) & 0x10 != 0
         case 12, 13, 14:
             f = false
         case 15, 16, 17, 18, 19, 20, 21, 22, 23:
             f = false
         case 24:
-            f = (osmSrc & 0x10) != 0
+            f = osmSrc & 0x10 != 0
         case 25, 26, 27:
-            f = ((osmDst ^ (osmDst &- 1)) & 0x10) != 0
+            f = (osmDst ^ (osmDst &- 1)) & 0x10 != 0
         case 28, 29, 30:
-            f = ((osmDst ^ (osmDst &+ 1)) & 0x10) != 0
+            f = (osmDst ^ (osmDst &+ 1)) & 0x10 != 0
         default:
             f = false
         }
@@ -96,62 +96,62 @@ extension Free86 {
         switch osm % 0x1f {
         case 0:
             u = osmDst &- osmSrc
-            f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 7) & 1) != 0
+            f = ((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 7 & 1 != 0
         case 1:
             u = osmDst &- osmSrc
-            f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 15) & 1) != 0
+            f = ((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 15 & 1 != 0
         case 2:
             u = osmDst &- osmSrc
-            f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 31) & 1) != 0
+            f = ((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 31 & 1 != 0
         case 3:
             u = osmDst &- osmSrc &- 1
-            f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 7) & 1) != 0
+            f = ((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 7 & 1 != 0
         case 4:
             u = osmDst &- osmSrc &- 1
-            f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 15) & 1) != 0
+            f = ((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 15 & 1 != 0
         case 5:
             u = osmDst &- osmSrc &- 1
-            f = ((((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 31) & 1) != 0
+            f = ((u ^ osmSrc ^ 0xffffffff) & (u ^ osmDst)) >> 31 & 1 != 0
         case 6:
             u = osmDst &+ osmSrc
-            f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 7) & 1) != 0
+            f = ((u ^ osmSrc) & (u ^ osmDst)) >> 7 & 1 != 0
         case 7:
             u = osmDst &+ osmSrc
-            f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 15) & 1) != 0
+            f = ((u ^ osmSrc) & (u ^ osmDst)) >> 15 & 1 != 0
         case 8:
             u = osmDst &+ osmSrc
-            f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 31) & 1) != 0
+            f = ((u ^ osmSrc) & (u ^ osmDst)) >> 31 & 1 != 0
         case 9:
             u = osmDst &+ osmSrc &+ 1
-            f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 7) & 1) != 0
+            f = ((u ^ osmSrc) & (u ^ osmDst)) >> 7 & 1 != 0
         case 10:
             u = osmDst &+ osmSrc &+ 1
-            f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 15) & 1) != 0
+            f = ((u ^ osmSrc) & (u ^ osmDst)) >> 15 & 1 != 0
         case 11:
             u = osmDst &+ osmSrc &+ 1
-            f = ((((u ^ osmSrc) & (u ^ osmDst)) >> 31) & 1) != 0
+            f = ((u ^ osmSrc) & (u ^ osmDst)) >> 31 & 1 != 0
         case 12, 13, 14:
             f = false
         case 15, 18:
-            f = (((osmSrc ^ osmDst) >> 7) & 1) != 0
+            f = (osmSrc ^ osmDst) >> 7 & 1 != 0
         case 16, 19:
-            f = (((osmSrc ^ osmDst) >> 15) & 1) != 0
+            f = (osmSrc ^ osmDst) >> 15 & 1 != 0
         case 17, 20:
-            f = (((osmSrc ^ osmDst) >> 31) & 1) != 0
+            f = (osmSrc ^ osmDst) >> 31 & 1 != 0
         case 21, 22, 23:
             f = osmSrc != 0
         case 24:
-            f = ((osmSrc >> 11) & 1) != 0
+            f = osmSrc >> 11 & 1 != 0
         case 25:
-            f = (osmDst & 0xff) == 0x80
+            f = osmDst & 0xff == 0x80
         case 26:
-            f = (osmDst & 0xffff) == 0x8000
+            f = osmDst & 0xffff == 0x8000
         case 27:
             f = osmDst == 0x80000000
         case 28:
-            f = (osmDst & 0xff) == 0x7f
+            f = osmDst & 0xff == 0x7f
         case 29:
-            f = (osmDst & 0xffff) == 0x7fff
+            f = osmDst & 0xffff == 0x7fff
         case 30:
             f = osmDst == 0x7fffffff
         default:
@@ -163,15 +163,15 @@ extension Free86 {
         let f: Bool
         switch osm {
         case 6:
-            f = ((osmDst &+ osmSrc) & 0xff) <= (osmSrc & 0xff)
+            f = (osmDst &+ osmSrc) & 0xff <= osmSrc & 0xff
         case 7:
-            f = ((osmDst &+ osmSrc) & 0xffff) <= (osmSrc & 0xffff)
+            f = (osmDst &+ osmSrc) & 0xffff <= osmSrc & 0xffff
         case 8:
             f = (osmDst &+ osmSrc) <= osmSrc
         case 24:
-            f = (osmSrc & (0x0040 | 0x0001)) != 0
+            f = osmSrc & (0x0040 | 0x0001) != 0
         default:
-            f = isCF() || (osmDst == 0)
+            f = isCF() || osmDst == 0
         }
         return f
     }
@@ -181,15 +181,15 @@ extension Free86 {
         let f: Bool
         switch osm {
         case 6:
-            f = ((osmDst + osmSrc) << 24) <= (osmSrc << 24)
+            f = (osmDst + osmSrc) << 24 <= osmSrc << 24
         case 7:
-            f = ((osmDst + osmSrc) << 16) <= (osmSrc << 16)
+            f = (osmDst + osmSrc) << 16 <= osmSrc << 16
         case 8:
             f = (osmDst + osmSrc) <= osmSrc
         case 12, 13, 14, 25, 26, 27, 28, 29, 30:
             f = osmDst <= 0
         case 24:
-            f = ((((osmSrc >> 7) ^ (osmSrc >> 11)) | (osmSrc >> 6)) & 1) != 0
+            f = (((osmSrc >> 7) ^ (osmSrc >> 11)) | osmSrc >> 6) & 1 != 0
         default:
             /// f = (((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 : 0)) | (osmDst == 0 ? 1 : 0)) != 0
             f = (osmDst > 0) == isOF() || osmDst == 0  // simplified
@@ -202,15 +202,15 @@ extension Free86 {
         let f: Bool
         switch osm {
         case 6:
-            f = ((osmDst + osmSrc) << 24) < (osmSrc << 24)
+            f = (osmDst + osmSrc) << 24 < osmSrc << 24
         case 7:
-            f = ((osmDst + osmSrc) << 16) < (osmSrc << 16)
+            f = (osmDst + osmSrc) << 16 < osmSrc << 16
         case 8:
             f = (osmDst + osmSrc) < osmSrc
         case 12, 13, 14, 25, 26, 27, 28, 29, 30:
             f = osmDst < 0
         case 24:
-            f = (((osmSrc >> 7) ^ (osmSrc >> 11)) & 1) != 0
+            f = (osmSrc >> 7 ^ osmSrc >> 11) & 1 != 0
         default:
             /// f = ((osmDst < 0 ? 1 : 0) ^ (isOF() ? 1 :0)) != 0
             f = (osmDst > 0) == isOF()  // simplified
@@ -229,7 +229,7 @@ extension Free86 {
         case 3:
             f = isBE()
         case 4:
-            f = (osm == 24 ? ((osmSrc >> 7) & 1) : (osmDst & 0x80000000)) != 0
+            f = (osm == 24 ? osmSrc >> 7 & 1 : osmDst & 0x80000000) != 0
         case 5:
             f = isPF()
         case 6:
@@ -246,7 +246,7 @@ extension Free86 {
         let f2: DWord = (isPF() ? 1 : 0) << 2
         let f4: DWord = (isAF() ? 1 : 0) << 4
         let f6: DWord = (osmDst == 0 ? 1 : 0) << 6
-        let f7: DWord = (osm == 24 ? ((osmSrc >> 7) & 1) : (osmDst >> 31) & 1) << 7
+        let f7: DWord = (osm == 24 ? osmSrc >> 7 & 1 : osmDst >> 31 & 1) << 7
         let f11: DWord = (isOF() ? 1 : 0) << 11
         return f11 | f7 | f6 | f4 | f2 | f0
     }
@@ -257,7 +257,7 @@ extension Free86 {
     }
     func updateEflags(_ bits: DWord, _ mask: DWord) {
         osmSrc = bits & Eflags.sFlagsMask()
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
         eflags = (eflags & ~mask) | (bits & mask)
     }

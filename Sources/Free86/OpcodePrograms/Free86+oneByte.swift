@@ -1433,7 +1433,7 @@ extension Free86 {
     }
     /// 0x78  JS
     func Ox78() throws -> Result<Resume, Never> {
-        if (osm == 24 ? (osmSrc >> 7) & 1 : (osmDst >> 31) & 1) != 0 {
+        if (osm == 24 ? osmSrc >> 7 & 1 : osmDst >> 31 & 1) != 0 {
             u = DWord(fetch8()).signExtendedByte
             far = far &+ u
         } else {
@@ -1443,7 +1443,7 @@ extension Free86 {
     }
     /// 0x79  JNS
     func Ox79() throws -> Result<Resume, Never> {
-        if (osm == 24 ? (osmSrc >> 7) & 1 : (osmDst >> 31) & 1) == 0 {
+        if (osm == 24 ? osmSrc >> 7 & 1 : osmDst >> 31 & 1) == 0 {
             u = DWord(fetch8()).signExtendedByte
             far = far &+ u
         } else {
@@ -1527,7 +1527,7 @@ extension Free86 {
         default:
             b = true
         }
-        if (u != 0) && b {
+        if u != 0 && b {
             if ipr.isFlagRaised(.operandSizeOverride) {
                 eip = (eip &+ far &- farStart &+ w).lowerHalf
                 (far, farStart) = (0, 0)
@@ -1540,7 +1540,7 @@ extension Free86 {
     /// 0xe3  JCXZ
     func Oxe3() throws -> Result<Resume, Never> {
         u = DWord(fetch8()).signExtendedByte
-        if (regs[.ECX] & ipr.addressSizeMask) == 0 {
+        if regs[.ECX] & ipr.addressSizeMask == 0 {
             if ipr.isFlagRaised(.operandSizeOverride) {
                 eip = (eip &+ far &- farStart &+ u).lowerHalf
                 (far, farStart) = (0, 0)
@@ -1653,21 +1653,21 @@ extension Free86 {
     /// 0xf5  CMC
     func Oxf5() throws -> Result<Resume, Never> {
         osmSrc = compileSflags() ^ 0x0001
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }
     /// 0xf8  CLC
     func Oxf8() throws -> Result<Resume, Never> {
         osmSrc = compileSflags() & ~0x0001
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }
     /// 0xf9  STC
     func Oxf9() throws -> Result<Resume, Never> {
         osmSrc = compileSflags() | 0x0001
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }
@@ -1705,8 +1705,8 @@ extension Free86 {
         mask.setFlag(.AF)
         mask.setFlag(.ZF)
         mask.setFlag(.SF)
-        osmSrc = ((regs[.EAX] >> 8) & mask) | ((isOF() ? 1 : 0) << 11)
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmSrc = (regs[.EAX] >> 8 & mask) | (isOF() ? 1 : 0) << 11
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
         return .success(.endFetchLoop)
     }

@@ -170,22 +170,22 @@ class PortA0<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     }
     func wr(_ iodata: T) {
         let i8259 = circuit.pics[slot]
-        if (iodata & 0x10) != 0 {  // ...(bit 4 == 1) is ICW1 (after reset)
+        if iodata & 0x10 != 0 {  // ...(bit 4 == 1) is ICW1 (after reset)
             i8259.reset()
             i8259.icwn = 1  // start ICW sequence
             i8259.icw4 = Int(iodata) & 1  // ICW1.IC4
-            if (iodata & 0x02) != 0 {  // ICW1.SNGL
+            if iodata & 0x02 != 0 {  // ICW1.SNGL
                 assert(false, "ICW1: SNGL == 1 not supported")
             }
-            if (iodata & 0x08) != 0 {  // ICW1.LTIM
+            if iodata & 0x08 != 0 {  // ICW1.LTIM
                 assert(false, "ICW1: LTIM == 1 not supported")
             }
-        } else if (iodata & 0x08) != 0 {  // ...(bit 3 == 1) are OCW3
-            if (iodata & 0x02) != 0 {  // OCW3.RR (read register command)
+        } else if iodata & 0x08 != 0 {  // ...(bit 3 == 1) are OCW3
+            if iodata & 0x02 != 0 {  // OCW3.RR (read register command)
                 i8259.read_reg_select = Int(iodata) & 1
             }
-            if (iodata & 0x40) != 0 {  // OCW3.ESMM (special mask mode)
-                i8259.special_mask = (Int(iodata) >> 5) & 1
+            if iodata & 0x40 != 0 {  // OCW3.ESMM (special mask mode)
+                i8259.special_mask = Int(iodata) >> 5 & 1
             }
         } else {  // ...( bit 4 == 0 && bit 3 == 0) are OCW2
             switch iodata {
@@ -263,7 +263,7 @@ class PortA1<T: FixedWidthInteger & UnsignedInteger>: IOPort {
                 i8259.icwn = 0
             }
         case 3:  // ICW4, program SFNM, BUF, M/S, AEOI and uPM if set
-            i8259.auto_eoi = (Int(iodata) >> 1) & 1
+            i8259.auto_eoi = Int(iodata) >> 1 & 1
             i8259.icwn = 0
         default:
             break
@@ -283,16 +283,16 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         switch channel.rw_state {
         case 0, 1, 2, 3:
             let ma = channel.pit_get_count()
-            if (channel.rw_state & 1) != 0 {
-                res = (ma >> 8) & 0xff
+            if channel.rw_state & 1 != 0 {
+                res = ma >> 8 & 0xff
             } else {
                 res = ma & 0xff
             }
-            if (channel.rw_state & 2) != 0 {
+            if channel.rw_state & 2 != 0 {
                 channel.rw_state ^= 1
             }
         case 4, 5:
-            if (channel.rw_state & 1) != 0 {
+            if channel.rw_state & 1 != 0 {
                 res = channel.latched_count >> 8
             } else {
                 res = channel.latched_count & 0xff
@@ -311,7 +311,7 @@ class Port42<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         case 1:
             channel.pit_load_count(Int(iodata) << 8)
         case 2, 3:
-            if (channel.rw_state & 1) != 0 {
+            if channel.rw_state & 1 != 0 {
                 channel.pit_load_count((channel.latched_count & 0xff) | (Int(iodata) << 8))
             } else {
                 channel.latched_count = Int(iodata)
@@ -334,13 +334,13 @@ class Port43<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         if slot == 3 {
             return
         }
-        let ih = (iodata >> 4) & 3
+        let ih = iodata >> 4 & 3
         switch ih {
         case 0:
             circuit.pit_channels[slot].latched_count = circuit.pit_channels[slot].pit_get_count()
             circuit.pit_channels[slot].rw_state = 4
         default:
-            circuit.pit_channels[slot].mode = (Int(iodata) >> 1) & 7
+            circuit.pit_channels[slot].mode = Int(iodata) >> 1 & 7
             circuit.pit_channels[slot].bcd = Int(iodata) & 1
             circuit.pit_channels[slot].rw_state = Int(ih) - 1
         }
@@ -353,11 +353,11 @@ class Port61<T: FixedWidthInteger & UnsignedInteger>: IOPort {
     }
     func rd() -> T {
         let eh = circuit.pit_channels[2].pit_get_out()
-        let iodata = (circuit.speaker_data_on << 1) | circuit.pit_channels[2].gate | (eh << 5)
+        let iodata = circuit.speaker_data_on << 1 | circuit.pit_channels[2].gate | eh << 5
         return T(iodata)
     }
     func wr(_ iodata: T) {
-        circuit.speaker_data_on = (Int(iodata) >> 1) & 1
+        circuit.speaker_data_on = Int(iodata) >> 1 & 1
         circuit.pit_channels[2].gate = Int(iodata) & 1
     }
 }
@@ -368,7 +368,7 @@ class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         setvbuf(stdout, nil, _IONBF, 0)  // set unbuffered (character) mode for serial output
     }
     func rd() -> T {
-        if (circuit.lcr & 0x80) != 0 {
+        if circuit.lcr & 0x80 != 0 {
             return T(circuit.divider & 0xff)
         } else {
             let reg = circuit.rbr
@@ -378,7 +378,7 @@ class Port3F8<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         }
 }
     func wr(_ iodata: T) {
-        if (circuit.lcr & 0x80) != 0 {
+        if circuit.lcr & 0x80 != 0 {
             circuit.divider = (circuit.divider & 0xff00) | Int(iodata)
         } else {
             circuit.lsr &= ~0x20
@@ -404,15 +404,15 @@ class Port3F9<T: FixedWidthInteger & UnsignedInteger>: IOPort {
         self.circuit = circuit
     }
     func rd() -> T {
-        if (circuit.lcr & 0x80) != 0 {
+        if circuit.lcr & 0x80 != 0 {
             return (T(circuit.divider) >> 8) & 0xff
         } else {
             return T(circuit.ier)
         }
     }
     func wr(_ iodata: T) {
-        if (circuit.lcr & 0x80) != 0 {
-            circuit.divider = (circuit.divider & 0x00ff) | (Int(iodata) << 8)
+        if circuit.lcr & 0x80 != 0 {
+            circuit.divider = (circuit.divider & 0x00ff) | Int(iodata) << 8
         } else {
             circuit.ier = Int(iodata)
             circuit.update_irq()

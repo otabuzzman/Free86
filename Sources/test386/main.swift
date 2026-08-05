@@ -176,7 +176,7 @@ extension Free86 {
         var result = ""
         result.reserveCapacity(8)
         for shift in stride(from: 7, through: 0, by: -1) {
-            result.append(((bits >> shift) & 1) == 1 ? "1" : "0")
+            result.append(bits >> shift & 1 == 1 ? "1" : "0")
         }
         return result
     }

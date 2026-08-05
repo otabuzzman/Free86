@@ -181,7 +181,7 @@ extension Free86 {
                 applyAddressingForm()
                 rm = DWord(try ld16ReadonlyCpl3())
             }
-            try auxVerrVerw(SegmentSelector(rm), (operation & 1) != 0)
+            try auxVerrVerw(SegmentSelector(rm), operation & 1 != 0)
         default:
             throw Interrupt(.UD)
         }
@@ -433,7 +433,7 @@ extension Free86 {
             rm = regs[modRM.rM]
         } else {
             applyAddressingForm()
-            lax = lax &+ ((r >> 5) << 2)
+            lax = lax &+ (r >> 5) << 2
             rm = try ldReadonlyCpl3()
         }
         auxBt(rm, r)
@@ -452,7 +452,7 @@ extension Free86 {
             regs[rM] = auxBtsBtrBtc(regs[rM], r)
         } else {
             applyAddressingForm()
-            lax = lax &+ ((r >> 5) << 2)
+            lax = lax &+ (r >> 5) << 2
             rm = try ldWritableCpl3()
             u = auxBtsBtrBtc(rm, r)
             try stWritableCpl3(dword: u)
@@ -623,7 +623,7 @@ extension Free86 {
     func Ox0fcf() throws -> Result<Resume, Never> {
         reg = opcode.encoded(.generalRegister)
         r = regs[reg]
-        regs[reg] = ((r >> 24) & 0xff) | ((r >> 8) & 0xff00) | ((r << 8) & 0xff0000) | (r << 24)
+        regs[reg] = (r >> 24 & 0xff) | (r >> 8 & 0xff00) | (r << 8 & 0xff0000) | r << 24
         return .success(.endFetchLoop)
     }
     /// 0x04  -

@@ -185,7 +185,7 @@ extension Free86 {
                 if xsd.isCodeSegment || !xsd.isFlagRaised(.W) {
                     throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
-                if (selector.rpl != cpl) || (xsd.dpl != cpl) {
+                if selector.rpl != cpl || xsd.dpl != cpl {
                     throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
             } else {
@@ -193,7 +193,7 @@ extension Free86 {
                     throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
                 if xsd.isDataSegment || !xsd.isFlagRaised(.C) {
-                    if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
+                    if xsd.dpl < cpl || xsd.dpl < selector.rpl {
                         throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                     }
                 }

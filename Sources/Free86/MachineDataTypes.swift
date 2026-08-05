@@ -15,7 +15,7 @@ extension FixedWidthInteger {
     }
     var upperHalf: Self {
         get { self >> Self.halfBitWidth }
-        set { self = (self & Self.lowerHalfMask) | (newValue << Self.halfBitWidth) }
+        set { self = (self & Self.lowerHalfMask) | newValue << Self.halfBitWidth }
     }
     var lowerHalf: Self {
         get { self & Self.lowerHalfMask }
@@ -39,7 +39,7 @@ extension FixedWidthInteger {
         self ^= Self.bitMask(for: position)
     }
     func isBitRaised(_ position: Int) -> Bool {
-        (self & Self.bitMask(for: position)) != 0
+        self & Self.bitMask(for: position) != 0
     }
 }
 

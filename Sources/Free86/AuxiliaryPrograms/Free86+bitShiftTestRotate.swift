@@ -5,7 +5,7 @@ extension Free86 {
         if c != 0 {
             if operation == 0 {  // SHLD
                 let s = src & 0xffff
-                u = s | (res << 16)
+                u = s | res << 16
                 osmSrc = u.signedShiftRight(count: 32 - c)
                 u = u << c
                 if c > 16 {
@@ -15,7 +15,7 @@ extension Free86 {
                 res = osmDst
                 osm = 19
             } else {  // SHRD
-                u = (res & 0xffff) | (src << 16)
+                u = (res & 0xffff) | src << 16
                 osmSrc = u.signedShiftRight(count: c - 1)
                 u = u >> c
                 if c > 16 {
@@ -103,7 +103,7 @@ extension Free86 {
         var s = src & 0xffff
         if s != 0 {
             res = 0
-            while (s & 1) == 0 {
+            while s & 1 == 0 {
                 res += 1
                 s >>= 1
             }
@@ -119,7 +119,7 @@ extension Free86 {
         var s = QWord(src)
         if s != 0 {
             res = 0
-            while (s & 1) == 0 {
+            while s & 1 == 0 {
                 res = res &+ 1
                 s >>= 1
             }
@@ -135,7 +135,7 @@ extension Free86 {
         var s = src & 0xffff
         if s != 0 {
             res = 15
-            while (s & 0x8000) == 0 {
+            while s & 0x8000 == 0 {
                 res = res &- 1
                 s <<= 1
             }
@@ -151,7 +151,7 @@ extension Free86 {
         var u = src
         if u != 0 {
             res = 31
-            while (u & 0x80000000) == 0 {
+            while u & 0x80000000 == 0 {
                 res = res &- 1
                 u <<= 1
             }
@@ -168,37 +168,37 @@ extension Free86 {
         var res = s, f: Eflags
         switch operation & 7 {
         case 0:
-            if (count & 0x1f) != 0 {
+            if count & 0x1f != 0 {
                 c = count & 0x7
-                res = (res << c) | (res >> (8 - c))
+                res = res << c | res >> (8 - c)
                 f = compileSflags()
                 f.setFlag(.CF, Int(res) & 1)
                 if c == 1 {
                     f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 1:
-            if (count & 0x1f) != 0 {
+            if count & 0x1f != 0 {
                 c = count & 0x7
-                res = (res >> c) | (res << (8 - c))
+                res = res >> c | res << (8 - c)
                 f = compileSflags()
                 f.setFlag(.CF, Int(res >> 7) & 1)
                 if c == 1 {
                     f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 2:
             c = Free86.shift8LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
-                res = (res << c) | (cf << (c - 1))
-                if (c > 1) {
+                res = res << c | cf << (c - 1)
+                if c > 1 {
                     res |= s >> (9 - c)
                 }
                 f = compileSflags()
@@ -207,14 +207,14 @@ extension Free86 {
                     f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 3:
             c = Free86.shift8LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
-                res = (res >> c) | (cf << (8 - c))
+                res = res >> c | cf << (8 - c)
                 if c > 1 {
                     res |= s << (9 - c)
                 }
@@ -224,7 +224,7 @@ extension Free86 {
                     f.setFlag(.OF, Int((s ^ res) >> 7) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 4, 6:
@@ -263,36 +263,36 @@ extension Free86 {
         var res = s, f: Eflags
         switch operation & 7 {
         case 0:
-            if (count & 0x1f) != 0 {
+            if count & 0x1f != 0 {
                 c = count & 0xf
-                res = (res << c) | (res >> (16 - c))
+                res = res << c | res >> (16 - c)
                 f = compileSflags()
                 f.setFlag(.CF, Int(res) & 1)
                 if c == 1 {
                     f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 1:
-            if (count & 0x1f) != 0 {
+            if count & 0x1f != 0 {
                 c = count & 0xf
-                res = (res >> c) | (res << (16 - c))
+                res = res >> c | res << (16 - c)
                 f = compileSflags()
                 f.setFlag(.CF, Int(res >> 15) & 1)
                 if c == 1 {
                     f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 2:
             c = Free86.shift16LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
-                res = (res << c) | (cf << (c - 1))
+                res = res << c | cf << (c - 1)
                 if c > 1 {
                     res |= s >> (17 - c)
                 }
@@ -302,14 +302,14 @@ extension Free86 {
                     f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 3:
             c = Free86.shift16LUT[count & 0x1f]
             if c != 0 {
                 cf = isCF() ? 1 : 0
-                res = (res >> c) | (cf << (16 - c))
+                res = res >> c | cf << (16 - c)
                 if c > 1 {
                     res |= s << (17 - c)
                 }
@@ -319,7 +319,7 @@ extension Free86 {
                     f.setFlag(.OF, Int((s ^ res) >> 15) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 4, 6:
@@ -360,34 +360,34 @@ extension Free86 {
         case 0:
             c = count & 0x1f
             if c != 0 {
-                res = (res << c) | (res >> (32 - c))
+                res = res << c | res >> (32 - c)
                 f = compileSflags()
                 f.setFlag(.CF, Int(res) & 1)
                 if c == 1 {
                     f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 1:
             c = count & 0x1f
             if c != 0 {
-                res = (res >> c) | (res << (32 - c))
+                res = res >> c | res << (32 - c)
                 f = compileSflags()
                 f.setFlag(.CF, Int(res >> 31) & 1)
                 if c == 1 {
                     f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 2:
             c = count & 0x1f
             if c != 0 {
                 cf = isCF() ? 1 : 0
-                res = (res << c) | (cf << (c - 1))
+                res = res << c | cf << (c - 1)
                 if c > 1 {
                     res |= s >> (33 - c)
                 }
@@ -397,14 +397,14 @@ extension Free86 {
                     f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 3:
             c = count & 0x1f
             if c != 0 {
                 cf = isCF() ? 1 : 0
-                res = (res >> c) | (cf << (32 - c))
+                res = res >> c | cf << (32 - c)
                 if c > 1 {
                     res |= s << (33 - c)
                 }
@@ -414,7 +414,7 @@ extension Free86 {
                     f.setFlag(.OF, Int((s ^ res) >> 31) & 1)
                 }
                 osmSrc = f
-                osmDst = ((osmSrc >> 6) & 1) ^ 1
+                osmDst = (osmSrc >> 6 & 1) ^ 1
                 osm = 24
             }
         case 4, 6:

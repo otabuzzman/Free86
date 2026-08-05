@@ -34,6 +34,6 @@ extension Eflags {
 extension Eflags {
     var iopl: Int {
         get { Int((self & 0x00003000) >> 12) }
-        set { self = (self & ~0x00003000) | (Self(newValue) << 12) }
+        set { self = (self & ~0x00003000) | Self(newValue) << 12 }
     }
 }

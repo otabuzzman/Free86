@@ -146,7 +146,7 @@ extension Free86 {
             default:
                 throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
-            if (xsd.dpl < cpl) || (xsd.dpl < selector.rpl) {
+            if xsd.dpl < cpl || xsd.dpl < selector.rpl {
                 throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
             }
             if !xsd.isFlagRaised(.P) {
@@ -171,7 +171,7 @@ extension Free86 {
             if !cgd.isFlagRaised(.P) {
                 throw Interrupt(.NP, errorCode: DWord(gsel.indexAndTI))
             }
-            if !cgd.isFlagRaised(.C) && (cgd.dpl < cpl) {  // intralevel
+            if !cgd.isFlagRaised(.C) && cgd.dpl < cpl {  // intralevel
                 let tss = try ldTssStack(cgd.dpl)  // seg:offset
                 let ss = SegmentSelector(truncatingIfNeeded: tss >> 32)
                 esp = DWord(truncatingIfNeeded: tss)
@@ -612,7 +612,7 @@ extension Free86 {
         if !cgd.isFlagRaised(.P) {
             throw Interrupt(.NP, errorCode: DWord(gsel.indexAndTI))
         }
-        if !cgd.isFlagRaised(.C) && (cgd.dpl < cpl) {  // interlevel
+        if !cgd.isFlagRaised(.C) && cgd.dpl < cpl {  // interlevel
             let tss = try ldTssStack(cgd.dpl)  // seg:offset
             ss = SegmentSelector(truncatingIfNeeded: tss >> 32)
             esp = DWord(truncatingIfNeeded: tss)

@@ -55,7 +55,7 @@ class I8259 {
     func set_irq(_ irq: Int, _ val: Bool) {
         let ir_register = 1 << irq
         if val {
-            if (last_irr & ir_register) == 0 {
+            if last_irr & ir_register == 0 {
                 irr |= ir_register
             }
             last_irr |= ir_register
@@ -85,7 +85,7 @@ class I8259 {
         if ir_register == 0 {
             return -1
         }
-        while (ir_register & (1 << ((priority + priority_add) & 7))) == 0 {
+        while ir_register & 1 << ((priority + priority_add) & 7) == 0 {
             priority -= 1
         }
         return priority
@@ -98,7 +98,7 @@ class I8259 {
         } else {
             isr |= 1 << irq
         }
-        if (elcr & (1 << irq)) == 0 {
+        if elcr & 1 << irq == 0 {
             irr &= ~(1 << irq)
         }
     }
@@ -191,13 +191,13 @@ class PITChannel {
         case 1:  // one shot
             eh = d < count
         case 2:  // frequency divider
-            if (d % count) == 0 && d != 0 {
+            if d % count == 0, d != 0 {
                 eh = true
             } else {
                 eh = false
             }
         case 3:  // square wave
-            eh = (d % count) < (count >> 1)
+            eh = d % count < count >> 1
         case 4,  // SW strobe
              5:  // HW strobe
             eh = d == count
@@ -248,9 +248,9 @@ class Serial {
         pic.set_irq(4, val)
     }
     func update_irq() {
-        if (lsr & 0x01) != 0 && (ier & 0x01) != 0 {
+        if lsr & 0x01 != 0, ier & 0x01 != 0 {
             iir = 0x04
-        } else if (lsr & 0x20) != 0 && (ier & 0x02) != 0 {
+        } else if lsr & 0x20 != 0, ier & 0x02 != 0 {
             iir = 0x02
         } else {
             iir = 0x01

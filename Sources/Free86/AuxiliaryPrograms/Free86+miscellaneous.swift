@@ -66,7 +66,7 @@ extension Free86 {
         } else {
             osmSrc.setFlag(.ZF, .zero)
         }
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
     }
     func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) throws -> DWord? {
@@ -102,7 +102,7 @@ extension Free86 {
                 break
             }
         }
-        if (descriptor.dpl < cpl) || (descriptor.dpl < selector.rpl) {
+        if descriptor.dpl < cpl || descriptor.dpl < selector.rpl {
             return nil
         } else {
             return limit ? descriptor.limit : descriptor.flags
@@ -115,7 +115,7 @@ extension Free86 {
         } else {
             osmSrc.setFlag(.ZF, .zero)
         }
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
     }
     func isSegmentAccessible(_ sreg: Int, _ writable: Bool) -> Bool {
@@ -142,7 +142,7 @@ extension Free86 {
                 return false
             } else {
                 if !descriptor.isFlagRaised(.C) {
-                    if (descriptor.dpl < cpl) || (descriptor.dpl < selector.rpl) {
+                    if descriptor.dpl < cpl || descriptor.dpl < selector.rpl {
                         return false
                     }
                 }
@@ -154,7 +154,7 @@ extension Free86 {
             if writable && !descriptor.isFlagRaised(.W) {
                 return false
             }
-            if (descriptor.dpl < cpl) || (descriptor.dpl < selector.rpl) {
+            if descriptor.dpl < cpl || descriptor.dpl < selector.rpl {
                 return false
             }
         }
@@ -184,7 +184,7 @@ extension Free86 {
         } else {
             osmSrc.setFlag(.ZF, .zero)
         }
-        osmDst = ((osmSrc >> 6) & 1) ^ 1
+        osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
     }
     func auxCpuid() {
@@ -197,8 +197,8 @@ extension Free86 {
         case 1:   // processor info and feature flags
             fallthrough
         default:  // https://datasheets.chipdb.org/Intel/x86/CPUID/24161821.pdf
-            regs[.EAX] = (5 << 8) | (4 << 4) | 3  // type | family | model | stepping
-            regs[.EBX] = 8 << 8                   //   00     0101    0100       0011
+            regs[.EAX] = 5 << 8 | 4 << 4 | 3  // type | family | model | stepping
+            regs[.EBX] = 8 << 8               //   00     0101    0100       0011
             regs[.ECX] = 0
             regs[.EDX] = 1 << 4
         }
@@ -213,7 +213,7 @@ extension Free86 {
         lax = lax &+ 2
         v = DWord(try ld16ReadonlyCpl3()).signExtendedWord
         r = regs[modRM.reg].signExtendedWord
-        if (r < u) || (r > v) {
+        if r < u || r > v {
             throw Interrupt(.BR)
         }
     }
@@ -227,7 +227,7 @@ extension Free86 {
         lax = lax &+ 4
         v = try ldReadonlyCpl3()
         r = regs[modRM.reg]
-        if (r < u) || (r > v) {
+        if r < u || r > v {
             throw Interrupt(.BR)
         }
     }

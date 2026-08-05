@@ -8,7 +8,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = io?[edx] ?? 0
@@ -17,7 +17,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -37,7 +37,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -46,7 +46,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -65,7 +65,7 @@ extension Free86 {
         let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld8ReadonlyCpl3())
@@ -75,7 +75,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -92,14 +92,14 @@ extension Free86 {
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             try st8WritableCpl3(byte: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -117,7 +117,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld8ReadonlyCpl3())
@@ -137,7 +137,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -156,7 +156,7 @@ extension Free86 {
         lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld8ReadonlyCpl3())
@@ -164,7 +164,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 0) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -180,7 +180,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld8ReadonlyCpl3())
@@ -197,7 +197,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -215,7 +215,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = io?[edx] ?? 0
@@ -224,7 +224,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -244,7 +244,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -253,7 +253,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -272,7 +272,7 @@ extension Free86 {
         let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -282,7 +282,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -299,14 +299,14 @@ extension Free86 {
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             try st16WritableCpl3(word: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -324,7 +324,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -344,7 +344,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -363,7 +363,7 @@ extension Free86 {
         lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -371,7 +371,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -387,7 +387,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -404,7 +404,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -422,7 +422,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = io?[edx] ?? 0
@@ -431,7 +431,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -451,7 +451,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -460,7 +460,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -479,7 +479,7 @@ extension Free86 {
         let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -489,7 +489,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -506,14 +506,14 @@ extension Free86 {
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             try st16WritableCpl3(word: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -531,7 +531,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -551,7 +551,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -570,7 +570,7 @@ extension Free86 {
         lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -578,7 +578,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 1) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -594,7 +594,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = DWord(try ld16ReadonlyCpl3())
@@ -611,7 +611,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -629,7 +629,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = io?[edx] ?? 0
@@ -638,7 +638,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -658,7 +658,7 @@ extension Free86 {
         let edx = regs[.EDX] & 0xffff
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             lax = segs[sreg].shadow.base &+ (esi & mask)
@@ -667,7 +667,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -686,7 +686,7 @@ extension Free86 {
         let la = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = try ldReadonlyCpl3()
@@ -696,7 +696,7 @@ extension Free86 {
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -713,14 +713,14 @@ extension Free86 {
         lax = segs[.ES].shadow.base &+ (edi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             try stWritableCpl3(dword: regs[.EAX])
             regs[.EDI] = (edi & ~mask) | ((edi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -738,7 +738,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = try ldReadonlyCpl3()
@@ -758,7 +758,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -777,7 +777,7 @@ extension Free86 {
         lax = segs[sreg].shadow.base &+ (esi & mask)
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = try ldReadonlyCpl3()
@@ -785,7 +785,7 @@ extension Free86 {
             regs[.ESI] = (esi & ~mask) | ((esi &+ df << 2) & mask)
             regs[.ECX] = (ecx & ~mask) | ((ecx &- 1) & mask)
             ecx = regs[.ECX]
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {
@@ -801,7 +801,7 @@ extension Free86 {
         operation = 7
         if ipr.isFlagRaised(.repzStringOperation) || ipr.isFlagRaised(.repnzStringOperation) {
             var ecx = regs[.ECX]
-            if (ecx & mask) == 0 {
+            if ecx & mask == 0 {
                 return
             }
             u = try ldReadonlyCpl3()
@@ -818,7 +818,7 @@ extension Free86 {
                     return
                 }
             }
-            if (ecx & mask) != 0 {
+            if ecx & mask != 0 {
                 far = farStart
             }
         } else {

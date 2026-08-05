@@ -15,7 +15,7 @@ extension Free86: PagedMemory {
             return memory.ld16(from: lax)
         }
         let hash = tlbReadonlyCplX[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 1) != 0 {
+        if (hash | Int(lax)) & 1 != 0 {
             var word: Word = 0
             word.lowerHalf = Word(try ld8ReadonlyCplX())
             lax += 1
@@ -30,7 +30,7 @@ extension Free86: PagedMemory {
             return memory.ld(from: lax)
         }
         let hash = tlbReadonlyCplX[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 3) != 0 {
+        if (hash | Int(lax)) & 3 != 0 {
             var dword: DWord = 0
             dword = DWord(try ld16ReadonlyCplX())
             lax += 2
@@ -42,7 +42,7 @@ extension Free86: PagedMemory {
     }
     func ld64ReadonlyCplX() throws -> QWord {
         let hash = tlbReadonlyCplX[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 7) != 0 {
+        if (hash | Int(lax)) & 7 != 0 {
             var qword: QWord = 0
             qword = QWord(try ldReadonlyCplX())
             lax += 4
@@ -68,7 +68,7 @@ extension Free86: PagedMemory {
             return memory.ld16(from: lax)
         }
         let hash = tlbReadonly[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 1) != 0 {
+        if (hash | Int(lax)) & 1 != 0 {
             var word: Word = 0
             word.lowerHalf = Word(try ld8ReadonlyCpl3())
             lax += 1
@@ -83,7 +83,7 @@ extension Free86: PagedMemory {
             return memory.ld(from: lax)
         }
         let hash = tlbReadonly[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 3) != 0 {
+        if (hash | Int(lax)) & 3 != 0 {
             var dword: DWord = 0
             dword = DWord(try ld16ReadonlyCpl3())
             lax += 2
@@ -109,7 +109,7 @@ extension Free86: PagedMemory {
             return memory.ld16(from: lax)
         }
         let hash = tlbWritable[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 1) != 0 {
+        if (hash | Int(lax)) & 1 != 0 {
             var word: Word = 0
             word.lowerHalf = Word(try ld8WritableCpl3())
             lax += 1
@@ -124,7 +124,7 @@ extension Free86: PagedMemory {
             return memory.ld(from: lax)
         }
         let hash = tlbWritable[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 3) != 0 {
+        if (hash | Int(lax)) & 3 != 0 {
             var dword: DWord = 0
             dword = DWord(try ld16WritableCpl3())
             lax += 2
@@ -152,7 +152,7 @@ extension Free86: PagedMemory {
             return
         }
         let hash = tlbWritableCplX[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 1) != 0 {
+        if (hash | Int(lax)) & 1 != 0 {
             try st8WritableCplX(byte: word.lowerHalf)
             lax += 1
             try st8WritableCplX(byte: word.upperHalf)
@@ -167,7 +167,7 @@ extension Free86: PagedMemory {
             return
         }
         let hash = tlbWritableCplX[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 3) != 0 {
+        if (hash | Int(lax)) & 3 != 0 {
             try st16WritableCplX(word: dword)
             lax += 2
             try st16WritableCplX(word: dword >> 16)
@@ -178,7 +178,7 @@ extension Free86: PagedMemory {
     }
     func st64WritableCplX(qword: QWord) throws {
         let hash = tlbWritableCplX[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 7) != 0 {
+        if (hash | Int(lax)) & 7 != 0 {
             try stWritableCplX(dword: qword)
             lax += 4
             try stWritableCplX(dword: qword >> 32)
@@ -205,7 +205,7 @@ extension Free86: PagedMemory {
             return
         }
         let hash = tlbWritable[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 1) != 0 {
+        if (hash | Int(lax)) & 1 != 0 {
             try st8WritableCpl3(byte: word.lowerHalf)
             lax += 1
             try st8WritableCpl3(byte: word.upperHalf)
@@ -220,7 +220,7 @@ extension Free86: PagedMemory {
             return
         }
         let hash = tlbWritable[lax.pageTablesIndices]
-        if ((hash | Int(lax)) & 3) != 0 {
+        if (hash | Int(lax)) & 3 != 0 {
             try st16WritableCpl3(word: dword)
             lax += 2
             try st16WritableCpl3(word: dword >> 16)

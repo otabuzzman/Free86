@@ -223,7 +223,7 @@ extension Free86 {
             rm = regs[modRM.rM]
         } else {
             applyAddressingForm()
-            lax = lax &+ ((r.lowerHalf >> 4) << 1)
+            lax = lax &+ (r.lowerHalf >> 4) << 1
             rm = DWord(try ld16ReadonlyCpl3())
         }
         aux16Bt(rm, r)
@@ -242,7 +242,7 @@ extension Free86 {
             regs[rM].lowerHalf = aux16BtsBtrBtc(regs[rM], r)
         } else {
             applyAddressingForm()
-            lax = lax &+ ((r.lowerHalf >> 4) << 1)
+            lax = lax &+ (r.lowerHalf >> 4) << 1
             rm = DWord(try ld16WritableCpl3())
             u = aux16BtsBtrBtc(rm, r)
             try st16WritableCpl3(word: u)
