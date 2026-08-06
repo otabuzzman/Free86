@@ -78,9 +78,16 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   # compare results
   diff ../test386.asm/test386-EE-reference.txt test386-EE-reference.txt
   ```
-  Results comparison should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF bit.
+  Results comparison should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF flag.
+
+**References**
+- Intel 80386 Programmer's Reference Manual ([PDF](https://css.csail.mit.edu/6.858/2019/readings/i386.pdf), [HTML](https://pdos.csail.mit.edu/6.828/2008/readings/i386/toc.htm))
+- [Intel 80386 Hardware Reference Manual](https://www.dosdays.co.uk/media/intel/1986_80386_Hardware_Reference_Manual.pdf) (PDF)
+- [Intel 80386 DX Microprocessor Data Sheet](https://datasheets.chipdb.org/Intel/x86/386/datashts/23163011.pdf) (PDF)
+- [Intel Processor Identification and the CPUID Instruction Application Note](https://ardent-tool.com/CPU/docs/Intel/CPUID/241618-005.pdf) (PDF)
+- [IA-32 Architectures Software Developer Manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
 
 **Acknowledgements**
-- Repository based on [CPU-386-cpp](https://github.com/kxkx5150/CPU-80386-cpp)
+- This repository is based on [CPU-386-cpp](https://github.com/kxkx5150/CPU-80386-cpp)
 - CPU-386-cpp probably derived from [jslinux-deobfuscated](https://github.com/levskaya/jslinux-deobfuscated)
 - jslinux-deobfuscated makes [JSLinux](https://bellard.org/jslinux/tech.html) from Fabrice Bellard readable
