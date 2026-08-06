@@ -6,7 +6,8 @@ import PackageDescription
 let package = Package(
     name: "Free86",
     platforms: [
-        .macOS(.v15),
+        .macOS(.v26),
+        .iOS(.v26),
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -140,9 +141,9 @@ let package = Package(
                 "PageTableEntry.swift",
                 "Free86+TranslationLookasideBuffer.swift",
            ],
-            swiftSettings: [
-                .define("DEBUG", .when(configuration: .debug)),
-            ],
+           swiftSettings: [
+               .define("DEBUG", .when(configuration: .debug)),
+           ],
         ),
-    ]
+    ],
 )
