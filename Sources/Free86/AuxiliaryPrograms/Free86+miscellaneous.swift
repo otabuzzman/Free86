@@ -70,44 +70,80 @@ extension Free86 {
         osm = 24
     }
     func ldDescriptorFields(_ selector: SegmentSelector, _ limit: Bool) throws -> DWord? {
-        if selector.isNull {
-            return nil
-        }
-        let descriptor = try ldXdtEntry(selector)
-        if descriptor.isNull {
-            return nil
-        }
-        let type = SegmentDescriptorType(rawValue: descriptor.type)
-        if descriptor.isSystemSegment {
-            switch type {
-            case .LDT,
-                .TSSAvailable,
-                .TSSBusy:
-                break
-            case .CallGate:
-                if limit {
-                    return nil
-                }
-            default:
-                return nil
-            }
-        } else {
-            switch type {
-            case .CodeExOnlyConforming,
-                .CodeExOnlyConformingAccessed,
-                .CodeExReadConforming,
-                .CodeExReadConformingAccessed:
-                return limit ? descriptor.limit : descriptor.flags
-            default:
-                break
-            }
-        }
-        if descriptor.dpl < cpl || descriptor.dpl < selector.rpl {
-            return nil
-        } else {
-            return limit ? descriptor.limit : descriptor.flags
-        }
-    }
+         if selector.isNull {
+             return nil
+         }
+         let descriptor = try ldXdtEntry(selector)
+         if descriptor.isNull {
+             return nil
+         }
+         let type = SegmentDescriptorType(rawValue: descriptor.type)
+         if limit {
+             switch type {
+             case .TSS16Available,
+                 .LDT,
+                 .TSS16Busy,
+                 .TSSAvailable,
+                 .TSSBusy,
+                 .DataRO,
+                 .DataROAccessed,
+                 .DataRW,
+                 .DataRWAccessed,
+                 .DataROExpandDown,
+                 .DataROExpandDownAccessed,
+                 .DataRWExpandDown,
+                 .DataRWExpandDownAccessed,
+                 .CodeExOnly,
+                 .CodeExOnlyAccessed,
+                 .CodeExRead,
+                 .CodeExReadAccessed:
+                 break
+             case .CodeExOnlyConforming,
+                 .CodeExOnlyConformingAccessed,
+                 .CodeExReadConforming,
+                 .CodeExReadConformingAccessed:
+                 return descriptor.limit
+             default:
+                 return nil
+             }
+         } else {
+             switch type {
+             case .TSS16Available,
+                 .LDT,
+                 .TSS16Busy,
+                 .CallGate16,
+                 .TaskGate,
+                 .TSSAvailable,
+                 .TSSBusy,
+                 .CallGate,
+                 .DataRO,
+                 .DataROAccessed,
+                 .DataRW,
+                 .DataRWAccessed,
+                 .DataROExpandDown,
+                 .DataROExpandDownAccessed,
+                 .DataRWExpandDown,
+                 .DataRWExpandDownAccessed,
+                 .CodeExOnly,
+                 .CodeExOnlyAccessed,
+                 .CodeExRead,
+                 .CodeExReadAccessed:
+                 break
+             case .CodeExOnlyConforming,
+                 .CodeExOnlyConformingAccessed,
+                 .CodeExReadConforming,
+                 .CodeExReadConformingAccessed:
+                 return descriptor.flags
+             default:
+                 return nil
+             }
+         }
+         if descriptor.dpl < cpl || descriptor.dpl < selector.rpl {
+             return nil
+         } else {
+             return limit ? descriptor.limit : descriptor.flags
+         }
+     }
     func auxVerrVerw(_ selector: SegmentSelector, _ writable: Bool) throws {
         osmSrc = compileSflags()
         if try isSegmentAccessible(selector, writable) {
