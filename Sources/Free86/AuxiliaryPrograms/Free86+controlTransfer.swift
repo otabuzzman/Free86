@@ -131,14 +131,10 @@ extension Free86 {
             eip = offset
             (far, farStart) = (0, 0)
         } else {
-            let type = SegmentDescriptorType(rawValue: xsd.type)
-            switch type {
-            case .TSS16Available,
-                .TaskGate,
-                .TSSAvailable:
+            switch SegmentDescriptorType(rawValue: xsd.type) {
+            case .TSS16Available, .TaskGate, .TSSAvailable:
                 assert(false, "fatal error: task management not implemented")
-            case .CallGate16,
-                .CallGate:
+            case .CallGate16, .CallGate:
                 break
             default:
                 throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
@@ -570,14 +566,10 @@ extension Free86 {
         }
         lax = idt.shadow.base + id * 8
         let isd = SegmentDescriptor(try ld64ReadonlyCplX())
-        let type = SegmentDescriptorType(rawValue: isd.type)
-        switch type {
-        case .TaskGate,
-            .InterruptGate16,
-            .TrapGate16:
+        switch SegmentDescriptorType(rawValue: isd.type) {
+        case .TaskGate, .InterruptGate16, .TrapGate16:
             assert(false, "fatal error: task management not implemented")
-        case .InterruptGate,
-            .TrapGate:
+        case .InterruptGate, .TrapGate:
             break
         default:
             throw Interrupt(.GP, errorCode: id * 8 + 2)
