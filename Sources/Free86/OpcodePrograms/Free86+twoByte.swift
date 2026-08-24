@@ -493,7 +493,7 @@ extension Free86 {
     }
     /// 0x31  RDTSC (80486)
     func Ox0f31() throws -> Result<Resume, Never> {
-        if cr4.isFlagRaised(.TSD) && cpl != 0 {
+        if cr4.isFlagRaised(.TSD), cpl != 0 {
             throw Interrupt(.GP, errorCode: 0)
         }
         let t: QWord = self.cycles &+ cyclesRequested &- cyclesRemaining

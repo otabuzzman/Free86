@@ -4,7 +4,7 @@ extension Free86 {
         var offset: DWord  // effective address
         var exp: Int?  // ESP or EBP register
         if ipr.isFlagRaised(.addressSizeOverride) {
-            if modRM.mod == 0 && modRM.rM == 6 {
+            if modRM.mod == 0, modRM.rM == 6 {
                 offset = DWord(fetch16())
                 sreg = .DS
             } else {
@@ -128,7 +128,7 @@ extension Free86 {
             throw Interrupt(.GP, errorCode: 0)
         }
         /// limit checking
-        if segs[sreg].shadow.isDataSegment && segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
+        if segs[sreg].shadow.isDataSegment, segs[sreg].shadow.isFlagRaised(.E) {  // expand-down segment
             notok = offset < segs[sreg].shadow.limit &+ 1
         } else {
             notok = offset > segs[sreg].shadow.limit &+ 1 &- stride
@@ -189,7 +189,7 @@ extension Free86 {
                     throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
             } else {
-                if xsd.isCodeSegment && !xsd.isFlagRaised(.R) {
+                if xsd.isCodeSegment, !xsd.isFlagRaised(.R) {
                     throw Interrupt(.GP, errorCode: DWord(selector.indexAndTI))
                 }
                 if xsd.isDataSegment || !xsd.isFlagRaised(.C) {

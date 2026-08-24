@@ -34,7 +34,7 @@ while true {
     while cycles > cpu.cycles {
         do {
             try await cpu.fetchDecodeExecute(cycles: cycles - cpu.cycles)
-            if historySkip > 0 && cycles > historySkip {
+            if historySkip > 0, cycles > historySkip {
                 history[Int(cpu.cycles) % historySize] = cpu.compactState()
             }
             if cpu.halted {

@@ -187,7 +187,7 @@ extension Free86 {
                 }
             }
         } else {
-            if writable && !descriptor.isFlagRaised(.W) {
+            if writable, !descriptor.isFlagRaised(.W) {
                 return false
             }
             if descriptor.dpl < cpl || descriptor.dpl < selector.rpl {

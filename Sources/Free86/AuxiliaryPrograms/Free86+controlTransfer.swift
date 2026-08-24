@@ -164,7 +164,7 @@ extension Free86 {
             if !cgd.isFlagRaised(.P) {
                 throw Interrupt(.NP, errorCode: DWord(gsel.indexAndTI))
             }
-            if !cgd.isFlagRaised(.C) && cgd.dpl < cpl {  // intralevel
+            if !cgd.isFlagRaised(.C), cgd.dpl < cpl {  // intralevel
                 let tss = try ldTssStack(cgd.dpl)  // seg:offset
                 let ss = SegmentSelector(truncatingIfNeeded: tss >> 32)
                 esp = DWord(truncatingIfNeeded: tss)
@@ -574,7 +574,7 @@ extension Free86 {
         default:
             throw Interrupt(.GP, errorCode: id * 8 + 2)
         }
-        if isSW && isd.dpl < cpl {
+        if isSW, isd.dpl < cpl {
             throw Interrupt(.GP, errorCode: id * 8 + 2)
         }
         if !isd.isFlagRaised(.P) {
@@ -598,7 +598,7 @@ extension Free86 {
         if !cgd.isFlagRaised(.P) {
             throw Interrupt(.NP, errorCode: DWord(gsel.indexAndTI))
         }
-        if !cgd.isFlagRaised(.C) && cgd.dpl < cpl {  // interlevel
+        if !cgd.isFlagRaised(.C), cgd.dpl < cpl {  // interlevel
             let tss = try ldTssStack(cgd.dpl)  // seg:offset
             ss = SegmentSelector(truncatingIfNeeded: tss >> 32)
             esp = DWord(truncatingIfNeeded: tss)
@@ -752,7 +752,7 @@ extension Free86 {
         if !tr.shadow.isFlagRaised(.P) {
             throw Interrupt(.NP, errorCode: DWord(tr.selector.indexAndTI))
         }
-        if !tr.shadow.isType(.TSSAvailable) && !tr.shadow.isType(.TSS16Available) {
+        if !tr.shadow.isType(.TSSAvailable), !tr.shadow.isType(.TSS16Available) {
             throw Interrupt(.GP, errorCode: DWord(tr.selector.indexAndTI))
         }
         let tss32 = tr.shadow.isType(.TSSAvailable) ? 1 : 0
@@ -773,7 +773,7 @@ extension Free86 {
     }
     func auxIret(_ operandSizeOverride: Bool) throws {
         if cr0.isRealOrV86Mode || eflags.isFlagRaised(.VM) {
-            if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
+            if eflags.isFlagRaised(.VM), eflags.iopl != 3 {
                 throw Interrupt(.GP, errorCode: 0)
             }
             try returnRealOrV86Mode(operandSizeOverride, true, 0)

@@ -1114,7 +1114,7 @@ extension Free86 {
     }
     /// 0x9c  PUSHF
     func Ox9c() throws -> Result<Resume, Never> {
-        if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
+        if eflags.isFlagRaised(.VM), eflags.iopl != 3 {
             throw Interrupt(.GP, errorCode: 0)
         }
         var mask: Eflags = 0
@@ -1130,7 +1130,7 @@ extension Free86 {
     }
     /// 0x9d  POPF
     func Ox9d() throws -> Result<Resume, Never> {
-        if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
+        if eflags.isFlagRaised(.VM), eflags.iopl != 3 {
             throw Interrupt(.GP, errorCode: 0)
         }
         if !ipr.isFlagRaised(.operandSizeOverride) {
@@ -1527,7 +1527,7 @@ extension Free86 {
         default:
             b = true
         }
-        if u != 0 && b {
+        if u != 0, b {
             if ipr.isFlagRaised(.operandSizeOverride) {
                 eip = (eip &+ far &- farStart &+ w).lowerHalf
                 (far, farStart) = (0, 0)
@@ -1630,7 +1630,7 @@ extension Free86 {
     /// 0xcd  INT
     func Oxcd() throws -> Result<Resume, Never> {
         imm = DWord(fetch8())
-        if eflags.isFlagRaised(.VM) && eflags.iopl != 3 {
+        if eflags.isFlagRaised(.VM), eflags.iopl != 3 {
             throw Interrupt(.GP, errorCode: 0)
         }
         u = eip &+ far &- farStart

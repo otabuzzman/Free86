@@ -103,11 +103,11 @@ extension Free86 {
                 let supervisor = !user
                 let pxe = pde & pte
                 /// error: user request and page not user-accessible
-                if user && !pxe.isUser {
+                if user, !pxe.isUser {
                     errorCode.setFlag(.P)
                 }
                 /// error: writable request and page not writable and not supervisor or (supervisor and) WP is set
-                if writable && !pxe.isWritable && (!supervisor || cr0.isFlagRaised(.WP)) {
+                if writable, !pxe.isWritable, !supervisor || cr0.isFlagRaised(.WP) {
                     errorCode.setFlag(.P)
                 }
                 if errorCode == 0 {
@@ -125,7 +125,7 @@ extension Free86 {
                     }
                     var wFlag = false
                     var uFlag = false
-                    if pte.isDirty && (pxe.isWritable || supervisor) {
+                    if pte.isDirty, pxe.isWritable || supervisor {
                         wFlag = true
                     }
                     if pxe.isUser {
