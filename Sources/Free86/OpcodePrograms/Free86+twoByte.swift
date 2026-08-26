@@ -46,7 +46,7 @@ extension Free86 {
             setEncodedByte(in: modRM.rM, to: u)
         } else {
             applyAddressingForm()
-            try st8WritableCpl3(byte: u)
+            try st8WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -153,7 +153,7 @@ extension Free86 {
                 regs[modRM.rM].lowerHalf = u
             } else {
                 applyAddressingForm()
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             }
         case 2:  // LDTR
             fallthrough
@@ -517,7 +517,7 @@ extension Free86 {
             applyAddressingForm()
             rm = DWord(try ld8WritableCpl3())
             u = calculate8(rm, getEncodedByte(from: reg))
-            try st8WritableCpl3(byte: u)
+            try st8WritableCpl3(dword: u)
             setEncodedByte(in: reg, to: rm)
         }
         return .success(.endFetchLoop)
@@ -563,7 +563,7 @@ extension Free86 {
             rm = DWord(try ld8WritableCpl3())
             u = calculate8(regs[.EAX], rm)
             if u == 0 {
-                try st8WritableCpl3(byte: getEncodedByte(from: reg))
+                try st8WritableCpl3(dword: getEncodedByte(from: reg))
             } else {
                 regs[.EAX].byteL = rm
             }

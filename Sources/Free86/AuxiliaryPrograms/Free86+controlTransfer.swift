@@ -62,11 +62,11 @@ extension Free86 {
             try st16WritableCpl3(word: segs[.CS].selector)
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCpl3(word: home)
+            try st16WritableCpl3(dword: home)
         } else {
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCpl3(dword: segs[.CS].selector)
+            try stWritableCpl3(word: segs[.CS].selector)
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
             try stWritableCpl3(dword: home)
@@ -114,11 +114,11 @@ extension Free86 {
                 try st16WritableCplX(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCplX(word: home)
+                try st16WritableCplX(dword: home)
             } else {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCplX(dword: segs[.CS].selector)
+                try stWritableCplX(word: segs[.CS].selector)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCplX(dword: home)
@@ -193,7 +193,7 @@ extension Free86 {
                 if xsd.isType(.CallGate) {  // 32 bit descriptor
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCplX(dword: segs[.SS].selector)
+                    try stWritableCplX(word: segs[.SS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
                     try stWritableCplX(dword: espStart)
@@ -209,12 +209,12 @@ extension Free86 {
                     try st16WritableCplX(word: segs[.SS].selector)
                     esp = esp &- 2
                     lax = ssBase &+ (esp & ssMask)
-                    try st16WritableCplX(word: espStart)
+                    try st16WritableCplX(dword: espStart)
                     for _ in (0..<gpac).reversed() {
                         u = 0 // Ye(osBase &+ ((espStart &+ i &* 2) & osMask))
                         esp = esp &- 2
                         lax = ssBase &+ (esp & ssMask)
-                        try st16WritableCplX(word: u)
+                        try st16WritableCplX(dword: u)
                     }
                 }
                 segs[.SS] = SegmentRegister(ss.indexAndTI | Word(ssd.dpl), ssd)
@@ -224,7 +224,7 @@ extension Free86 {
             if xsd.isType(.CallGate) {
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
-                try stWritableCplX(dword: segs[.CS].selector)
+                try stWritableCplX(word: segs[.CS].selector)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCplX(dword: home)
@@ -234,7 +234,7 @@ extension Free86 {
                 try st16WritableCplX(word: segs[.CS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCplX(word: home)
+                try st16WritableCplX(dword: home)
             }
             segs[.CS] = SegmentRegister(gsel.indexAndTI | Word(cgd.dpl), cgd)
             cpl = cgd.dpl
@@ -519,13 +519,13 @@ extension Free86 {
         var esp = regs[.ESP]
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: compileEflags())
+        try st16WritableCpl3(dword: compileEflags())
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
         try st16WritableCpl3(word: segs[.CS].selector)
         esp = esp &- 2
         lax = ssBase &+ (esp & ssMask)
-        try st16WritableCpl3(word: isSW ? home : eip)
+        try st16WritableCpl3(dword: isSW ? home : eip)
         regs[.ESP] = (regs[.ESP] & ~ssMask) | (esp & ssMask)
         eip = DWord(offset)
         (far, farStart) = (0, 0)
@@ -641,21 +641,21 @@ extension Free86 {
                 if eflags.isFlagRaised(.VM) {
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCplX(dword: segs[.GS].selector)
+                    try stWritableCplX(word: segs[.GS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCplX(dword: segs[.FS].selector)
+                    try stWritableCplX(word: segs[.FS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCplX(dword: segs[.DS].selector)
+                    try stWritableCplX(word: segs[.DS].selector)
                     esp = esp &- 4
                     lax = ssBase &+ (esp & ssMask)
-                    try stWritableCplX(dword: segs[.ES].selector)
+                    try stWritableCplX(word: segs[.ES].selector)
                 }
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 let x = segs[.SS].selector
-                try stWritableCplX(dword: x)
+                try stWritableCplX(word: x)
                 esp = esp &- 4
                 lax = ssBase &+ (esp & ssMask)
                 try stWritableCplX(dword: regs[.ESP])
@@ -665,7 +665,7 @@ extension Free86 {
             try stWritableCplX(dword: compileEflags())
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
-            try stWritableCplX(dword: segs[.CS].selector)
+            try stWritableCplX(word: segs[.CS].selector)
             esp = esp &- 4
             lax = ssBase &+ (esp & ssMask)
             try stWritableCplX(dword: isSW ? home : eip)
@@ -695,21 +695,21 @@ extension Free86 {
                 try st16WritableCplX(word: segs[.SS].selector)
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCplX(word: regs[.ESP])
+                try st16WritableCplX(dword: regs[.ESP])
             }
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCplX(word: compileEflags())
+            try st16WritableCplX(dword: compileEflags())
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
             try st16WritableCplX(word: segs[.CS].selector)
             esp = esp &- 2
             lax = ssBase &+ (esp & ssMask)
-            try st16WritableCplX(word: isSW ? home : eip)
+            try st16WritableCplX(dword: isSW ? home : eip)
             if pushErrorCode {
                 esp = esp &- 2
                 lax = ssBase &+ (esp & ssMask)
-                try st16WritableCplX(word: errorCode)
+                try st16WritableCplX(dword: errorCode)
             }
         }
         if isInterlevel {

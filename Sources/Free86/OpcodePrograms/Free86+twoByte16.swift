@@ -111,7 +111,7 @@ extension Free86 {
             applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
             u = calculate16(rm, regs[reg])
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
             regs[reg].lowerHalf = rm
         }
         return .success(.endFetchLoop)
@@ -154,7 +154,7 @@ extension Free86 {
             imm = DWord(fetch8())
             rm = DWord(try ld16WritableCpl3())
             u = aux16ShrdShld(rm, r, imm)
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -171,7 +171,7 @@ extension Free86 {
             applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
             u = aux16ShrdShld(rm, r, regs[.ECX])
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -207,7 +207,7 @@ extension Free86 {
                 imm = DWord(fetch8())
                 rm = DWord(try ld16WritableCpl3())
                 u = aux16BtsBtrBtc(rm, imm)
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             }
         default:
             throw Interrupt(.UD)
@@ -245,7 +245,7 @@ extension Free86 {
             lax = lax &+ (r.lowerHalf >> 4) << 1
             rm = DWord(try ld16WritableCpl3())
             u = aux16BtsBtrBtc(rm, r)
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -289,7 +289,7 @@ extension Free86 {
             rm = DWord(try ld16WritableCpl3())
             u = calculate16(regs[.EAX], rm)
             if u == 0 {
-                try st16WritableCpl3(word: regs[reg])
+                try st16WritableCpl3(dword: regs[reg])
             } else {
                 regs[.EAX].lowerHalf = m
             }

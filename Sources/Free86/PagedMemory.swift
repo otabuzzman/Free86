@@ -23,34 +23,28 @@ protocol PagedMemory {
 }
 
 extension PagedMemory {
-    func st8WritableCplX(byte: Word) throws {
-        try self.st8WritableCplX(byte: Byte(byte & 0xff))
+    func st8WritableCplX(word: Word) throws {
+        try self.st8WritableCplX(byte: Byte(word & 0xff))
     }
-    func st8WritableCplX(byte: DWord) throws {
-        try self.st8WritableCplX(byte: Byte(byte & 0xff))
+    func st16WritableCplX(dword: DWord) throws {
+        try self.st16WritableCplX(word: Word(dword & 0xffff))
     }
-    func st16WritableCplX(word: DWord) throws {
-        try self.st16WritableCplX(word: Word(word & 0xffff))
+    func stWritableCplX(word: Word) throws {
+        try self.stWritableCplX(dword: DWord(word))
     }
-    func stWritableCplX(dword: Word) throws {
-        try self.stWritableCplX(dword: DWord(dword))
+    func stWritableCplX(qword: QWord) throws {
+        try self.stWritableCplX(dword: DWord(qword & 0xffffffff))
     }
-    func stWritableCplX(dword: QWord) throws {
-        try self.stWritableCplX(dword: DWord(dword & 0xffffffff))
+    func st8WritableCpl3(word: Word) throws {
+        try self.st8WritableCpl3(byte: Byte(word & 0xff))
     }
-    func st8WritableCpl3(byte: Word) throws {
-        try self.st8WritableCpl3(byte: Byte(byte & 0xff))
+    func st8WritableCpl3(dword: DWord) throws {
+        try self.st8WritableCpl3(byte: Byte(dword & 0xff))
     }
-    func st8WritableCpl3(byte: DWord) throws {
-        try self.st8WritableCpl3(byte: Byte(byte & 0xff))
+    func st16WritableCpl3(dword: DWord) throws {
+        try self.st16WritableCpl3(word: Word(dword & 0xffff))
     }
-    func st16WritableCpl3(word: DWord) throws {
-        try self.st16WritableCpl3(word: Word(word & 0xffff))
-    }
-    func stWritableCpl3(dword: Word) throws {
-        try self.stWritableCpl3(dword: DWord(dword))
-    }
-    func stWritableCpl3(dword: QWord) throws {
-        try self.stWritableCpl3(dword: DWord(dword & 0xffffffff))
+    func stWritableCpl3(word: Word) throws {
+        try self.stWritableCpl3(dword: DWord(word))
     }
 }

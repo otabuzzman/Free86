@@ -120,7 +120,7 @@ extension Free86 {
             setEncodedByte(in: rM, to: r)
         } else {
             applyAddressingForm()
-            try st8WritableCpl3(byte: r)
+            try st8WritableCpl3(dword: r)
         }
         return .success(.endFetchLoop)
     }
@@ -179,7 +179,7 @@ extension Free86 {
     /// 0xa2  MOV ,AL
     func Oxa2() throws -> Result<Resume, Never> {
         try ldMemoryOffset(true)
-        try st8WritableCpl3(byte: regs[.EAX])
+        try st8WritableCpl3(dword: regs[.EAX])
         return .success(.endFetchLoop)
     }
     /// 0xa3  MOV ,AX
@@ -197,7 +197,7 @@ extension Free86 {
         } else {
             applyAddressingForm()
             imm = DWord(fetch8())
-            try st8WritableCpl3(byte: imm)
+            try st8WritableCpl3(dword: imm)
         }
         return .success(.endFetchLoop)
     }
@@ -247,7 +247,7 @@ extension Free86 {
             }
         } else {
             applyAddressingForm()
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -263,7 +263,7 @@ extension Free86 {
         } else {
             applyAddressingForm()
             rm = DWord(try ld8WritableCpl3())
-            try st8WritableCpl3(byte: getEncodedByte(from: reg))
+            try st8WritableCpl3(dword: getEncodedByte(from: reg))
         }
         setEncodedByte(in: reg, to: rm)
         return .success(.endFetchLoop)
@@ -342,7 +342,7 @@ extension Free86 {
             if operation != 7 {
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(rm, r)
-                try st8WritableCpl3(byte: u)
+                try st8WritableCpl3(dword: u)
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -551,7 +551,7 @@ extension Free86 {
             if operation != 7 {
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(rm, imm)
-                try st8WritableCpl3(byte: u)
+                try st8WritableCpl3(dword: u)
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld8ReadonlyCpl3())
@@ -761,7 +761,7 @@ extension Free86 {
             } else {
                 applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
-                try st8WritableCpl3(byte: ~rm)
+                try st8WritableCpl3(dword: ~rm)
             }
         case 3:  // NEG
             operation = 5
@@ -773,7 +773,7 @@ extension Free86 {
                 applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
                 u = calculate8(0, rm)
-                try st8WritableCpl3(byte: u)
+                try st8WritableCpl3(dword: u)
             }
         case 4:  // MUL AL/X
             if modRM.mod == 3 {
@@ -914,7 +914,7 @@ extension Free86 {
             imm = DWord(fetch8())
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, imm)
-            try st8WritableCpl3(byte: u)
+            try st8WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -946,7 +946,7 @@ extension Free86 {
             applyAddressingForm()
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, 1)
-            try st8WritableCpl3(byte: u)
+            try st8WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -976,7 +976,7 @@ extension Free86 {
             applyAddressingForm()
             rm = DWord(try ld8WritableCpl3())
             u = shift8(rm, regs[.ECX] & 0xff)
-            try st8WritableCpl3(byte: u)
+            try st8WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -1198,7 +1198,7 @@ extension Free86 {
                 applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
                 u = aux8Inc(rm)
-                try st8WritableCpl3(byte: u)
+                try st8WritableCpl3(dword: u)
             }
         case 1:  // DEC
             if modRM.mod == 3 {
@@ -1209,7 +1209,7 @@ extension Free86 {
                 applyAddressingForm()
                 rm = DWord(try ld8WritableCpl3())
                 u = aux8Dec(rm)
-                try st8WritableCpl3(byte: u)
+                try st8WritableCpl3(dword: u)
             }
         default:
             throw Interrupt(.UD)

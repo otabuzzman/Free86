@@ -8,7 +8,7 @@ extension Free86 {
             regs[modRM.rM].lowerHalf = r
         } else {
             applyAddressingForm()
-            try st16WritableCpl3(word: r)
+            try st16WritableCpl3(dword: r)
         }
         return .success(.endFetchLoop)
     }
@@ -47,7 +47,7 @@ extension Free86 {
     /// 0x1a3  MOV ,AX
     func Ox1a3() throws -> Result<Resume, Never> {
         try ldMemoryOffset(true)
-        try st16WritableCpl3(word: regs[.EAX])
+        try st16WritableCpl3(dword: regs[.EAX])
         return .success(.endFetchLoop)
     }
     /// 0x1c7  MOV
@@ -59,7 +59,7 @@ extension Free86 {
         } else {
             applyAddressingForm()
             imm = DWord(fetch16())
-            try st16WritableCpl3(word: imm)
+            try st16WritableCpl3(dword: imm)
         }
         return .success(.endFetchLoop)
     }
@@ -89,7 +89,7 @@ extension Free86 {
         } else {
             applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
-            try st16WritableCpl3(word: regs[reg])
+            try st16WritableCpl3(dword: regs[reg])
         }
         regs[reg].lowerHalf = rm
         return .success(.endFetchLoop)
@@ -125,7 +125,7 @@ extension Free86 {
             if operation != 7 {
                 rm = DWord(try ld16WritableCpl3())
                 u = calculate16(rm, r)
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             } else {
                 rm = DWord(try ld16ReadonlyCpl3())
                 calculate16(rm, r)
@@ -183,7 +183,7 @@ extension Free86 {
             if operation != 7 {
                 rm = DWord(try ld16WritableCpl3())
                 u = calculate16(rm, imm)
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld16ReadonlyCpl3())
@@ -207,7 +207,7 @@ extension Free86 {
             if operation != 7 {
                 rm = DWord(try ld16WritableCpl3())
                 u = calculate16(rm, v)
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             } else {
                 // LOCK prefix not allowed
                 rm = DWord(try ld16ReadonlyCpl3())
@@ -317,7 +317,7 @@ extension Free86 {
             } else {
                 applyAddressingForm()
                 rm = DWord(try ld16WritableCpl3())
-                try st16WritableCpl3(word: ~rm)
+                try st16WritableCpl3(dword: ~rm)
             }
         case 3:  // NEG
             operation = 5
@@ -329,7 +329,7 @@ extension Free86 {
                 applyAddressingForm()
                 rm = DWord(try ld16WritableCpl3())
                 u = calculate16(0, rm)
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             }
         case 4:  // MUL AL/X
             if modRM.mod == 3 {
@@ -385,7 +385,7 @@ extension Free86 {
             imm = DWord(fetch8())
             rm = DWord(try ld16WritableCpl3())
             u = shift16(rm, imm)
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -400,7 +400,7 @@ extension Free86 {
             applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
             u = shift16(rm, 1)
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -415,7 +415,7 @@ extension Free86 {
             applyAddressingForm()
             rm = DWord(try ld16WritableCpl3())
             u = shift16(rm, regs[.ECX] & 0xff)
-            try st16WritableCpl3(word: u)
+            try st16WritableCpl3(dword: u)
         }
         return .success(.endFetchLoop)
     }
@@ -482,7 +482,7 @@ extension Free86 {
             v = regs[.ESP]
             applyAddressingForm()
             regs[.ESP] = u
-            try st16WritableCpl3(word: m)
+            try st16WritableCpl3(dword: m)
             regs[.ESP] = v
         }
         return .success(.endFetchLoop)
@@ -552,7 +552,7 @@ extension Free86 {
                 applyAddressingForm()
                 rm = DWord(try ld16WritableCpl3())
                 u = aux16Inc(rm)
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             }
         case 1:  // DEC
             if modRM.mod == 3 {
@@ -563,7 +563,7 @@ extension Free86 {
                 applyAddressingForm()
                 rm = DWord(try ld16WritableCpl3())
                 u = aux16Dec(rm)
-                try st16WritableCpl3(word: u)
+                try st16WritableCpl3(dword: u)
             }
         case 2:  // CALL
             if modRM.mod == 3 {
