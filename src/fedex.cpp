@@ -3101,28 +3101,28 @@ void Free86::fetch_decode_execute(uint64_t cycles, Interrupt& interrupt) {
                     aux16_BOUND();
                     goto FETCH_LOOP;
                 case 0x1a5: // MOVSW/D
-                    aux16_MOVS();
+                    aux_MOVSW();
                     goto FETCH_LOOP;
                 case 0x1a7: // CMPSW/D
-                    aux16_CMPS();
+                    aux_CMPSW();
                     goto FETCH_LOOP;
                 case 0x1ad: // LOSW/D
-                    aux16_LODS();
+                    aux_LODSW();
                     goto FETCH_LOOP;
                 case 0x1af: // SCASW/D
-                    aux16_SCAS();
+                    aux_SCASW();
                     goto FETCH_LOOP;
                 case 0x1ab: // STOSW/D
-                    aux16_STOS();
+                    aux_STOSW();
                     goto FETCH_LOOP;
                 case 0x16d: // INSW/D
-                    aux16_INS();
+                    aux_INSW();
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
                     goto FETCH_LOOP;
                 case 0x16f: // OUTSW/D
-                    aux16_OUTS();
+                    aux_OUTSW();
                     if (get_irq() != 0 && (eflags & 0x00000200)) {
                         goto OUTER_LOOP;
                     }
