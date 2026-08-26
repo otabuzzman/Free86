@@ -681,37 +681,37 @@ extension Free86 {
     }
     /// 0x1a5  MOVSW/D
     func Ox1a5() throws -> Result<Resume, Never> {
-        try aux16Movs()
+        try auxMovsw()
         return .success(.endFetchLoop)
     }
     /// 0x1a7  CMPSW/D
     func Ox1a7() throws -> Result<Resume, Never> {
-        try aux16Cmps()
+        try auxCmpsw()
         return .success(.endFetchLoop)
     }
     /// 0x1ad  LOSW/D
     func Ox1ad() throws -> Result<Resume, Never> {
-        try aux16Lods()
+        try auxLodsw()
         return .success(.endFetchLoop)
     }
     /// 0x1af  SCASW/D
     func Ox1af() throws -> Result<Resume, Never> {
-        try aux16Scas()
+        try auxScasw()
         return .success(.endFetchLoop)
     }
     /// 0x1ab  STOSW/D
     func Ox1ab() throws -> Result<Resume, Never> {
-        try aux16Stos()
+        try auxStosw()
         return .success(.endFetchLoop)
     }
     /// 0x16d  INSW/D
     func Ox16d() throws -> Result<Resume, Never> {
-        try aux16Ins()
+        try auxInsw()
         return .success(.endOnInterrupt)
     }
     /// 0x16f  OUTSW/D
     func Ox16f() throws -> Result<Resume, Never> {
-        try aux16Outs()
+        try auxOutsw()
         return .success(.endOnInterrupt)
     }
     /// 0x1e5  IN AX,
