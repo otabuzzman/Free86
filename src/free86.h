@@ -507,14 +507,6 @@ class Free86 {
     void ld_far_pointer(uint32_t sreg);
 
     // string.cpp
-    void aux16_INS();
-    void aux16_OUTS();
-    void aux16_MOVS();
-    void aux16_STOS();
-    void aux16_CMPS();
-    void aux16_LODS();
-    void aux16_SCAS();
-
     void aux_INSB();
     void aux_OUTSB();
     void aux_MOVSB();
