@@ -11,7 +11,7 @@ extension Free86 {
         for s in 0..<segs.count {
             segs[s] = .init(0, .init(0, 0, .none, 0))
         }
-        segs[.CS] = .init(0, .init(0xFFFF0000, 0, .none, 0))
+        segs[.CS] = .init(0xF000, .init(0xFFFF0000, 0, .none, 0))
         idt = .init(0, .init(0, 0x03FF, .none, 0))
 
         cr0 = 0

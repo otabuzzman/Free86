@@ -37,7 +37,7 @@ void Free86::reset() {
     for (int i = 0 ; i < 6 ; i++) {
         segs[i] = {0, {0, 0, 0}};
     }
-    segs[1] = {0, {0xffff0000, 0, 0}};
+    segs[1] = {0xf000, {0xffff0000, 0, 0}};
     idt = {0, {0, 0x3ff, 0}};
     cr0 = 1 << 4; // 80387 present (Vol. 3A, p. 2-16)
     // emulator state variables
