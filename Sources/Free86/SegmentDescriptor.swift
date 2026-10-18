@@ -20,7 +20,7 @@ extension SegmentDescriptor {
     }
 }
 
-enum SegmentDescriptorFlag: Int {
+public enum SegmentDescriptorFlag: Int {
     case G = 23  // granularity, 1 = limit in 4 kB units
     case D = 22  // D (default)/ B (big) flag if code/ data segment, 0 = 16 bit
     case P = 15  // 1 = segment is present
@@ -101,7 +101,7 @@ extension SegmentDescriptor {
 }
 
 extension SegmentDescriptor {
-    func isFlagRaised(_ flag: SegmentDescriptorFlag) -> Bool {
+    public func isFlagRaised(_ flag: SegmentDescriptorFlag) -> Bool {
         upper.isBitRaised(flag.rawValue)
     }
     func isFlagRaised(_ flag: SegmentDescriptorTypeFlag) -> Bool {
