@@ -9,7 +9,7 @@ public struct SegmentRegister {
     }
     public private(set) var selector = SegmentSelector(0)
     public private(set) var shadow = SegmentDescriptor(0)  // aka descriptor cache
-    init(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor) {
+    public init(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor) {
         self.selector = selector
         self.shadow = descriptor
     }

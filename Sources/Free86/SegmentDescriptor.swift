@@ -4,7 +4,7 @@ public struct SegmentDescriptor {
     var qword: QWord {
         QWord(upper) << 32 | QWord(lower)
     }
-    init(_ qword: QWord) {
+    public init(_ qword: QWord) {
         upper = DWord(qword >> 32)
         lower = DWord(truncatingIfNeeded: qword)
     }
