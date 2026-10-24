@@ -32,7 +32,7 @@ public class Free86 {
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     public internal(set) var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
-    public internal(set) var eflags = Eflags(0)
+    public internal(set) var eflags = ExtendedFlagsRegister(0)
 
     public internal(set) var eip = LinearAddress(0)
     var eipLinear = LinearAddress(0)
@@ -103,7 +103,7 @@ public class Free86 {
 
     /// direction flag (used by string instructions)
     var df: DWord {  // values 1/ -1 reflect EFLAGS.DF false/ true
-        eflags.isFlagRaised(EflagsFlag.DF) ? DWord(bitPattern: -1) : 1
+        eflags.isFlagRaised(ExtendedFlagsRegisterFlag.DF) ? DWord(bitPattern: -1) : 1
     }
 
     var cyclesRequested: QWord = 0

@@ -3,18 +3,18 @@ import Testing
 
 @Test("EFLAGS flags positions")
 func extendedFlagsRegisterPositions() {
-    #expect(EflagsFlag.CF.rawValue == 0)
-    #expect(EflagsFlag.PF.rawValue == 2)
-    #expect(EflagsFlag.AF.rawValue == 4)
-    #expect(EflagsFlag.ZF.rawValue == 6)
-    #expect(EflagsFlag.SF.rawValue == 7)
-    #expect(EflagsFlag.TF.rawValue == 8)
-    #expect(EflagsFlag.IF.rawValue == 9)
-    #expect(EflagsFlag.DF.rawValue == 10)
-    #expect(EflagsFlag.OF.rawValue == 11)
-    #expect(EflagsFlag.NT.rawValue == 14)
-    #expect(EflagsFlag.RF.rawValue == 16)
-    #expect(EflagsFlag.VM.rawValue == 17)
+    #expect(ExtendedFlagsRegisterFlag.CF.rawValue == 0)
+    #expect(ExtendedFlagsRegisterFlag.PF.rawValue == 2)
+    #expect(ExtendedFlagsRegisterFlag.AF.rawValue == 4)
+    #expect(ExtendedFlagsRegisterFlag.ZF.rawValue == 6)
+    #expect(ExtendedFlagsRegisterFlag.SF.rawValue == 7)
+    #expect(ExtendedFlagsRegisterFlag.TF.rawValue == 8)
+    #expect(ExtendedFlagsRegisterFlag.IF.rawValue == 9)
+    #expect(ExtendedFlagsRegisterFlag.DF.rawValue == 10)
+    #expect(ExtendedFlagsRegisterFlag.OF.rawValue == 11)
+    #expect(ExtendedFlagsRegisterFlag.NT.rawValue == 14)
+    #expect(ExtendedFlagsRegisterFlag.RF.rawValue == 16)
+    #expect(ExtendedFlagsRegisterFlag.VM.rawValue == 17)
 }
 
 @Test("EFLAGS set/ check flags")
@@ -23,8 +23,8 @@ func extendedFlagsRegisterSetCheck() {
     #expect(eflags.isFlagRaised(.CF) == true)
     eflags.setFlag(.CF, .zero)
     #expect(eflags == 0xDEADBEAE)
-    #expect(Eflags.flagMask(for: .DF) == 1 << EflagsFlag.DF.rawValue)
-    #expect(Eflags.flagMask(for: .DF) == 0x00000400)
+    #expect(ExtendedFlagsRegister.flagMask(for: .DF) == 1 << ExtendedFlagsRegisterFlag.DF.rawValue)
+    #expect(ExtendedFlagsRegister.flagMask(for: .DF) == 0x00000400)
 }
 
 @Test("EFLAGS fields access")

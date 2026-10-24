@@ -253,7 +253,7 @@ extension Free86 {
     func returnRealOrV86Mode(_ operandSizeOverride: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
         let cs: SegmentSelector
         let homeEip: DWord
-        var homeEflags: Eflags = 0
+        var homeEflags: ExtendedFlagsRegister = 0
         var esp = regs[.ESP]
         let ssMask: DWord = 0xffff
         if operandSizeOverride {
@@ -265,7 +265,7 @@ extension Free86 {
             esp = esp &+ 2
             if isIret {
                 lax = ssBase &+ (esp & ssMask)
-                homeEflags = Eflags(try ld16ReadonlyCplX())
+                homeEflags = ExtendedFlagsRegister(try ld16ReadonlyCplX())
                 esp = esp &+ 2
             }
         } else {
@@ -307,7 +307,7 @@ extension Free86 {
     }
     func returnProtectedMode(_ operandSizeOverride: Bool, _ isIret: Bool, _ releaseStackItems: DWord) throws {
         let homeEsp: DWord, homeEip: DWord
-        var homeEflags: Eflags = 0
+        var homeEflags: ExtendedFlagsRegister = 0
         let es: SegmentSelector, cs: SegmentSelector, ss: SegmentSelector
         let ds: SegmentSelector, fs: SegmentSelector, gs: SegmentSelector
         let cpl = self.cpl
@@ -321,7 +321,7 @@ extension Free86 {
             esp = esp &+ 2
             if isIret {
                 lax = ssBase &+ (esp & ssMask)
-                homeEflags = Eflags(try ld16ReadonlyCplX())
+                homeEflags = ExtendedFlagsRegister(try ld16ReadonlyCplX())
                 esp = esp &+ 2
             }
         } else {

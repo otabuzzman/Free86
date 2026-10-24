@@ -165,7 +165,7 @@ extension Free86 {
     func shift8(_ src: DWord, _ count: DWord) -> DWord {
         let c: DWord, cf: DWord
         let s = src & 0xff
-        var res = s, f: Eflags
+        var res = s, f: ExtendedFlagsRegister
         switch operation & 7 {
         case 0:
             if count & 0x1f != 0 {
@@ -260,7 +260,7 @@ extension Free86 {
     func shift16(_ src: DWord, _ count: DWord) -> DWord {
         let c: DWord, cf: DWord
         let s = src & 0xffff
-        var res = s, f: Eflags
+        var res = s, f: ExtendedFlagsRegister
         switch operation & 7 {
         case 0:
             if count & 0x1f != 0 {
@@ -355,7 +355,7 @@ extension Free86 {
     func shift(_ src: DWord, _ count: DWord) -> DWord {
         let c: DWord, cf: DWord
         let s = src
-        var res = s, f: Eflags
+        var res = s, f: ExtendedFlagsRegister
         switch operation & 7 {
         case 0:
             c = count & 0x1f

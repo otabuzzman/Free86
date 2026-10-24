@@ -1,6 +1,6 @@
-public typealias Eflags = DWord
+public typealias ExtendedFlagsRegister = DWord
 
-enum EflagsFlag: Int {
+enum ExtendedFlagsRegisterFlag: Int {
     case CF = 0
     case PF = 2
     case AF = 4
@@ -19,19 +19,19 @@ enum EflagsFlag: Int {
     case ID = 21   // 80486
 }
 
-extension Eflags {
-    func isFlagRaised(_ flag: EflagsFlag) -> Bool {
+extension ExtendedFlagsRegister {
+    func isFlagRaised(_ flag: ExtendedFlagsRegisterFlag) -> Bool {
         self.isBitRaised(flag.rawValue)
     }
-    mutating func setFlag(_ flag: EflagsFlag, _ value: Int = 1) {
+    mutating func setFlag(_ flag: ExtendedFlagsRegisterFlag, _ value: Int = 1) {
         self.setBit(flag.rawValue, value)
     }
-    static func flagMask(for flag: EflagsFlag) -> Self {
+    static func flagMask(for flag: ExtendedFlagsRegisterFlag) -> Self {
         return Self.bitMask(for: flag.rawValue)
     }
 }
 
-extension Eflags {
+extension ExtendedFlagsRegister {
     var iopl: Int {
         get { Int((self & 0x00003000) >> 12) }
         set { self = (self & ~0x00003000) | Self(newValue) << 12 }

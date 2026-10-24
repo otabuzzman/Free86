@@ -1117,9 +1117,9 @@ extension Free86 {
         if eflags.isFlagRaised(.VM), eflags.iopl != 3 {
             throw Interrupt(.GP, errorCode: 0)
         }
-        var mask: Eflags = 0
-        mask |= Eflags.flagMask(for: .RF)
-        mask |= Eflags.flagMask(for: .VM)
+        var mask: ExtendedFlagsRegister = 0
+        mask |= ExtendedFlagsRegister.flagMask(for: .RF)
+        mask |= ExtendedFlagsRegister.flagMask(for: .VM)
         u = compileEflags() & ~mask
         if !ipr.isFlagRaised(.operandSizeOverride) {
             try push(u)
@@ -1140,7 +1140,7 @@ extension Free86 {
             m = DWord(try pop16())
             u = 0xffff
         }
-        var mask: Eflags = 0
+        var mask: ExtendedFlagsRegister = 0
         mask.setFlag(.TF)
         mask.setFlag(.NT)
         mask.setFlag(.AC)
@@ -1699,7 +1699,7 @@ extension Free86 {
     }
     /// 0x9e  SAHF
     func Ox9e() throws -> Result<Resume, Never> {
-        var mask: Eflags = 0
+        var mask: ExtendedFlagsRegister = 0
         mask.setFlag(.CF)
         mask.setFlag(.PF)
         mask.setFlag(.AF)

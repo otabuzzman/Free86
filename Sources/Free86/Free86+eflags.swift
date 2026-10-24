@@ -256,20 +256,20 @@ extension Free86 {
         return bits
     }
     func updateEflags(_ bits: DWord, _ mask: DWord) {
-        osmSrc = bits & Eflags.sFlagsMask()
+        osmSrc = bits & ExtendedFlagsRegister.sFlagsMask()
         osmDst = (osmSrc >> 6 & 1) ^ 1
         osm = 24
         eflags = (eflags & ~mask) | (bits & mask)
     }
 }
 
-extension Eflags {
-    static func sFlagsMask() -> Eflags {
-        Eflags.flagMask(for: .OF) |
-        Eflags.flagMask(for: .SF) |
-        Eflags.flagMask(for: .ZF) |
-        Eflags.flagMask(for: .AF) |
-        Eflags.flagMask(for: .PF) |
-        Eflags.flagMask(for: .CF)
+extension ExtendedFlagsRegister {
+    static func sFlagsMask() -> ExtendedFlagsRegister {
+        flagMask(for: .OF) |
+        flagMask(for: .SF) |
+        flagMask(for: .ZF) |
+        flagMask(for: .AF) |
+        flagMask(for: .PF) |
+        flagMask(for: .CF)
     }
 }
