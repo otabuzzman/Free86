@@ -61,10 +61,10 @@ class Free86 {
     // ES, CS, SS, DS, FS, GS
     SegmentRegister segs[6];
 
-    SegmentRegister gdt; // GDT register
-    SegmentRegister ldt; // LDT register
-    SegmentRegister tr;  // task register
-    SegmentRegister idt; // IDT register
+    SegmentRegister gdt; // GDT register, limit:base
+    SegmentRegister ldt; // LDT register, selector:limit:base
+    SegmentRegister tr; // task register, selector:limit:base
+    SegmentRegister idt; // IDT register, limit:base
 
     uint32_t cr0;
     uint32_t cr2;

@@ -209,12 +209,12 @@ extension Free86 {
                 var xdt = gdt.shadow
                 xdt.base = m
                 xdt.limit = DWord(m16)
-                gdt = .init(gdt.selector, xdt)
+                gdt = .init(0, xdt)
             } else {
                 var xdt = idt.shadow
                 xdt.base = m
                 xdt.limit = DWord(m16)
-                idt = .init(idt.selector, xdt)
+                idt = .init(0, xdt)
             }
         case 7:  // INVLPG (80486)
             if cpl != 0 {

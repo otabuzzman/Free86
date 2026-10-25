@@ -40,10 +40,10 @@ public class Free86 {
     /// ES, CS, SS, DS, FS, GS
     public internal(set) var segs: [SegmentRegister] = .init(repeating: .init(0, .init(0)), count: 6)
 
-    public internal(set) var gdt = SegmentRegister(0, .init(0))  // GDT register
-    public internal(set) var ldt = SegmentRegister(0, .init(0))  // LDT register
-    public internal(set) var tr = SegmentRegister(0, .init(0))  // task register
-    public internal(set) var idt = SegmentRegister(0, .init(0))  // IDT register
+    public internal(set) var gdt = SegmentRegister(0, .init(0))  // GDT register, limit:base
+    public internal(set) var ldt = SegmentRegister(0, .init(0))  // LDT register, selector:limit:base
+    public internal(set) var tr = SegmentRegister(0, .init(0))  // task register, selector:limit:base
+    public internal(set) var idt = SegmentRegister(0, .init(0))  // IDT register, limit:base
 
     var _cr0 = CR0(0)
     public internal(set) var cr0: CR0 {
