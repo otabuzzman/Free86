@@ -1,6 +1,6 @@
 public struct SegmentDescriptor {
-    var upper: DWord = 0
-    var lower: DWord = 0
+    public internal(set) var upper: DWord = 0
+    public internal(set) var lower: DWord = 0
     var qword: QWord {
         QWord(upper) << 32 | QWord(lower)
     }
