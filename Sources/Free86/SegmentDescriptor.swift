@@ -88,7 +88,7 @@ public extension SegmentDescriptor {
     }
 }
 
-extension SegmentDescriptor {
+public extension SegmentDescriptor {
     var isSystemSegment: Bool {
         !isFlagRaised(.S)
     }
