@@ -72,13 +72,13 @@
     72 00000046 4F                          db 0x4F
     73 00000047 00                          db 0x00
     74                                  
-    75                                      ; 3rd dte, CS selector 0x10, base 0xffff0000, 32 bit, executable
+    75                                      ; 3rd dte, CS selector 0x10, base 0, 32 bit, executable
     76 00000048 FFFF                        dw 0xFFFF
     77 0000004A 0000                        dw 0x0000
-    78 0000004C FF                          db 0xFF
+    78 0000004C 00                          db 0x00
     79 0000004D 9A                          db 0x9A
     80 0000004E 4F                          db 0x4F
-    81 0000004F FF                          db 0xFF
+    81 0000004F 00                          db 0x00
     82                                  
     83                                      ; 4th dte, DS selector 0x18, base 0, 32 bit, writable
     84 00000050 FFFF                        dw 0xFFFF
@@ -94,7 +94,7 @@
     94 0000005A [38000F00]                  dd C_SEG_REAL * 16 + GDT_alpha ; base
     95                                  
     96                                  ; ----------------------------------------------------------------
-    97                                  ;   fill-in NOPs until 0xfff0 where execution starts after reset
+    97                                  ; fill-in NOPs until 0xfff0 where execution starts after reset
     98                                  ; ----------------------------------------------------------------
     99 0000005E 90<rep FF92h>           times 0xfff0-($-$$) nop
    100                                  

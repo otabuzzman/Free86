@@ -72,13 +72,13 @@ GDT_alpha:
     db 0x4F
     db 0x00
 
-    ; 3rd dte, CS selector 0x10, base 0xffff0000, 32 bit, executable
+    ; 3rd dte, CS selector 0x10, base 0, 32 bit, executable
     dw 0xFFFF
     dw 0x0000
-    db 0xFF
+    db 0x00
     db 0x9A
     db 0x4F
-    db 0xFF
+    db 0x00
 
     ; 4th dte, DS selector 0x18, base 0, 32 bit, writable
     dw 0xFFFF
