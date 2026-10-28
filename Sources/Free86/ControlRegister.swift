@@ -21,8 +21,8 @@ extension CR0 {
     }
 }
 
-extension CR0 {
-    public var isPagingEnabled: Bool {
+public extension CR0 {
+    var isPagingEnabled: Bool {
         isFlagRaised(.PG) && isProtectedMode
     }
     var isProtectedMode: Bool {
