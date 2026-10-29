@@ -29,10 +29,13 @@ public struct Interrupt: Error, Equatable {
 }
 
 extension Interrupt {
-    init(_ exception: Exception, errorCode: DWord = 0) {
-        self.init(exception.rawValue, errorCode: errorCode)
+    init(_ vector: Exception, errorCode: DWord = 0) {
+        self.init(vector.rawValue, errorCode: errorCode)
     }
-    var description: String {
+}
+
+extension Interrupt: CustomStringConvertible {
+    public var description: String {
         "Interrupt id \(id), error code \(errorCode))"
     }
 }

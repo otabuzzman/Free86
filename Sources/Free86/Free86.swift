@@ -4,17 +4,6 @@ public class Free86 {
     public let NMI = PinIO<Bool>()
     public let RESET = PinIO<Bool>()
 
-    /// internal interrupts (exceptions)
-    var _interrupt: Interrupt?
-    public var interrupt: Interrupt? {
-        get {
-            let oldValue = _interrupt
-            _interrupt = nil
-            return oldValue
-        }
-        set { _interrupt = newValue }
-    }
-
     /// Interrupts in-flight register
     ///
     /// The interrupts in-flight register (IFR) indicates an NMI hardware interrupt handler (ISR)

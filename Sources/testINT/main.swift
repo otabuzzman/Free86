@@ -140,8 +140,8 @@ extension Free86 {
                     print("\(self.cycles) cycles")
                     break
                 }
-            } catch let interrupt as Interrupt {
-                self.interrupt = interrupt
+            } catch let exception as Interrupt {
+                print("\(exception)")
             } catch {
                 print("\(error)")
                 exit(EXIT_FAILURE)

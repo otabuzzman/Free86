@@ -46,14 +46,13 @@ while true {
                 print("\(cpu.cycles)")
                 exit(EXIT_SUCCESS)
             }
-        } catch let interrupt as Interrupt {
-            cpu.interrupt = interrupt
-            switch interrupt.id {
+        } catch let exception as Interrupt {
+            switch exception.id {
             case 6:
                 let eip = cpu.segs[.CS].shadow.base + cpu.eip
                 let (eip15, n) = bytes(at: eip, count: 15, cpu, mem)
                 let header = String(format: "[EIP..EIP+%02X]: ", n - 1)
-                print("interrupt id \(interrupt.id)")
+                print("exception id \(exception.id)")
                 print(cpu.compactState() + "\n" + header + eip15)
             default:
                 break

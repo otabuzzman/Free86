@@ -51,9 +51,7 @@ flush:
     mov ebx, 2 * 1024 * 1024  ; initrd_size
 
     jmp C_SEG_LINUX:linuxstart ; implicitly reloads PM CS with
-                               ; selector 0x10 with base 0xffff0000,
-                               ; the value after reset and expected
-                               ; by linuxstart.bin.
+                               ; selector 0x10.
     ; end of prepare state
 
 ;----------------------------------------------------------------------

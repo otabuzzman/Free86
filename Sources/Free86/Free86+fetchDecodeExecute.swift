@@ -9,10 +9,6 @@ extension Free86 {
                 _ = try? await INTR.probe()
                 ifr = .init(0)
             }
-            /// internal exception or fault
-            if let interrupt = self.interrupt {
-                try raiseInterrupt(interrupt.id, interrupt.errorCode, false, 0)
-            }
             if await NMI.pending, !ifr.isFlagRaised(.NMI) {
                 halted = false
                 ifr.setFlag(.NMI)
@@ -104,9 +100,10 @@ extension Free86 {
             } while cyclesRemaining > 0
             self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
             eip = eip &+ far &- farStart
-        } catch let interrupt as Interrupt {
+        } catch let exception as Interrupt {
             self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
-            throw interrupt
+            try raiseInterrupt(exception.id, exception.errorCode, false, 0)
+            throw exception
         }
     }
 }
