@@ -22,7 +22,7 @@ public struct Interrupt: Error, Equatable {
     public private(set) var id: Byte
     var errorCode: DWord
 
-    init(_ vector: Byte, errorCode: DWord = 0) {
+    public init(_ vector: Byte, errorCode: DWord = 0) {
         self.id = vector
         self.errorCode = errorCode
     }
