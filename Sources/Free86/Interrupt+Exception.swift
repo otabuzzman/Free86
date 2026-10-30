@@ -19,8 +19,8 @@ public enum Exception: Byte {
 }
 
 public struct Interrupt: Error, Equatable {
-    public private(set) var id: Byte
-    var errorCode: DWord
+    public internal(set) var id: Byte
+    public internal(set) var errorCode: DWord
 
     public init(_ vector: Byte, errorCode: DWord = 0) {
         self.id = vector
