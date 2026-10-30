@@ -259,6 +259,10 @@ public class Free86 {
     var imm: DWord = 0, imm16: Word = 0, moffs: DWord = 0  // immediate/ offset operands
     var u: DWord = 0, v: DWord = 0, w: DWord = 0  // intermediate results
 
+    public enum Event: Error {
+        case endOnReset
+    }
+
     typealias OpcodeDecoder = [OpcodeProgram]
     typealias OpcodeProgram = () throws -> Result<Resume, Never>
 

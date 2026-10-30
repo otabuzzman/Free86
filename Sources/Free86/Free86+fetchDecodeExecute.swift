@@ -8,17 +8,18 @@ extension Free86 {
                 _ = try? await NMI.probe()
                 _ = try? await INTR.probe()
                 ifr = .init(0)
+                throw Event.endOnReset
             }
             if await NMI.pending, !ifr.isFlagRaised(.NMI) {
                 halted = false
                 ifr.setFlag(.NMI)
                 _ = try await NMI.probe()
-                try raiseInterrupt(2, 0, false, 0)
+                throw Interrupt(2)
             }
             if await INTR.pending, !ifr.isFlagRaised(.NMI), eflags.isFlagRaised(.IF) {
                 halted = false
                 let id = try await INTR.probe()
-                try raiseInterrupt(id, 0, false, 0)
+                throw Interrupt(id)
             }
             guard !halted else { return }
             (far, farStart) = (0, 0)

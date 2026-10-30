@@ -96,7 +96,7 @@ while true {
                 break
             }
         } catch let exception as Interrupt {
-            // ...
+            continue
         } catch {
             print("\(error)")
             exit(EXIT_FAILURE)

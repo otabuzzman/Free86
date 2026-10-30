@@ -142,6 +142,8 @@ extension Free86 {
                 }
             } catch let exception as Interrupt {
                 print("\(exception)")
+            } catch let event as Event {
+                print("\(event)")
             } catch {
                 print("\(error)")
                 exit(EXIT_FAILURE)
