@@ -2,7 +2,7 @@ public enum Exception: Byte {
     case DE
     case DB
     case NonMaskableInterrupt  // PinIO
-    case BP = 3
+    case BP
     case OF
     case BR
     case UD
@@ -29,6 +29,27 @@ public struct Interrupt: Error, Equatable {
 }
 
 extension Interrupt {
+    public enum Class: Int {
+        case begnin
+        case contributory
+        case pagefault
+        case doublefault
+        case none
+    }
+    public var `class`: Class {
+        switch self.id {
+        case 1, 2, 3, 4, 5, 6, 7:
+            return .begnin
+        case 0, 9, 10, 11, 12, 13:
+            return .contributory
+        case 14:
+            return .pagefault
+        case 8:
+            return .doublefault
+        default:
+            return .none
+        }
+    }
     init(_ vector: Exception, errorCode: DWord = 0) {
         self.init(vector.rawValue, errorCode: errorCode)
     }
@@ -36,6 +57,6 @@ extension Interrupt {
 
 extension Interrupt: CustomStringConvertible {
     public var description: String {
-        "Interrupt id \(id), error code \(errorCode))"
+        "Interrupt id \(id), error code \(errorCode)"
     }
 }

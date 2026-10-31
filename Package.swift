@@ -58,6 +58,9 @@ let package = Package(
             sources: [
                 "main.swift",
             ],
+            resources: [
+                .copy("bin")
+            ],
             swiftSettings: [
                 .define("DEBUG", .when(configuration: .debug)),
             ],

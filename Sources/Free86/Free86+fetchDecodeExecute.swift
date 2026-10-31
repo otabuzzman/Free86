@@ -103,8 +103,28 @@ extension Free86 {
             eip = eip &+ far &- farStart
         } catch let exception as Interrupt {
             self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
-            try raiseInterrupt(exception.id, exception.errorCode, false, 0)
-            throw exception
+            var fex = exception
+            var fec = fex.class
+            while true {
+                do {
+                    try raiseInterrupt(fex.id, fex.errorCode, false, 0)
+                } catch exception as Interrupt {
+                    fex = exception
+                    let sec = fex.class
+                    if fec == .doublefault, (sec == .contributory || sec == .pagefault) {
+                        throw Event.tripleFault
+                    }
+                    if fec == .contributory, sec == .contributory ||
+                        fec == .pagefault, (sec == .contributory || sec == .pagefault) {
+                        fex = Interrupt(.DF)
+                        fec = .doublefault
+                    } else {
+                        fec = sec
+                    }
+                    continue
+                }
+                throw fex
+            }
         }
     }
 }

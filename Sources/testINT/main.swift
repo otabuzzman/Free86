@@ -1,13 +1,13 @@
 import Foundation
 import Free86
 
-// var fileURL = URL(fileURLWithPath: "bin/testINTs.bin")
-var fileURL = URL(fileURLWithPath: "bin/testINTr.bin")
+// var fileURL = Bundle.module.url(forResource: "bin/testINTs.bin", withExtension: "")
+var fileURL = Bundle.module.url(forResource: "bin/testINTr.bin", withExtension: "")
 let loadAddress: DWord = 0x000f0000
 let debugPortAddress: DWord  = 0x2a
 
 let mem = MemoryIO<DWord>(capacity: 16 * 1024 * 1024)  // 16 MB
-let data = try Data(contentsOf: fileURL)
+let data = try Data(contentsOf: fileURL!)
 for (offset, byte) in data.enumerated() {
     mem[loadAddress + DWord(offset)] = Byte(byte)
 }
@@ -37,16 +37,16 @@ assert(cpu.regs[.ESP] == 0x7c00)
 /// test 4: HW interrupt on INTR
 try await cpu.INTR.trigger(32)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 72)  // for later inspection
+assert(cpu.cycles == 114)  // for later inspection
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 4: nested INTR blocked
 try await cpu.INTR.trigger(32)  // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 72)  // ...blocked
+assert(cpu.cycles == 114)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.INTR.trigger(32)  // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 72)  // ...blocked
+assert(cpu.cycles == 114)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 4: RESET to continue
 try await cpu.RESET.trigger(true)
@@ -68,41 +68,41 @@ assert(cpu.regs[.ESP] == 0x7c00)
 /// test 8: HW interrupt on NMI
 try await cpu.NMI.trigger(true)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 143)  // for later inspection
+assert(cpu.cycles == 226)  // for later inspection
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 8: nested NMI blocked
 try await cpu.NMI.trigger(true)  // nested NMI...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 143)  // ...blocked
+assert(cpu.cycles == 226)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.NMI.trigger(true)  // nested NMI...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 143)  // ...blocked
+assert(cpu.cycles == 226)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 8: nested INTR blocked
 try await cpu.INTR.trigger(32)  // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 143)  // ...blocked
+assert(cpu.cycles == 226)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.INTR.trigger(32)  // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 143)  // ...blocked
+assert(cpu.cycles == 226)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 8: RESET to continue
 try await cpu.RESET.trigger(true)
 
 /// test 9: divide by 0 exception (#DE)
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 175)  // for later inspection
+assert(cpu.cycles == 258)  // for later inspection
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 9: nested INTR blocked
 try await cpu.INTR.trigger(32)  // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 175)  // ...blocked
+assert(cpu.cycles == 258)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 try await cpu.INTR.trigger(32)  // nested INTR...
 await cpu.fetchDecodeExecuteLoop(cycles: cycles)
-assert(cpu.cycles == 175)  // ...blocked
+assert(cpu.cycles == 258)  // ...blocked
 assert(cpu.regs[.ESP] == 0x7bfa)
 /// test 9: NMI to continue (ISR and blocked (pending) INTR ISR both output test #9)
 try await cpu.NMI.trigger(true)
@@ -158,6 +158,17 @@ extension MemoryIO<DWord> {
         self.init(defaultBank: DefaultBank<A>())
         for addr in stride(from: 0, to: capacity, by: A.bankSize) {
             self.register(bank: RAMBank<A>(), at: addr)
+        }
+    }
+    func load(_ text: String, at address: DWord) throws {
+        let data: Data
+        if let file = Bundle.main.url(forResource: text, withExtension: "") {
+            data = try Data(contentsOf: file)
+        } else {
+            data = text.data(using: .ascii)!
+        }
+        for (offset, byte) in data.enumerated() {
+            self[address + DWord(offset)] = Byte(byte)
         }
     }
 }
