@@ -65,7 +65,7 @@ class Test386 {
                 switch (e.id) {
                     case 6:
                         std::cout
-                            << "interrupt id " << e.id
+                            << "exception id " << e.id
                             << std::endl << compact_state()
                             << std::endl << eip_15() << std::endl;
                         break;
