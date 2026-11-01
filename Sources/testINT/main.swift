@@ -144,6 +144,9 @@ extension Free86 {
                 print("\(exception)")
             } catch let event as Event {
                 print("\(event)")
+                if event == .tripleFault {
+                    break
+                }
             } catch {
                 print("\(error)")
                 exit(EXIT_FAILURE)

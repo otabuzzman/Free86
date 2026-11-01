@@ -1612,9 +1612,7 @@ extension Free86 {
     /// 0xcf  IRET
     func Oxcf() throws -> Result<Resume, Never> {
         try auxIret(ipr.isFlagRaised(.operandSizeOverride))
-        if ifr.isFlagRaised(.NMI) {
-            ifr.setFlag(.NMI, .zero)  // NMI IRET problem (https://lwn.net/Articles/484932/)
-        }
+        nf = false  // NMI IRET problem (https://lwn.net/Articles/484932/)
         return .success(.endOnInterrupt)
     }
     /// 0x90  NOP

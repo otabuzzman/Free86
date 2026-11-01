@@ -7,16 +7,16 @@ extension Free86 {
                 reset()
                 _ = try? await NMI.probe()
                 _ = try? await INTR.probe()
-                ifr = .init(0)
+                nf = false
                 throw Event.endOnReset
             }
-            if await NMI.pending, !ifr.isFlagRaised(.NMI) {
+            if await NMI.pending, !nf {
                 halted = false
-                ifr.setFlag(.NMI)
+                nf = true
                 _ = try await NMI.probe()
                 throw Interrupt(2)
             }
-            if await INTR.pending, !ifr.isFlagRaised(.NMI), eflags.isFlagRaised(.IF) {
+            if await INTR.pending, !nf, eflags.isFlagRaised(.IF) {
                 halted = false
                 let id = try await INTR.probe()
                 throw Interrupt(id)
@@ -108,7 +108,7 @@ extension Free86 {
             while true {
                 do {
                     try raiseInterrupt(fex.id, fex.errorCode, false, 0)
-                } catch exception as Interrupt {
+                } catch let exception as Interrupt {
                     fex = exception
                     let sec = fex.class
                     if fec == .doublefault, (sec == .contributory || sec == .pagefault) {

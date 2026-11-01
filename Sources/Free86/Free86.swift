@@ -4,18 +4,8 @@ public class Free86 {
     public let NMI = PinIO<Bool>()
     public let RESET = PinIO<Bool>()
 
-    /// Interrupts in-flight register
-    ///
-    /// The interrupts in-flight register (IFR) indicates an NMI hardware interrupt handler (ISR)
-    /// in execution. If FC is set bits 0 to 4 contain the id of the first internal exception to be
-    /// used for double fault condition check. IFR is specific to this emulator and not part of
-    /// the genuine processor architecture.
-    // +-----+-----+----+-----+-----+-----+-----+-----+-----+
-    // | NMI | ... | FC | ... |   first internal exception  |
-    // +-----+-----+----+-----+-----+-----+-----+-----+-----+
-    // | b10 | ... | b7 | ... |  b4 |  b3 |  b2 |  b1 |  b0 |
-    // +-----+-----+----+-----+-----+-----+-----+-----+-----+
-    var ifr = InterruptsInFlightRegister(0)
+    /// NMI in-flight flag
+    var nf = false
 
     let io: IsolatedIO<DWord>?
 
@@ -261,7 +251,6 @@ public class Free86 {
 
     public enum Event: Error {
         case endOnReset
-        case doubleFault
         case tripleFault
     }
 

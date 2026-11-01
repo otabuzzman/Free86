@@ -38,9 +38,9 @@ extension Interrupt {
     }
     public var `class`: Class {
         switch self.id {
-        case 1, 2, 3, 4, 5, 6, 7:
+        case 1, 2, 3, 4, 5, 6, 7, 9:
             return .begnin
-        case 0, 9, 10, 11, 12, 13:
+        case 0, 10, 11, 12, 13:
             return .contributory
         case 14:
             return .pagefault

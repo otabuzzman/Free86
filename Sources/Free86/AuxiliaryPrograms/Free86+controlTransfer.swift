@@ -493,9 +493,6 @@ extension Free86 {
         } else {
             try raiseInterruptProtectedMode(DWord(id), errorCode, isSW, home)
         }
-        if 16 > id {
-            ifr.setFlag(.FC, .zero)
-        }
     }
     func raiseInterruptRealOrV86Mode(_ id: DWord, _ isSW: Bool, _ home: LinearAddress) throws {
         if (id * 4 + 3) > idt.shadow.limit {

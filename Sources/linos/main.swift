@@ -95,7 +95,7 @@ while true {
             if cpu.halted {
                 break
             }
-        } catch let exception as Interrupt {
+        } catch is Interrupt {
             continue
         } catch {
             print("\(error)")
