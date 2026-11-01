@@ -30,24 +30,21 @@ public struct Interrupt: Error, Equatable {
 
 extension Interrupt {
     public enum Class: Int {
-        case begnin
         case contributory
         case pagefault
         case doublefault
-        case none
+        case begnin
     }
     public var `class`: Class {
         switch self.id {
-        case 1, 2, 3, 4, 5, 6, 7, 9:
-            return .begnin
         case 0, 10, 11, 12, 13:
             return .contributory
         case 14:
             return .pagefault
         case 8:
             return .doublefault
-        default:
-            return .none
+        default:  // 1, 2, 3, 4, 5, 6, 7, 9, 16, 17
+            return .begnin
         }
     }
     init(_ vector: Exception, errorCode: DWord = 0) {

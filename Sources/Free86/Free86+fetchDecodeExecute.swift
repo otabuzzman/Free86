@@ -101,9 +101,9 @@ extension Free86 {
             } while cyclesRemaining > 0
             self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
             eip = eip &+ far &- farStart
-        } catch let exception as Interrupt {
+        } catch let interrupt as Interrupt {
             self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
-            var fex = exception
+            var fex = interrupt
             var fec = fex.class
             while true {
                 do {
@@ -118,8 +118,6 @@ extension Free86 {
                         fec == .pagefault, (sec == .contributory || sec == .pagefault) {
                         fex = Interrupt(.DF)
                         fec = .doublefault
-                    } else {
-                        fec = sec
                     }
                     continue
                 }
