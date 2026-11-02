@@ -109,15 +109,16 @@ extension Free86 {
                 do {
                     try raiseInterrupt(fex.id, fex.errorCode, false, 0)
                 } catch let exception as Interrupt {
-                    fex = exception
-                    let sec = fex.class
-                    if fec == .doublefault, (sec == .contributory || sec == .pagefault) {
+                    let sex = exception
+                    let sec = sex.class
+                    if fec == .doublefault {
                         throw Event.tripleFault
                     }
-                    if fec == .contributory, sec == .contributory ||
-                        fec == .pagefault, (sec == .contributory || sec == .pagefault) {
+                    if fec == .contributory, sec == .contributory || fec == .pagefault {
                         fex = Interrupt(.DF)
                         fec = .doublefault
+                    } else {
+                        fex = sex
                     }
                     continue
                 }
