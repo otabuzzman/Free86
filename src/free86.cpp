@@ -44,7 +44,6 @@ void Free86::reset() {
     halted = false;
 }
 [[noreturn]] void Free86::abort(int id, int error_code) {
-    this->cycles += cycles_requested - cycles_remaining;
     throw Interrupt{id, error_code};
 }
 void Free86::update_SSB() {

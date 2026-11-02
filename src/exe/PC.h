@@ -490,7 +490,7 @@ inline void Serial::set_irq(int val) {
 }
 #ifndef __APPLE__
 #define CLOCK_UPTIME_RAW 0  // bogus
-static int clock_gettime_nsec_np(int bogus) {
+static uint64_t clock_gettime_nsec_np(int bogus) {
     struct timespec ts;
     timespec_get(&ts, TIME_UTC);
     return ts.tv_sec * 1000000000 + ts.tv_nsec;
@@ -519,7 +519,7 @@ class PITChannel {
     }
     int pit_get_count() {
         uint32_t d, dh;
-        d = (clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time) * 1193181 / 1000000000;
+        d = (clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time) / 1000000000 * 1193181 ;
         switch (mode) {
         case 0:
         case 1:
@@ -534,8 +534,8 @@ class PITChannel {
         return dh;
     }
     int pit_get_out() {
-        int d, eh;
-        d = (clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time) * 1193181 / 1000000000;
+        uint32_t d, eh;
+        d = (clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - count_load_time) / 1000000000 * 1193181;
         switch (mode) {
         default:
         case 0: // Interrupt on terminal count

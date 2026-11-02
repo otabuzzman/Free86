@@ -44,10 +44,9 @@ class Test386 {
     void cycle() {
         uint64_t number = 100000; // a value of 1 enables history recording (slow)
         uint64_t cycles = cpu->cycles + number;
-        Interrupt interrupt = {-1, 0};
         while (cpu->cycles < cycles) {
             try {
-                cpu->fetch_decode_execute(cycles - cpu->cycles, interrupt);
+                cpu->fetch_decode_execute(cycles - cpu->cycles);
                 if (number == 1 && cycles > history_skip) {
                     history[cpu->cycles % history_size] = compact_state();
                 }
@@ -61,7 +60,6 @@ class Test386 {
                     exit(0);
                 }
             } catch (const Interrupt& e) {
-                interrupt = {e.id, e.error_code};
                 switch (e.id) {
                     case 6:
                         std::cout

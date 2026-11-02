@@ -108,7 +108,7 @@ class Free86 {
     void reset();
 
     // fedex.cpp
-    void fetch_decode_execute(uint64_t cycles, Interrupt& interrupt);
+    void fetch_decode_execute(uint64_t cycles);
 
     // memory.cpp
     uint32_t ld8_direct(uint32_t address); // read/ write at physical memory address (bypass TLB)
