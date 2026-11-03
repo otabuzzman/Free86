@@ -50,10 +50,17 @@ io.register(port: port3FD, at: 0x3FD)
 io.register(port: port3FE, at: 0x3FE)
 io.register(port: port3FF, at: 0x3FF)
 
+#if os(Windows)
+try mem.load("bin/bootstrap.bin",  at: 0x000f0000)
+try mem.load("bin/linuxstart.bin", at: 0x00010000)
+try mem.load("bin/vmlinux-2.6.20.bin", at: 0x00100000)
+try mem.load("bin/root.bin", at: 0x00400000)
+#else
 try mem.load("~/lab/Free86/bin/bootstrap.bin",  at: 0x000f0000)
 try mem.load("~/lab/Free86/bin/linuxstart.bin", at: 0x00010000)
 try mem.load("~/lab/Free86/bin/vmlinux-2.6.20.bin", at: 0x00100000)
 try mem.load("~/lab/Free86/bin/root.bin", at: 0x00400000)
+#endif
 try mem.load("console=ttyS0 root=/dev/ram0 rw init=/sbin/init notsc=1", at: 0x0000f800)  // lpj=101131 no-hlt
 
 /// https://github.com/eneko/Random.git
