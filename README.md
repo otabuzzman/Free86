@@ -1,6 +1,6 @@
 # Free86
 
-An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ or Swift compiler, git, cmake, make, and when on Winos nmake. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok.
+An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ or Swift compiler, git, cmake, make, and nmake when on Winos. The emulator boots a Linux kernel into RAM and finally runs a shell, proving that protected mode works perfectly for Linos' needs. It also passes the [Test386 suite](https://github.com/barotto/test386.asm), proving many real mode and protected mode features ok.
 
 **Missing features**
 - Full segment limit and rights checks
@@ -10,20 +10,20 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 
 **Build on Linos (also WSL)**
 - Install C++, CMake, Swift toolchain
-- Run commands (use `stty -icanon -echo` for Linos)
+- Run commands
   ```
   git clone https://github.com/otabuzzman/Free86.git ; cd Free86
   
   # build for Linos boot and Test386 suite (see comment on setup below)
-  cmake -G "Unix Makefiles" .
+  (rm -rf build ; mkdir build ; cd build ; cmake -G "Unix Makefiles" ..)
   
   # compile...
-  make
+  (cd build ; make)
   # ...and run Linos
   exe/linos
   
   # compile and run with Swift toolchain
-  swift run -c release linos
+  stty -icanon -echo ; swift run -c release linos
   ```
 
 **Build on MacOS**
@@ -37,10 +37,10 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   git clone https://github.com/otabuzzman/Free86.git ; cd Free86
   
   # build for Linos boot and Test386 suite (see comment on setup below)
-  cmake -G "NMake Makefiles" .
+  rmdir /s /q build & md build & cd build & cmake -G "NMake Makefiles" .. & cd ..
   
   # compile...
-  nmake
+  cd build & nmake & cd ..
   # ...and run Linos
   exe\linos
   
@@ -57,8 +57,9 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
 - In the Test386 repo’s src/configuration.asm, set OUT_PORT to a non-zero value
 - Run commands
   ```
-  # clone repository beside Free86 folder
-  https://github.com/barotto/test386.asm ; cd test386
+  # clone repository into Free86 sibling folder
+  git clone https://github.com/barotto/test386.asm.git ; cd test386.asm
+  git checkout fde2686 # newer commits fail due to unsupported features
   
   # assemble test suite (see README)
   nasm -i./src/ -f bin src/test386.asm -l test386.lst -o test386.bin
@@ -70,15 +71,17 @@ An Intel 80386 emulator for Linos, MacOS, and Winos. Compilation requires a C++ 
   cd ../Free86
   
   # run suite and capture results
-  exe/test386 >test386-EE-reference.txt
+  exe/test386 >_out
   
   # run suite with Swift toolchain
-  swift run -c release test386 >test386-EE-reference.txt
+  swift run -c release test386 >_out
   
-  # compare results
-  diff ../test386.asm/test386-EE-reference.txt test386-EE-reference.txt
+  # compare results with test suite
+  diff ../test386.asm/test386-EE-reference.txt _out >_out2
+  
+  # compare differences with known deviations (none expected)
+  diff _out2 test386-EE-reference.diff
   ```
-  Results comparison should look as in file `test386-EE-reference.diff`. Differences of ROL and RCL instructions are due to undefined OF flag.
 
 **References**
 - Intel 80386 Programmer's Reference Manual ([PDF](https://css.csail.mit.edu/6.858/2019/readings/i386.pdf), [HTML](https://pdos.csail.mit.edu/6.828/2008/readings/i386/toc.htm))
