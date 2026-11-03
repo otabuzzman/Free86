@@ -14,12 +14,12 @@ extension Free86 {
                 halted = false
                 nf = true
                 _ = try await NMI.probe()
-                throw Interrupt(2)
+                try raiseInterrupt(2, 0, false, 0)
             }
             if await INTR.pending, !nf, eflags.isFlagRaised(.IF) {
                 halted = false
                 let id = try await INTR.probe()
-                throw Interrupt(id)
+                try raiseInterrupt(id, 0, false, 0)
             }
             guard !halted else { return }
             (far, farStart) = (0, 0)
@@ -103,27 +103,7 @@ extension Free86 {
             eip = eip &+ far &- farStart
         } catch let interrupt as Interrupt {
             self.cycles = self.cycles &+ cyclesRequested &- cyclesRemaining
-            var fex = interrupt
-            var fec = fex.class
-            while true {
-                do {
-                    try raiseInterrupt(fex.id, fex.errorCode, false, 0)
-                } catch let exception as Interrupt {
-                    let sex = exception
-                    let sec = sex.class
-                    if fec == .doublefault {
-                        throw Event.tripleFault
-                    }
-                    if fec == .contributory, sec == .contributory || fec == .pagefault {
-                        fex = Interrupt(.DF)
-                        fec = .doublefault
-                    } else {
-                        fex = sex
-                    }
-                    continue
-                }
-                throw fex
-            }
+            try raiseException(interrupt.id, interrupt.errorCode)
         }
     }
 }

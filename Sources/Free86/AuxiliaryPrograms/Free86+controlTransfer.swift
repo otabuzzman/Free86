@@ -487,6 +487,29 @@ extension Free86 {
             }
         }
     }
+    func raiseException(_ id: Byte, _ errorCode: DWord) throws {
+        var fex = Interrupt(id, errorCode: errorCode)
+        var fec = fex.class
+        while true {
+            do {
+                try raiseInterrupt(fex.id, fex.errorCode, false, 0)
+            } catch let exception as Interrupt {
+                let sex = exception
+                let sec = sex.class
+                if fec == .doublefault {
+                    throw Event.tripleFault
+                }
+                if fec == .contributory, sec == .contributory || fec == .pagefault {
+                    fex = Interrupt(.DF)
+                    fec = .doublefault
+                } else {
+                    fex = sex
+                }
+                continue
+            }
+            throw fex
+        }
+    }
     func raiseInterrupt(_ id: Byte, _ errorCode: DWord, _ isSW: Bool, _ home: LinearAddress) throws {
         if cr0.isRealOrV86Mode {
             try raiseInterruptRealOrV86Mode(DWord(id), isSW, home)

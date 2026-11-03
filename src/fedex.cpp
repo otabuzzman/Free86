@@ -5,7 +5,6 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
 	try {
 	    if (get_irq() != 0 && (eflags & 0x00000200)) {
 	        halted = false;
-	        // throw Interrupt{get_iid(), 0};
 	        raise_interrupt(get_iid(), 0, 0, 0);
 	    }
 	    if (halted) {
@@ -3721,15 +3720,6 @@ void Free86::fetch_decode_execute(uint64_t cycles) {
 	    eip = eip + far - far_start;
 	} catch (const Interrupt& e) {
 	    this->cycles += cycles_requested - cycles_remaining;
-	    Interrupt fex = e;
-	    while (true) {
-	        try  {
-	            raise_interrupt(fex.id, fex.error_code, 0, 0);
-	        } catch (const Interrupt& sex) {
-	            fex = sex;
-	            continue;
-	        }
-	        throw fex;
-	    }
+        raise_exception(e.id, e.error_code);
 	}
 }

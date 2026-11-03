@@ -48,6 +48,24 @@ typedef struct SegmentRegister {
 typedef struct Interrupt {
     int id; // 0-31 termed `Exceptions'
     int error_code;
+
+    enum Class { contributory, pagefault, doublefault, begnin };
+    Class clazz() {
+        switch (id) {
+            case 0:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+                return contributory;
+            case 14:
+                return pagefault;
+            case 8:
+                return doublefault;
+            default: // 1, 2, 3, 4, 5, 6, 7, 9, 16, 17
+                return begnin;
+        }
+    }
 } Interrupt;
 
 class Free86 {
@@ -475,6 +493,7 @@ class Free86 {
     void return_protected(bool o32, bool is_iret, uint32_t release_stack_items);
     void reset_segment_register(uint32_t sreg, uint32_t level);
 
+    void raise_exception(int id, int error_code);
     void raise_interrupt(int id, int error_code, int is_sw, uint32_t home);
     void raise_interrupt_real__v86(int id, int is_sw, uint32_t home);
     void raise_interrupt_protected(int id, int error_code, int is_sw, uint32_t home);

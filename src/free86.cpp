@@ -2619,6 +2619,29 @@ void Free86::reset_segment_register(uint32_t sreg, uint32_t level) {
         }
     }
 }
+void Free86::raise_exception(int id, int error_code) {
+	Interrupt fex = Interrupt{id, error_code};
+    Interrupt::Class fec = fex.clazz();
+	while (true) {
+	    try  {
+	        raise_interrupt(fex.id, fex.error_code, 0, 0);
+	    } catch (const Interrupt& e) {
+            Interrupt sex = e;
+            Interrupt::Class sec = sex.clazz();
+            if (fec == Interrupt::Class::doublefault) {
+                throw "tripleFault";
+            }
+            if (fec == Interrupt::Class::contributory && (sec == Interrupt::Class::contributory || fec == Interrupt::Class::pagefault)) {
+                fex = Interrupt{8, 0};
+                fec = Interrupt::Class::doublefault;
+            } else {
+                fex = sex;
+            }
+	        continue;
+	    }
+	    throw fex;
+	}
+}
 void Free86::raise_interrupt(int id, int error_code, int is_sw, uint32_t home) {
     if (!is_protected()) {
         raise_interrupt_real__v86(id, is_sw, home);
