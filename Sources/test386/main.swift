@@ -1,7 +1,7 @@
 import Foundation
 import Free86
 
-var fileURL = URL(fileURLWithPath: "../test386.asm/test386.bin")
+var fileURL = URL(fileURLWithPath: "~/lab/test386.asm/test386.bin")
 let loadAddress: DWord = 0x000f0000
 let postPortAddress: DWord = 0x0190
 let outPortAddress: DWord  = 0x002a
