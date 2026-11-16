@@ -1,6 +1,6 @@
 public class Free86 {
     /// hardware interrupts (pins)
-    public internal(set) var INTR = PinIO<Byte>()
+    public let INTR = PinIO<Byte>()
     public let NMI = PinIO<Bool>()
     public let RESET = PinIO<Bool>()
 
@@ -11,7 +11,7 @@ public class Free86 {
 
     /// EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
     public internal(set) var regs: [GeneralRegister] = .init(repeating: .zero, count: 8)
-    public internal(set) var eflags = ExtendedFlagsRegister(0)
+    var eflags = ExtendedFlagsRegister(0)
 
     public internal(set) var eip = LinearAddress(0)
     var eipLinear = LinearAddress(0)

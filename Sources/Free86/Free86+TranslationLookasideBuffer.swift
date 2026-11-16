@@ -88,8 +88,12 @@ extension UnsafeMutablePointer {
 
 extension Free86 {
     func translate(_ linear: LinearAddress, writable: Bool, user: Bool) throws {
-        if !cr0.isPagingEnabled {
-            tlbUpdate(linear: linear & ~0xFFF, with: linear & ~0xFFF, writable: true, user: false)
+        guard cr0.isPagingEnabled else {
+            tlbUpdate(
+                linear: linear & ~0xFFF,
+                with: linear & ~0xFFF,
+                writable: true, user: false
+            )
             return
         }
         /// paging enabled

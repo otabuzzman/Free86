@@ -146,7 +146,8 @@ extension Free86 {
      }
     func auxVerrVerw(_ selector: SegmentSelector, _ writable: Bool) throws {
         osmSrc = compileSflags()
-        if try isSegmentAccessible(selector, writable) {
+        let descriptor = try ldXdtEntry(selector)
+        if isSegmentAccessible(selector, descriptor, writable) {
             osmSrc.setFlag(.ZF)
         } else {
             osmSrc.setFlag(.ZF, .zero)
@@ -156,9 +157,6 @@ extension Free86 {
     }
     func isSegmentAccessible(_ sreg: Int, _ writable: Bool) -> Bool {
         return isSegmentAccessible(segs[sreg].selector, segs[sreg].shadow, writable)
-    }
-    func isSegmentAccessible(_ selector: SegmentSelector, _ writable: Bool) throws -> Bool {
-        return isSegmentAccessible(selector, try ldXdtEntry(selector), writable)
     }
     func isSegmentAccessible(_ selector: SegmentSelector, _ descriptor: SegmentDescriptor, _ writable: Bool) -> Bool {
         if cr0.isRealOrV86Mode {

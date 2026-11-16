@@ -7,7 +7,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/exe/linos",
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "CMake: Generate Debug Symbols"
         },
         {
             "type": "swift",
