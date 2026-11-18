@@ -102,7 +102,7 @@ extension Free86 {
                 }
             }
         }
-        if computeEffectiveAddress || x8664LongMode && !ipr.isFlagRaised(.addressSizeOverride) && !ipr.segmentOverride {
+        if computeEffectiveAddress || x8664LongMode && !ipr.isFlagRaised(.operandSizeOverride) && !ipr.segmentOverride {
             lax = offset
         } else {
             lax = segs[sreg].shadow.base &+ offset
